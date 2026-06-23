@@ -498,7 +498,7 @@ function TrackingContent() {
 
       {/* Footer copyright */}
       <footer className="h-16 border-t border-slate-900 flex items-center justify-center text-[10px] text-slate-650 font-semibold tracking-wide uppercase px-6">
-        <span>© {new Date().getFullYear()} TrustCare OS-Manager • Todos os direitos reservados.</span>
+        <span>© {new Date().getFullYear()} Trust Care - Consultoria em T.I • Todos os direitos reservados.</span>
       </footer>
     </div>
   );

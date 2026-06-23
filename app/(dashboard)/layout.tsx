@@ -127,10 +127,10 @@ export default function DashboardLayout({
         {/* Brand Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
           <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
-            <div className="p-1.5 bg-blue-600 rounded-lg">
-              <Wrench className="w-5 h-5" />
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden bg-white/10 p-1">
+              <img src="/logo.png" alt="Trust Care" className="w-full h-full object-contain" />
             </div>
-            {sidebarOpen && <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">OS-Manager</span>}
+            {sidebarOpen && <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Trust Care</span>}
           </Link>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 text-slate-400 hover:text-white rounded-md hidden lg:block">
             <Menu className="w-5 h-5" />
