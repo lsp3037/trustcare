@@ -29,14 +29,14 @@ export default function LoginPage() {
         // Se falhar (por exemplo, banco não configurado ou credenciais incorretas),
         // fornecemos um fallback amigável para testes locais caso o Supabase não esteja pronto.
         console.warn('Erro de autenticação no Supabase:', error.message);
-        
+
         if (email === 'admin@admin.com' && password === 'admin123') {
           // Salva uma flag mock de sessão no localStorage para a navegação funcionar offline
           localStorage.setItem('os-session', JSON.stringify({ email, companyId: '1', role: 'admin' }));
           router.push('/dashboard');
           return;
         }
-        
+
         throw new Error(error.message);
       }
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
         <div className="p-3 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl mb-4 shadow-lg shadow-blue-500/10">
           <Wrench className="w-8 h-8 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">OS-Manager</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Trust Care - Consultoria em T.I</h1>
         <p className="text-sm text-slate-400 mt-1">Gerenciamento de Ordens de Serviço</p>
       </div>
 
