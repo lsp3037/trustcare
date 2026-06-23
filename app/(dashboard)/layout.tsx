@@ -117,8 +117,13 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
-      {/* Sidebar - Desktop */}
-      <aside className={`fixed inset-y-0 left-0 z-20 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+      {/* Sidebar - Drawer Responsivo / Collapsible */}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 
+        ${sidebarOpen 
+          ? 'translate-x-0 w-64' 
+          : '-translate-x-full md:translate-x-0 md:w-20'
+        }
+      `}>
         {/* Brand Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
           <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
@@ -158,6 +163,10 @@ export default function DashboardLayout({
                   if (item.href === '/dashboard/inventory') {
                     window.dispatchEvent(new Event('nav-estoque-click'));
                   }
+                  // Auto-fechamento do drawer se estiver em tela mobile (< 768px)
+                  if (window.innerWidth < 768) {
+                    setSidebarOpen(false);
+                  }
                 }}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive 
@@ -195,12 +204,20 @@ export default function DashboardLayout({
         </div>
       </aside>
 
+      {/* Overlay Backdrop - Apenas Mobile */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+        />
+      )}
+
       {/* Main Content Wrap */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'}`}>
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'}`}>
         {/* Header/Top Bar */}
         <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6">
           <div className="flex items-center gap-2">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg lg:hidden">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg md:hidden">
               <Menu className="w-5 h-5" />
             </button>
             <h2 className="font-semibold text-slate-200">Painel de Controle</h2>
