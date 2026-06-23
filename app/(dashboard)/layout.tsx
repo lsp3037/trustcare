@@ -1,0 +1,233 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { 
+  ClipboardList, 
+  Users, 
+  Package, 
+  BarChart3, 
+  LogOut, 
+  Wrench, 
+  User,
+  Building,
+  Menu,
+  X,
+  Sun,
+  Moon
+} from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [companyName, setCompanyName] = useState('Assistência Técnica T.I.');
+  const [userName, setUserName] = useState('Desenvolvedor');
+  const [userRole, setUserRole] = useState('Admin');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('os-theme');
+    if (storedTheme === 'light') {
+      setTheme('light');
+    } else if (storedTheme === 'dark') {
+      setTheme('dark');
+    } else {
+      const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      setTheme(systemPrefersLight ? 'light' : 'dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    localStorage.setItem('os-theme', nextTheme);
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      // 1. Tenta obter sessão local (mock)
+      const mockSession = localStorage.getItem('os-session');
+      if (mockSession) {
+        const parsed = JSON.parse(mockSession);
+        setUserName(parsed.email.split('@')[0]);
+        const role = parsed.role || 'admin';
+        setIsAdmin(role === 'admin');
+        setUserRole(role === 'admin' ? 'Administrador' : role === 'tecnico' ? 'Técnico' : 'Recepcionista');
+        setCompanyName('TechAssist Corp (Local)');
+      }
+
+      // 2. Tenta do Supabase Auth
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário');
+        setCompanyName(user.user_metadata?.company_name || 'Minha Assistência');
+        
+        // Busca o profile no banco de dados para ver a role real
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, companies(name)')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile) {
+          const role = profile.role || 'admin';
+          setIsAdmin(role === 'admin');
+          setUserRole(role === 'admin' ? 'Administrador' : role === 'technician' ? 'Técnico' : 'Recepcionista');
+          if ((profile as any).companies?.name) {
+            setCompanyName((profile as any).companies.name);
+          }
+        }
+      } else if (!mockSession) {
+        // Redireciona para o login se não houver nenhuma sessão
+        router.push('/login');
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('os-session');
+    router.push('/login');
+  };
+
+  const navItems = [
+    { name: 'Dashboard & Relatórios', href: '/dashboard', icon: BarChart3 },
+    { name: 'Ordens de Serviço', href: '/dashboard/orders', icon: ClipboardList },
+    { name: 'Clientes', href: '/dashboard/clients', icon: Users },
+    { name: 'Estoque', href: '/dashboard/inventory', icon: Package },
+    { name: 'Serviços', href: '/dashboard/services', icon: Wrench },
+    ...(isAdmin ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : [])
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+      {/* Sidebar - Desktop */}
+      <aside className={`fixed inset-y-0 left-0 z-20 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+        {/* Brand Logo */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+          <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
+            <div className="p-1.5 bg-blue-600 rounded-lg">
+              <Wrench className="w-5 h-5" />
+            </div>
+            {sidebarOpen && <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">OS-Manager</span>}
+          </Link>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 text-slate-400 hover:text-white rounded-md hidden lg:block">
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tenant/Company Info Card */}
+        {sidebarOpen && (
+          <div className="mx-4 my-4 p-3 bg-slate-950/50 border border-slate-800/80 rounded-xl flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+              <Building className="w-4 h-4" />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tenant Ativo</p>
+              <p className="text-sm font-bold text-slate-200 truncate">{companyName}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Menu */}
+        <nav className="flex-1 px-3 space-y-1 py-4">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => {
+                  if (item.href === '/dashboard/inventory') {
+                    window.dispatchEvent(new Event('nav-estoque-click'));
+                  }
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/10' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {sidebarOpen && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User Card & Logout */}
+        <div className="p-3 border-t border-slate-800 bg-slate-900/40">
+          {sidebarOpen && (
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-950/30 border border-slate-800/50 mb-3">
+              <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold uppercase text-sm">
+                {userName.charAt(0)}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-sm font-semibold text-slate-200 truncate">{userName}</p>
+                <p className="text-[10px] text-slate-500 uppercase font-bold">{userRole}</p>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {sidebarOpen && <span>Sair</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Wrap */}
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'}`}>
+        {/* Header/Top Bar */}
+        <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg lg:hidden">
+              <Menu className="w-5 h-5" />
+            </button>
+            <h2 className="font-semibold text-slate-200">Painel de Controle</h2>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-slate-450 hover:text-slate-200 hover:bg-slate-800/40 rounded-lg border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
+              title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+            >
+              {theme === 'light' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+            </button>
+
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs text-slate-400 font-semibold bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800">
+              Conexão Supabase OK
+            </span>
+          </div>
+        </header>
+
+        {/* Page Body */}
+        <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

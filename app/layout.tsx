@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ThemeSync from "@/components/ThemeSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,10 +25,35 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('os-theme');
+                  if (theme === 'light') {
+                    document.documentElement.classList.add('light');
+                  } else if (theme === 'dark') {
+                    document.documentElement.classList.remove('light');
+                  } else {
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                      document.documentElement.classList.add('light');
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col">
+        <ThemeSync />
+        {children}
+      </body>
     </html>
   );
 }
