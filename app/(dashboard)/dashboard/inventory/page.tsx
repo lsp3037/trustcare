@@ -421,9 +421,9 @@ export default function InventoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <Package className="w-8 h-8 text-blue-500" /> Estoque de Produtos
+            <Package className="w-8 h-8 text-emerald-500" /> Estoque de Produtos
           </h1>
-          <p className="text-slate-400 mt-1">Gerencie peças de reposição e componentes da assistência.</p>
+          <p className="text-slate-405 mt-1">Gerencie peças de reposição e componentes da assistência.</p>
         </div>
         {!isCreating && (
           <button
@@ -431,7 +431,7 @@ export default function InventoryPage() {
               resetForm();
               setIsCreating(true);
             }}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
           >
             <Plus className="w-4 h-4" /> Cadastrar Produto
           </button>
@@ -702,7 +702,7 @@ export default function InventoryPage() {
               <button
                 type="submit"
                 disabled={submitting || formSuccess}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200 disabled:opacity-55"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200 disabled:opacity-55"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -717,7 +717,7 @@ export default function InventoryPage() {
         <>
           {/* Barra de Busca e Filtro Ativo */}
           <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-xl">
+            <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-xl border border-slate-800/60 shadow-sm">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="text"
@@ -776,7 +776,7 @@ export default function InventoryPage() {
               <p className="text-sm text-slate-500 mt-1 max-w-xs">Tente redefinir seus filtros ou cadastrar peças.</p>
             </div>
           ) : (
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
@@ -898,15 +898,18 @@ export default function InventoryPage() {
                           <td className="py-4 px-6 text-center text-slate-300 font-semibold">{p.brand || '—'}</td>
                           <td className="py-4 px-6 text-center">
                             {isOut ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400 uppercase tracking-wide">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-rose-500" />
                                 Esgotado
                               </span>
                             ) : isLowStock ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 uppercase tracking-wide animate-pulse">
-                                <AlertTriangle className="w-3.5 h-3.5" /> Reabastecer
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-amber-500 animate-pulse" />
+                                Reabastecer
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 uppercase tracking-wide">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-emerald-500" />
                                 Saudável
                               </span>
                             )}

@@ -288,17 +288,17 @@ export default function DashboardOverviewPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusDotColor = (status: string) => {
     switch (status) {
-      case 'Aguardando Equipamento': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-      case 'Em Análise': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'Na Bancada': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'Aguardando Peça': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'Em Testes': return 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20';
-      case 'Pronta para Retirada': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case 'Entregue': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-      case 'Cancelada': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+      case 'Aguardando Equipamento': return 'bg-indigo-500';
+      case 'Em Análise': return 'bg-amber-500';
+      case 'Na Bancada': return 'bg-blue-500';
+      case 'Aguardando Peça': return 'bg-purple-500';
+      case 'Em Testes': return 'bg-cyan-500';
+      case 'Pronta para Retirada': return 'bg-emerald-500';
+      case 'Entregue': return 'bg-slate-400';
+      case 'Cancelada': return 'bg-rose-500';
+      default: return 'bg-slate-400';
     }
   };
 
@@ -316,10 +316,10 @@ export default function DashboardOverviewPage() {
           <p className="text-slate-400 mt-1 flex flex-wrap items-center gap-3">
             <span>Indicadores e visão geral da assistência técnica.</span>
             <span className="hidden sm:inline h-4 w-px bg-slate-800" />
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-sm">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 shadow-sm">
               PJ: {stats.pjCount} {stats.pjCount === 1 ? 'cliente' : 'clientes'}
             </span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-sm">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-350 border border-slate-700 shadow-sm">
               PF: {stats.pfCount} {stats.pfCount === 1 ? 'cliente' : 'clientes'}
             </span>
           </p>
@@ -336,7 +336,7 @@ export default function DashboardOverviewPage() {
           </Link>
           <Link
             href="/dashboard/orders?new=true"
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
           >
             <Plus className="w-4 h-4" /> Nova OS
           </Link>
@@ -346,7 +346,7 @@ export default function DashboardOverviewPage() {
       {/* Grid de Cards Estatísticos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Faturamento */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-6 relative overflow-hidden hover:scale-[1.02] hover:border-slate-700/80 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
               <DollarSign className="w-5 h-5" />
@@ -355,8 +355,8 @@ export default function DashboardOverviewPage() {
               <TrendingUp className="w-3 h-3" /> +14.5%
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-400">Faturamento Realizado</p>
-          <h3 className="text-2xl font-bold text-white mt-1">
+          <p className="text-sm font-semibold text-slate-405">Faturamento Realizado</p>
+          <h3 className="text-2xl font-black text-white mt-1">
             R$ {stats.billing.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h3>
           <p className="text-xs text-slate-500 mt-2">Soma de OS Concluídas/Entregues</p>
@@ -365,40 +365,40 @@ export default function DashboardOverviewPage() {
         {/* Card 2: OS Ativas (Clicável) */}
         <div 
           onClick={() => router.push('/dashboard/orders?status=Ativas')}
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-6 hover:scale-[1.02] hover:border-slate-700/80 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer group"
+          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
               <Clock className="w-5 h-5" />
             </div>
-            <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-blue-450 transition-colors">
+            <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
               Em progresso <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-350 transition-colors">OS Abertas / Em Análise</p>
-          <h3 className="text-2xl font-bold text-white mt-1">{stats.openOrders}</h3>
+          <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">OS Abertas / Em Análise</p>
+          <h3 className="text-2xl font-black text-white mt-1">{stats.openOrders}</h3>
           <p className="text-xs text-slate-500 mt-2">Aguardando aprovação ou peças</p>
         </div>
 
         {/* Card 3: OS Concluídas */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-6 hover:scale-[1.02] hover:border-slate-700/80 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
               Taxa 85%
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-400">OS Concluídas</p>
-          <h3 className="text-2xl font-bold text-white mt-1">{stats.completedOrders}</h3>
+          <p className="text-sm font-semibold text-slate-405">OS Concluídas</p>
+          <h3 className="text-2xl font-black text-white mt-1">{stats.completedOrders}</h3>
           <p className="text-xs text-slate-500 mt-2">Prontas para entrega ou finalizadas</p>
         </div>
 
         {/* Card 4: Alertas de Estoque (Clicável - Não afetado por data) */}
         <div 
           onClick={() => router.push('/dashboard/inventory?filter=low_stock')}
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-6 relative overflow-hidden hover:scale-[1.02] hover:border-slate-700/80 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer group"
+          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg group-hover:bg-rose-500/20 transition-colors">
@@ -408,8 +408,8 @@ export default function DashboardOverviewPage() {
               Crítico <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-350 transition-colors">Produtos com Estoque Baixo</p>
-          <h3 className="text-2xl font-bold text-white mt-1">{stats.lowStockCount}</h3>
+          <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">Produtos com Estoque Baixo</p>
+          <h3 className="text-2xl font-black text-white mt-1">{stats.lowStockCount}</h3>
           <p className="text-xs text-slate-500 mt-2">Itens abaixo do estoque mínimo</p>
         </div>
       </div>
@@ -417,13 +417,13 @@ export default function DashboardOverviewPage() {
       {/* Grid de Seções Inferiores */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ordens de Serviço Recentes */}
-        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-6 flex flex-col">
+        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col shadow-lg">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-bold text-white">Ordens de Serviço Recentes</h3>
               <p className="text-xs text-slate-500 mt-0.5">Movimentações no período selecionado.</p>
             </div>
-            <Link href="/dashboard/orders" className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 transition-colors">
+            <Link href="/dashboard/orders" className="text-xs text-emerald-450 hover:text-emerald-400 font-semibold flex items-center gap-1 transition-colors">
               Ver mais <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
@@ -447,16 +447,17 @@ export default function DashboardOverviewPage() {
                 <tbody className="divide-y divide-slate-800/40">
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-800/10 transition-colors">
-                      <td className="py-3.5 pr-2 font-medium text-slate-200">{order.clients?.name || 'Cliente'}</td>
-                      <td className="py-3.5 pr-2 text-slate-400 truncate max-w-[200px]" title={order.equipment_details}>
+                      <td className="py-4 pr-2 font-semibold text-slate-200">{order.clients?.name || 'Cliente'}</td>
+                      <td className="py-4 pr-2 text-slate-400 truncate max-w-[200px]" title={order.equipment_details}>
                         {formatEquipmentDetails(order.equipment_details)}
                       </td>
-                      <td className="py-3.5 pr-2">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getStatusColor(order.status)}`}>
+                      <td className="py-4 pr-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
+                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getStatusDotColor(order.status)}`} />
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-3.5 text-right font-semibold text-slate-200">
+                      <td className="py-4 text-right font-bold text-slate-200">
                         R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-3.5 text-right relative pr-4">
@@ -517,7 +518,7 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* Módulo de Gráfico de Faturamento */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-6 flex flex-col justify-between shadow-2xl">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
           <div>
             <h3 className="text-lg font-bold text-white mb-1">Faturamento</h3>
             <p className="text-xs text-slate-500">Histórico do período selecionado.</p>
@@ -532,8 +533,8 @@ export default function DashboardOverviewPage() {
                   <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.9}/>
+                        <stop offset="95%" stopColor="#0f766e" stopOpacity={0.2}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-800)" />

@@ -9,6 +9,8 @@
 
 @theme {
   --color-slate-850: #1b253b;
+  --font-inter: var(--font-inter);
+  --font-jetbrains: var(--font-jetbrains-mono);
 }
 
 @theme inline {
@@ -34,39 +36,40 @@ body {
 
 /* Light Theme Variables Override */
 html.light {
-  /* Invert Slate Color Scales */
-  --color-slate-950: #f8fafc; /* Page Background */
+  /* Invert Slate Color Scales with Sophisticated Zinc Palette */
+  --color-slate-950: #f9f9fb; /* Page Background */
   --color-slate-900: #ffffff; /* Card / Sidebar Background */
-  --color-slate-850: #f1f5f9; /* Table borders, inputs bg */
-  --color-slate-800: #e2e8f0; /* Borders */
-  --color-slate-700: #cbd5e1; /* Disabled elements border */
-  --color-slate-600: #94a3b8; /* Placeholders, minor details */
-  --color-slate-500: #64748b; /* Secondary text */
-  --color-slate-450: #475569; /* Intermediate text */
-  --color-slate-400: #475569; /* Intermediate text */
-  --color-slate-350: #1e293b; /* Alt buttons / titles */
-  --color-slate-300: #334155; /* Section headers */
-  --color-slate-200: #1e293b; /* Primary text */
-  --color-slate-100: #0f172a; /* Main Headings */
-  --color-slate-50: #020617;  /* High contrast elements */
+  --color-slate-850: #f4f4f7; /* Table borders, inputs bg */
+  --color-slate-800: #e4e4e7; /* Borders */
+  --color-slate-700: #d4d4d8; /* Disabled elements border */
+  --color-slate-600: #a1a1aa; /* Placeholders, minor details */
+  --color-slate-550: #71717a; /* Muted text */
+  --color-slate-500: #71717a; /* Secondary text */
+  --color-slate-450: #52525b; /* Intermediate text */
+  --color-slate-400: #52525b; /* Intermediate text */
+  --color-slate-350: #27272a; /* Alt buttons / titles */
+  --color-slate-300: #27272a; /* Section headers */
+  --color-slate-200: #18181b; /* Primary text */
+  --color-slate-100: #09090b; /* Main Headings */
+  --color-slate-50: #09090b;  /* High contrast elements */
 
   /* Invert Zinc Color Scales */
-  --color-zinc-950: #f8fafc;
+  --color-zinc-950: #f9f9fb;
   --color-zinc-900: #ffffff;
-  --color-zinc-850: #f1f5f9;
-  --color-zinc-800: #e2e8f0;
-  --color-zinc-700: #cbd5e1;
-  --color-zinc-600: #94a3b8;
-  --color-zinc-500: #64748b;
-  --color-zinc-400: #475569;
-  --color-zinc-300: #334155;
-  --color-zinc-200: #1e293b;
-  --color-zinc-100: #0f172a;
-  --color-zinc-50: #020617;
+  --color-zinc-850: #f4f4f7;
+  --color-zinc-800: #e4e4e7;
+  --color-zinc-700: #d4d4d8;
+  --color-zinc-600: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-400: #52525b;
+  --color-zinc-300: #27272a;
+  --color-zinc-200: #18181b;
+  --color-zinc-100: #09090b;
+  --color-zinc-50: #09090b;
 
   /* Global background/foreground overrides */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f9f9fb;
+  --foreground: #09090b;
 
   /* Smooth light mode filters */
   color-scheme: light;
