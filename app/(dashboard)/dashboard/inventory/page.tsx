@@ -799,10 +799,6 @@ export default function InventoryPage() {
                       <th className="py-4 px-6 text-center">SKU</th>
                       <th className="py-4 px-6">Categoria</th>
                       <th className="py-4 px-6 text-center">Marca</th>
-                      <th className="py-4 px-6 text-center">Capacidade</th>
-                      <th className="py-4 px-6 text-center">Qtd. Estoque</th>
-                      <th className="py-4 px-6 text-right">Custo</th>
-                      <th className="py-4 px-6 text-right">Venda</th>
                       <th className="py-4 px-6 text-center">Status</th>
                       <th className="py-4 px-6 text-center">Ações</th>
                     </tr>
@@ -848,45 +844,6 @@ export default function InventoryPage() {
                         />
                       </td>
                       <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="Capacidade..."
-                          value={filterCapacity}
-                          onChange={(e) => setFilterCapacity(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
-                        <select
-                          value={filterQuantity}
-                          onChange={(e) => setFilterQuantity(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                          <option value="">Todos</option>
-                          <option value="ok">Disponível</option>
-                          <option value="low">Baixo Estoque</option>
-                          <option value="out">Esgotado</option>
-                        </select>
-                      </td>
-                      <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="Custo..."
-                          value={filterCost}
-                          onChange={(e) => setFilterCost(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-right focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="Venda..."
-                          value={filterSale}
-                          onChange={(e) => setFilterSale(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-right focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
                         <select
                           value={filterStatus}
                           onChange={(e) => setFilterStatus(e.target.value)}
@@ -927,7 +884,7 @@ export default function InventoryPage() {
                               <div className={`p-1.5 rounded-lg shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-450' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-450'}`}>
                                 <Boxes className="w-4 h-4" />
                               </div>
-                              <Link href={`/dashboard/inventory/${p.id}`} className="truncate max-w-[180px] md:max-w-xs hover:text-blue-400 hover:underline transition-colors">
+                              <Link href={`/dashboard/inventory/${p.id}`} className="truncate max-w-[280px] md:max-w-md lg:max-w-lg hover:text-blue-400 hover:underline transition-colors">
                                 {p.name}
                               </Link>
                             </div>
@@ -939,14 +896,6 @@ export default function InventoryPage() {
                             </span>
                           </td>
                           <td className="py-4 px-6 text-center text-slate-300 font-semibold">{p.brand || '—'}</td>
-                          <td className="py-4 px-6 text-center text-slate-400 font-mono text-xs">{p.capacity || '—'}</td>
-                          <td className="py-4 px-6 text-center font-bold text-slate-250">
-                            <span className={isLowStock ? 'text-amber-400 font-extrabold' : 'text-slate-200'}>
-                              {p.quantity} <span className="text-slate-500 font-normal text-xs">un</span>
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-right text-slate-450 font-medium">R$ {Number(p.cost_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                          <td className="py-4 px-6 text-right text-slate-200 font-bold">R$ {Number(p.sale_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                           <td className="py-4 px-6 text-center">
                             {isOut ? (
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400 uppercase tracking-wide">
