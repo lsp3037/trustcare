@@ -9,6 +9,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE public.companies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    logo_url TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -23,6 +26,7 @@ CREATE TABLE public.profiles (
     role TEXT NOT NULL CHECK (role IN ('admin', 'technician', 'viewer')),
     full_name TEXT,
     email TEXT,
+    phone TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -93,6 +97,7 @@ CREATE TABLE public.service_orders (
     technician_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     delivery_prediction TIMESTAMPTZ,
     service_value NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (service_value >= 0),
+    discount NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (discount >= 0),
     total_value NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (total_value >= 0),
     codigo_os VARCHAR UNIQUE,
     pago BOOLEAN DEFAULT FALSE,
@@ -199,14 +204,15 @@ BEGIN
     user_role := 'admin';
   END IF;
 
-  -- Cria o perfil do usuário vinculado à empresa com nome e e-mail
-  INSERT INTO public.profiles (user_id, company_id, role, full_name, email)
+  -- Cria o perfil do usuário vinculado à empresa com nome, e-mail e telefone
+  INSERT INTO public.profiles (user_id, company_id, role, full_name, email, phone)
   VALUES (
     new.id, 
     target_company_id, 
     user_role, 
     COALESCE(new.raw_user_meta_data->>'full_name', 'Membro da Equipe'),
-    new.email
+    new.email,
+    new.raw_user_meta_data->>'phone'
   );
 
   RETURN new;
@@ -353,6 +359,25 @@ CREATE POLICY "Permitir insercao de midias os-media" ON storage.objects
 
 CREATE POLICY "Permitir exclusao de midias os-media" ON storage.objects
   FOR DELETE USING (bucket_id = 'os-media' AND auth.role() = 'authenticated');
+
+
+-- ==========================================
+-- BUCKET DE STORAGE E POLÍTICAS PARA LOGOTIPOS
+-- ==========================================
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('company-logos', 'company-logos', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Permitir leitura publica de logotipos" ON storage.objects
+  FOR SELECT USING (bucket_id = 'company-logos');
+
+CREATE POLICY "Permitir insercao de logotipos" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'company-logos' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Permitir exclusao de logotipos" ON storage.objects
+  FOR DELETE USING (bucket_id = 'company-logos' AND auth.role() = 'authenticated');
+
 
 
 -- ====================================================

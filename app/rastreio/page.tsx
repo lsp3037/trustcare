@@ -323,9 +323,12 @@ function TrackingContent() {
                   {order.equipment_name || 'Aparelho'} {order.equipment_brand} {order.equipment_model}
                 </h2>
                 
-                <div className="text-xs text-slate-400 flex items-center gap-1.5">
+                <div className="text-xs text-slate-400 space-y-1 mt-2">
                   <span className="font-semibold text-slate-350">Defeito relatado:</span>
-                  <span className="italic">"{order.reported_problem}"</span>
+                  <div 
+                    className="prose prose-invert max-w-none text-xs text-slate-400 italic font-medium"
+                    dangerouslySetInnerHTML={{ __html: order.reported_problem }}
+                  />
                 </div>
               </div>
 
@@ -468,9 +471,10 @@ function TrackingContent() {
                   <FileText className="w-4 h-4 text-blue-500" />
                   Laudo Técnico / Diagnóstico do Serviço / Serviço Realizado
                 </h3>
-                <div className="text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-4 rounded-2xl border border-slate-850 font-medium whitespace-pre-wrap">
-                  {order.technical_report}
-                </div>
+                <div 
+                  className="text-xs text-slate-300 prose prose-invert max-w-none leading-relaxed bg-slate-950/40 p-4 rounded-2xl border border-slate-850 font-medium"
+                  dangerouslySetInnerHTML={{ __html: order.technical_report }}
+                />
               </div>
             )}
 

@@ -22,13 +22,35 @@ import {
   Eye,
   X,
   Film,
-  Paperclip
+  Paperclip,
+  Printer
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { useCompany } from '@/lib/context/CompanyContext';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+  ssr: false,
+  loading: () => <div className="h-32 w-full animate-pulse bg-slate-950 border border-slate-800 rounded-lg" />
+});
+
+const modules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ align: [] }],
+    ['clean']
+  ]
+};
+
+const formats = ['bold', 'italic', 'underline', 'list', 'bullet', 'align'];
+
 
 export default function OrderDetailPage() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
+  const { company } = useCompany();
 
   // Estados dos Dados
   const [order, setOrder] = useState<any>(null);
@@ -43,6 +65,7 @@ export default function OrderDetailPage() {
   const [technicalReport, setTechnicalReport] = useState('');
   const [deliveryPrediction, setDeliveryPrediction] = useState('');
   const [serviceValue, setServiceValue] = useState('0'); // Valor da mão de obra
+  const [discount, setDiscount] = useState('0');         // Valor do desconto
   const [totalValue, setTotalValue] = useState('0');     // Mão de obra + Peças
   const [pago, setPago] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<any[]>([]);
@@ -90,6 +113,7 @@ export default function OrderDetailPage() {
         setTechnicianId(osData.technician_id || '');
         setTechnicalReport(osData.technical_report || '');
         setServiceValue(Number(osData.service_value || 0).toString());
+        setDiscount(Number(osData.discount || 0).toString());
         setTotalValue(Number(osData.total_value || 0).toString());
         setPago(osData.pago || false);
         setMediaFiles(osData.media || []);
@@ -194,6 +218,7 @@ export default function OrderDetailPage() {
         setTechnicianId(foundOs.technician_id || '');
         setTechnicalReport(foundOs.technical_report || '');
         setServiceValue(Number(foundOs.service_value || 0).toString());
+        setDiscount(Number(foundOs.discount || 0).toString());
         setTotalValue(Number(foundOs.total_value || 0).toString());
         setPago(foundOs.pago || false);
         setMediaFiles(foundOs.media || []);
@@ -245,13 +270,15 @@ export default function OrderDetailPage() {
     fetchData();
   }, [id]);
 
-  // 2. Atualiza o Valor Total somando Mão de Obra + Peças + Serviços do Catálogo
+  // 2. Atualiza o Valor Total somando Mão de Obra + Peças + Serviços do Catálogo e deduzindo o desconto
   useEffect(() => {
     const labor = parseFloat(serviceValue) || 0;
     const partsTotal = selectedProducts.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const servicesTotal = selectedServices.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    setTotalValue((labor + partsTotal + servicesTotal).toFixed(2));
-  }, [serviceValue, selectedProducts, selectedServices]);
+    const subtotal = labor + partsTotal + servicesTotal;
+    const disc = parseFloat(discount) || 0;
+    setTotalValue(Math.max(0, subtotal - disc).toFixed(2));
+  }, [serviceValue, selectedProducts, selectedServices, discount]);
 
   // Adicionar Peça à OS (em tela, sem persistir de imediato no DB)
   const handleAddProduct = () => {
@@ -443,6 +470,7 @@ export default function OrderDetailPage() {
         technical_report: technicalReport || null,
         delivery_prediction: deliveryPrediction || null,
         service_value: parseFloat(serviceValue) || 0,
+        discount: parseFloat(discount) || 0,
         total_value: parseFloat(totalValue) || 0,
         pago: status === 'Entregue' ? pago : false,
         media: mediaFiles.map(m => ({
@@ -592,6 +620,7 @@ export default function OrderDetailPage() {
               technical_report: technicalReport || null,
               delivery_prediction: deliveryPrediction || null,
               service_value: parseFloat(serviceValue) || 0,
+              discount: parseFloat(discount) || 0,
               total_value: parseFloat(totalValue) || 0,
               pago: status === 'Entregue' ? pago : false,
               media: mediaFiles.map(m => ({
@@ -799,38 +828,48 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Voltar e Header */}
-      <div className="space-y-3">
-        <Link
-          href="/dashboard/orders"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Voltar para Ordens de Serviço
-        </Link>
+    <>
+      {/* 1. LAYOUT PRINCIPAL DO SISTEMA (Oculto na hora de imprimir) */}
+      <div className="space-y-8 print:hidden">
+        {/* Voltar e Header */}
+        <div className="space-y-3">
+          <Link
+            href="/dashboard/orders"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar para Ordens de Serviço
+          </Link>
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border ${getStatusColor(status)}`}>
-                {status}
-              </span>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">
-                Ordem de Serviço #{order.codigo_os || order.id.slice(0, 8)}
-              </h1>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border ${getStatusColor(status)}`}>
+                  {status}
+                </span>
+                <h1 className="text-2xl font-extrabold text-white tracking-tight">
+                  Ordem de Serviço #{order.codigo_os || order.id.slice(0, 8)}
+                </h1>
+              </div>
+              <p className="text-sm text-slate-400 mt-1">
+                Cliente: <strong className="text-slate-200">{client?.name}</strong> • Aberta em {new Date(order.created_at).toLocaleDateString('pt-BR')}
+              </p>
             </div>
-            <p className="text-sm text-slate-400 mt-1">
-              Cliente: <strong className="text-slate-200">{client?.name}</strong> • Aberta em {new Date(order.created_at).toLocaleDateString('pt-BR')}
-            </p>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider bg-slate-950 border border-slate-850 px-2.5 py-1.5 rounded-lg">
-              Prioridade: <strong className={priority === 'Alta' ? 'text-rose-400' : priority === 'Média' ? 'text-amber-400' : 'text-slate-400'}>{priority}</strong>
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/10 cursor-pointer transition-all active:scale-95"
+              >
+                <Printer className="w-4 h-4" /> Imprimir Via do Cliente
+              </button>
+
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider bg-slate-950 border border-slate-850 px-2.5 py-1.5 rounded-lg">
+                Prioridade: <strong className={priority === 'Alta' ? 'text-rose-400' : priority === 'Média' ? 'text-amber-400' : 'text-slate-400'}>{priority}</strong>
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Feedbacks de Operação */}
       {successMsg && (
@@ -878,9 +917,10 @@ export default function OrderDetailPage() {
 
             <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-900/80">
               <p className="text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Problema Relatado / Defeito</p>
-              <p className="text-sm text-slate-350 italic font-medium">
-                "{order.reported_problem}"
-              </p>
+              <div 
+                className="text-sm text-slate-305 prose prose-invert max-w-none font-medium"
+                dangerouslySetInnerHTML={{ __html: order.reported_problem }}
+              />
             </div>
           </div>
 
@@ -975,13 +1015,16 @@ export default function OrderDetailPage() {
             {/* Laudo Técnico */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Laudo Técnico / Diagnóstico do Serviço / Serviço Realizado</label>
-              <textarea
-                rows={5}
-                placeholder="Insira as observações técnicas detalhadas, testes executados e solução encontrada..."
-                value={technicalReport}
-                onChange={(e) => setTechnicalReport(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors resize-none"
-              />
+              <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+                <ReactQuill
+                  theme="snow"
+                  modules={modules}
+                  formats={formats}
+                  value={technicalReport}
+                  onChange={setTechnicalReport}
+                  placeholder="Insira as observações técnicas detalhadas, testes executados e solução encontrada..."
+                />
+              </div>
             </div>
 
             {/* Seção de Anexo de Mídias */}
@@ -1100,19 +1143,36 @@ export default function OrderDetailPage() {
               <Boxes className="w-5 h-5 text-emerald-500" /> Peças e Mão de Obra
             </h3>
 
-            {/* Mão de Obra */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4 text-emerald-500" /> Valor de Mão de Obra (R$)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={serviceValue}
-                onChange={(e) => setServiceValue(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors font-semibold"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              {/* Mão de Obra */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                  <DollarSign className="w-4 h-4 text-emerald-500" /> Mão de Obra (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={serviceValue}
+                  onChange={(e) => setServiceValue(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors font-semibold"
+                />
+              </div>
+
+              {/* Desconto */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-rose-500" /> Desconto (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors font-semibold"
+                />
+              </div>
             </div>
 
             {/* Adicionar Peça do Estoque */}
@@ -1307,6 +1367,23 @@ export default function OrderDetailPage() {
                 </span>
               </div>
               <div className="h-px bg-slate-850 my-1" />
+              <div className="flex justify-between items-center text-xs text-slate-400">
+                <span>Subtotal:</span>
+                <span className="font-semibold text-slate-250">
+                  R$ {(
+                    parseFloat(serviceValue) +
+                    selectedServices.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0) +
+                    selectedProducts.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+                  ).toFixed(2)}
+                </span>
+              </div>
+              {parseFloat(discount) > 0 && (
+                <div className="flex justify-between items-center text-xs text-rose-455 font-bold">
+                  <span>Desconto Aplicado:</span>
+                  <span>- R$ {parseFloat(discount).toFixed(2)}</span>
+                </div>
+              )}
+              <div className="h-px bg-slate-850 my-1" />
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-slate-200">VALOR TOTAL DO SERVIÇO:</span>
                 <span className="text-base font-extrabold text-emerald-450 flex items-center">
@@ -1360,6 +1437,289 @@ export default function OrderDetailPage() {
           </div>
         </div>
       )}
+      </div>
+
+      {/* 2. LAYOUT EXCLUSIVO DE IMPRESSÃO DA VIA DO CLIENTE (Visível apenas na impressora) */}
+      <div className="hidden print:block bg-white text-black min-h-screen p-6 font-sans text-sm">
+        <PrintDocumentContent
+          order={order}
+          client={client}
+          company={company}
+          selectedProducts={selectedProducts}
+          selectedServices={selectedServices}
+          subtotalValue={
+            (parseFloat(serviceValue) || 0) +
+            selectedServices.reduce((sum: number, s: any) => sum + (s.quantity * s.unit_price), 0) +
+            selectedProducts.reduce((sum: number, p: any) => sum + (p.quantity * p.unit_price), 0)
+          }
+          discountValue={parseFloat(discount) || 0}
+          laborValue={parseFloat(serviceValue) || 0}
+        />
+      </div>
+    </>
+  );
+}
+
+// Subcomponente com a estrutura estrita da folha A4 em estilo brutalista
+function PrintDocumentContent({
+  order,
+  client,
+  company,
+  selectedProducts,
+  selectedServices,
+  subtotalValue,
+  discountValue,
+  laborValue
+}: any) {
+  const currentDate = new Date().toLocaleDateString('pt-BR');
+
+  const parseEquipmentDetails = (details: string = '') => {
+    const snRegex = /\s*\(S\/N:\s*([^)]+)\)/i;
+    const match = details.match(snRegex);
+    
+    let serialNumber = '';
+    let specs = details;
+    
+    if (match) {
+      serialNumber = match[1].trim();
+      specs = details.replace(snRegex, '').trim();
+    }
+    
+    const isInvalidSN = !serialNumber || 
+                        serialNumber === '—' || 
+                        serialNumber.toLowerCase() === 'n/a' || 
+                        serialNumber.toLowerCase() === 'não informado' || 
+                        serialNumber.toLowerCase() === 'nao informado';
+                        
+    return {
+      specs: specs || '—',
+      serialNumber: isInvalidSN ? '' : serialNumber
+    };
+  };
+
+  const { specs, serialNumber } = parseEquipmentDetails(order.equipment_details);
+
+  const getTechnicalReportTitle = (status: string) => {
+    const finalStatuses = ['Pronta para Retirada', 'Entregue'];
+    const initialStatuses = ['Aguardando Equipamento', 'Em Análise', 'Na Bancada', 'Aguardando Peça', 'Em Testes'];
+    
+    if (finalStatuses.includes(status)) {
+      return 'LAUDO TÉCNICO & SERVIÇOS EXECUTADOS';
+    } else if (initialStatuses.includes(status)) {
+      return 'LAUDO TÉCNICO & SERVIÇOS A EXECUTAR';
+    } else {
+      return 'LAUDO TÉCNICO & RELATÓRIO DE SERVIÇOS';
+    }
+  };
+
+  return (
+    <div className="space-y-4 print:space-y-2 flex flex-col justify-between h-full bg-white text-black p-1">
+      <div className="space-y-4 print:space-y-2">
+        
+        {/* CABEÇALHO */}
+        <div className="flex justify-between items-start border-b-2 border-black pb-4 print:pb-1.5">
+          <div className="flex items-center gap-3">
+            {company.logo_url ? (
+              <img 
+                src={company.logo_url} 
+                alt={company.name} 
+                className="w-14 h-14 print:w-11 print:h-11 object-contain" 
+              />
+            ) : (
+              <div className="w-14 h-14 print:w-11 print:h-11 bg-black text-white font-extrabold flex items-center justify-center text-xl rounded-none">
+                TC
+              </div>
+            )}
+            <div>
+              <h2 className="text-lg print:text-sm font-black tracking-tight uppercase">{company.name}</h2>
+              <p className="text-xs print:text-[10px] text-slate-700 font-semibold">{company.email}</p>
+              <p className="text-xs print:text-[10px] text-slate-700 font-semibold">{company.phone}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] print:text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Ordem de Serviço</span>
+            <span className="text-xl print:text-sm font-black font-mono text-black block mt-0.5">
+              #{order.codigo_os || `OS-${order.id.slice(0, 8).toUpperCase()}`}
+            </span>
+            <span className="text-[10px] print:text-[8px] font-medium text-slate-600 block mt-1 print:mt-0.5">
+              Data de Abertura: {new Date(order.created_at).toLocaleDateString('pt-BR')}
+            </span>
+          </div>
+        </div>
+
+        {/* BLOCO 1: CLIENTE */}
+        <div className="border border-black p-4 print:p-2">
+          <h3 className="text-xs print:text-[9px] font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3 print:mb-1">
+            Identificação do Cliente
+          </h3>
+          <div className="grid grid-cols-3 gap-4 print:gap-2 text-xs print:text-[10px]">
+            <div>
+              <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">Nome</span>
+              <span className="font-bold text-black text-sm print:text-xs">{client?.name || 'Membro da Equipe'}</span>
+            </div>
+            <div>
+              <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">Telefone</span>
+              <span className="font-semibold text-black font-mono">{client?.phone || '—'}</span>
+            </div>
+            <div>
+              <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">E-mail</span>
+              {client?.email && client.email.trim() !== '' ? (
+                <span className="font-semibold text-black font-mono">{client.email}</span>
+              ) : (
+                <span className="text-slate-400 italic font-normal">Não informado</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* BLOCO 2: EQUIPAMENTO & DIAGNÓSTICO */}
+        <div className="border border-black p-4 print:p-2">
+          <h3 className="text-xs print:text-[9px] font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3 print:mb-1">
+            Equipamento & Problema Reportado
+          </h3>
+          <div className="grid grid-cols-2 gap-4 print:gap-2 text-xs print:text-[10px]">
+            <div>
+              <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">Especificação do Equipamento</span>
+              <span className="font-bold text-black text-xs print:text-[10px]">{specs}</span>
+            </div>
+            <div>
+              <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">Número de Série (S/N)</span>
+              {serialNumber ? (
+                <span className="font-semibold text-black font-mono">{serialNumber}</span>
+              ) : (
+                <span className="text-slate-400 italic font-normal">Não informado</span>
+              )}
+            </div>
+          </div>
+          <div className="space-y-3 print:space-y-1 mt-3 print:mt-1.5">
+            <div className="border-t border-slate-200 pt-2 print:pt-1">
+              <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">Defeito Relatado pelo Cliente</span>
+              <div 
+                className="text-xs print:text-[10px] text-black prose max-w-none print:prose-sm mt-0.5 print:text-black font-medium"
+                dangerouslySetInnerHTML={{ __html: order.reported_problem }}
+              />
+            </div>
+            {order.technical_report && (
+              <div className="border-t border-slate-200 pt-2 print:pt-1">
+                <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase block">
+                  {getTechnicalReportTitle(order.status)}
+                </span>
+                <div 
+                  className="text-xs print:text-[10px] text-black prose max-w-none print:prose-sm mt-0.5 print:text-black font-medium"
+                  dangerouslySetInnerHTML={{ __html: order.technical_report }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* WRAPPER ÚNICO E INDISSOCIÁVEL COM INLINE STYLING PARA IMPEDIR QUEBRAS ENTRE TABELA, FINANCEIRO E ASSINATURA */}
+      <div 
+        style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }} 
+        className="break-inside-avoid print:break-inside-avoid space-y-4 print:space-y-2"
+      >
+        {/* BLOCO 3: SERVIÇOS E PEÇAS */}
+        <div className="border border-black p-4 print:p-2">
+          <h3 className="text-xs print:text-[9px] font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3 print:mb-1">
+            Itens Adicionados & Serviços Prestados
+          </h3>
+          
+          {selectedProducts.length === 0 && selectedServices.length === 0 && laborValue === 0 ? (
+            <p className="text-xs print:text-[10px] text-slate-500 italic py-2">Nenhum serviço ou peça vinculados.</p>
+          ) : (
+            <table className="w-full text-left text-xs print:text-[10px] border-collapse mt-2 print:mt-1">
+              <thead>
+                <tr className="border-b border-black text-black font-black text-[10px] print:text-[8px] uppercase tracking-wider bg-slate-100">
+                  <th className="py-2 px-2 print:py-1">Descrição do Serviço / Peça</th>
+                  <th className="py-2 px-2 print:py-1 text-center w-24 print:w-20">Valor Unitário</th>
+                  <th className="py-2 px-2 print:py-1 text-center w-16 print:w-12">Qtd.</th>
+                  <th className="py-2 px-2 print:py-1 text-right w-24 print:w-20">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {laborValue > 0 && (
+                  <tr className="font-semibold text-black">
+                    <td className="py-2.5 px-2 print:py-1 font-bold">Mão de Obra Técnica (Serviço Geral)</td>
+                    <td className="py-2.5 px-2 print:py-1 text-center font-mono">R$ {laborValue.toFixed(2)}</td>
+                    <td className="py-2.5 px-2 print:py-1 text-center">1</td>
+                    <td className="py-2.5 px-2 print:py-1 text-right font-mono">R$ {laborValue.toFixed(2)}</td>
+                  </tr>
+                )}
+                
+                {selectedServices.map((item: any, idx: number) => (
+                  <tr key={`serv-${idx}`} className="text-slate-800">
+                    <td className="py-2 px-2 print:py-1 font-medium">{item.name} <span className="text-[10px] print:text-[8px] font-bold text-slate-500 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Serviço</span></td>
+                    <td className="py-2 px-2 print:py-1 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 print:py-1 text-center font-bold">{item.quantity}</td>
+                    <td className="py-2 px-2 print:py-1 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                  </tr>
+                ))}
+
+                {selectedProducts.map((item: any, idx: number) => (
+                  <tr key={`prod-${idx}`} className="text-slate-800">
+                    <td className="py-2 px-2 print:py-1 font-medium">{item.name} <span className="text-[10px] print:text-[8px] font-bold text-slate-500 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Peça</span></td>
+                    <td className="py-2 px-2 print:py-1 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 print:py-1 text-center font-bold">{item.quantity}</td>
+                    <td className="py-2 px-2 print:py-1 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* BLOCO 4: RESUMO FINANCEIRO */}
+        <div className="flex justify-between items-stretch gap-6 print:gap-3">
+          <div className="flex-1 border border-black p-4 print:p-2 min-h-[100px] print:min-h-[60px] flex flex-col justify-between">
+            <span className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
+            <p className="text-[10px] print:text-[9px] text-slate-700 leading-relaxed mt-1">
+              Garantia de 90 dias referente aos serviços executados e peças trocadas. O equipamento retirado deve ser conferido no ato da entrega.
+            </p>
+          </div>
+          
+          <div className="w-80 print:w-64 border border-black p-4 print:p-2 space-y-2.5 print:space-y-1 bg-slate-50">
+            <div className="flex justify-between text-xs print:text-[10px] text-slate-700 font-semibold">
+              <span>Subtotal dos Itens:</span>
+              <span className="font-mono">R$ {subtotalValue.toFixed(2)}</span>
+            </div>
+            {discountValue > 0 && (
+              <div className="flex justify-between text-xs print:text-[10px] text-rose-650 font-bold">
+                <span>Desconto Aplicado:</span>
+                <span className="font-mono">- R$ {discountValue.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="h-px bg-black" />
+            <div className="flex justify-between items-center">
+              <span className="text-xs print:text-[10px] font-black uppercase text-black">Total da O.S.:</span>
+              <div className="flex items-center gap-2">
+                {order.pago && (
+                  <span className="px-1.5 py-0.5 border-2 border-emerald-600 text-emerald-600 text-[9px] print:text-[8px] font-black uppercase tracking-wider">
+                    RECEBIDO
+                  </span>
+                )}
+                <span className="text-lg print:text-sm font-black font-mono text-black">
+                  R$ {Math.max(0, subtotalValue - discountValue).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RODAPÉ E ASSINATURA */}
+        <div className="pt-6 print:pt-2 border-t border-black grid grid-cols-2 gap-8 print:gap-4 mt-6 print:mt-2">
+          <div>
+            <p className="text-[10px] print:text-[8px] font-bold text-slate-500 uppercase">Local e Data</p>
+            <p className="text-xs print:text-[10px] font-bold text-black mt-2 print:mt-1 font-mono">{company.name}, {currentDate}</p>
+          </div>
+          <div className="text-center">
+            <div className="border-b border-black w-full h-8 print:h-6" />
+            <p className="text-[9px] print:text-[8px] font-bold text-slate-500 uppercase mt-1.5 print:mt-1">Assinatura do Cliente (Retirada)</p>
+            <p className="text-[9px] print:text-[7px] text-slate-500 font-medium">Declaro ter recebido o equipamento testado e em perfeito estado.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

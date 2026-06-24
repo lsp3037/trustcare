@@ -15,23 +15,37 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  Settings
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <CompanyProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </CompanyProvider>
+  );
+}
+
+function DashboardLayoutContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const { company } = useCompany();
+  
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [companyName, setCompanyName] = useState('Assistência Técnica T.I.');
   const [userName, setUserName] = useState('Desenvolvedor');
   const [userRole, setUserRole] = useState('Admin');
   const [isAdmin, setIsAdmin] = useState(false);
-
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
@@ -67,19 +81,17 @@ export default function DashboardLayout({
         const role = parsed.role || 'admin';
         setIsAdmin(role === 'admin');
         setUserRole(role === 'admin' ? 'Administrador' : role === 'tecnico' ? 'Técnico' : 'Recepcionista');
-        setCompanyName('TechAssist Corp (Local)');
       }
 
       // 2. Tenta do Supabase Auth
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário');
-        setCompanyName(user.user_metadata?.company_name || 'Minha Assistência');
         
         // Busca o profile no banco de dados para ver a role real
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, companies(name)')
+          .select('role')
           .eq('user_id', user.id)
           .single();
 
@@ -87,9 +99,6 @@ export default function DashboardLayout({
           const role = profile.role || 'admin';
           setIsAdmin(role === 'admin');
           setUserRole(role === 'admin' ? 'Administrador' : role === 'technician' ? 'Técnico' : 'Recepcionista');
-          if ((profile as any).companies?.name) {
-            setCompanyName((profile as any).companies.name);
-          }
         }
       } else if (!mockSession) {
         // Redireciona para o login se não houver nenhuma sessão
@@ -112,13 +121,16 @@ export default function DashboardLayout({
     { name: 'Clientes', href: '/dashboard/clients', icon: Users },
     { name: 'Estoque', href: '/dashboard/inventory', icon: Package },
     { name: 'Serviços', href: '/dashboard/services', icon: Wrench },
-    ...(isAdmin ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : [])
+    ...(isAdmin ? [
+      { name: 'Usuários', href: '/usuarios', icon: Users },
+      { name: 'Sistema', href: '/dashboard/system', icon: Settings }
+    ] : [])
   ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
-      {/* Sidebar - Drawer Responsivo / Collapsible */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 
+      {/* Sidebar - Drawer Responsivo / Collapsible (Oculto na Impressão) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 print:hidden 
         ${sidebarOpen 
           ? 'translate-x-0 w-64' 
           : '-translate-x-full md:translate-x-0 md:w-20'
@@ -128,9 +140,17 @@ export default function DashboardLayout({
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
           <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden bg-white/10 p-1">
-              <img src="/logo.png" alt="Trust Care" className="w-full h-full object-contain" />
+              {company.logo_url ? (
+                <img src={company.logo_url} alt={company.name} className="w-full h-full object-contain" />
+              ) : (
+                <img src="/logo.png" alt="Trust Care" className="w-full h-full object-contain" />
+              )}
             </div>
-            {sidebarOpen && <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Trust Care</span>}
+            {sidebarOpen && (
+              <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent truncate max-w-[150px]">
+                {company.name}
+              </span>
+            )}
           </Link>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 text-slate-400 hover:text-white rounded-md hidden lg:block">
             <Menu className="w-5 h-5" />
@@ -145,7 +165,7 @@ export default function DashboardLayout({
             </div>
             <div className="overflow-hidden">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tenant Ativo</p>
-              <p className="text-sm font-bold text-slate-200 truncate">{companyName}</p>
+              <p className="text-sm font-bold text-slate-200 truncate">{company.name}</p>
             </div>
           </div>
         )}
@@ -204,18 +224,18 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Overlay Backdrop - Apenas Mobile */}
+      {/* Overlay Backdrop - Apenas Mobile (Oculto na Impressão) */}
       {sidebarOpen && (
         <div 
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200 print:hidden"
         />
       )}
 
       {/* Main Content Wrap */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'}`}>
-        {/* Header/Top Bar */}
-        <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6">
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'} print:pl-0`}>
+        {/* Header/Top Bar (Oculto na Impressão) */}
+        <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 print:hidden">
           <div className="flex items-center gap-2">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg md:hidden">
               <Menu className="w-5 h-5" />
@@ -227,7 +247,7 @@ export default function DashboardLayout({
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-slate-450 hover:text-slate-200 hover:bg-slate-800/40 rounded-lg border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
+              className="p-2 text-slate-455 hover:text-slate-200 hover:bg-slate-800/40 rounded-lg border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
               title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
             >
               {theme === 'light' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
@@ -241,7 +261,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Body */}
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-6 lg:p-8 overflow-y-auto print:p-0">
           {children}
         </main>
       </div>

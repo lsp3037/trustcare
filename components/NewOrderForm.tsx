@@ -17,6 +17,25 @@ import {
   Boxes,
   DollarSign
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+  ssr: false,
+  loading: () => <div className="h-32 w-full animate-pulse bg-slate-950 border border-slate-800 rounded-lg" />
+});
+
+const modules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ align: [] }],
+    ['clean']
+  ]
+};
+
+const formats = ['bold', 'italic', 'underline', 'list', 'bullet', 'align'];
+
 
 interface Client {
   id: string;
@@ -46,6 +65,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   
   // Estado Financeiro / Mão de Obra
   const [serviceValue, setServiceValue] = useState('0'); // Valor da mão de obra
+  const [discount, setDiscount] = useState('0');         // Valor do desconto
+  const [subtotalValue, setSubtotalValue] = useState('0'); // Valor subtotal
   const [totalValue, setTotalValue] = useState('0');     // Valor total (Mão de Obra + Peças)
 
   // Listagem de Equipamentos e Inventário
@@ -218,13 +239,16 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     }
   }, [equipmentId, equipments]);
 
-  // 3. Atualiza o Valor Total somando Mão de Obra + Peças + Serviços do Catálogo
+  // 3. Atualiza o Valor Total e Subtotal somando Mão de Obra + Peças + Serviços do Catálogo
   useEffect(() => {
     const labor = parseFloat(serviceValue) || 0;
     const partsTotal = selectedProducts.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const servicesTotal = selectedServices.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    setTotalValue((labor + partsTotal + servicesTotal).toFixed(2));
-  }, [serviceValue, selectedProducts, selectedServices]);
+    const subtotal = labor + partsTotal + servicesTotal;
+    const disc = parseFloat(discount) || 0;
+    setSubtotalValue(subtotal.toFixed(2));
+    setTotalValue(Math.max(0, subtotal - disc).toFixed(2));
+  }, [serviceValue, selectedProducts, selectedServices, discount]);
 
   // Adiciona produto ao chamado
   const handleAddProduct = () => {
@@ -335,6 +359,14 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       return;
     }
 
+    const isProblemEmpty = !reportedProblem || reportedProblem.trim() === '' || reportedProblem === '<p><br></p>';
+    if (isProblemEmpty) {
+      setErrorMsg('Por favor, descreva o problema relatado.');
+      setLoading(false);
+      return;
+    }
+
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       let companyId = 'mock-tenant-id';
@@ -362,6 +394,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         technician_id: technicianId || null,
         delivery_prediction: deliveryPrediction || null,
         service_value: parseFloat(serviceValue) || 0,
+        discount: parseFloat(discount) || 0,
         total_value: parseFloat(totalValue) || 0,
       };
 
@@ -620,19 +653,36 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             />
           </div>
 
-          {/* Mão de Obra */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Valor de Mão de Obra (R$)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={serviceValue}
-              onChange={(e) => setServiceValue(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Mão de Obra */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Mão de Obra (R$)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={serviceValue}
+                onChange={(e) => setServiceValue(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            {/* Desconto */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-rose-500" /> Desconto (R$)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -640,14 +690,16 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       {/* Problema Relatado */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-slate-450 uppercase tracking-wider">Problema Relatado / Sintomas</label>
-        <textarea
-          rows={3}
-          placeholder="Descreva o problema relatado..."
-          value={reportedProblem}
-          onChange={(e) => setReportedProblem(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors resize-none"
-          required
-        />
+        <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+          <ReactQuill
+            theme="snow"
+            modules={modules}
+            formats={formats}
+            value={reportedProblem}
+            onChange={setReportedProblem}
+            placeholder="Descreva o problema relatado..."
+          />
+        </div>
       </div>
 
       {/* Seção de Peças e Produtos Utilizados */}
@@ -834,13 +886,27 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
       {/* Resumo Financeiro / Botão de Ação */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-850">
-        <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex items-center gap-4">
-          <Tag className="w-6 h-6 text-emerald-450" />
-          <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valor Total da O.S.</p>
-            <p className="text-xl font-extrabold text-emerald-450 font-mono">
-              R$ {Number(totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
+          {/* Listagem de Subtotal e Desconto */}
+          <div className="flex flex-col text-xs text-slate-400 gap-0.5">
+            <div>
+              Subtotal: <span className="font-semibold text-slate-200 font-mono">R$ {Number(subtotalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+            {parseFloat(discount) > 0 && (
+              <div className="text-rose-455 font-bold">
+                Desconto: <span className="font-mono">- R$ {Number(discount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex items-center gap-4">
+            <Tag className="w-6 h-6 text-emerald-450" />
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valor Total da O.S.</p>
+              <p className="text-xl font-extrabold text-emerald-450 font-mono">
+                R$ {Number(totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
         </div>
 

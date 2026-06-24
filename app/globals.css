@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
 
 :root {
   --background: #ffffff;
@@ -117,4 +119,89 @@ html.light {
     color: var(--color-slate-100) !important;
   }
 }
+
+@media print {
+  @page {
+    margin: 10mm;
+  }
+
+  /* Impor formatação de Rich Text para elementos Prose na Impressão */
+  .prose {
+    color: #000000 !important;
+  }
+  .prose p {
+    display: block !important;
+    margin-top: 0.4em !important;
+    margin-bottom: 0.4em !important;
+  }
+  .prose ul, .prose ol {
+    display: block !important;
+    padding-left: 20px !important;
+    margin-top: 0.4em !important;
+    margin-bottom: 0.4em !important;
+  }
+  .prose ul {
+    list-style-type: disc !important;
+  }
+  .prose ol {
+    list-style-type: decimal !important;
+  }
+  .prose li {
+    display: list-item !important;
+    list-style: inherit !important;
+    margin-bottom: 0.2em !important;
+  }
+  .prose strong {
+    font-weight: bold !important;
+  }
+  .prose em {
+    font-style: italic !important;
+  }
+  .prose u {
+    text-decoration: underline !important;
+  }
+}
+
+/* Alinhamento nativo gerado pelo Quill */
+.ql-align-center { text-align: center; }
+.ql-align-right { text-align: right; }
+.ql-align-justify { text-align: justify; }
+
+/* Customização Dark/Light Theme para o Quill */
+.ql-container.ql-snow {
+  border: 1px solid var(--color-slate-800) !important;
+  background-color: var(--color-slate-950) !important;
+  color: var(--color-slate-100) !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important; /* text-sm */
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+.ql-editor {
+  min-height: 100px;
+}
+.ql-toolbar.ql-snow {
+  border: 1px solid var(--color-slate-800) !important;
+  background-color: var(--color-slate-900) !important;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+.ql-snow .ql-stroke {
+  stroke: var(--color-slate-400) !important;
+}
+.ql-snow .ql-fill {
+  fill: var(--color-slate-400) !important;
+}
+.ql-snow .ql-picker {
+  color: var(--color-slate-400) !important;
+}
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--color-blue-400) !important;
+}
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--color-blue-400) !important;
+}
+
 
