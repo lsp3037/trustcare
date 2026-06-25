@@ -85,9 +85,20 @@ export default function OnboardingModal() {
             if (user.user_metadata?.whatsapp) {
               initialWhatsapp = user.user_metadata.whatsapp;
             }
+            if (user.user_metadata?.phone) {
+              initialPhone = user.user_metadata.phone;
+            }
           }
         } catch (err) {
           console.warn('Erro ao obter usuário para onboarding:', err);
+        }
+
+        // Se um campo de contato foi informado no cadastro e o outro não, iguala-os
+        if (initialWhatsapp && !initialPhone) {
+          initialPhone = initialWhatsapp;
+        }
+        if (initialPhone && !initialWhatsapp) {
+          initialWhatsapp = initialPhone;
         }
 
         // 3. Se ainda estiver vazio e o contexto tiver dados NÃO genéricos, usa os do contexto

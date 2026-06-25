@@ -27,6 +27,7 @@ import {
   CartesianGrid 
 } from 'recharts';
 import DatePickerWithRange from '@/components/DatePickerWithRange';
+import { useCompany } from '@/lib/context/CompanyContext';
 
 interface DateRange {
   from: Date;
@@ -35,14 +36,15 @@ interface DateRange {
 
 export default function DashboardOverviewPage() {
   const router = useRouter();
+  const { company } = useCompany();
   const [stats, setStats] = useState({
-    billing: 12450.00,
-    openOrders: 8,
-    completedOrders: 14,
-    totalClients: 42,
-    lowStockCount: 3,
-    pjCount: 28,
-    pfCount: 14
+    billing: 0,
+    openOrders: 0,
+    completedOrders: 0,
+    totalClients: 0,
+    lowStockCount: 0,
+    pjCount: 0,
+    pfCount: 0
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -201,11 +203,41 @@ export default function DashboardOverviewPage() {
 
         setChartData(processChartDataForRange(orders, from, to));
       } else {
-        loadLocalDashboardMock(from, to);
+        const isCustomCompany = company && company.name !== 'Trust Care T.I.';
+        if (isCustomCompany) {
+          setRecentOrders([]);
+          setChartData([]);
+          setStats({
+            billing: 0,
+            openOrders: 0,
+            completedOrders: 0,
+            totalClients: 0,
+            lowStockCount: 0,
+            pjCount: 0,
+            pfCount: 0
+          });
+        } else {
+          loadLocalDashboardMock(from, to);
+        }
       }
     } catch (error) {
       console.warn('Erro ao buscar dados do dashboard do Supabase, usando fallback local:', error);
-      loadLocalDashboardMock(from, to);
+      const isCustomCompany = company && company.name !== 'Trust Care T.I.';
+      if (isCustomCompany) {
+        setRecentOrders([]);
+        setChartData([]);
+        setStats({
+          billing: 0,
+          openOrders: 0,
+          completedOrders: 0,
+          totalClients: 0,
+          lowStockCount: 0,
+          pjCount: 0,
+          pfCount: 0
+        });
+      } else {
+        loadLocalDashboardMock(from, to);
+      }
     } finally {
       setLoading(false);
     }

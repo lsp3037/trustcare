@@ -32,6 +32,7 @@ export default function RegisterPage() {
             full_name: userName,
             company_name: companyName, // Guardamos nos metadados para triggers ou criação posterior
             whatsapp: whatsapp,
+            phone: whatsapp, // Telefone = Whatsapp
           },
         },
       });
@@ -45,7 +46,8 @@ export default function RegisterPage() {
           companyId: 'mock-tenant-id', 
           role: 'admin', 
           company_name: companyName,
-          whatsapp: whatsapp
+          whatsapp: whatsapp,
+          phone: whatsapp // Telefone = Whatsapp
         }));
         setSuccess(true);
         setTimeout(() => {
