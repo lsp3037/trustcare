@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Wrench, Mail, Lock, Loader2, ArrowRight, Building, User } from 'lucide-react';
+import { Wrench, Mail, Lock, Loader2, ArrowRight, Building, User, Phone } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [companyName, setCompanyName] = useState('');
   const [userName, setUserName] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export default function RegisterPage() {
           data: {
             full_name: userName,
             company_name: companyName, // Guardamos nos metadados para triggers ou criação posterior
+            whatsapp: whatsapp,
           },
         },
       });
@@ -42,7 +44,8 @@ export default function RegisterPage() {
           email, 
           companyId: 'mock-tenant-id', 
           role: 'admin', 
-          company_name: companyName 
+          company_name: companyName,
+          whatsapp: whatsapp
         }));
         setSuccess(true);
         setTimeout(() => {
@@ -116,6 +119,21 @@ export default function RegisterPage() {
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="Ex: João Silva"
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">WhatsApp da Empresa</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder="Ex: (66) 99999-9999"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>

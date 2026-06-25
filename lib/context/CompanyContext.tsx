@@ -9,6 +9,7 @@ interface Company {
   phone: string;
   email: string;
   logo_url: string;
+  whatsapp?: string;
 }
 
 interface CompanyContextType {
@@ -24,7 +25,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     name: 'Trust Care T.I.',
     phone: '(66) 99999-9999',
     email: 'contato@trustcare.com.br',
-    logo_url: ''
+    logo_url: '',
+    whatsapp: ''
   });
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           name: data.name || 'Trust Care T.I.',
           phone: data.phone || '(66) 99999-9999',
           email: data.email || 'contato@trustcare.com.br',
-          logo_url: data.logo_url || ''
+          logo_url: data.logo_url || '',
+          whatsapp: data.whatsapp || ''
         };
         setCompany(companyObj);
         // Salva localmente para uso offline também
@@ -63,7 +66,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           name: 'Trust Care T.I.',
           phone: '(66) 99999-9999',
           email: 'contato@trustcare.com.br',
-          logo_url: ''
+          logo_url: '',
+          whatsapp: ''
         };
         localStorage.setItem('mock-company-settings', JSON.stringify(defaultCompany));
         setCompany(defaultCompany);
@@ -101,7 +105,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           name: 'Trust Care T.I.',
           phone: '(66) 99999-9999',
           email: 'contato@trustcare.com.br',
-          logo_url: ''
+          logo_url: '',
+          whatsapp: ''
         });
       }
     });

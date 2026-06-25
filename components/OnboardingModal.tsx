@@ -24,6 +24,7 @@ export default function OnboardingModal() {
   // Form states
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   
@@ -55,6 +56,7 @@ export default function OnboardingModal() {
         let initialName = '';
         let initialEmail = '';
         let initialPhone = '';
+        let initialWhatsapp = '';
 
         // 1. Tenta obter do local storage (offline fallback)
         const mockSession = localStorage.getItem('os-session');
@@ -64,6 +66,7 @@ export default function OnboardingModal() {
             initialName = parsed.company_name || '';
             initialEmail = parsed.email || '';
             initialPhone = parsed.phone || '';
+            initialWhatsapp = parsed.whatsapp || '';
           } catch (e) {
             console.error(e);
           }
@@ -79,6 +82,9 @@ export default function OnboardingModal() {
             if (user.email) {
               initialEmail = user.email;
             }
+            if (user.user_metadata?.whatsapp) {
+              initialWhatsapp = user.user_metadata.whatsapp;
+            }
           }
         } catch (err) {
           console.warn('Erro ao obter usuário para onboarding:', err);
@@ -91,6 +97,9 @@ export default function OnboardingModal() {
         if (!initialPhone && company.phone && company.phone !== '(66) 99999-9999') {
           initialPhone = company.phone;
         }
+        if (!initialWhatsapp && company.whatsapp) {
+          initialWhatsapp = company.whatsapp;
+        }
         if (!initialEmail && company.email && company.email !== 'contato@trustcare.com.br') {
           initialEmail = company.email;
         }
@@ -99,6 +108,7 @@ export default function OnboardingModal() {
           setIsOpen(true);
           setName(initialName);
           setPhone(initialPhone);
+          setWhatsapp(initialWhatsapp);
           setEmail(initialEmail);
           setLogoUrl(company.logo_url || '');
           setPreviewUrl(company.logo_url || '');
@@ -202,7 +212,8 @@ export default function OnboardingModal() {
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim(),
-        logo_url: finalLogoUrl
+        logo_url: finalLogoUrl,
+        whatsapp: whatsapp.trim()
       };
 
       // 2. Salva no banco ou localStorage
@@ -378,7 +389,7 @@ export default function OnboardingModal() {
               </div>
             </div>
 
-            {/* Phone & Email fields */}
+            {/* Phone & WhatsApp fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label htmlFor="onboard-phone" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
@@ -399,21 +410,40 @@ export default function OnboardingModal() {
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="onboard-email" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  E-mail
+                <label htmlFor="onboard-whatsapp" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  WhatsApp
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
                   <input
-                    id="onboard-email"
-                    type="email"
+                    id="onboard-whatsapp"
+                    type="text"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Ex: contato@suaempresa.com"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="Ex: (66) 99999-9999"
                     className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Email field */}
+            <div className="space-y-1">
+              <label htmlFor="onboard-email" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                E-mail
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
+                <input
+                  id="onboard-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Ex: contato@suaempresa.com"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                />
               </div>
             </div>
           </div>

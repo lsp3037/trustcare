@@ -22,6 +22,7 @@ export default function CompanySettingsPage() {
   // Form states
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   
@@ -41,6 +42,7 @@ export default function CompanySettingsPage() {
     if (company) {
       setName(company.name || '');
       setPhone(company.phone || '');
+      setWhatsapp(company.whatsapp || '');
       setEmail(company.email || '');
       setLogoUrl(company.logo_url || '');
       setPreviewUrl(company.logo_url || '');
@@ -150,7 +152,8 @@ export default function CompanySettingsPage() {
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim(),
-        logo_url: finalLogoUrl
+        logo_url: finalLogoUrl,
+        whatsapp: whatsapp.trim()
       };
 
       // 2. Save configurations (Supabase or Local Fallback)
@@ -324,22 +327,41 @@ export default function CompanySettingsPage() {
                 </div>
               </div>
 
-              {/* Phone & Email */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label htmlFor="company-phone" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Telefone de Contato
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-555" />
-                    <input
-                      id="company-phone"
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Ex: (66) 99999-9999"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
-                    />
+              {/* Phone, WhatsApp & Email */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label htmlFor="company-phone" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Telefone de Contato
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-555" />
+                      <input
+                        id="company-phone"
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Ex: (66) 99999-9999"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="company-whatsapp" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      WhatsApp de Contato
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-555" />
+                      <input
+                        id="company-whatsapp"
+                        type="text"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                        placeholder="Ex: (66) 99999-9999"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                      />
+                    </div>
                   </div>
                 </div>
 

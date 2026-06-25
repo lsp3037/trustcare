@@ -12,6 +12,7 @@ CREATE TABLE public.companies (
     phone TEXT,
     email TEXT,
     logo_url TEXT,
+    whatsapp TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
