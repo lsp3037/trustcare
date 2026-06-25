@@ -16,7 +16,8 @@ import {
   X,
   Sun,
   Moon,
-  Settings
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -117,6 +118,7 @@ function DashboardLayoutContent({
 
   const navItems = [
     { name: 'Dashboard & Relatórios', href: '/dashboard', icon: BarChart3 },
+    { name: 'Funil de Leads', href: '/dashboard/leads', icon: TrendingUp },
     { name: 'Ordens de Serviço', href: '/dashboard/orders', icon: ClipboardList },
     { name: 'Clientes', href: '/dashboard/clients', icon: Users },
     { name: 'Estoque', href: '/dashboard/inventory', icon: Package },
@@ -188,10 +190,10 @@ function DashboardLayoutContent({
                     setSidebarOpen(false);
                   }
                 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out ${
                   isActive 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/10' 
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/15' 
+                    : 'text-slate-400 hover:text-slate-250 hover:bg-slate-800/30'
                 }`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
@@ -205,7 +207,7 @@ function DashboardLayoutContent({
         <div className="p-3 border-t border-slate-800 bg-slate-900/40">
           {sidebarOpen && (
             <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-950/30 border border-slate-800/50 mb-3">
-              <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold uppercase text-sm">
+              <div className="w-8 h-8 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold uppercase text-sm">
                 {userName.charAt(0)}
               </div>
               <div className="overflow-hidden">

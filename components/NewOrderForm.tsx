@@ -52,11 +52,12 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   const searchParams = useSearchParams();
   const queryClientId = searchParams.get('clientId') || searchParams.get('client_id') || '';
   const queryEquipmentId = searchParams.get('equipmentId') || searchParams.get('equipment_id') || '';
+  const queryEquipmentName = searchParams.get('equipment') || searchParams.get('equipment_details') || '';
 
   // Estados dos Campos Principais
   const [clientId, setClientId] = useState(queryClientId);
-  const [equipmentId, setEquipmentId] = useState(queryEquipmentId);
-  const [equipmentDetails, setEquipmentDetails] = useState('');
+  const [equipmentId, setEquipmentId] = useState(queryEquipmentId || (queryEquipmentName ? 'manual' : ''));
+  const [equipmentDetails, setEquipmentDetails] = useState(queryEquipmentName || '');
   const [reportedProblem, setReportedProblem] = useState('');
   const [status, setStatus] = useState('Em Análise');
   const [priority, setPriority] = useState('Média');
@@ -192,8 +193,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       setEquipments(localFiltered);
       if (localFiltered.length > 0) {
         const hasQueryEq = queryEquipmentId && localFiltered.some((e: any) => e.id === queryEquipmentId);
-        setEquipmentId(hasQueryEq ? queryEquipmentId : localFiltered[0].id);
-        setIsManualEquipment(false);
+        setEquipmentId(hasQueryEq ? queryEquipmentId : (queryEquipmentName ? 'manual' : localFiltered[0].id));
+        setIsManualEquipment(hasQueryEq ? false : (queryEquipmentName ? true : false));
       } else {
         setEquipmentId('manual');
         setIsManualEquipment(true);
@@ -214,8 +215,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         if (!error && eqsData && eqsData.length > 0) {
           setEquipments(eqsData);
           const hasQueryEq = queryEquipmentId && eqsData.some((e: any) => e.id === queryEquipmentId);
-          setEquipmentId(hasQueryEq ? queryEquipmentId : eqsData[0].id);
-          setIsManualEquipment(false);
+          setEquipmentId(hasQueryEq ? queryEquipmentId : (queryEquipmentName ? 'manual' : eqsData[0].id));
+          setIsManualEquipment(hasQueryEq ? false : (queryEquipmentName ? true : false));
         }
       } catch (err) {
         console.warn('Erro ao carregar equipamentos do Supabase:', err);
@@ -223,13 +224,16 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     };
 
     fetchOnlineEquipments();
-  }, [clientId, queryEquipmentId]);
+  }, [clientId, queryEquipmentId, queryEquipmentName]);
 
   // 2. Controla o preenchimento automático das especificações se selecionar um equipamento pronto
   useEffect(() => {
     if (equipmentId === 'manual' || !equipmentId) {
       setIsManualEquipment(true);
-      setEquipmentDetails('');
+      // Only clear if the current details is not the prefilled query value or if no query value is present
+      if (!queryEquipmentName) {
+        setEquipmentDetails('');
+      }
     } else {
       setIsManualEquipment(false);
       const selected = equipments.find((e) => e.id === equipmentId);
@@ -237,7 +241,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         setEquipmentDetails(`${selected.name} - ${selected.brand} ${selected.model} (S/N: ${selected.serial_number || '—'})`);
       }
     }
-  }, [equipmentId, equipments]);
+  }, [equipmentId, equipments, queryEquipmentName]);
 
   // 3. Atualiza o Valor Total e Subtotal somando Mão de Obra + Peças + Serviços do Catálogo
   useEffect(() => {

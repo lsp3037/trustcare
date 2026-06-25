@@ -197,7 +197,7 @@ export default function TempPrintPreviewPage() {
   const subtotalValue = laborValue + partsSubtotal + servicesSubtotal;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 antialiased font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-300 antialiased font-inter">
       
       {/* HUD DE AVISO TEMPORÁRIO (Oculto na Impressão) */}
       <div className="print:hidden max-w-4xl mx-auto p-4 bg-slate-900 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 rounded-t-xl">
@@ -246,7 +246,7 @@ export default function TempPrintPreviewPage() {
       </div>
 
       {/* CONTAINER EXCLUSIVO DE IMPRESSÃO (Oculto na tela normal, visível na impressora) */}
-      <div className="hidden print:block bg-white text-black min-h-screen p-10 font-sans text-sm">
+      <div className="hidden print:block bg-white text-black min-h-screen p-10 font-inter text-sm">
         <PrintDocumentContent
           order={order}
           client={client}
@@ -277,7 +277,7 @@ function PrintDocumentContent({
   const currentDate = new Date().toLocaleDateString('pt-BR');
 
   return (
-    <div className="space-y-6 flex flex-col justify-between h-full bg-white text-black p-1">
+    <div className="space-y-6 flex flex-col justify-between h-full bg-white text-black p-1 font-inter">
       <div className="space-y-6">
         
         {/* CABEÇALHO */}
@@ -302,7 +302,7 @@ function PrintDocumentContent({
           </div>
           <div className="text-right">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Ordem de Serviço</span>
-            <span className="text-xl font-black font-mono text-black block mt-0.5">
+            <span className="text-xl font-black font-jetbrains text-black block mt-0.5">
               #{order.codigo_os || `OS-${order.id.slice(0, 8).toUpperCase()}`}
             </span>
             <span className="text-[10px] font-medium text-slate-600 block mt-1">
@@ -323,11 +323,11 @@ function PrintDocumentContent({
             </div>
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase block">Telefone</span>
-              <span className="font-semibold text-black font-mono">{client?.phone || '—'}</span>
+              <span className="font-semibold text-black font-jetbrains">{client?.phone || '—'}</span>
             </div>
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase block">E-mail</span>
-              <span className="font-semibold text-black font-mono">{client?.email || '—'}</span>
+              <span className="font-semibold text-black font-jetbrains">{client?.email || '—'}</span>
             </div>
           </div>
         </div>
@@ -378,9 +378,9 @@ function PrintDocumentContent({
                 {laborValue > 0 && (
                   <tr className="font-semibold text-black">
                     <td className="py-2.5 px-2">Mão de Obra Técnica (Serviço Geral)</td>
-                    <td className="py-2.5 px-2 text-center font-mono">R$ {laborValue.toFixed(2)}</td>
+                    <td className="py-2.5 px-2 text-center font-jetbrains">R$ {laborValue.toFixed(2)}</td>
                     <td className="py-2.5 px-2 text-center">1</td>
-                    <td className="py-2.5 px-2 text-right font-mono">R$ {laborValue.toFixed(2)}</td>
+                    <td className="py-2.5 px-2 text-right font-jetbrains">R$ {laborValue.toFixed(2)}</td>
                   </tr>
                 )}
                 
@@ -388,9 +388,9 @@ function PrintDocumentContent({
                 {selectedServices.map((item: any, idx: number) => (
                   <tr key={`serv-${idx}`} className="text-slate-800">
                     <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-550 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Serviço</span></td>
-                    <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-center font-jetbrains">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right font-jetbrains font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
                   </tr>
                 ))}
 
@@ -398,9 +398,9 @@ function PrintDocumentContent({
                 {selectedProducts.map((item: any, idx: number) => (
                   <tr key={`prod-${idx}`} className="text-slate-800">
                     <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-550 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Peça</span></td>
-                    <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-center font-jetbrains">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right font-jetbrains font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -420,12 +420,12 @@ function PrintDocumentContent({
           <div className="w-80 border border-black p-4 space-y-2.5 bg-slate-50">
             <div className="flex justify-between text-xs text-slate-700 font-semibold">
               <span>Subtotal dos Itens:</span>
-              <span className="font-mono">R$ {subtotalValue.toFixed(2)}</span>
+              <span className="font-jetbrains">R$ {subtotalValue.toFixed(2)}</span>
             </div>
             {discountValue > 0 && (
               <div className="flex justify-between text-xs text-rose-650 font-bold">
                 <span>Desconto Aplicado:</span>
-                <span className="font-mono">- R$ {discountValue.toFixed(2)}</span>
+                <span className="font-jetbrains">- R$ {discountValue.toFixed(2)}</span>
               </div>
             )}
             <div className="h-px bg-black" />
@@ -437,7 +437,7 @@ function PrintDocumentContent({
                     RECEBIDO
                   </span>
                 )}
-                <span className="text-lg font-black font-mono text-black">
+                <span className="text-lg font-black font-jetbrains text-black">
                   R$ {Math.max(0, subtotalValue - discountValue).toFixed(2)}
                 </span>
               </div>
@@ -451,7 +451,7 @@ function PrintDocumentContent({
       <div className="mt-12 pt-6 border-t border-black grid grid-cols-2 gap-8 break-inside-avoid print:break-inside-avoid">
         <div>
           <p className="text-[10px] font-bold text-slate-500 uppercase">Local e Data</p>
-          <p className="text-xs font-bold text-black mt-2 font-mono">{company.name}, {currentDate}</p>
+          <p className="text-xs font-bold text-black mt-2 font-jetbrains">{company.name}, {currentDate}</p>
         </div>
         <div className="text-center">
           <div className="border-b border-black w-full h-8" />
