@@ -38,7 +38,12 @@ export default function RegisterPage() {
         console.warn('Erro ao registrar no Supabase:', error.message);
         
         // Fallback local para testes offline
-        localStorage.setItem('os-session', JSON.stringify({ email, companyId: 'mock-tenant-id', role: 'admin' }));
+        localStorage.setItem('os-session', JSON.stringify({ 
+          email, 
+          companyId: 'mock-tenant-id', 
+          role: 'admin', 
+          company_name: companyName 
+        }));
         setSuccess(true);
         setTimeout(() => {
           router.push('/dashboard');

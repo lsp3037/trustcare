@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
+import OnboardingModal from '@/components/OnboardingModal';
 
 export default function DashboardLayout({
   children,
@@ -150,6 +151,7 @@ function DashboardLayoutContent({
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+      <OnboardingModal />
       {/* Sidebar - Drawer Responsivo / Collapsible (Oculto na Impressão) */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 print:hidden 
         ${sidebarOpen 
