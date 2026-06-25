@@ -10,14 +10,14 @@ import {
   BarChart3, 
   LogOut, 
   Wrench, 
-  User,
   Building,
   Menu,
-  X,
   Sun,
   Moon,
   Settings,
-  TrendingUp
+  TrendingUp,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -48,17 +48,30 @@ function DashboardLayoutContent({
   const [userRole, setUserRole] = useState('Admin');
   const [isAdmin, setIsAdmin] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/dashboard/settings'));
+
+  useEffect(() => {
+    if (pathname.startsWith('/dashboard/settings')) {
+      const timer = setTimeout(() => {
+        setSettingsOpen(true);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('os-theme');
-    if (storedTheme === 'light') {
-      setTheme('light');
-    } else if (storedTheme === 'dark') {
-      setTheme('dark');
-    } else {
-      const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-      setTheme(systemPrefersLight ? 'light' : 'dark');
-    }
+    const timer = setTimeout(() => {
+      if (storedTheme === 'light') {
+        setTheme('light');
+      } else if (storedTheme === 'dark') {
+        setTheme('dark');
+      } else {
+        const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        setTheme(systemPrefersLight ? 'light' : 'dark');
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleTheme = () => {
@@ -125,7 +138,13 @@ function DashboardLayoutContent({
     { name: 'Serviços', href: '/dashboard/services', icon: Wrench },
     ...(isAdmin ? [
       { name: 'Usuários', href: '/usuarios', icon: Users },
-      { name: 'Sistema', href: '/dashboard/system', icon: Settings }
+      { 
+        name: 'Configurações', 
+        icon: Settings,
+        subItems: [
+          { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building }
+        ]
+      }
     ] : [])
   ];
 
@@ -174,9 +193,67 @@ function DashboardLayoutContent({
 
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 space-y-1 py-4">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
+          {navItems.map((item, index) => {
             const Icon = item.icon;
+
+            if ('subItems' in item && item.subItems) {
+              const isSubActive = item.subItems.some(sub => pathname === sub.href);
+              return (
+                <div key={`sub-group-${index}`} className="space-y-1">
+                  <button
+                    onClick={() => {
+                      if (!sidebarOpen) {
+                        setSidebarOpen(true);
+                      }
+                      setSettingsOpen(!settingsOpen);
+                    }}
+                    className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out cursor-pointer ${
+                      isSubActive 
+                        ? 'text-emerald-450 bg-slate-800/20' 
+                        : 'text-slate-400 hover:text-slate-250 hover:bg-slate-800/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-5 h-5 shrink-0" />
+                      {sidebarOpen && <span>{item.name}</span>}
+                    </div>
+                    {sidebarOpen && (
+                      settingsOpen ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />
+                    )}
+                  </button>
+                  {settingsOpen && sidebarOpen && (
+                    <div className="pl-6 space-y-1 mt-1 animate-in slide-in-from-top-1 duration-150">
+                      {item.subItems.map((sub) => {
+                        const isActive = pathname === sub.href;
+                        const SubIcon = sub.icon;
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={() => {
+                              if (window.innerWidth < 768) {
+                                setSidebarOpen(false);
+                              }
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                              isActive 
+                                ? 'bg-emerald-600 text-white shadow shadow-emerald-600/10' 
+                                : 'text-slate-455 hover:text-slate-200 hover:bg-slate-800/25'
+                            }`}
+                          >
+                            <SubIcon className="w-4 h-4 shrink-0" />
+                            <span>{sub.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Normal Link
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
@@ -185,7 +262,6 @@ function DashboardLayoutContent({
                   if (item.href === '/dashboard/inventory') {
                     window.dispatchEvent(new Event('nav-estoque-click'));
                   }
-                  // Auto-fechamento do drawer se estiver em tela mobile (< 768px)
                   if (window.innerWidth < 768) {
                     setSidebarOpen(false);
                   }
