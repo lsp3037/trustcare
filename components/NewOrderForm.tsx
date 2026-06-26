@@ -15,7 +15,8 @@ import {
   Calendar, 
   User, 
   Boxes,
-  DollarSign
+  DollarSign,
+  X
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
@@ -74,6 +75,62 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   const [equipments, setEquipments] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [isManualEquipment, setIsManualEquipment] = useState(false);
+
+  // Estados de Controle / Dados de Criação Inline
+  const [companyId, setCompanyId] = useState('mock-tenant-id');
+  const [clientsList, setClientsList] = useState<Client[]>(clients);
+  const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+  const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
+
+  // Formulário Novo Cliente + Equipamento
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientType, setNewClientType] = useState('PF'); // 'PF' | 'PJ'
+  const [newClientDoc, setNewClientDoc] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+
+  const [newEqName, setNewEqName] = useState('');
+  const [newEqBrand, setNewEqBrand] = useState('');
+  const [newEqModel, setNewEqModel] = useState('');
+  const [newEqSerial, setNewEqSerial] = useState('');
+  const [savingClient, setSavingClient] = useState(false);
+  const [clientModalError, setClientModalError] = useState('');
+
+  // Formulário Nova Peça/Produto
+  const [newProdName, setNewProdName] = useState('');
+  const [newProdCategory, setNewProdCategory] = useState('');
+  const [newProdQty, setNewProdQty] = useState('10');
+  const [newProdSalePrice, setNewProdSalePrice] = useState('');
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [productModalError, setProductModalError] = useState('');
+
+  // Sincroniza a prop 'clients' com a listagem interna 'clientsList'
+  useEffect(() => {
+    setClientsList(clients);
+  }, [clients]);
+
+  // Carrega o company_id associado ao perfil logado no mount
+  useEffect(() => {
+    const getCompany = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile?.company_id) {
+            setCompanyId(profile.company_id);
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar company_id:', err);
+      }
+    };
+    getCompany();
+  }, []);
 
   // Peças Selecionadas
   const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
@@ -253,6 +310,190 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     setSubtotalValue(subtotal.toFixed(2));
     setTotalValue(Math.max(0, subtotal - disc).toFixed(2));
   }, [serviceValue, selectedProducts, selectedServices, discount]);
+
+  // Salva o novo cliente e equipamento (criação inline)
+  const handleSaveClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName || !newEqName) {
+      setClientModalError('Por favor, preencha os campos obrigatórios (*).');
+      return;
+    }
+    setSavingClient(true);
+    setClientModalError('');
+
+    try {
+      const clientData = {
+        company_id: companyId,
+        name: newClientName,
+        type: newClientType,
+        document: newClientDoc || '',
+        phone: newClientPhone || '',
+        email: newClientEmail || '',
+      };
+
+      let newClient: Client | null = null;
+      let newEquipment: any = null;
+
+      // 1. Salva o cliente
+      const { data: insertedClient, error: clientErr } = await supabase
+        .from('clients')
+        .insert(clientData)
+        .select()
+        .single();
+
+      if (clientErr) {
+        console.warn('Erro Supabase ao salvar cliente, salvando mock local:', clientErr.message);
+        
+        const mockClientsStr = localStorage.getItem('mock-clients') || '[]';
+        const parsedClients = JSON.parse(mockClientsStr);
+        const nextNumber = Math.max(...parsedClients.map((c: any) => c.client_number || 1000), 1000) + 1;
+        const mockClientId = `mock-client-${Date.now()}`;
+        
+        newClient = {
+          id: mockClientId,
+          ...clientData,
+        };
+        
+        parsedClients.push({
+          ...newClient,
+          client_number: nextNumber,
+        });
+        localStorage.setItem('mock-clients', JSON.stringify(parsedClients));
+      } else {
+        newClient = insertedClient;
+      }
+
+      if (!newClient) throw new Error('Falha ao registrar novo cliente.');
+
+      // 2. Salva o equipamento associado
+      const eqData = {
+        company_id: companyId,
+        client_id: newClient.id,
+        name: newEqName,
+        brand: newEqBrand || '',
+        model: newEqModel || '',
+        serial_number: newEqSerial || '',
+      };
+
+      const { data: insertedEq, error: eqErr } = await supabase
+        .from('client_equipments')
+        .insert(eqData)
+        .select()
+        .single();
+
+      if (eqErr) {
+        console.warn('Erro Supabase ao salvar equipamento, salvando mock local:', eqErr.message);
+        
+        const mockEqsStr = localStorage.getItem('mock-equipments') || '[]';
+        const parsedEqs = JSON.parse(mockEqsStr);
+        newEquipment = {
+          id: `mock-eq-${Date.now()}`,
+          ...eqData,
+        };
+        parsedEqs.push(newEquipment);
+        localStorage.setItem('mock-equipments', JSON.stringify(parsedEqs));
+      } else {
+        newEquipment = insertedEq;
+      }
+
+      // 3. Atualiza os estados para auto-seleção imediata
+      setClientsList((prev) => [...prev, newClient!]);
+      setClientId(newClient.id);
+
+      if (newEquipment) {
+        setEquipments((prev) => [...prev, newEquipment]);
+        setEquipmentId(newEquipment.id);
+        setIsManualEquipment(false);
+      }
+
+      // 4. Reseta e fecha o modal
+      setIsNewClientModalOpen(false);
+      setNewClientName('');
+      setNewClientType('PF');
+      setNewClientDoc('');
+      setNewClientPhone('');
+      setNewClientEmail('');
+      setNewEqName('');
+      setNewEqBrand('');
+      setNewEqModel('');
+      setNewEqSerial('');
+    } catch (err: any) {
+      setClientModalError(err.message || 'Erro inesperado ao salvar cliente/equipamento.');
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  // Salva a nova peça/produto no estoque (criação inline)
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProdName || !newProdSalePrice) {
+      setProductModalError('Por favor, preencha os campos obrigatórios (*).');
+      return;
+    }
+    setSavingProduct(true);
+    setProductModalError('');
+
+    try {
+      const generatedSku = `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+      const salePriceNum = parseFloat(newProdSalePrice) || 0;
+      const costPriceNum = salePriceNum * 0.6;
+      const qtyNum = parseInt(newProdQty) || 0;
+
+      const productData = {
+        company_id: companyId,
+        name: newProdName,
+        sku: generatedSku,
+        category: newProdCategory || 'Peças',
+        brand: '',
+        capacity: '',
+        quantity: qtyNum,
+        cost_price: costPriceNum,
+        sale_price: salePriceNum,
+        min_stock_alert: 1,
+      };
+
+      let newProduct: any = null;
+
+      const { data: insertedProd, error: prodErr } = await supabase
+        .from('products_inventory')
+        .insert(productData)
+        .select()
+        .single();
+
+      if (prodErr) {
+        console.warn('Erro Supabase ao salvar produto, salvando mock local:', prodErr.message);
+        
+        const mockInvStr = localStorage.getItem('mock-inventory') || '[]';
+        const parsedInv = JSON.parse(mockInvStr);
+        newProduct = {
+          id: `mock-prod-${Date.now()}`,
+          ...productData,
+        };
+        parsedInv.push(newProduct);
+        localStorage.setItem('mock-inventory', JSON.stringify(parsedInv));
+      } else {
+        newProduct = insertedProd;
+      }
+
+      if (!newProduct) throw new Error('Falha ao registrar novo produto.');
+
+      // Atualiza listagem dinâmica de produtos do autocomplete e seleciona o item recém-criado
+      setInventory((prev) => [...prev, newProduct]);
+      setCurrentProductId(newProduct.id);
+
+      // Reseta e fecha o modal
+      setIsNewProductModalOpen(false);
+      setNewProdName('');
+      setNewProdCategory('');
+      setNewProdQty('10');
+      setNewProdSalePrice('');
+    } catch (err: any) {
+      setProductModalError(err.message || 'Erro inesperado ao salvar produto.');
+    } finally {
+      setSavingProduct(false);
+    }
+  };
 
   // Adiciona produto ao chamado
   const handleAddProduct = () => {
@@ -506,7 +747,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 text-slate-200">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6 text-slate-200">
       {success && (
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
@@ -533,17 +775,29 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             </label>
             <select
               value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'create_new_client') {
+                  setIsNewClientModalOpen(true);
+                } else {
+                  setClientId(val);
+                }
+              }}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               required
               disabled={!!queryClientId}
             >
               <option value="">Selecione um cliente...</option>
-              {clients.map((client) => (
+              {clientsList.map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.name} ({client.type})
                 </option>
               ))}
+              {!queryClientId && (
+                <option value="create_new_client" className="text-emerald-500 font-semibold">
+                  ➕ Cadastrar Novo Cliente
+                </option>
+              )}
             </select>
           </div>
 
@@ -718,7 +972,14 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Produto em Estoque</label>
             <select
               value={currentProductId}
-              onChange={(e) => setCurrentProductId(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'create_new_product') {
+                  setIsNewProductModalOpen(true);
+                } else {
+                  setCurrentProductId(val);
+                }
+              }}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="">Selecione um item do estoque...</option>
@@ -727,6 +988,9 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   {prod.name} (Qtd: {prod.quantity} | R$ {prod.sale_price.toFixed(2)})
                 </option>
               ))}
+              <option value="create_new_product" className="text-emerald-500 font-semibold">
+                ➕ Cadastrar Nova Peça/Serviço
+              </option>
             </select>
           </div>
 
@@ -929,5 +1193,294 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         </button>
       </div>
     </form>
-  );
+
+    {/* Modal para Cadastro de Novo Cliente + Equipamento */}
+    {isNewClientModalOpen && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+          <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <User className="w-5 h-5 text-emerald-500" /> Cadastrar Novo Cliente + Equipamento
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsNewClientModalOpen(false)}
+              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveClient} className="p-6 space-y-4">
+            {clientModalError && (
+              <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{clientModalError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Dados do Cliente */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider border-b border-slate-800 pb-1 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" /> Informações Básicas
+                </h4>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Tipo de Cliente</label>
+                  <div className="flex gap-4 pt-1">
+                    <label className="flex items-center gap-2 text-sm text-slate-200 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="clientType"
+                        value="PF"
+                        checked={newClientType === 'PF'}
+                        onChange={() => setNewClientType('PF')}
+                        className="accent-emerald-500 focus:ring-emerald-500"
+                      />
+                      Pessoa Física
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-200 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="clientType"
+                        value="PJ"
+                        checked={newClientType === 'PJ'}
+                        onChange={() => setNewClientType('PJ')}
+                        className="accent-emerald-500 focus:ring-emerald-500"
+                      />
+                      Pessoa Jurídica
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Nome / Razão Social *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: João da Silva ou Tech Corp Ltda"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">CPF / CNPJ</label>
+                  <input
+                    type="text"
+                    value={newClientDoc}
+                    onChange={(e) => setNewClientDoc(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: 000.000.000-00"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Telefone / WhatsApp</label>
+                  <input
+                    type="text"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: (11) 99999-9999"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">E-mail</label>
+                  <input
+                    type="email"
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: cliente@email.com"
+                  />
+                </div>
+              </div>
+
+              {/* Dados do Equipamento */}
+              <div className="space-y-4 md:border-l md:border-slate-850 md:pl-6">
+                <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider border-b border-slate-800 pb-1 flex items-center gap-1.5">
+                  <Wrench className="w-3.5 h-3.5" /> Equipamento Inicial *
+                </h4>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Nome do Equipamento *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newEqName}
+                    onChange={(e) => setNewEqName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: Notebook Dell Inspiron"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Marca</label>
+                  <input
+                    type="text"
+                    value={newEqBrand}
+                    onChange={(e) => setNewEqBrand(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: Dell"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Modelo</label>
+                  <input
+                    type="text"
+                    value={newEqModel}
+                    onChange={(e) => setNewEqModel(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: L14 Gen 2"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Número de Série</label>
+                  <input
+                    type="text"
+                    value={newEqSerial}
+                    onChange={(e) => setNewEqSerial(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Ex: SN-98765432"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+              <button
+                type="button"
+                onClick={() => setIsNewClientModalOpen(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={savingClient}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {savingClient ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Salvar Cliente e Equipamento
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Modal para Cadastro de Nova Peça no Estoque */}
+    {isNewProductModalOpen && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+          <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Boxes className="w-5 h-5 text-emerald-500" /> Cadastrar Nova Peça
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsNewProductModalOpen(false)}
+              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
+            {productModalError && (
+              <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{productModalError}</span>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-slate-400 font-semibold">Descrição / Nome da Peça *</label>
+              <input
+                type="text"
+                required
+                value={newProdName}
+                onChange={(e) => setNewProdName(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                placeholder="Ex: SSD 480GB Kingston A400"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-slate-400 font-semibold">Categoria / Tipo</label>
+              <input
+                type="text"
+                value={newProdCategory}
+                onChange={(e) => setNewProdCategory(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                placeholder="Ex: Peças, Armazenamento, Placas"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400 font-semibold">Preço de Venda (R$) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  value={newProdSalePrice}
+                  onChange={(e) => setNewProdSalePrice(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400 font-semibold">Qtd. Inicial em Estoque</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newProdQty}
+                  onChange={(e) => setNewProdQty(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+              <button
+                type="button"
+                onClick={() => setIsNewProductModalOpen(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-755 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={savingProduct}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {savingProduct ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Salvar Peça
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+  </>
+);
 }
