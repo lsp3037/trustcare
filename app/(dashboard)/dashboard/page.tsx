@@ -88,7 +88,7 @@ export default function DashboardOverviewPage() {
       });
 
       ordersList.forEach(order => {
-        if (order.created_at && (order.status === 'Pronta para Retirada' || order.status === 'Entregue')) {
+        if (order.created_at && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
           const orderDate = order.created_at.split('T')[0];
           const dayObj = days.find(d => d.rawDate === orderDate);
           if (dayObj) {
@@ -126,7 +126,7 @@ export default function DashboardOverviewPage() {
       }
 
       ordersList.forEach(order => {
-        if (order.created_at && (order.status === 'Pronta para Retirada' || order.status === 'Entregue')) {
+        if (order.created_at && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
           const orderDate = new Date(order.created_at);
           const weekObj = weeks.find(w => orderDate >= w.start && orderDate <= w.end);
           if (weekObj) {
@@ -171,16 +171,16 @@ export default function DashboardOverviewPage() {
 
         setRecentOrders(filteredByDate.slice(0, 5));
         
-        // Faturamento: soma de concluídas/entregues no período
+        // Faturamento: soma de concluídas/finalizadas no período
         const billingTotal = filteredByDate
-          .filter(o => o.status === 'Pronta para Retirada' || o.status === 'Entregue')
+          .filter(o => o.status === 'Pronto para Retirada' || o.status === 'Finalizado')
           .reduce((sum, o) => sum + Number(o.total_value || 0), 0);
         
         // OS Abertas: criadas no período e ativas
-        const open = filteredByDate.filter(o => !['Entregue', 'Cancelada'].includes(o.status)).length;
+        const open = filteredByDate.filter(o => !['Finalizado', 'Cancelado'].includes(o.status)).length;
         
         // OS Concluídas: finalizadas no período
-        const completed = filteredByDate.filter(o => ['Pronta para Retirada', 'Entregue'].includes(o.status)).length;
+        const completed = filteredByDate.filter(o => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
 
         // Busca total clientes e perfis PF/PJ (Estátistica Global)
         const { data: allClients } = await supabase.from('clients').select('type');
@@ -251,8 +251,8 @@ export default function DashboardOverviewPage() {
     } else {
       ordersList = [
         { id: '1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', status: 'Em Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-        { id: '2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', status: 'Aguardando Peça', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
-        { id: '3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', status: 'Pronta para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
+        { id: '2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', status: 'Aguardando Peças', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
+        { id: '3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', status: 'Pronto para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
         { id: '4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', status: 'Em Análise', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString() },
       ];
     }
@@ -269,11 +269,11 @@ export default function DashboardOverviewPage() {
 
     // Estatísticas
     const billingTotal = filteredByDate
-      .filter((o: any) => o.status === 'Pronta para Retirada' || o.status === 'Entregue')
+      .filter((o: any) => o.status === 'Pronto para Retirada' || o.status === 'Finalizado')
       .reduce((sum: number, o: any) => sum + Number(o.total_value || 0), 0);
     
-    const open = filteredByDate.filter((o: any) => !['Entregue', 'Cancelada'].includes(o.status)).length;
-    const completed = filteredByDate.filter((o: any) => ['Pronta para Retirada', 'Entregue'].includes(o.status)).length;
+    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Cancelado'].includes(o.status)).length;
+    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
 
     const localClients = localStorage.getItem('mock-clients');
     const parsedClients = localClients ? JSON.parse(localClients) : [];
@@ -322,14 +322,15 @@ export default function DashboardOverviewPage() {
 
   const getStatusDotColor = (status: string) => {
     switch (status) {
-      case 'Aguardando Equipamento': return 'bg-indigo-500';
-      case 'Em Análise': return 'bg-amber-500';
-      case 'Na Bancada': return 'bg-blue-500';
-      case 'Aguardando Peça': return 'bg-purple-500';
+      case 'Aguardando Equipamento': return 'bg-slate-500';
+      case 'Em Análise': return 'bg-blue-500';
+      case 'Aguardando Aprovação': return 'bg-amber-500';
+      case 'Aguardando Peças': return 'bg-orange-500';
+      case 'Em Execução': return 'bg-sky-500';
       case 'Em Testes': return 'bg-cyan-500';
-      case 'Pronta para Retirada': return 'bg-emerald-500';
-      case 'Entregue': return 'bg-slate-400';
-      case 'Cancelada': return 'bg-rose-500';
+      case 'Pronto para Retirada': return 'bg-emerald-500';
+      case 'Finalizado': return 'bg-emerald-600';
+      case 'Cancelado': return 'bg-rose-500';
       default: return 'bg-slate-400';
     }
   };
@@ -519,7 +520,7 @@ export default function DashboardOverviewPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownId(null);
-                                const newStatus = prompt("Digite o novo status (Aguardando Equipamento, Em Análise, Na Bancada, Aguardando Peça, Em Testes, Pronta para Retirada, Entregue, Cancelada):", order.status);
+                                const newStatus = prompt("Digite o novo status (Aguardando Equipamento, Em Análise, Aguardando Aprovação, Aguardando Peças, Em Execução, Em Testes, Pronto para Retirada, Finalizado, Cancelado):", order.status);
                                 if (newStatus) {
                                   handleUpdateStatus(order.id, newStatus);
                                 }

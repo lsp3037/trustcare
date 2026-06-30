@@ -48,11 +48,12 @@ function TrackingContent() {
   const steps = [
     { label: 'Aguardando Equipamento', status: 'Aguardando Equipamento', desc: 'Aparelho ainda não entregue na assistência.' },
     { label: 'Em Análise', status: 'Em Análise', desc: 'Aparelho recebido e aguardando diagnóstico.' },
-    { label: 'Na Bancada', status: 'Na Bancada', desc: 'Técnico trabalhando no diagnóstico ou conserto.' },
-    { label: 'Aguardando Peça', status: 'Aguardando Peça', desc: 'Conserto pausado aguardando chegada de peças.' },
+    { label: 'Aguardando Aprovação', status: 'Aguardando Aprovação', desc: 'Orçamento gerado, aguardando aprovação do cliente.' },
+    { label: 'Aguardando Peças', status: 'Aguardando Peças', desc: 'Conserto pausado aguardando chegada de peças.' },
+    { label: 'Em Execução', status: 'Em Execução', desc: 'Técnico trabalhando no diagnóstico ou conserto.' },
     { label: 'Em Testes', status: 'Em Testes', desc: 'Aparelho montado passando por testes de estresse.' },
-    { label: 'Pronto para Retirada', status: 'Pronta para Retirada', desc: 'Serviço concluído, pronto para retirada pelo cliente.' },
-    { label: 'Entregue', status: 'Entregue', desc: 'Equipamento entregue e finalizado.' }
+    { label: 'Pronto para Retirada', status: 'Pronto para Retirada', desc: 'Serviço concluído, pronto para retirada pelo cliente.' },
+    { label: 'Finalizado', status: 'Finalizado', desc: 'Equipamento entregue e finalizado.' }
   ];
 
   // Load order data
@@ -179,7 +180,7 @@ function TrackingContent() {
 
   // Helper to determine active steps
   const getStepIndex = (currentStatus: string) => {
-    if (currentStatus === 'Cancelada') return -1;
+    if (currentStatus === 'Cancelado') return -1;
     return steps.findIndex(s => s.status === currentStatus);
   };
 
@@ -188,14 +189,15 @@ function TrackingContent() {
   // Helper to get status colors (No purple!)
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'Aguardando Equipamento': return 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5';
-      case 'Em Análise': return 'text-amber-400 border-amber-500/20 bg-amber-500/5';
-      case 'Na Bancada': return 'text-blue-400 border-blue-500/20 bg-blue-500/5';
-      case 'Aguardando Peça': return 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5';
+      case 'Aguardando Equipamento': return 'text-slate-400 border-slate-500/20 bg-slate-500/5';
+      case 'Em Análise': return 'text-blue-400 border-blue-500/20 bg-blue-500/5';
+      case 'Aguardando Aprovação': return 'text-amber-450 border-amber-550/20 bg-amber-500/5';
+      case 'Aguardando Peças': return 'text-orange-450 border-orange-500/20 bg-orange-500/5';
+      case 'Em Execução': return 'text-sky-400 border-sky-500/20 bg-sky-500/5';
       case 'Em Testes': return 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5';
-      case 'Pronta para Retirada': return 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5';
-      case 'Entregue': return 'text-slate-400 border-slate-500/20 bg-slate-500/5';
-      case 'Cancelada': return 'text-rose-400 border-rose-500/20 bg-rose-500/5';
+      case 'Pronto para Retirada': return 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5';
+      case 'Finalizado': return 'text-emerald-500 border-emerald-600/20 bg-emerald-600/5';
+      case 'Cancelado': return 'text-rose-400 border-rose-500/20 bg-rose-500/5';
       default: return 'text-slate-400 border-slate-500/20 bg-slate-500/5';
     }
   };
@@ -343,7 +345,7 @@ function TrackingContent() {
                     : 'A combinar'}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">
-                  {order.status === 'Pronta para Retirada' 
+                  {order.status === 'Pronto para Retirada' 
                     ? 'Seu aparelho já está pronto!' 
                     : 'Sujeito a alterações técnicas.'}
                 </p>
@@ -351,7 +353,7 @@ function TrackingContent() {
             </div>
 
             {/* Cancelled Alert Box */}
-            {order.status === 'Cancelada' && (
+            {order.status === 'Cancelado' && (
               <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-rose-400 space-y-2">
                 <div className="flex items-center gap-2 font-bold text-sm">
                   <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />

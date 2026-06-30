@@ -93,7 +93,7 @@ CREATE TABLE public.service_orders (
     equipment_details TEXT,
     reported_problem TEXT NOT NULL,
     technical_report TEXT,
-    status TEXT NOT NULL DEFAULT 'Em Análise' CHECK (status IN ('Aguardando Equipamento', 'Em Análise', 'Na Bancada', 'Aguardando Peça', 'Em Testes', 'Pronta para Retirada', 'Entregue', 'Cancelada')),
+    status TEXT NOT NULL DEFAULT 'Em Análise' CHECK (status IN ('Aguardando Equipamento', 'Em Análise', 'Aguardando Aprovação', 'Aguardando Peças', 'Em Execução', 'Em Testes', 'Pronto para Retirada', 'Finalizado', 'Cancelado')),
     priority TEXT NOT NULL DEFAULT 'Média' CHECK (priority IN ('Baixa', 'Média', 'Alta')),
     technician_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     delivery_prediction TIMESTAMPTZ,

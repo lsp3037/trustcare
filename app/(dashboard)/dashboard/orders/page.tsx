@@ -87,8 +87,8 @@ function OrdersContent() {
     } else {
       const initialMock = [
         { id: '1', client_id: 'c1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', reported_problem: 'Tela azul intermitente e desligamento automático', technical_report: 'Realizado limpeza interna e troca de pasta térmica. Testado sistema por 12 horas.', status: 'Em Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString(), codigo_os: 'TC-2026-0001', pago: false },
-        { id: '2', client_id: 'c2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', reported_problem: 'Placa de vídeo liga mas não dá vídeo', technical_report: null, status: 'Aguardando Peça', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString(), codigo_os: 'TC-2026-0002', pago: false },
-        { id: '3', client_id: 'c3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', reported_problem: 'Backup automático falhando e HD 3 piscando vermelho', technical_report: 'Substituição de HD em RAID por sobressalente. Reconfiguração do script bash de backup.', status: 'Pronta para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString(), codigo_os: 'TC-2026-0003', pago: false },
+        { id: '2', client_id: 'c2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', reported_problem: 'Placa de vídeo liga mas não dá vídeo', technical_report: null, status: 'Aguardando Peças', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString(), codigo_os: 'TC-2026-0002', pago: false },
+        { id: '3', client_id: 'c3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', reported_problem: 'Backup automático falhando e HD 3 piscando vermelho', technical_report: 'Substituição de HD em RAID por sobressalente. Reconfiguração do script bash de backup.', status: 'Pronto para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString(), codigo_os: 'TC-2026-0003', pago: false },
         { id: '4', client_id: 'c4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', reported_problem: 'Teclado com teclas travadas (A, S, D)', technical_report: null, status: 'Em Análise', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString(), codigo_os: 'TC-2026-0004', pago: false },
       ];
       localStorage.setItem('mock-orders', JSON.stringify(initialMock));
@@ -105,14 +105,15 @@ function OrdersContent() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Aguardando Equipamento': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-      case 'Em Análise': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'Na Bancada': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'Aguardando Peça': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'Em Testes': return 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20';
-      case 'Pronta para Retirada': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case 'Entregue': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-      case 'Cancelada': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+      case 'Aguardando Equipamento': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+      case 'Em Análise': return 'bg-blue-500/10 text-blue-450 border-blue-500/20';
+      case 'Aguardando Aprovação': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+      case 'Aguardando Peças': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+      case 'Em Execução': return 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+      case 'Em Testes': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+      case 'Pronto para Retirada': return 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20';
+      case 'Finalizado': return 'bg-emerald-600/10 text-emerald-500 border-emerald-600/20';
+      case 'Cancelado': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
       default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     }
   };
@@ -255,7 +256,7 @@ function OrdersContent() {
 
     const matchesStatus = 
       statusFilter === 'Todos' || 
-      (statusFilter === 'Ativas' && !['Entregue', 'Cancelada'].includes(order.status)) ||
+      (statusFilter === 'Ativas' && !['Finalizado', 'Cancelado'].includes(order.status)) ||
       order.status === statusFilter;
 
     return matchesSearch && matchesStatus;
@@ -332,12 +333,13 @@ function OrdersContent() {
                 <option value="Ativas">OS Abertas / Em Análise</option>
                 <option value="Aguardando Equipamento">Aguardando Equipamento</option>
                 <option value="Em Análise">Em Análise</option>
-                <option value="Na Bancada">Na Bancada</option>
-                <option value="Aguardando Peça">Aguardando Peça</option>
+                <option value="Aguardando Aprovação">Aguardando Aprovação</option>
+                <option value="Aguardando Peças">Aguardando Peças</option>
+                <option value="Em Execução">Em Execução</option>
                 <option value="Em Testes">Em Testes</option>
-                <option value="Pronta para Retirada">Pronta para Retirada</option>
-                <option value="Entregue">Entregue</option>
-                <option value="Cancelada">Cancelada</option>
+                <option value="Pronto para Retirada">Pronto para Retirada</option>
+                <option value="Finalizado">Finalizado</option>
+                <option value="Cancelado">Cancelado</option>
               </select>
             </div>
           </div>
@@ -449,12 +451,13 @@ function OrdersContent() {
               <option value="" disabled>Selecione...</option>
               <option value="Aguardando Equipamento">Aguardando Equipamento</option>
               <option value="Em Análise">Em Análise</option>
-              <option value="Na Bancada">Na Bancada</option>
-              <option value="Aguardando Peça">Aguardando Peça</option>
+              <option value="Aguardando Aprovação">Aguardando Aprovação</option>
+              <option value="Aguardando Peças">Aguardando Peças</option>
+              <option value="Em Execução">Em Execução</option>
               <option value="Em Testes">Em Testes</option>
-              <option value="Pronta para Retirada">Pronta para Retirada</option>
-              <option value="Entregue">Entregue</option>
-              <option value="Cancelada">Cancelada</option>
+              <option value="Pronto para Retirada">Pronto para Retirada</option>
+              <option value="Finalizado">Finalizado</option>
+              <option value="Cancelado">Cancelado</option>
             </select>
           </div>
           <div className="h-4 w-px bg-slate-800" />

@@ -23,7 +23,9 @@ import {
   X,
   Film,
   Paperclip,
-  Printer
+  Printer,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
@@ -46,6 +48,54 @@ const modules = {
 
 const formats = ['bold', 'italic', 'underline', 'list', 'bullet', 'align'];
 
+export const STATUS_CONFIG: Record<string, { label: string; colorClass: string; desc: string }> = {
+  'Aguardando Equipamento': { 
+    label: 'Aguardando Equipamento', 
+    colorClass: 'bg-slate-500/10 text-slate-400 border-slate-500/20', 
+    desc: 'Aparelho ainda não entregue pelo cliente' 
+  },
+  'Em Análise': { 
+    label: 'Em Análise', 
+    colorClass: 'bg-blue-500/10 text-blue-450 border-blue-500/20', 
+    desc: 'Aparelho recebido para diagnóstico' 
+  },
+  'Aguardando Aprovação': { 
+    label: 'Aguardando Aprovação', 
+    colorClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20', 
+    desc: 'Orçamento gerado, aguardando aprovação' 
+  },
+  'Aguardando Peças': { 
+    label: 'Aguardando Peças', 
+    colorClass: 'bg-orange-500/10 text-orange-500 border-orange-500/20', 
+    desc: 'Conserto pausado aguardando peças' 
+  },
+  'Em Execução': { 
+    label: 'Em Execução', 
+    colorClass: 'bg-sky-500/10 text-sky-400 border-sky-500/20', 
+    desc: 'Técnico trabalhando no reparo' 
+  },
+  'Em Testes': { 
+    label: 'Em Testes', 
+    colorClass: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', 
+    desc: 'Passando por testes pós-reparo' 
+  },
+  'Pronto para Retirada': { 
+    label: 'Pronto para Retirada', 
+    colorClass: 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20', 
+    desc: 'Pronto para retirada física' 
+  },
+  'Finalizado': { 
+    label: 'Finalizado', 
+    colorClass: 'bg-emerald-600/10 text-emerald-500 border-emerald-600/20', 
+    desc: 'Equipamento entregue e finalizado' 
+  },
+  'Cancelado': { 
+    label: 'Cancelado', 
+    colorClass: 'bg-rose-500/10 text-rose-500 border-rose-500/20', 
+    desc: 'Ordem de serviço cancelada' 
+  }
+};
+
 
 export default function OrderDetailPage() {
   const router = useRouter();
@@ -60,6 +110,8 @@ export default function OrderDetailPage() {
 
   // Estados dos Campos Editáveis da OS
   const [status, setStatus] = useState('Novo');
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [priority, setPriority] = useState('Média');
   const [technicianId, setTechnicianId] = useState('');
   const [technicalReport, setTechnicalReport] = useState('');
@@ -472,7 +524,7 @@ export default function OrderDetailPage() {
         service_value: parseFloat(serviceValue) || 0,
         discount: parseFloat(discount) || 0,
         total_value: parseFloat(totalValue) || 0,
-        pago: status === 'Entregue' ? pago : false,
+        pago: status === 'Finalizado' ? pago : false,
         media: mediaFiles.map(m => ({
           name: m.name,
           url: m.persistentUrl || m.url,
@@ -571,7 +623,7 @@ export default function OrderDetailPage() {
       }
 
       // 4. Dispara o webhook de notificação se o status mudou para um status crítico e houver URL configurada
-      const criticalStatuses = ['Aguardando Peça', 'Pronta para Retirada', 'Cancelada'];
+      const criticalStatuses = ['Aguardando Peças', 'Pronto para Retirada', 'Cancelado'];
       const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL;
       const statusChanged = order && order.status !== status;
 
@@ -622,7 +674,7 @@ export default function OrderDetailPage() {
               service_value: parseFloat(serviceValue) || 0,
               discount: parseFloat(discount) || 0,
               total_value: parseFloat(totalValue) || 0,
-              pago: status === 'Entregue' ? pago : false,
+              pago: status === 'Finalizado' ? pago : false,
               media: mediaFiles.map(m => ({
                 name: m.name,
                 url: m.persistentUrl || m.url,
@@ -791,18 +843,78 @@ export default function OrderDetailPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Aguardando Equipamento': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-      case 'Em Análise': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'Na Bancada': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'Aguardando Peça': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-      case 'Em Testes': return 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20';
-      case 'Pronta para Retirada': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case 'Entregue': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-      case 'Cancelada': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+  const handleStatusChange = async (newStatus: string) => {
+    setStatus(newStatus);
+    setUpdatingStatus(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      // 1. Tenta atualizar no Supabase (Online)
+      const { error: updateErr } = await supabase
+        .from('service_orders')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (updateErr) throw updateErr;
+
+      // Se deu certo, atualiza o cache da OS na tela
+      setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
+      setSuccessMsg('Status atualizado em tempo real!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+
+      // Dispara o webhook se necessário
+      const criticalStatuses = ['Aguardando Peças', 'Pronto para Retirada', 'Cancelado'];
+      const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL;
+      if (webhookUrl && criticalStatuses.includes(newStatus)) {
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              event: 'order_status_changed',
+              order_id: id,
+              status: newStatus,
+              equipment: order?.equipment_details || 'Equipamento',
+              client_name: client?.name || 'Cliente',
+              client_phone: client?.phone || '',
+              tracking_url: `${window.location.origin}/rastreio?id=${id}`
+            }),
+            mode: 'cors'
+          });
+        } catch (webhookErr) {
+          console.warn('Falha ao enviar webhook de notificação:', webhookErr);
+        }
+      }
+    } catch (err: any) {
+      console.warn('Erro ao atualizar status online, aplicando localmente:', err.message);
+
+      // 2. Fluxo local offline fallback
+      const localOrders = localStorage.getItem('mock-orders');
+      if (localOrders) {
+        const parsedOrders = JSON.parse(localOrders);
+        const updatedOrders = parsedOrders.map((o: any) => {
+          if (o.id === id) {
+            return { ...o, status: newStatus };
+          }
+          return o;
+        });
+        localStorage.setItem('mock-orders', JSON.stringify(updatedOrders));
+        setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
+        setSuccessMsg('[Offline] Status atualizado localmente!');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setErrorMsg('Falha ao gravar localmente o novo status.');
+      }
+    } finally {
+      setUpdatingStatus(false);
     }
+  };
+
+  const getStatusColor = (status: string) => {
+    return STATUS_CONFIG[status]?.colorClass || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
   };
 
   if (loading) {
@@ -932,22 +1044,74 @@ export default function OrderDetailPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Status */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <label className="text-xs font-semibold text-slate-400">Status da OS</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
-                >
-                  <option value="Aguardando Equipamento">Aguardando Equipamento</option>
-                  <option value="Em Análise">Em Análise</option>
-                  <option value="Na Bancada">Na Bancada</option>
-                  <option value="Aguardando Peça">Aguardando Peça</option>
-                  <option value="Em Testes">Em Testes</option>
-                  <option value="Pronta para Retirada">Pronta para Retirada</option>
-                  <option value="Entregue">Entregue</option>
-                  <option value="Cancelada">Cancelada</option>
-                </select>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 flex items-center justify-between hover:border-slate-700 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${
+                        status === 'Aguardando Equipamento' || status === 'Cancelado' ? 'bg-slate-500' :
+                        status === 'Aguardando Aprovação' || status === 'Aguardando Peças' ? 'bg-amber-500' :
+                        status === 'Em Análise' || status === 'Em Execução' || status === 'Em Testes' ? 'bg-blue-500' :
+                        'bg-emerald-500'
+                      }`} />
+                      <span className="font-semibold text-xs py-0.5 px-1.5 rounded bg-slate-900 border border-slate-850">
+                        {status}
+                      </span>
+                    </div>
+                    {updatingStatus ? (
+                      <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                    ) : (
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />
+                    )}
+                  </button>
+
+                  {isStatusDropdownOpen && (
+                    <>
+                      {/* Overlay invisível para fechar ao clicar fora */}
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setIsStatusDropdownOpen(false)}
+                      />
+                      
+                      <div className="absolute left-0 right-0 mt-1.5 bg-slate-950 border border-slate-850 rounded-xl shadow-2xl z-25 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 p-1.5 space-y-1">
+                        {Object.keys(STATUS_CONFIG).map((statusKey) => {
+                          const conf = STATUS_CONFIG[statusKey];
+                          const isSelected = status === statusKey;
+                          return (
+                            <button
+                              key={statusKey}
+                              type="button"
+                              onClick={() => {
+                                handleStatusChange(statusKey);
+                                setIsStatusDropdownOpen(false);
+                              }}
+                              className={`w-full text-left py-2 px-3 rounded-lg flex items-center justify-between text-xs transition-colors cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-slate-900 text-white font-semibold' 
+                                  : 'text-slate-400 hover:bg-slate-900/50 hover:text-white'
+                              }`}
+                            >
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${conf.colorClass}`}>
+                                    {conf.label}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-500 font-normal leading-normal">{conf.desc}</p>
+                              </div>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-2" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Prioridade */}
@@ -978,8 +1142,8 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            {/* Pagamento (Somente se Entregue) */}
-            {status === 'Entregue' && (
+            {/* Pagamento (Somente se Finalizado) */}
+            {status === 'Finalizado' && (
               <div className="flex items-center gap-3 p-4 bg-slate-950/40 border border-slate-800 rounded-xl">
                 <input
                   type="checkbox"
@@ -1500,8 +1664,8 @@ function PrintDocumentContent({
   const { specs, serialNumber } = parseEquipmentDetails(order.equipment_details);
 
   const getTechnicalReportTitle = (status: string) => {
-    const finalStatuses = ['Pronta para Retirada', 'Entregue'];
-    const initialStatuses = ['Aguardando Equipamento', 'Em Análise', 'Na Bancada', 'Aguardando Peça', 'Em Testes'];
+    const finalStatuses = ['Pronto para Retirada', 'Finalizado'];
+    const initialStatuses = ['Aguardando Equipamento', 'Em Análise', 'Aguardando Aprovação', 'Aguardando Peças', 'Em Execução', 'Em Testes'];
     
     if (finalStatuses.includes(status)) {
       return 'LAUDO TÉCNICO & SERVIÇOS EXECUTADOS';

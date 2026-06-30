@@ -925,16 +925,17 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
               >
                 <option value="Aguardando Equipamento">Aguardando Equipamento</option>
                 <option value="Em Análise">Em Análise</option>
-                <option value="Na Bancada">Na Bancada</option>
-                <option value="Aguardando Peça">Aguardando Peça</option>
+                <option value="Aguardando Aprovação">Aguardando Aprovação</option>
+                <option value="Aguardando Peças">Aguardando Peças</option>
+                <option value="Em Execução">Em Execução</option>
                 <option value="Em Testes">Em Testes</option>
-                <option value="Pronta para Retirada">Pronta para Retirada</option>
-                <option value="Entregue">Entregue</option>
-                <option value="Cancelada">Cancelada</option>
+                <option value="Pronto para Retirada">Pronto para Retirada</option>
+                <option value="Finalizado">Finalizado</option>
+                <option value="Cancelado">Cancelado</option>
               </select>
             </div>
 
