@@ -115,6 +115,7 @@ export default function OrderDetailPage() {
   const [priority, setPriority] = useState('Média');
   const [technicianId, setTechnicianId] = useState('');
   const [technicalReport, setTechnicalReport] = useState('');
+  const [reportedProblem, setReportedProblem] = useState('');
   const [deliveryPrediction, setDeliveryPrediction] = useState('');
   const [serviceValue, setServiceValue] = useState('0'); // Valor da mão de obra
   const [discount, setDiscount] = useState('0');         // Valor do desconto
@@ -164,6 +165,7 @@ export default function OrderDetailPage() {
         setPriority(osData.priority);
         setTechnicianId(osData.technician_id || '');
         setTechnicalReport(osData.technical_report || '');
+        setReportedProblem(osData.reported_problem || '');
         setServiceValue(Number(osData.service_value || 0).toString());
         setDiscount(Number(osData.discount || 0).toString());
         setTotalValue(Number(osData.total_value || 0).toString());
@@ -269,6 +271,7 @@ export default function OrderDetailPage() {
         setPriority(foundOs.priority);
         setTechnicianId(foundOs.technician_id || '');
         setTechnicalReport(foundOs.technical_report || '');
+        setReportedProblem(foundOs.reported_problem || '');
         setServiceValue(Number(foundOs.service_value || 0).toString());
         setDiscount(Number(foundOs.discount || 0).toString());
         setTotalValue(Number(foundOs.total_value || 0).toString());
@@ -520,6 +523,7 @@ export default function OrderDetailPage() {
         priority,
         technician_id: technicianId || null,
         technical_report: technicalReport || null,
+        reported_problem: reportedProblem,
         delivery_prediction: deliveryPrediction || null,
         service_value: parseFloat(serviceValue) || 0,
         discount: parseFloat(discount) || 0,
@@ -670,6 +674,7 @@ export default function OrderDetailPage() {
               priority,
               technician_id: technicianId || null,
               technical_report: technicalReport || null,
+              reported_problem: reportedProblem,
               delivery_prediction: deliveryPrediction || null,
               service_value: parseFloat(serviceValue) || 0,
               discount: parseFloat(discount) || 0,
@@ -1029,9 +1034,13 @@ export default function OrderDetailPage() {
 
             <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-900/80 w-full max-w-full overflow-hidden break-words">
               <p className="text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Problema Relatado / Defeito</p>
-              <div 
-                className="text-sm text-slate-305 prose prose-invert max-w-none font-medium break-words whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: order.reported_problem }}
+              <ReactQuill
+                theme="snow"
+                value={reportedProblem}
+                onChange={setReportedProblem}
+                modules={modules}
+                formats={formats}
+                className="bg-slate-950/80 rounded-lg border border-slate-850/80 prose prose-invert text-slate-300 max-w-none text-sm"
               />
             </div>
           </div>
