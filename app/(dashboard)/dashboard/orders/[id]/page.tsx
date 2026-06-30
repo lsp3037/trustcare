@@ -1027,10 +1027,10 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-900/80">
+            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-900/80 w-full max-w-full overflow-hidden break-words">
               <p className="text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-2">Problema Relatado / Defeito</p>
               <div 
-                className="text-sm text-slate-305 prose prose-invert max-w-none font-medium"
+                className="text-sm text-slate-305 prose prose-invert max-w-none font-medium break-words whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ __html: order.reported_problem }}
               />
             </div>

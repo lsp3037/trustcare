@@ -328,7 +328,7 @@ function TrackingContent() {
                 <div className="text-xs text-slate-400 space-y-1 mt-2">
                   <span className="font-semibold text-slate-350">Defeito relatado:</span>
                   <div 
-                    className="prose prose-invert max-w-none text-xs text-slate-400 italic font-medium"
+                    className="prose prose-invert max-w-none text-xs text-slate-400 italic font-medium break-words whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: order.reported_problem }}
                   />
                 </div>
