@@ -83,6 +83,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
 
   // Formulário Novo Cliente + Equipamento
+  const [clientModalStep, setClientModalStep] = useState(1); // 1 = Dados do Cliente, 2 = Dados do Equipamento
   const [newClientName, setNewClientName] = useState('');
   const [newClientType, setNewClientType] = useState('PF'); // 'PF' | 'PJ'
   const [newClientDoc, setNewClientDoc] = useState('');
@@ -99,8 +100,21 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   // Formulário Nova Peça/Produto
   const [newProdName, setNewProdName] = useState('');
   const [newProdCategory, setNewProdCategory] = useState('');
+  const [newProdBrand, setNewProdBrand] = useState('');
+  const [newProdCapacity, setNewProdCapacity] = useState('');
   const [newProdQty, setNewProdQty] = useState('10');
   const [newProdSalePrice, setNewProdSalePrice] = useState('');
+  
+  // SSD especificações
+  const [newProdSsdTech, setNewProdSsdTech] = useState('');
+  const [newProdSsdGb, setNewProdSsdGb] = useState('');
+
+  // Memória RAM especificações
+  const [newProdRamApp, setNewProdRamApp] = useState('');
+  const [newProdRamTech, setNewProdRamTech] = useState('');
+  const [newProdRamSpeed, setNewProdRamSpeed] = useState('');
+  const [newProdRamGb, setNewProdRamGb] = useState('');
+
   const [savingProduct, setSavingProduct] = useState(false);
   const [productModalError, setProductModalError] = useState('');
 
@@ -108,6 +122,30 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
   useEffect(() => {
     setClientsList(clients);
   }, [clients]);
+
+  // Efeito para sincronizar nome e capacidade da peça criada inline baseada nos campos selecionados
+  useEffect(() => {
+    if (newProdCategory === 'Memória RAM') {
+      if (newProdRamGb && newProdRamTech && newProdRamApp) {
+        const computedCap = `${newProdRamGb} ${newProdRamTech}${newProdRamSpeed ? ` ${newProdRamSpeed}` : ''} (${newProdRamApp})`;
+        if (newProdCapacity !== computedCap) setNewProdCapacity(computedCap);
+        
+        const speedPart = newProdRamSpeed ? ` ${newProdRamSpeed}` : '';
+        const brandPart = newProdBrand ? ` ${newProdBrand}` : '';
+        const computedName = `Memória RAM ${newProdRamTech} ${newProdRamGb}${speedPart}${brandPart}`;
+        if (newProdName !== computedName) setNewProdName(computedName);
+      }
+    } else if (newProdCategory === 'SSD') {
+      if (newProdSsdGb && newProdSsdTech) {
+        const computedCap = `${newProdSsdGb} ${newProdSsdTech}`;
+        if (newProdCapacity !== computedCap) setNewProdCapacity(computedCap);
+        
+        const brandPart = newProdBrand ? ` ${newProdBrand}` : '';
+        const computedName = `SSD ${newProdSsdGb}${brandPart} ${newProdSsdTech}`;
+        if (newProdName !== computedName) setNewProdName(computedName);
+      }
+    }
+  }, [newProdCategory, newProdBrand, newProdRamApp, newProdRamTech, newProdRamSpeed, newProdRamGb, newProdSsdTech, newProdSsdGb, newProdCapacity, newProdName]);
 
   // Carrega o company_id associado ao perfil logado no mount
   useEffect(() => {
@@ -311,6 +349,17 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     setTotalValue(Math.max(0, subtotal - disc).toFixed(2));
   }, [serviceValue, selectedProducts, selectedServices, discount]);
 
+  // Avança para a etapa do equipamento no modal de cliente (criação inline)
+  const handleNextStep = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!newClientName) {
+      setClientModalError('Por favor, preencha o nome do cliente (*).');
+      return;
+    }
+    setClientModalError('');
+    setClientModalStep(2);
+  };
+
   // Salva o novo cliente e equipamento (criação inline)
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -408,6 +457,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
       // 4. Reseta e fecha o modal
       setIsNewClientModalOpen(false);
+      setClientModalStep(1);
       setNewClientName('');
       setNewClientType('PF');
       setNewClientDoc('');
@@ -435,7 +485,25 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     setProductModalError('');
 
     try {
-      const generatedSku = `SKU-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+      // Geração inteligente de SKU baseado na categoria e marca
+      const catClean = (newProdCategory || 'OUT').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
+      const catCode = catClean.slice(0, 3).padEnd(3, 'X');
+      const brandClean = (newProdBrand || 'GEN').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
+      const brandCode = brandClean.slice(0, 3).padEnd(3, 'X');
+      const prefix = `${catCode}-${brandCode}-`;
+
+      const matchingProducts = inventory.filter(p => p.sku && p.sku.startsWith(prefix));
+      const numbers = matchingProducts.map(p => {
+        const parts = p.sku.split('-');
+        const lastPart = parts[parts.length - 1];
+        const num = parseInt(lastPart);
+        return isNaN(num) ? 0 : num;
+      });
+
+      const nextNum = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+      const paddedNum = String(nextNum).padStart(3, '0');
+      const finalSku = `${prefix}${paddedNum}`;
+
       const salePriceNum = parseFloat(newProdSalePrice) || 0;
       const costPriceNum = salePriceNum * 0.6;
       const qtyNum = parseInt(newProdQty) || 0;
@@ -443,10 +511,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       const productData = {
         company_id: companyId,
         name: newProdName,
-        sku: generatedSku,
+        sku: finalSku,
         category: newProdCategory || 'Peças',
-        brand: '',
-        capacity: '',
+        brand: newProdBrand || '',
+        capacity: newProdCapacity || '',
         quantity: qtyNum,
         cost_price: costPriceNum,
         sale_price: salePriceNum,
@@ -478,7 +546,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
       if (!newProduct) throw new Error('Falha ao registrar novo produto.');
 
-      // Atualiza listagem dinâmica de produtos do autocomplete e seleciona o item recém-criado
+      // Atualiza listagem dinâmica de produtos do estoque
       setInventory((prev) => [...prev, newProduct]);
       setCurrentProductId(newProduct.id);
 
@@ -486,8 +554,16 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       setIsNewProductModalOpen(false);
       setNewProdName('');
       setNewProdCategory('');
+      setNewProdBrand('');
+      setNewProdCapacity('');
       setNewProdQty('10');
       setNewProdSalePrice('');
+      setNewProdSsdTech('');
+      setNewProdSsdGb('');
+      setNewProdRamApp('');
+      setNewProdRamTech('');
+      setNewProdRamSpeed('');
+      setNewProdRamGb('');
     } catch (err: any) {
       setProductModalError(err.message || 'Erro inesperado ao salvar produto.');
     } finally {
@@ -1194,36 +1270,51 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       </div>
     </form>
 
-    {/* Modal para Cadastro de Novo Cliente + Equipamento */}
+    {/* Modal para Cadastro de Novo Cliente + Equipamento (Fluxo em Etapas com Deslizamento) */}
     {isNewClientModalOpen && (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+        <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+          
+          {/* Cabeçalho */}
           <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <User className="w-5 h-5 text-emerald-500" /> Cadastrar Novo Cliente + Equipamento
+              <User className="w-5 h-5 text-emerald-500" /> Cadastrar Novo Cliente
             </h3>
             <button
               type="button"
-              onClick={() => setIsNewClientModalOpen(false)}
+              onClick={() => {
+                setIsNewClientModalOpen(false);
+                setClientModalStep(1);
+              }}
               className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSaveClient} className="p-6 space-y-4">
+          {/* Indicadores Visuais de Etapa */}
+          <div className="flex items-center justify-center gap-2 px-6 pt-4">
+            <div className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${clientModalStep === 1 ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+            <div className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${clientModalStep === 2 ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+          </div>
+
+          {/* Formulário com Slider Horizontal */}
+          <form onSubmit={handleSaveClient} className="overflow-hidden">
             {clientModalError && (
-              <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+              <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2 animate-in fade-in duration-200">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{clientModalError}</span>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Dados do Cliente */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider border-b border-slate-800 pb-1 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5" /> Informações Básicas
+            <div 
+              className="flex w-[200%] transition-transform duration-350 ease-in-out" 
+              style={{ transform: `translateX(-${(clientModalStep - 1) * 50}%)` }}
+            >
+              {/* Etapa 1: Dados do Cliente */}
+              <div className="w-1/2 px-6 py-4 space-y-4">
+                <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider pb-1 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" /> Passo 1: Informações Básicas
                 </h4>
 
                 <div className="space-y-1.5">
@@ -1258,10 +1349,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   <label className="text-xs text-slate-400 font-semibold">Nome / Razão Social *</label>
                   <input
                     type="text"
-                    required
+                    required={clientModalStep === 1}
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: João da Silva ou Tech Corp Ltda"
                   />
                 </div>
@@ -1272,7 +1363,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newClientDoc}
                     onChange={(e) => setNewClientDoc(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: 000.000.000-00"
                   />
                 </div>
@@ -1283,7 +1374,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newClientPhone}
                     onChange={(e) => setNewClientPhone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: (11) 99999-9999"
                   />
                 </div>
@@ -1294,26 +1385,46 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="email"
                     value={newClientEmail}
                     onChange={(e) => setNewClientEmail(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: cliente@email.com"
                   />
                 </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNewClientModalOpen(false);
+                      setClientModalStep(1);
+                    }}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    Salvar e Adicionar Equipamento
+                  </button>
+                </div>
               </div>
 
-              {/* Dados do Equipamento */}
-              <div className="space-y-4 md:border-l md:border-slate-850 md:pl-6">
-                <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider border-b border-slate-800 pb-1 flex items-center gap-1.5">
-                  <Wrench className="w-3.5 h-3.5" /> Equipamento Inicial *
+              {/* Etapa 2: Dados do Equipamento */}
+              <div className="w-1/2 px-6 py-4 space-y-4">
+                <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider pb-1 flex items-center gap-1.5">
+                  <Wrench className="w-3.5 h-3.5" /> Passo 2: Equipamento Inicial *
                 </h4>
 
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-400 font-semibold">Nome do Equipamento *</label>
                   <input
                     type="text"
-                    required
+                    required={clientModalStep === 2}
                     value={newEqName}
                     onChange={(e) => setNewEqName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: Notebook Dell Inspiron"
                   />
                 </div>
@@ -1324,7 +1435,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newEqBrand}
                     onChange={(e) => setNewEqBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: Dell"
                   />
                 </div>
@@ -1335,7 +1446,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newEqModel}
                     onChange={(e) => setNewEqModel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: L14 Gen 2"
                   />
                 </div>
@@ -1346,44 +1457,47 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newEqSerial}
                     onChange={(e) => setNewEqSerial(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: SN-98765432"
                   />
                 </div>
-              </div>
-            </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
-              <button
-                type="button"
-                onClick={() => setIsNewClientModalOpen(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={savingClient}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {savingClient ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Salvar Cliente e Equipamento
-                  </>
-                )}
-              </button>
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setClientModalError('');
+                      setClientModalStep(1);
+                    }}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingClient}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {savingClient ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Salvar e Concluir
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>
       </div>
     )}
 
-    {/* Modal para Cadastro de Nova Peça no Estoque */}
+    {/* Modal para Cadastro de Nova Peça no Estoque com Estrutura Hierárquica */}
     {isNewProductModalOpen && (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+        <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
           <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Boxes className="w-5 h-5 text-emerald-500" /> Cadastrar Nova Peça
@@ -1399,12 +1513,13 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
           <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
             {productModalError && (
-              <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs flex items-center gap-2">
+              <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{productModalError}</span>
               </div>
             )}
 
+            {/* Descrição / Nome da Peça */}
             <div className="space-y-1.5">
               <label className="text-xs text-slate-400 font-semibold">Descrição / Nome da Peça *</label>
               <input
@@ -1412,21 +1527,183 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                 required
                 value={newProdName}
                 onChange={(e) => setNewProdName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
-                placeholder="Ex: SSD 480GB Kingston A400"
+                disabled={newProdCategory === 'Memória RAM' || newProdCategory === 'SSD'}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                placeholder={
+                  newProdCategory === 'Memória RAM' || newProdCategory === 'SSD'
+                    ? 'Gerado automaticamente com base nos atributos...'
+                    : 'Ex: HD Externo 1TB Seagate Expansion'
+                }
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs text-slate-400 font-semibold">Categoria / Tipo</label>
-              <input
-                type="text"
-                value={newProdCategory}
-                onChange={(e) => setNewProdCategory(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
-                placeholder="Ex: Peças, Armazenamento, Placas"
-              />
+            <div className={`grid grid-cols-1 ${newProdCategory === 'Memória RAM' || newProdCategory === 'SSD' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
+              {/* Categoria */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400 font-semibold">Categoria *</label>
+                <select
+                  value={newProdCategory}
+                  onChange={(e) => {
+                    setNewProdCategory(e.target.value);
+                    // Limpa estados específicos ao mudar de categoria
+                    setNewProdBrand('');
+                    setNewProdCapacity('');
+                    setNewProdSsdTech('');
+                    setNewProdSsdGb('');
+                    setNewProdRamApp('');
+                    setNewProdRamTech('');
+                    setNewProdRamSpeed('');
+                    setNewProdRamGb('');
+                    if (e.target.value === 'Memória RAM' || e.target.value === 'SSD') {
+                      setNewProdName('');
+                    }
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                  required
+                >
+                  <option value="">Selecione...</option>
+                  <option value="HD">HD</option>
+                  <option value="SSD">SSD</option>
+                  <option value="Memória RAM">Memória RAM</option>
+                  <option value="Placa de Vídeo">Placa de Vídeo</option>
+                  <option value="Fonte de Alimentação">Fonte de Alimentação</option>
+                  <option value="Gabinete">Gabinete</option>
+                  <option value="Processador">Processador</option>
+                  <option value="Placa-Mãe">Placa-Mãe</option>
+                  <option value="Cabo / Acessório">Cabo / Acessório</option>
+                  <option value="Ferramentas">Ferramentas</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+
+              {/* Marca */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400 font-semibold">Marca *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Kingston"
+                  value={newProdBrand}
+                  onChange={(e) => setNewProdBrand(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              {/* Capacidade (Se não for RAM ou SSD) */}
+              {newProdCategory !== 'Memória RAM' && newProdCategory !== 'SSD' && (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold">Capacidade</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 1TB / 8GB"
+                    value={newProdCapacity}
+                    onChange={(e) => setNewProdCapacity(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+              )}
             </div>
+
+            {/* Condicionais SSD */}
+            {newProdCategory === 'SSD' && (
+              <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-xl animate-in slide-in-from-top-1 duration-200">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia SSD *</label>
+                  <select
+                    value={newProdSsdTech}
+                    onChange={(e) => setNewProdSsdTech(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    required
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="SATA III">SATA III</option>
+                    <option value="NVMe">NVMe</option>
+                    <option value="M.2 SATA">M.2 SATA</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB/TB) *</label>
+                  <select
+                    value={newProdSsdGb}
+                    onChange={(e) => setNewProdSsdGb(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    required
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="120GB">120GB</option>
+                    <option value="240GB">240GB</option>
+                    <option value="256GB">256GB</option>
+                    <option value="480GB">480GB</option>
+                    <option value="500GB">500GB</option>
+                    <option value="960GB">960GB</option>
+                    <option value="1TB">1TB</option>
+                    <option value="2TB">2TB</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Condicionais Memória RAM */}
+            {newProdCategory === 'Memória RAM' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-xl animate-in slide-in-from-top-1 duration-200">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aplicação *</label>
+                  <select
+                    value={newProdRamApp}
+                    onChange={(e) => setNewProdRamApp(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    required
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="PC">PC (Desktop)</option>
+                    <option value="Notebook">Notebook</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia *</label>
+                  <select
+                    value={newProdRamTech}
+                    onChange={(e) => setNewProdRamTech(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    required
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="DDR">DDR</option>
+                    <option value="DDR2">DDR2</option>
+                    <option value="DDR3">DDR3</option>
+                    <option value="DDR4">DDR4</option>
+                    <option value="DDR5">DDR5</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Velocidade</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 3200MHz"
+                    value={newProdRamSpeed}
+                    onChange={(e) => setNewProdRamSpeed(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho *</label>
+                  <select
+                    value={newProdRamGb}
+                    onChange={(e) => setNewProdRamGb(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    required
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="2GB">2GB</option>
+                    <option value="4GB">4GB</option>
+                    <option value="8GB">8GB</option>
+                    <option value="16GB">16GB</option>
+                    <option value="32GB">32GB</option>
+                    <option value="64GB">64GB</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -1438,7 +1715,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   required
                   value={newProdSalePrice}
                   onChange={(e) => setNewProdSalePrice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                   placeholder="0.00"
                 />
               </div>
