@@ -18,6 +18,17 @@ import {
 import { supabase } from '@/lib/supabase/client';
 import NewOrderForm from '@/components/NewOrderForm';
 
+const stripHtml = (html: string) => {
+  if (!html) return '';
+  const clean = html.replace(/<[^>]*>/g, '');
+  return clean
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"');
+};
+
 // Componente Wrapper para lidar com a busca de query params com Suspense no Next.js
 function OrdersContent() {
   const searchParams = useSearchParams();
@@ -382,7 +393,7 @@ function OrdersContent() {
                           onClick={(e) => e.stopPropagation()}
                           className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-blue-500 cursor-pointer"
                         />
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getStatusColor(order.status)}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border whitespace-nowrap ${getStatusColor(order.status)}`}>
                           {order.status}
                         </span>
                       </div>
@@ -405,7 +416,7 @@ function OrdersContent() {
                     <div className="p-3 bg-slate-950/40 rounded-lg border border-slate-900">
                       <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Problema Reportado:</p>
                       <p className="text-xs text-slate-300 line-clamp-2 italic">
-                        "{order.reported_problem}"
+                        "{stripHtml(order.reported_problem)}"
                       </p>
                     </div>
                   </div>
