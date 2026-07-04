@@ -5,6 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, Loader2, AlertTriangle, Building, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
+interface ChecklistTemplateItem {
+  id: string;
+  label: string;
+}
+
+const DEFAULT_TEMPLATE_ITEMS: ChecklistTemplateItem[] = [
+  { id: 'charger', label: 'Carregador' },
+  { id: 'battery', label: 'Bateria' },
+  { id: 'screen', label: 'Tela / Display' },
+  { id: 'keyboard', label: 'Teclado' },
+  { id: 'casing', label: 'Carcaça' },
+  { id: 'power_on', label: 'Ligar / Dar Vídeo' },
+  { id: 'removable_media', label: 'Mídia Removível' },
+  { id: 'missing_screws', label: 'Parafusos Ausentes' }
+];
+
 export default function TempPrintPreviewPage() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
@@ -22,6 +38,7 @@ export default function TempPrintPreviewPage() {
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [checklistTemplateItems, setChecklistTemplateItems] = useState<ChecklistTemplateItem[]>(DEFAULT_TEMPLATE_ITEMS);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -40,6 +57,45 @@ export default function TempPrintPreviewPage() {
         if (osData) {
           setOrder(osData);
           setClient(osData.clients);
+
+          // Busca template de checklist com base na categoria do equipamento
+          if (osData.equipment_id) {
+            try {
+              const { data: eqData } = await supabase
+                .from('client_equipments')
+                .select('category_id')
+                .eq('id', osData.equipment_id)
+                .single();
+              
+              if (eqData && eqData.category_id) {
+                const { data: templateData } = await supabase
+                  .from('checklist_templates')
+                  .select('schema')
+                  .eq('category_id', eqData.category_id)
+                  .maybeSingle();
+                
+                if (templateData && templateData.schema && Array.isArray(templateData.schema.items)) {
+                  setChecklistTemplateItems(templateData.schema.items);
+                } else {
+                  // Tenta mock local
+                  const mockTemplatesStr = localStorage.getItem('mock-checklist-templates');
+                  const mockTemplates = mockTemplatesStr ? JSON.parse(mockTemplatesStr) : {};
+                  if (mockTemplates[eqData.category_id] && Array.isArray(mockTemplates[eqData.category_id].items)) {
+                    setChecklistTemplateItems(mockTemplates[eqData.category_id].items);
+                  } else {
+                    setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+                  }
+                }
+              } else {
+                setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+              }
+            } catch (err) {
+              console.warn('Erro ao carregar template do checklist, usando padrão:', err);
+              setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+            }
+          } else {
+            setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+          }
 
           // 2. Busca Peças alocadas à O.S.
           const { data: itemsData } = await supabase
@@ -241,6 +297,7 @@ export default function TempPrintPreviewPage() {
             subtotalValue={subtotalValue}
             discountValue={discountValue}
             laborValue={laborValue}
+            checklistTemplateItems={checklistTemplateItems}
           />
         </div>
       </div>
@@ -256,6 +313,7 @@ export default function TempPrintPreviewPage() {
           subtotalValue={subtotalValue}
           discountValue={discountValue}
           laborValue={laborValue}
+          checklistTemplateItems={checklistTemplateItems}
         />
       </div>
 
@@ -272,7 +330,8 @@ function PrintDocumentContent({
   selectedServices,
   subtotalValue,
   discountValue,
-  laborValue
+  laborValue,
+  checklistTemplateItems = DEFAULT_TEMPLATE_ITEMS
 }: any) {
   const currentDate = new Date().toLocaleDateString('pt-BR');
 
@@ -344,7 +403,7 @@ function PrintDocumentContent({
             </div>
             <div className="border-t border-slate-205 pt-2">
               <span className="text-[9px] font-bold text-slate-500 uppercase block">Defeito Relatado pelo Cliente</span>
-              <p className="text-xs text-black italic mt-0.5">"{order.reported_problem}"</p>
+              <p className="text-xs text-black italic mt-0.5">&quot;{order.reported_problem}&quot;</p>
             </div>
             {order.technical_report && (
               <div className="border-t border-slate-205 pt-2">
@@ -354,6 +413,45 @@ function PrintDocumentContent({
             )}
           </div>
         </div>
+
+        {/* BLOCO 2.5: CONDIÇÕES DE RECEBIMENTO (CHECKLIST DE ENTRADA) */}
+        {order.entry_checklist && (
+          <div className="border border-black p-4">
+            <h3 className="text-xs font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
+              Condições de Recebimento (Checklist)
+            </h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+              {checklistTemplateItems.map((item: any) => {
+                const checkData = order.entry_checklist[item.id];
+                if (!checkData?.checked && !checkData?.observation?.trim()) return null;
+                return (
+                  <div key={item.id} className="flex gap-2 text-xs">
+                    <span className="font-bold text-black min-w-[120px] flex-shrink-0">
+                      {checkData.checked ? '☑' : '☐'} {item.label}:
+                    </span>
+                    <span className="text-black italic break-words line-clamp-2">
+                      {checkData.observation || (checkData.checked ? 'Presente / OK' : '')}
+                    </span>
+                  </div>
+                );
+              })}
+              
+              {order.entry_checklist.password_pin?.has_password && (
+                <div className="flex gap-2 text-xs col-span-2 mt-2 pt-2 border-t border-slate-205">
+                  <span className="font-bold text-black flex-shrink-0">☑ Senha / PIN:</span>
+                  <span className="text-black font-jetbrains">{order.entry_checklist.password_pin.password_value || 'Registrado'}</span>
+                </div>
+              )}
+              
+              {order.entry_checklist.general_notes?.trim() && (
+                <div className="col-span-2 mt-2 pt-2 border-t border-slate-205 text-xs">
+                  <span className="font-bold text-black block mb-1">Observações Gerais (Entrada):</span>
+                  <p className="text-black italic whitespace-pre-wrap">{order.entry_checklist.general_notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* BLOCO 3: SERVIÇOS E PEÇAS */}
         <div className="border border-black p-4">

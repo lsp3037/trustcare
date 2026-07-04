@@ -50,11 +50,23 @@ CREATE TABLE public.clients (
 -- Habilitar RLS para Clientes
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 
+-- 6. Tabela de Categorias de Equipamentos
+CREATE TABLE public.equipment_categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar RLS para Categorias de Equipamentos
+ALTER TABLE public.equipment_categories ENABLE ROW LEVEL SECURITY;
+
 -- 7. Tabela de Equipamentos dos Clientes
 CREATE TABLE public.client_equipments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+    category_id UUID REFERENCES public.equipment_categories(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     brand TEXT,
     model TEXT,
@@ -64,6 +76,20 @@ CREATE TABLE public.client_equipments (
 
 -- Habilitar RLS para Equipamentos dos Clientes
 ALTER TABLE public.client_equipments ENABLE ROW LEVEL SECURITY;
+
+-- 8. Tabela de Templates de Checklist
+CREATE TABLE public.checklist_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES public.equipment_categories(id) ON DELETE CASCADE,
+    schema JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT unique_category_template_per_company UNIQUE (company_id, category_id)
+);
+
+-- Habilitar RLS para Templates de Checklist
+ALTER TABLE public.checklist_templates ENABLE ROW LEVEL SECURITY;
 
 -- 4. Tabela de Estoque de Produtos
 CREATE TABLE public.products_inventory (
@@ -103,6 +129,8 @@ CREATE TABLE public.service_orders (
     codigo_os VARCHAR UNIQUE,
     pago BOOLEAN DEFAULT FALSE,
     media JSONB DEFAULT '[]'::jsonb,
+    entry_checklist JSONB,
+    exit_checklist JSONB,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -176,6 +204,16 @@ CREATE POLICY manage_service_order_items ON public.service_order_items
 
 -- Políticas para public.client_equipments
 CREATE POLICY manage_client_equipments ON public.client_equipments
+    FOR ALL USING (company_id = public.get_my_company_id())
+    WITH CHECK (company_id = public.get_my_company_id());
+
+-- Políticas para public.equipment_categories
+CREATE POLICY manage_equipment_categories ON public.equipment_categories
+    FOR ALL USING (company_id = public.get_my_company_id())
+    WITH CHECK (company_id = public.get_my_company_id());
+
+-- Políticas para public.checklist_templates
+CREATE POLICY manage_checklist_templates ON public.checklist_templates
     FOR ALL USING (company_id = public.get_my_company_id())
     WITH CHECK (company_id = public.get_my_company_id());
 

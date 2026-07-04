@@ -96,6 +96,102 @@ export const STATUS_CONFIG: Record<string, { label: string; colorClass: string; 
   }
 };
 
+export interface ChecklistItem {
+  checked: boolean;
+  observation: string;
+}
+
+export interface OrderChecklist {
+  password_pin: {
+    has_password: boolean;
+    password_value: string;
+  };
+  general_notes: string;
+  [key: string]: ChecklistItem | any;
+}
+
+export interface ChecklistTemplateItem {
+  id: string;
+  label: string;
+  type?: 'boolean';
+  required?: boolean;
+}
+
+export const DEFAULT_TEMPLATE_ITEMS: ChecklistTemplateItem[] = [
+  { id: 'charger', label: 'Carregador' },
+  { id: 'battery', label: 'Bateria' },
+  { id: 'screen', label: 'Tela / Display' },
+  { id: 'keyboard', label: 'Teclado' },
+  { id: 'casing', label: 'Carcaça (Arranhões/Amassados)' },
+  { id: 'power_on', label: 'Ligar / Dar Vídeo' },
+  { id: 'removable_media', label: 'Mídia Removível (PenDrive/SD)' },
+  { id: 'missing_screws', label: 'Parafusos Ausentes' }
+];
+
+export const defaultChecklist: OrderChecklist = {
+  password_pin: { has_password: false, password_value: '' },
+  general_notes: ''
+};
+
+const ChecklistItemRow = ({ 
+  label, 
+  field, 
+  checklist, 
+  setChecklist, 
+  disabled = false,
+  color = 'emerald'
+}: { 
+  label: string, 
+  field: string, 
+  checklist: OrderChecklist, 
+  setChecklist: React.Dispatch<React.SetStateAction<OrderChecklist>>,
+  disabled?: boolean,
+  color?: 'emerald' | 'sky'
+}) => {
+  const item = (checklist[field] || { checked: false, observation: '' }) as ChecklistItem;
+
+  const colorClasses = color === 'emerald' 
+    ? 'bg-emerald-500 focus:border-emerald-500' 
+    : 'bg-sky-500 focus:border-sky-500';
+
+  return (
+    <div className="group">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-bold text-slate-300 uppercase tracking-wide group-hover:text-white transition-colors">{label}</span>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setChecklist(prev => ({
+            ...prev,
+            [field]: { 
+              ...(prev[field] || { checked: false, observation: '' }), 
+              checked: !(prev[field] || { checked: false, observation: '' }).checked 
+            }
+          }))}
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-sm border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${item.checked ? colorClasses.split(' ')[0] : 'bg-slate-700'}`}
+        >
+          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-sm bg-white shadow ring-0 transition duration-200 ease-in-out ${item.checked ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
+      </div>
+      {(item.checked || item.observation.trim() !== '') && (
+        <input
+          type="text"
+          disabled={disabled}
+          placeholder={`Observações sobre ${label.toLowerCase()}...`}
+          value={item.observation}
+          onChange={(e) => setChecklist(prev => ({
+            ...prev,
+            [field]: { 
+              ...(prev[field] || { checked: false, observation: '' }), 
+              observation: e.target.value 
+            }
+          }))}
+          className={`w-full bg-slate-950/50 border-b border-slate-800 px-3 py-1.5 text-xs text-slate-200 focus:outline-none transition-colors disabled:opacity-50 ${colorClasses.split(' ')[1]}`}
+        />
+      )}
+    </div>
+  );
+};
 
 export default function OrderDetailPage() {
   const router = useRouter();
@@ -112,6 +208,12 @@ export default function OrderDetailPage() {
   const [status, setStatus] = useState('Novo');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  
+  // Estados de Finalização Financeira
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [paymentMethod, setPaymentMethod] = useState<string>('PIX');
+  const [pendingStatusUpdate, setPendingStatusUpdate] = useState<string>('');
   const [priority, setPriority] = useState('Média');
   const [technicianId, setTechnicianId] = useState('');
   const [technicalReport, setTechnicalReport] = useState('');
@@ -124,6 +226,12 @@ export default function OrderDetailPage() {
   const [mediaFiles, setMediaFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // Estados dos Checklists
+  const [entryChecklist, setEntryChecklist] = useState<OrderChecklist>(defaultChecklist);
+  const [exitChecklist, setExitChecklist] = useState<OrderChecklist>(defaultChecklist);
+  const [savingChecklist, setSavingChecklist] = useState(false);
+  const [checklistTemplateItems, setChecklistTemplateItems] = useState<ChecklistTemplateItem[]>(DEFAULT_TEMPLATE_ITEMS);
 
   // Estados dos Serviços do Catálogo
   const [availableServices, setAvailableServices] = useState<any[]>([]);
@@ -171,6 +279,48 @@ export default function OrderDetailPage() {
         setTotalValue(Number(osData.total_value || 0).toString());
         setPago(osData.pago || false);
         setMediaFiles(osData.media || []);
+        
+        if (osData.entry_checklist) setEntryChecklist(osData.entry_checklist);
+        if (osData.exit_checklist) setExitChecklist(osData.exit_checklist);
+
+        // Busca template de checklist com base na categoria do equipamento
+        if (osData.equipment_id) {
+          try {
+            const { data: eqData } = await supabase
+              .from('client_equipments')
+              .select('category_id')
+              .eq('id', osData.equipment_id)
+              .single();
+            
+            if (eqData && eqData.category_id) {
+              const { data: templateData } = await supabase
+                .from('checklist_templates')
+                .select('schema')
+                .eq('category_id', eqData.category_id)
+                .maybeSingle();
+              
+              if (templateData && templateData.schema && Array.isArray(templateData.schema.items)) {
+                setChecklistTemplateItems(templateData.schema.items);
+              } else {
+                // Tenta mock local
+                const mockTemplatesStr = localStorage.getItem('mock-checklist-templates');
+                const mockTemplates = mockTemplatesStr ? JSON.parse(mockTemplatesStr) : {};
+                if (mockTemplates[eqData.category_id] && Array.isArray(mockTemplates[eqData.category_id].items)) {
+                  setChecklistTemplateItems(mockTemplates[eqData.category_id].items);
+                } else {
+                  setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+                }
+              }
+            } else {
+              setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+            }
+          } catch (err) {
+            console.warn('Erro ao carregar template do checklist, usando padrão:', err);
+            setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+          }
+        } else {
+          setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
+        }
 
         if (osData.delivery_prediction) {
           setDeliveryPrediction(new Date(osData.delivery_prediction).toISOString().split('T')[0]);
@@ -511,6 +661,34 @@ export default function OrderDetailPage() {
     setMediaFiles(mediaFiles.filter((_, idx) => idx !== index));
   };
 
+  // Salvar Checklists Especificamente
+  const handleSaveChecklists = async (type: 'entry' | 'exit') => {
+    setSavingChecklist(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    
+    try {
+      const updateData = type === 'entry' 
+        ? { entry_checklist: entryChecklist }
+        : { exit_checklist: exitChecklist };
+
+      const { error } = await supabase
+        .from('service_orders')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setSuccessMsg(`Checklist de ${type === 'entry' ? 'Entrada' : 'Saída'} salvo com sucesso!`);
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err: any) {
+      console.error(`Erro ao salvar checklist de ${type}:`, err);
+      setErrorMsg(`Falha ao salvar checklist: ${err.message}`);
+    } finally {
+      setSavingChecklist(false);
+    }
+  };
+
   // Salvar Alterações (Online / Offline)
   const handleSaveChanges = async () => {
     setSaving(true);
@@ -849,6 +1027,12 @@ export default function OrderDetailPage() {
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === 'Finalizado' || newStatus === 'Entregue') {
+      setPendingStatusUpdate(newStatus);
+      setIsPaymentModalOpen(true);
+      return;
+    }
+
     setStatus(newStatus);
     setUpdatingStatus(true);
     setErrorMsg('');
@@ -897,21 +1081,68 @@ export default function OrderDetailPage() {
       console.warn('Erro ao atualizar status online, aplicando localmente:', err.message);
 
       // 2. Fluxo local offline fallback
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsedOrders = JSON.parse(localOrders);
-        const updatedOrders = parsedOrders.map((o: any) => {
+      const localOrdersStr = localStorage.getItem('mock-orders');
+      if (localOrdersStr) {
+        const localOrders = JSON.parse(localOrdersStr);
+        const updatedLocal = localOrders.map((o: any) => {
           if (o.id === id) {
             return { ...o, status: newStatus };
           }
           return o;
         });
-        localStorage.setItem('mock-orders', JSON.stringify(updatedOrders));
-        setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
-        setSuccessMsg('[Offline] Status atualizado localmente!');
-        setTimeout(() => setSuccessMsg(''), 3000);
+        localStorage.setItem('mock-orders', JSON.stringify(updatedLocal));
+        setSuccessMsg('Status atualizado offline!');
       } else {
-        setErrorMsg('Falha ao gravar localmente o novo status.');
+        setErrorMsg('Falha ao atualizar o status localmente.');
+      }
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleConfirmPaymentAndStatus = async () => {
+    setIsPaymentModalOpen(false);
+    setStatus(pendingStatusUpdate);
+    setUpdatingStatus(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const { error: updateErr } = await supabase
+        .from('service_orders')
+        .update({ 
+          status: pendingStatusUpdate,
+          payment_date: paymentDate,
+          payment_method: paymentMethod
+        })
+        .eq('id', id);
+
+      if (updateErr) throw updateErr;
+
+      setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod } : null);
+      setSuccessMsg('Status e fluxo de caixa atualizados em tempo real!');
+    } catch (err) {
+      const errObj = err as Error;
+      console.warn('Erro ao atualizar status/caixa no Supabase, atualizando localmente:', errObj.message);
+      
+      const localOrdersStr = localStorage.getItem('mock-orders');
+      if (localOrdersStr) {
+        const localOrders = JSON.parse(localOrdersStr);
+        const updatedLocal = localOrders.map((o: any) => {
+          if (o.id === id) {
+            return { 
+              ...o, 
+              status: pendingStatusUpdate,
+              payment_date: paymentDate,
+              payment_method: paymentMethod
+            };
+          }
+          return o;
+        });
+        localStorage.setItem('mock-orders', JSON.stringify(updatedLocal));
+        setSuccessMsg('Status atualizado offline!');
+      } else {
+        setErrorMsg('Falha ao atualizar o status localmente.');
       }
     } finally {
       setUpdatingStatus(false);
@@ -1589,6 +1820,152 @@ export default function OrderDetailPage() {
           </div>
 
         </div>
+        
+        {/* Nova Seção: Checklist de Entrada e Saída (Asymmetric Layered) */}
+        <div className="mt-8 space-y-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
+            <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Checklist e Condições
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Bloco de Entrada (Recebimento) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col h-full">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Entrada (Recebimento)
+                </h3>
+                <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-bold">PREENCHIMENTO INICIAL</span>
+              </div>
+              
+              <div className="flex-1 space-y-4">
+                {checklistTemplateItems.map((item) => (
+                  <ChecklistItemRow 
+                    key={item.id} 
+                    label={item.label} 
+                    field={item.id} 
+                    checklist={entryChecklist} 
+                    setChecklist={setEntryChecklist} 
+                  />
+                ))}
+                
+                {/* Senha */}
+                <div className="pt-4 border-t border-slate-800/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Possui Senha / PIN?</span>
+                    <button
+                      type="button"
+                      onClick={() => setEntryChecklist(prev => ({
+                        ...prev,
+                        password_pin: { ...prev.password_pin, has_password: !prev.password_pin.has_password }
+                      }))}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-sm border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${entryChecklist.password_pin.has_password ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-sm bg-white shadow ring-0 transition duration-200 ease-in-out ${entryChecklist.password_pin.has_password ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                  {entryChecklist.password_pin.has_password && (
+                    <input
+                      type="text"
+                      placeholder="Ex: 1234 ou Padrão Z"
+                      value={entryChecklist.password_pin.password_value}
+                      onChange={(e) => setEntryChecklist(prev => ({
+                        ...prev,
+                        password_pin: { ...prev.password_pin, password_value: e.target.value }
+                      }))}
+                      className="w-full bg-slate-950/50 border-b border-slate-800 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
+                  )}
+                </div>
+
+                {/* Observações Gerais */}
+                <div className="pt-4 border-t border-slate-800/50">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wide block mb-2">Observações Gerais (Entrada)</span>
+                  <textarea
+                    rows={2}
+                    placeholder="Outros detalhes sobre o estado de recebimento..."
+                    value={entryChecklist.general_notes}
+                    onChange={(e) => setEntryChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => handleSaveChecklists('entry')}
+                  disabled={savingChecklist}
+                  className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-lg py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  {savingChecklist ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Salvar Checklist de Entrada
+                </button>
+              </div>
+            </div>
+
+            {/* Bloco de Saída (Entrega) */}
+            <div className={`border rounded-2xl p-6 shadow-xl flex flex-col h-full transition-all duration-300 ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'bg-slate-900 border-slate-800' : 'bg-slate-950/50 border-slate-800/50 opacity-60'}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-bold text-sky-500 uppercase tracking-wider flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full bg-sky-500 ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'animate-pulse' : ''}`} /> Saída (Entrega)
+                </h3>
+                <div className="flex items-center gap-2">
+                  {['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) && (
+                    <button 
+                      type="button"
+                      onClick={() => setExitChecklist(JSON.parse(JSON.stringify(entryChecklist)))}
+                      className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                      title="Copiar as condições registradas na Entrada"
+                    >
+                      COPIAR DA ENTRADA
+                    </button>
+                  )}
+                  <span className="text-[10px] bg-slate-900 border border-slate-800 text-slate-500 px-2 py-1 rounded font-bold">REVISÃO FINAL</span>
+                </div>
+              </div>
+              
+              <div className="flex-1 space-y-4">
+                {checklistTemplateItems.map((item) => (
+                  <ChecklistItemRow 
+                    key={item.id} 
+                    label={item.label} 
+                    field={item.id} 
+                    checklist={exitChecklist} 
+                    setChecklist={setExitChecklist} 
+                    disabled={!['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)} 
+                    color="sky" 
+                  />
+                ))}
+                
+                {/* Observações Gerais */}
+                <div className="pt-4 border-t border-slate-800/50">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-2">Observações Gerais (Saída)</span>
+                  <textarea
+                    rows={2}
+                    disabled={!['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)}
+                    placeholder="Outros detalhes sobre o estado de entrega..."
+                    value={exitChecklist.general_notes}
+                    onChange={(e) => setExitChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition-colors resize-none disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => handleSaveChecklists('exit')}
+                  disabled={savingChecklist || !['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)}
+                  className="w-full bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-lg py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingChecklist ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Salvar Checklist de Saída
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
       </div>
 
@@ -1629,6 +2006,70 @@ export default function OrderDetailPage() {
           laborValue={parseFloat(serviceValue) || 0}
         />
       </div>
+
+      {/* MODAL DE FINALIZAÇÃO FINANCEIRA */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl shadow-black overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-850">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-emerald-500" />
+                Finalização e Caixa
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Ao alterar o status para <strong>{pendingStatusUpdate}</strong>, registre as informações de pagamento para alimentar o Fluxo de Caixa.
+              </p>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Data do Pagamento
+                </label>
+                <input
+                  type="date"
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Forma de Pagamento
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  <option value="PIX">PIX</option>
+                  <option value="Cartão de Crédito">Cartão de Crédito</option>
+                  <option value="Cartão de Débito">Cartão de Débito</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-950 border-t border-slate-850 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPaymentAndStatus}
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -1892,7 +2333,6 @@ function PrintDocumentContent({
           </div>
         </div>
       </div>
-
     </div>
   );
 }

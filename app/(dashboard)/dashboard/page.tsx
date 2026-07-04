@@ -39,6 +39,7 @@ export default function DashboardOverviewPage() {
   const { company } = useCompany();
   const [stats, setStats] = useState({
     billing: 0,
+    ticketMedio: 0,
     openOrders: 0,
     completedOrders: 0,
     totalClients: 0,
@@ -46,6 +47,7 @@ export default function DashboardOverviewPage() {
     pjCount: 0,
     pfCount: 0
   });
+  const [paymentDistribution, setPaymentDistribution] = useState<Record<string, number>>({});
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,8 +90,9 @@ export default function DashboardOverviewPage() {
       });
 
       ordersList.forEach(order => {
-        if (order.created_at && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
-          const orderDate = order.created_at.split('T')[0];
+        const dateToUse = order.payment_date || order.created_at;
+        if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado' || order.status === 'Entregue')) {
+          const orderDate = dateToUse.split('T')[0];
           const dayObj = days.find(d => d.rawDate === orderDate);
           if (dayObj) {
             dayObj.faturamento += Number(order.total_value || 0);
@@ -126,8 +129,9 @@ export default function DashboardOverviewPage() {
       }
 
       ordersList.forEach(order => {
-        if (order.created_at && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
-          const orderDate = new Date(order.created_at);
+        const dateToUse = order.payment_date || order.created_at;
+        if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado' || order.status === 'Entregue')) {
+          const orderDate = new Date(dateToUse);
           const weekObj = weeks.find(w => orderDate >= w.start && orderDate <= w.end);
           if (weekObj) {
             weekObj.faturamento += Number(order.total_value || 0);
@@ -171,16 +175,33 @@ export default function DashboardOverviewPage() {
 
         setRecentOrders(filteredByDate.slice(0, 5));
         
-        // Faturamento: soma de concluídas/finalizadas no período
-        const billingTotal = filteredByDate
-          .filter(o => o.status === 'Pronto para Retirada' || o.status === 'Finalizado')
-          .reduce((sum, o) => sum + Number(o.total_value || 0), 0);
+        // Filtragem das OS Pagas no Período (para Faturamento e Ticket Médio, com fallback para created_at)
+        const paidOrders = orders.filter(o => {
+          const dateToUse = o.payment_date || o.created_at;
+          if (!dateToUse) return false;
+          const pDate = new Date(dateToUse);
+          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && pDate >= from && pDate <= to;
+        });
+
+        // Faturamento Realizado (Caixa)
+        const billingTotal = paidOrders.reduce((sum, o) => sum + Number(o.total_value || 0), 0);
+        
+        // Ticket Médio
+        const ticketMedio = paidOrders.length > 0 ? (billingTotal / paidOrders.length) : 0;
+
+        // Distribuição de Pagamento
+        const dist = paidOrders.reduce((acc, order) => {
+          const method = order.payment_method || 'Não Informado';
+          acc[method] = (acc[method] || 0) + Number(order.total_value || 0);
+          return acc;
+        }, {} as Record<string, number>);
+        setPaymentDistribution(dist);
         
         // OS Abertas: criadas no período e ativas
-        const open = filteredByDate.filter(o => !['Finalizado', 'Cancelado'].includes(o.status)).length;
+        const open = filteredByDate.filter(o => !['Finalizado', 'Entregue', 'Cancelado'].includes(o.status)).length;
         
         // OS Concluídas: finalizadas no período
-        const completed = filteredByDate.filter(o => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
+        const completed = filteredByDate.filter(o => ['Pronto para Retirada', 'Finalizado', 'Entregue'].includes(o.status)).length;
 
         // Busca total clientes e perfis PF/PJ (Estátistica Global)
         const { data: allClients } = await supabase.from('clients').select('type');
@@ -193,6 +214,7 @@ export default function DashboardOverviewPage() {
         
         setStats({
           billing: billingTotal,
+          ticketMedio: ticketMedio,
           openOrders: open,
           completedOrders: completed,
           totalClients: clientsCount,
@@ -209,6 +231,7 @@ export default function DashboardOverviewPage() {
           setChartData([]);
           setStats({
             billing: 0,
+            ticketMedio: 0,
             openOrders: 0,
             completedOrders: 0,
             totalClients: 0,
@@ -216,6 +239,7 @@ export default function DashboardOverviewPage() {
             pjCount: 0,
             pfCount: 0
           });
+          setPaymentDistribution({});
         } else {
           loadLocalDashboardMock(from, to);
         }
@@ -228,6 +252,7 @@ export default function DashboardOverviewPage() {
         setChartData([]);
         setStats({
           billing: 0,
+          ticketMedio: 0,
           openOrders: 0,
           completedOrders: 0,
           totalClients: 0,
@@ -235,6 +260,7 @@ export default function DashboardOverviewPage() {
           pjCount: 0,
           pfCount: 0
         });
+        setPaymentDistribution({});
       } else {
         loadLocalDashboardMock(from, to);
       }
@@ -267,13 +293,26 @@ export default function DashboardOverviewPage() {
     setRecentOrders(filteredByDate.slice(0, 5));
     setChartData(processChartDataForRange(ordersList, from, to));
 
-    // Estatísticas
-    const billingTotal = filteredByDate
-      .filter((o: any) => o.status === 'Pronto para Retirada' || o.status === 'Finalizado')
-      .reduce((sum: number, o: any) => sum + Number(o.total_value || 0), 0);
+    // Estatísticas financeiras (usando payment_date ou fallback pra created_at no mock)
+    const paidOrders = ordersList.filter((o: any) => {
+      const dateToUse = o.payment_date || o.created_at;
+      if (!dateToUse) return false;
+      const orderDate = new Date(dateToUse);
+      return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && orderDate >= from && orderDate <= to;
+    });
+
+    const billingTotal = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_value || 0), 0);
+    const ticketMedio = paidOrders.length > 0 ? (billingTotal / paidOrders.length) : 0;
     
-    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Cancelado'].includes(o.status)).length;
-    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
+    const dist = paidOrders.reduce((acc: any, order: any) => {
+      const method = order.payment_method || 'Não Informado';
+      acc[method] = (acc[method] || 0) + Number(order.total_value || 0);
+      return acc;
+    }, {} as Record<string, number>);
+    setPaymentDistribution(dist);
+    
+    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Entregue', 'Cancelado'].includes(o.status)).length;
+    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado', 'Entregue'].includes(o.status)).length;
 
     const localClients = localStorage.getItem('mock-clients');
     const parsedClients = localClients ? JSON.parse(localClients) : [];
@@ -287,6 +326,7 @@ export default function DashboardOverviewPage() {
 
     setStats({
       billing: billingTotal,
+      ticketMedio: ticketMedio,
       openOrders: open,
       completedOrders: completed,
       totalClients: clientsCount,
@@ -413,19 +453,21 @@ export default function DashboardOverviewPage() {
           <p className="text-xs text-slate-500 mt-2">Aguardando aprovação ou peças</p>
         </div>
 
-        {/* Card 3: OS Concluídas */}
+        {/* Card 3: Ticket Médio */}
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <CheckCircle2 className="w-5 h-5" />
+              <TrendingUp className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-              Taxa 85%
+              Caixa
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-405">OS Concluídas</p>
-          <h3 className="text-2xl font-black text-white mt-1">{stats.completedOrders}</h3>
-          <p className="text-xs text-slate-500 mt-2">Prontas para entrega ou finalizadas</p>
+          <p className="text-sm font-semibold text-slate-405">Ticket Médio</p>
+          <h3 className="text-2xl font-black text-white mt-1">
+            R$ {stats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </h3>
+          <p className="text-xs text-slate-500 mt-2">Valor médio por O.S. paga</p>
         </div>
 
         {/* Card 4: Alertas de Estoque (Clicável - Não afetado por data) */}
@@ -605,6 +647,38 @@ export default function DashboardOverviewPage() {
           </div>
 
           <div className="mt-8 border-t border-slate-800/80 pt-6">
+            <h4 className="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-slate-500" />
+              Formas de Recebimento
+            </h4>
+            <div className="space-y-4">
+              {Object.keys(paymentDistribution).length === 0 ? (
+                <div className="text-xs text-slate-500 italic">Nenhum pagamento registrado no período.</div>
+              ) : (
+                Object.entries(paymentDistribution)
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([method, value]) => {
+                  const percent = stats.billing > 0 ? (value / stats.billing) * 100 : 0;
+                  return (
+                    <div key={method}>
+                      <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1.5">
+                        <span>{method}</span>
+                        <span>{percent.toFixed(1)}% <span className="text-[10px] text-slate-500 ml-1 font-mono">(R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</span></span>
+                      </div>
+                      <div className="w-full bg-slate-950 rounded-full h-2 border border-slate-850">
+                        <div 
+                          className={`h-full rounded-full ${method === 'PIX' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]' : method === 'Dinheiro' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`} 
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-slate-800/80 pt-6">
             <Link
               href="/dashboard/clients"
               className="w-full bg-slate-950 hover:bg-slate-800/80 text-slate-350 text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border border-slate-800/80 transition-all"

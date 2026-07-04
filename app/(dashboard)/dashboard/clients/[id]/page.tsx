@@ -19,7 +19,11 @@ import {
   AlertTriangle,
   Plus,
   Laptop,
-  QrCode
+  QrCode,
+  Trash2,
+  Save,
+  Tag,
+  FolderPlus
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
@@ -51,6 +55,11 @@ export default function ClientDetailPage() {
   const [addingEq, setAddingEq] = useState(false);
   const [eqError, setEqError] = useState('');
   const [eqSuccess, setEqSuccess] = useState(false);
+
+  // Estados para Categorias e CRUD de Equipamentos
+  const [categories, setCategories] = useState<any[]>([]);
+  const [eqCategoryId, setEqCategoryId] = useState('');
+  const [editingEqId, setEditingEqId] = useState<string | null>(null);
 
   const fetchClientAndOrders = async () => {
     try {
@@ -93,10 +102,20 @@ export default function ClientDetailPage() {
           setOrders(ordersData);
         }
 
-        // Busca Equipamentos do cliente
+        // Busca Categorias de Equipamentos
+        const { data: catData } = await supabase
+          .from('equipment_categories')
+          .select('*')
+          .order('name');
+        
+        if (catData) {
+          setCategories(catData);
+        }
+
+        // Busca Equipamentos do cliente com a categoria relacionada
         const { data: eqData } = await supabase
           .from('client_equipments')
-          .select('*')
+          .select('*, equipment_categories(name)')
           .eq('client_id', id)
           .order('created_at', { ascending: false });
 
@@ -139,16 +158,31 @@ export default function ClientDetailPage() {
           const filteredOrders = allOrders.filter((o: any) => o.client_id === id);
           setOrders(filteredOrders);
 
+          // Busca categorias mockadas
+          const mockCats = localStorage.getItem('mock-equipment-categories');
+          const allCats = mockCats ? JSON.parse(mockCats) : [
+            { id: 'cat1', name: 'Notebook' },
+            { id: 'cat2', name: 'Desktop' },
+          ];
+          setCategories(allCats);
+
           // Busca equipamentos mockados
           const mockEqs = localStorage.getItem('mock-equipments');
           const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-            { id: 'eq2', client_id: 'c2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-            { id: 'eq3', client_id: 'c3', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-            { id: 'eq4', client_id: 'c4', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
+            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728', equipment_categories: { name: 'Notebook' } },
+            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A', equipment_categories: { name: 'Desktop' } },
+            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B', equipment_categories: { name: 'Desktop' } },
+            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5', equipment_categories: { name: 'Notebook' } },
           ];
           const filteredEqs = allEqs.filter((e: any) => e.client_id === id);
-          setEquipments(filteredEqs);
+          const enrichedEqs = filteredEqs.map((e: any) => {
+            const cat = allCats.find((c: any) => c.id === e.category_id);
+            return {
+              ...e,
+              equipment_categories: cat ? { name: cat.name } : null
+            };
+          });
+          setEquipments(enrichedEqs);
         } else {
           setClient(null);
         }
@@ -213,7 +247,7 @@ export default function ClientDetailPage() {
     }
   };
 
-  const handleCreateEquipment = async (e: React.FormEvent) => {
+  const handleSaveEquipment = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddingEq(true);
     setEqError('');
@@ -227,39 +261,90 @@ export default function ClientDetailPage() {
         if (profile?.company_id) companyId = profile.company_id;
       }
 
-      const newEq = {
+      const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+      const localEqData = {
         company_id: companyId,
         client_id: id,
+        category_id: eqCategoryId || null,
         name: eqName,
         brand: eqBrand,
         model: eqModel,
         serial_number: eqSerial,
       };
 
-      const { error } = await supabase.from('client_equipments').insert(newEq);
+      const supabaseEqData = {
+        ...localEqData,
+        category_id: isUuid(eqCategoryId) ? eqCategoryId : null,
+      };
 
-      if (error) {
-        console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
+      if (editingEqId) {
+        // Modo Edição
+        const isMockId = editingEqId.startsWith('mock-eq-') || ['eq1', 'eq2', 'eq3', 'eq4'].includes(editingEqId);
         
-        const mockEqs = localStorage.getItem('mock-equipments');
-        const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-          { id: 'eq1', client_id: 'c1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-          { id: 'eq2', client_id: 'c2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-          { id: 'eq3', client_id: 'c3', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-          { id: 'eq4', client_id: 'c4', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-        ];
-        allEqs.push({
-          id: `mock-eq-${Date.now()}`,
-          ...newEq
-        });
-        localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
+        if (isMockId) {
+          const mockEqs = localStorage.getItem('mock-equipments');
+          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
+            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
+            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
+            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
+            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
+          ];
+          const updatedEqs = allEqs.map((e: any) => {
+            if (e.id === editingEqId) {
+              return { ...e, ...localEqData, id: editingEqId };
+            }
+            return e;
+          });
+          localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
+        } else {
+          const { error } = await supabase.from('client_equipments').update(supabaseEqData).eq('id', editingEqId);
+          if (error) {
+            console.warn('Falha Supabase ao atualizar, tentando mock local:', error.message);
+            const mockEqs = localStorage.getItem('mock-equipments');
+            if (mockEqs) {
+              const allEqs = JSON.parse(mockEqs);
+              const updatedEqs = allEqs.map((e: any) => {
+                if (e.id === editingEqId) {
+                  return { ...e, ...localEqData, id: editingEqId };
+                }
+                return e;
+              });
+              localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
+            } else {
+              throw error;
+            }
+          }
+        }
+      } else {
+        // Modo Criação
+        const { error } = await supabase.from('client_equipments').insert(supabaseEqData);
+        if (error) {
+          console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
+          
+          const mockEqs = localStorage.getItem('mock-equipments');
+          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
+            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
+            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
+            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
+            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
+          ];
+          allEqs.push({
+            id: `mock-eq-${Date.now()}`,
+            ...localEqData
+          });
+          localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
+        }
       }
 
       setEqSuccess(true);
+      
+      // Limpa os campos
       setEqName('');
       setEqBrand('');
       setEqModel('');
       setEqSerial('');
+      setEqCategoryId('');
+      setEditingEqId(null);
       
       setTimeout(() => {
         setEqSuccess(false);
@@ -267,11 +352,74 @@ export default function ClientDetailPage() {
 
       fetchClientAndOrders();
     } catch (err: any) {
-      setEqError(err.message || 'Erro ao adicionar equipamento.');
+      setEqError(err.message || 'Erro ao salvar equipamento.');
     } finally {
       setAddingEq(false);
     }
   };
+
+  const handleDeleteEquipment = async (eqId: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este equipamento?')) return;
+    
+    try {
+      const { error } = await supabase.from('client_equipments').delete().eq('id', eqId);
+      if (error) throw error;
+      fetchClientAndOrders();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao excluir equipamento.');
+    }
+  };
+
+  const handleEditEquipment = (eq: any) => {
+    setEditingEqId(eq.id);
+    setEqName(eq.name);
+    setEqBrand(eq.brand || '');
+    setEqModel(eq.model || '');
+    setEqSerial(eq.serial_number || '');
+    setEqCategoryId(eq.category_id || '');
+    // Scroll down to the form
+    window.document.getElementById('equipment-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleCreateCategory = async () => {
+    const catName = window.prompt('Digite o nome da nova categoria:');
+    if (!catName || !catName.trim()) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let companyId = 'mock-tenant-id';
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+        if (profile?.company_id) companyId = profile.company_id;
+      }
+
+      const { data, error } = await supabase
+        .from('equipment_categories')
+        .insert({ name: catName.trim(), company_id: companyId })
+        .select()
+        .single();
+      
+      if (error) {
+        console.warn('Fallback mock categories:', error);
+        const mockCats = localStorage.getItem('mock-equipment-categories');
+        const allCats = mockCats ? JSON.parse(mockCats) : [];
+        const newCat = { id: `mock-cat-${Date.now()}`, name: catName.trim() };
+        allCats.push(newCat);
+        localStorage.setItem('mock-equipment-categories', JSON.stringify(allCats));
+        setCategories(allCats);
+        setEqCategoryId(newCat.id);
+        return;
+      }
+
+      if (data) {
+        setCategories([...categories, data]);
+        setEqCategoryId(data.id);
+      }
+    } catch (err) {
+      alert('Erro ao criar categoria.');
+    }
+  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -520,18 +668,45 @@ export default function ClientDetailPage() {
                   <thead>
                     <tr className="border-b border-slate-850 text-slate-500 font-semibold uppercase tracking-wider bg-slate-950/20">
                       <th className="py-2.5 px-3">Equipamento</th>
+                      <th className="py-2.5 px-3">Categoria</th>
                       <th className="py-2.5 px-3">Marca</th>
                       <th className="py-2.5 px-3">Modelo</th>
-                      <th className="py-2.5 px-3 text-right">N/S (Serial)</th>
+                      <th className="py-2.5 px-3">N/S (Serial)</th>
+                      <th className="py-2.5 px-3 text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/40">
                     {equipments.map((eq) => (
                       <tr key={eq.id} className="hover:bg-slate-800/10 transition-colors">
                         <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
+                        <td className="py-2.5 px-3 text-slate-400">
+                          {eq.equipment_categories?.name ? (
+                            <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
+                              {eq.equipment_categories.name}
+                            </span>
+                          ) : '—'}
+                        </td>
                         <td className="py-2.5 px-3 text-slate-400">{eq.brand || '—'}</td>
                         <td className="py-2.5 px-3 text-slate-400">{eq.model || '—'}</td>
-                        <td className="py-2.5 px-3 text-right font-mono text-slate-350">{eq.serial_number || '—'}</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-350">{eq.serial_number || '—'}</td>
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditEquipment(eq)}
+                              title="Editar Equipamento"
+                              className="p-1.5 bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-md transition-colors"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEquipment(eq.id)}
+                              title="Excluir Equipamento"
+                              className="p-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-md transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -539,9 +714,15 @@ export default function ClientDetailPage() {
               </div>
             )}
 
-            {/* Formulário para adicionar Equipamento */}
-            <form onSubmit={handleCreateEquipment} className="border-t border-slate-850 pt-5 space-y-4">
-              <h4 className="text-sm font-semibold text-slate-200">Cadastrar Novo Equipamento</h4>
+            {/* Formulário para adicionar/editar Equipamento */}
+            <form id="equipment-form" onSubmit={handleSaveEquipment} className="border-t border-slate-850 pt-5 space-y-4">
+              <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                {editingEqId ? (
+                  <><Edit className="w-4 h-4 text-indigo-400" /> Atualizar Equipamento</>
+                ) : (
+                  <><Plus className="w-4 h-4 text-indigo-400" /> Cadastrar Novo Equipamento</>
+                )}
+              </h4>
               
               {eqSuccess && (
                 <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
@@ -565,6 +746,30 @@ export default function ClientDetailPage() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                     required
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Categoria</label>
+                  <div className="flex gap-2">
+                    <select
+                      value={eqCategoryId}
+                      onChange={(e) => setEqCategoryId(e.target.value)}
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    >
+                      <option value="">Selecione...</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleCreateCategory}
+                      className="px-3 bg-slate-900 border border-slate-800 hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 rounded-lg flex items-center justify-center transition-colors"
+                      title="Nova Categoria"
+                    >
+                      <FolderPlus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-1">
@@ -604,13 +809,30 @@ export default function ClientDetailPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
+                {editingEqId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingEqId(null);
+                      setEqName('');
+                      setEqBrand('');
+                      setEqModel('');
+                      setEqSerial('');
+                      setEqCategoryId('');
+                    }}
+                    className="bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold py-2 px-5 rounded-lg text-xs transition-colors"
+                  >
+                    Cancelar Edição
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={addingEq || eqSuccess}
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
                 >
-                  {addingEq ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Adicionar Equipamento
+                  {addingEq ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)} 
+                  {editingEqId ? 'Atualizar Equipamento' : 'Adicionar Equipamento'}
                 </button>
               </div>
             </form>

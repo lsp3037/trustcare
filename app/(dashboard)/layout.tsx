@@ -143,7 +143,8 @@ function DashboardLayoutContent({
         name: 'Configurações', 
         icon: Settings,
         subItems: [
-          { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building }
+          { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building },
+          { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList }
         ]
       }
     ] : [])
