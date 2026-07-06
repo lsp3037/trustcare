@@ -11,7 +11,7 @@ function InviteContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
   const [inviteData, setInviteData] = useState<any>(null);
   const [companyName, setCompanyName] = useState<string>('');
