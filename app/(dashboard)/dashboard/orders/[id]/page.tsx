@@ -1597,25 +1597,64 @@ export default function OrderDetailPage() {
                   ))}
                 </select>
 
-                <div className="flex gap-2">
-                  <div className="w-24 shrink-0">
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Qtd"
-                      value={currentProductQty}
-                      onChange={(e) => setCurrentProductQty(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors text-center"
-                    />
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <div className="w-24 shrink-0">
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Qtd"
+                        value={currentProductQty}
+                        onChange={(e) => setCurrentProductQty(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddProduct}
+                      disabled={(() => {
+                        if (!currentProductId) return true;
+                        const prod = inventory.find(p => p.id === currentProductId);
+                        if (!prod) return true;
+                        const existingItem = selectedProducts.find(p => p.product_id === currentProductId);
+                        const existingQty = existingItem ? existingItem.quantity : 0;
+                        const stockAvailable = prod.quantity + existingQty;
+                        return (parseInt(currentProductQty) || 0) > stockAvailable;
+                      })()}
+                      className={`flex-1 font-semibold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-md ${
+                        (() => {
+                          if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
+                          const prod = inventory.find(p => p.id === currentProductId);
+                          if (!prod) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
+                          const existingItem = selectedProducts.find(p => p.product_id === currentProductId);
+                          const existingQty = existingItem ? existingItem.quantity : 0;
+                          const stockAvailable = prod.quantity + existingQty;
+                          if ((parseInt(currentProductQty) || 0) > stockAvailable) {
+                            return 'bg-rose-950/20 text-rose-550 border border-rose-900/50 cursor-not-allowed';
+                          }
+                          return 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/10 cursor-pointer';
+                        })()
+                      }`}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar Peça
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddProduct}
-                    disabled={!currentProductId}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-800 text-white font-semibold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-500/10 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Adicionar Peça
-                  </button>
+                  {(() => {
+                    const prod = inventory.find(p => p.id === currentProductId);
+                    if (prod) {
+                      const existingItem = selectedProducts.find(p => p.product_id === currentProductId);
+                      const existingQty = existingItem ? existingItem.quantity : 0;
+                      const stockAvailable = prod.quantity + existingQty;
+                      const qty = parseInt(currentProductQty) || 0;
+                      const over = qty > stockAvailable;
+                      return (
+                        <span className={`text-[10px] font-semibold ${over ? 'text-rose-500 animate-pulse' : 'text-slate-550'}`}>
+                          Saldo disponível (Estoque + Alocado): {stockAvailable} un (Estoque atual: {prod.quantity} un)
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             </div>

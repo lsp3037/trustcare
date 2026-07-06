@@ -1080,12 +1080,40 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               onChange={(e) => setCurrentProductQty(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
             />
+            {(() => {
+              const prod = inventory.find(p => p.id === currentProductId);
+              if (prod) {
+                const qty = parseInt(currentProductQty) || 0;
+                const over = qty > prod.quantity;
+                return (
+                  <span className={`text-[10px] block mt-0.5 font-semibold ${over ? 'text-rose-500 animate-pulse' : 'text-slate-500'}`}>
+                    Estoque: {prod.quantity} un
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           <button
             type="button"
             onClick={handleAddProduct}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 transition-colors h-[34px] shadow-lg shadow-indigo-650/10"
+            disabled={(() => {
+              if (!currentProductId) return true;
+              const prod = inventory.find(p => p.id === currentProductId);
+              if (!prod) return true;
+              return (parseInt(currentProductQty) || 0) > prod.quantity;
+            })()}
+            className={`font-semibold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 transition-all h-[34px] ${
+              (() => {
+                if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
+                const prod = inventory.find(p => p.id === currentProductId);
+                if (!prod || (parseInt(currentProductQty) || 0) > prod.quantity) {
+                  return 'bg-rose-950/20 text-rose-550 border border-rose-900/50 cursor-not-allowed';
+                }
+                return 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-650/10 cursor-pointer';
+              })()
+            }`}
           >
             <Plus className="w-3.5 h-3.5" /> Adicionar Peça
           </button>

@@ -15,8 +15,11 @@ import {
   X, 
   ArrowRight,
   Info,
-  Check
+  Check,
+  FileText
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
+import { useCompany } from '@/lib/context/CompanyContext';
 
 function createUniqueId(prefix: string): string {
   const timestamp = new Date().getTime();
@@ -26,14 +29,17 @@ function createUniqueId(prefix: string): string {
 
 interface Lead {
   id: string;
-  nome_cliente: string;
-  telefone: string;
-  equipamento_interesse: string;
+  company_id?: string;
+  name: string;
+  phone: string;
+  equipment_info: string;
+  problem_description?: string;
   origem: 'WhatsApp' | 'Instagram Ads' | 'Indicação' | 'Telefone' | 'Outro';
-  status_funil: 'Novo Contato' | 'Em Negociação' | 'Aguardando Equipamento' | 'Ganho/Convertido' | 'Perdido';
+  status: 'Novo Contato' | 'Em Negociação' | 'Aguardando Equipamento' | 'Ganho/Convertido' | 'Perdido';
   valor_estimado: number;
   motivo_perda?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 interface Client {
@@ -56,6 +62,7 @@ const COLUMNS = [
 
 export default function LeadsFunnelPage() {
   const router = useRouter();
+  const { company } = useCompany();
   
   // State variables
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -79,35 +86,62 @@ export default function LeadsFunnelPage() {
   const [nomeCliente, setNomeCliente] = useState('');
   const [telefone, setTelefone] = useState('');
   const [equipamentoInteresse, setEquipamentoInteresse] = useState('');
+  const [problemDescription, setProblemDescription] = useState('');
   const [origem, setOrigem] = useState<'WhatsApp' | 'Instagram Ads' | 'Indicação' | 'Telefone' | 'Outro'>('WhatsApp');
   const [valorEstimado, setValorEstimado] = useState('0.00');
-  const [statusFunil, setStatusFunil] = useState<Lead['status_funil']>('Novo Contato');
+  const [statusFunil, setStatusFunil] = useState<Lead['status']>('Novo Contato');
 
-  useEffect(() => {
+  const fetchLeads = async () => {
+    if (!company?.id) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setLeads(data as Lead[]);
+      } else {
+        loadLocalLeads();
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar leads do Supabase, buscando mock local:', err);
+      loadLocalLeads();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLocalLeads = () => {
     const stored = localStorage.getItem('mock-leads');
     let loadedLeads: Lead[] = [];
     if (stored) {
       loadedLeads = JSON.parse(stored);
     } else {
       loadedLeads = [
-        { id: 'l1', nome_cliente: 'Ana Paula Souza', telefone: '(11) 98888-7777', equipamento_interesse: 'MacBook Pro M2 - Upgrade de SSD', origem: 'WhatsApp', status_funil: 'Novo Contato', valor_estimado: 1200.00, created_at: new Date(Date.now() - 3600000 * 3).toISOString() },
-        { id: 'l2', nome_cliente: 'Marcos Vinícius', telefone: '(21) 97777-6666', equipamento_interesse: 'Console PS5 - Limpeza e Superaquecimento', origem: 'Instagram Ads', status_funil: 'Em Negociação', valor_estimado: 450.00, created_at: new Date(Date.now() - 3600000 * 20).toISOString() },
-        { id: 'l3', nome_cliente: 'Roberto da Silva', telefone: '(19) 99999-8888', equipamento_interesse: 'Notebook Dell Inspiron - Reparo de Carcaça', origem: 'Indicação', status_funil: 'Aguardando Equipamento', valor_estimado: 350.00, created_at: new Date(Date.now() - 3600000 * 48).toISOString() },
-        { id: 'l4', nome_cliente: 'Lúcia Ferreira', telefone: '(31) 96666-5555', equipamento_interesse: 'iPhone 13 - Troca de Tela', origem: 'Telefone', status_funil: 'Ganho/Convertido', valor_estimado: 600.00, created_at: new Date(Date.now() - 3600000 * 72).toISOString() },
-        { id: 'l5', nome_cliente: 'Julio Cesar Santos', telefone: '(11) 97777-8888', equipamento_interesse: 'Placa Mãe PC Desktop - Reparo de Trilhas', origem: 'Outro', status_funil: 'Perdido', valor_estimado: 750.00, motivo_perda: 'Preço muito alto', created_at: new Date(Date.now() - 3600000 * 96).toISOString() }
+        { id: 'l1', name: 'Ana Paula Souza', phone: '(11) 98888-7777', equipment_info: 'MacBook Pro M2 - Upgrade de SSD', problem_description: 'Upgrade para maior capacidade', origem: 'WhatsApp', status: 'Novo Contato', valor_estimado: 1200.00, created_at: new Date(Date.now() - 3600000 * 3).toISOString() },
+        { id: 'l2', name: 'Marcos Vinícius', phone: '(21) 97777-6666', equipment_info: 'Console PS5 - Limpeza e Superaquecimento', problem_description: 'Desliga sozinho ao jogar', origem: 'Instagram Ads', status: 'Em Negociação', valor_estimado: 450.00, created_at: new Date(Date.now() - 3600000 * 20).toISOString() },
+        { id: 'l3', name: 'Roberto da Silva', phone: '(19) 99999-8888', equipment_info: 'Notebook Dell Inspiron - Reparo de Carcaça', problem_description: 'Dobradiça quebrada', origem: 'Indicação', status: 'Aguardando Equipamento', valor_estimado: 350.00, created_at: new Date(Date.now() - 3600000 * 48).toISOString() },
+        { id: 'l4', name: 'Lúcia Ferreira', phone: '(31) 96666-5555', equipment_info: 'iPhone 13 - Troca de Tela', problem_description: 'Vidro quebrado e touch falhando', origem: 'Telefone', status: 'Ganho/Convertido', valor_estimado: 600.00, created_at: new Date(Date.now() - 3600000 * 72).toISOString() },
+        { id: 'l5', name: 'Julio Cesar Santos', phone: '(11) 97777-8888', equipment_info: 'Placa Mãe PC Desktop - Reparo de Trilhas', problem_description: 'Curto circuito na linha de entrada', origem: 'Outro', status: 'Perdido', valor_estimado: 750.00, motivo_perda: 'Preço muito alto', created_at: new Date(Date.now() - 3600000 * 96).toISOString() }
       ];
       localStorage.setItem('mock-leads', JSON.stringify(loadedLeads));
     }
-    
-    const timer = setTimeout(() => {
-      setLeads(loadedLeads);
-      setLoading(false);
-    }, 0);
+    setLeads(loadedLeads);
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => {
+    if (company?.id) {
+      fetchLeads();
+    } else {
+      loadLocalLeads();
+    }
+  }, [company?.id]);
 
-  // Save leads helper
   const saveLeadsToStorage = (updatedLeads: Lead[]) => {
     setLeads(updatedLeads);
     localStorage.setItem('mock-leads', JSON.stringify(updatedLeads));
@@ -133,14 +167,14 @@ export default function LeadsFunnelPage() {
     setDragOverColumn(columnId);
   };
 
-  const handleDrop = (e: React.DragEvent, targetColumn: Lead['status_funil']) => {
+  const handleDrop = (e: React.DragEvent, targetColumn: Lead['status']) => {
     e.preventDefault();
     setDragOverColumn(null);
     const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
     if (!leadId) return;
 
     const lead = leads.find((l) => l.id === leadId);
-    if (!lead || lead.status_funil === targetColumn) return;
+    if (!lead || lead.status === targetColumn) return;
 
     // Handle Loss transition
     if (targetColumn === 'Perdido') {
@@ -154,27 +188,54 @@ export default function LeadsFunnelPage() {
     updateLeadStatus(leadId, targetColumn);
   };
 
-  const updateLeadStatus = (leadId: string, newStatus: Lead['status_funil'], motivoPerda?: string) => {
+  const updateLeadStatus = async (leadId: string, newStatus: Lead['status'], motivoPerda?: string) => {
+    // Optimistic UI update
     const updated = leads.map((l) => {
       if (l.id === leadId) {
         return {
           ...l,
-          status_funil: newStatus,
+          status: newStatus,
           motivo_perda: newStatus === 'Perdido' ? motivoPerda : undefined,
           updated_at: new Date().toISOString()
         };
       }
       return l;
     });
-    saveLeadsToStorage(updated);
+    setLeads(updated);
     
     // Update active details modal if open
     if (selectedLead && selectedLead.id === leadId) {
       setSelectedLead({
         ...selectedLead,
-        status_funil: newStatus,
+        status: newStatus,
         motivo_perda: newStatus === 'Perdido' ? motivoPerda : undefined
       });
+    }
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({
+          status: newStatus,
+          motivo_perda: newStatus === 'Perdido' ? motivoPerda : null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', leadId);
+
+      if (error) throw error;
+      
+      // Sync local storage
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      const updatedLocal = parsedLeads.map((l: any) => 
+        l.id === leadId 
+          ? { ...l, status: newStatus, motivo_perda: newStatus === 'Perdido' ? motivoPerda : null, updated_at: new Date().toISOString() } 
+          : l
+      );
+      localStorage.setItem('mock-leads', JSON.stringify(updatedLocal));
+    } catch (err) {
+      console.warn('Erro ao atualizar status do lead no Supabase, aplicando localmente:', err);
+      saveLeadsToStorage(updated);
     }
   };
 
@@ -190,66 +251,145 @@ export default function LeadsFunnelPage() {
   };
 
   // Add Lead
-  const handleCreateLead = (e: React.FormEvent) => {
+  const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nomeCliente.trim()) return;
 
-    const newLead: Lead = {
-      id: createUniqueId('lead'),
-      nome_cliente: nomeCliente.trim(),
-      telefone: telefone.trim(),
-      equipamento_interesse: equipamentoInteresse.trim(),
+    const newLeadData = {
+      company_id: company?.id,
+      name: nomeCliente.trim(),
+      phone: telefone.trim(),
+      equipment_info: equipamentoInteresse.trim(),
+      problem_description: problemDescription.trim(),
       origem,
-      status_funil: statusFunil,
-      valor_estimado: parseFloat(valorEstimado) || 0.00,
-      created_at: new Date().toISOString()
+      status: statusFunil,
+      valor_estimado: parseFloat(valorEstimado) || 0.00
     };
 
-    saveLeadsToStorage([newLead, ...leads]);
-    setIsCreating(false);
-    resetForm();
+    try {
+      if (!company?.id) throw new Error('Empresa não selecionada');
+      
+      const { data, error } = await supabase
+        .from('leads')
+        .insert(newLeadData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setLeads([data as Lead, ...leads]);
+        
+        // Sync local storage
+        const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+        const parsedLeads = JSON.parse(localLeadsStr);
+        parsedLeads.unshift(data);
+        localStorage.setItem('mock-leads', JSON.stringify(parsedLeads));
+
+        setIsCreating(false);
+        resetForm();
+      }
+    } catch (err) {
+      console.warn('Erro Supabase ao salvar lead, salvando mock local:', err);
+      
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      
+      const localNewLead: Lead = {
+        id: `mock-lead-${Date.now()}`,
+        ...newLeadData,
+        created_at: new Date().toISOString()
+      };
+      
+      parsedLeads.unshift(localNewLead);
+      localStorage.setItem('mock-leads', JSON.stringify(parsedLeads));
+      
+      setLeads([localNewLead, ...leads]);
+      setIsCreating(false);
+      resetForm();
+    }
   };
 
   // Edit Lead
-  const handleUpdateLead = (e: React.FormEvent) => {
+  const handleUpdateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead || !nomeCliente.trim()) return;
 
-    const updated = leads.map((l) => {
-      if (l.id === selectedLead.id) {
-        return {
-          ...l,
-          nome_cliente: nomeCliente.trim(),
-          telefone: telefone.trim(),
-          equipamento_interesse: equipamentoInteresse.trim(),
-          origem,
-          valor_estimado: parseFloat(valorEstimado) || 0.00,
-          status_funil: statusFunil
-        };
-      }
-      return l;
-    });
-
-    saveLeadsToStorage(updated);
-    setSelectedLead({
-      ...selectedLead,
-      nome_cliente: nomeCliente.trim(),
-      telefone: telefone.trim(),
-      equipamento_interesse: equipamentoInteresse.trim(),
+    const updateData = {
+      name: nomeCliente.trim(),
+      phone: telefone.trim(),
+      equipment_info: equipamentoInteresse.trim(),
+      problem_description: problemDescription.trim(),
       origem,
       valor_estimado: parseFloat(valorEstimado) || 0.00,
-      status_funil: statusFunil
-    });
-    setIsEditing(false);
+      status: statusFunil,
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update(updateData)
+        .eq('id', selectedLead.id);
+
+      if (error) throw error;
+
+      const updatedLead = { ...selectedLead, ...updateData };
+      setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
+      
+      // Sync local storage
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      const updated = parsedLeads.map((l: any) => l.id === selectedLead.id ? { ...l, ...updateData } : l);
+      localStorage.setItem('mock-leads', JSON.stringify(updated));
+
+      setSelectedLead(updatedLead);
+      setIsEditing(false);
+    } catch (err) {
+      console.warn('Erro ao atualizar lead no Supabase, aplicando localmente:', err);
+      
+      const updatedLead = { ...selectedLead, ...updateData };
+      setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
+      
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      const updated = parsedLeads.map((l: any) => l.id === selectedLead.id ? { ...l, ...updateData } : l);
+      localStorage.setItem('mock-leads', JSON.stringify(updated));
+      
+      setSelectedLead(updatedLead);
+      setIsEditing(false);
+    }
   };
 
   // Delete Lead
-  const handleDeleteLead = (leadId: string) => {
+  const handleDeleteLead = async (leadId: string) => {
     if (!window.confirm('Tem certeza que deseja excluir este Lead?')) return;
-    const updated = leads.filter((l) => l.id !== leadId);
-    saveLeadsToStorage(updated);
+    
+    // Optimistic UI update
+    setLeads(prev => prev.filter((l) => l.id !== leadId));
     setSelectedLead(null);
     setIsEditing(false);
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', leadId);
+
+      if (error) throw error;
+      
+      // Sync local storage
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      const updated = parsedLeads.filter((l: any) => l.id !== leadId);
+      localStorage.setItem('mock-leads', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Erro ao deletar lead no Supabase, aplicando localmente:', err);
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      const updated = parsedLeads.filter((l: any) => l.id !== leadId);
+      localStorage.setItem('mock-leads', JSON.stringify(updated));
+    }
   };
 
   // Reset fields
@@ -257,6 +397,7 @@ export default function LeadsFunnelPage() {
     setNomeCliente('');
     setTelefone('');
     setEquipamentoInteresse('');
+    setProblemDescription('');
     setOrigem('WhatsApp');
     setValorEstimado('0.00');
     setStatusFunil('Novo Contato');
@@ -271,9 +412,9 @@ export default function LeadsFunnelPage() {
     const storedClients: Client[] = storedClientsRaw ? JSON.parse(storedClientsRaw) : [];
 
     // Search duplicate by name or phone
-    const cleanedPhone = selectedLead.telefone.replace(/\D/g, '');
+    const cleanedPhone = selectedLead.phone.replace(/\D/g, '');
     const duplicate = storedClients.find((c) => {
-      const matchName = c.name.toLowerCase().trim() === selectedLead.nome_cliente.toLowerCase().trim();
+      const matchName = c.name.toLowerCase().trim() === selectedLead.name.toLowerCase().trim();
       const matchPhone = cleanedPhone && c.phone.replace(/\D/g, '') === cleanedPhone;
       return matchName || matchPhone;
     });
@@ -300,9 +441,9 @@ export default function LeadsFunnelPage() {
       id: newClientId,
       client_number: nextNumber,
       type: 'PF',
-      name: selectedLead.nome_cliente,
+      name: selectedLead.name,
       document: '',
-      phone: selectedLead.telefone,
+      phone: selectedLead.phone,
       email: ''
     };
 
@@ -318,7 +459,7 @@ export default function LeadsFunnelPage() {
     setSelectedLead(null);
 
     // Redirect to New O.S. Form with prefilled parameters
-    router.push(`/dashboard/orders?new=true&client_id=${newClientId}&equipment=${encodeURIComponent(selectedLead.equipamento_interesse)}`);
+    router.push(`/dashboard/orders?new=true&client_id=${newClientId}&equipment=${encodeURIComponent(selectedLead.equipment_info)}`);
   };
 
   // Scenario 2: Use existing matching client and redirect
@@ -333,7 +474,7 @@ export default function LeadsFunnelPage() {
     setSelectedLead(null);
 
     // Redirect with existing client id
-    router.push(`/dashboard/orders?new=true&client_id=${duplicateClient.id}&equipment=${encodeURIComponent(selectedLead.equipamento_interesse)}`);
+    router.push(`/dashboard/orders?new=true&client_id=${duplicateClient.id}&equipment=${encodeURIComponent(selectedLead.equipment_info)}`);
   };
 
   // Color badges helper
@@ -348,8 +489,8 @@ export default function LeadsFunnelPage() {
   };
 
   // Sum total value of active leads per column
-  const getColumnTotals = (colId: Lead['status_funil']) => {
-    const filtered = leads.filter((l) => l.status_funil === colId);
+  const getColumnTotals = (colId: Lead['status']) => {
+    const filtered = leads.filter((l) => l.status === colId);
     const sum = filtered.reduce((total, lead) => total + lead.valor_estimado, 0);
     return {
       count: filtered.length,
@@ -382,7 +523,7 @@ export default function LeadsFunnelPage() {
       <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl flex items-center gap-3.5 text-slate-350 text-xs">
         <Info className="w-5 h-5 text-emerald-400 shrink-0" />
         <div>
-          <span className="font-bold text-white block">Ambiente de Teste CRM Ativado (LocalStorage)</span>
+          <span className="font-bold text-white block">CRM Conectado ao Supabase (com sincronização offline local)</span>
           Arraste e solte os cards entre as colunas para atualizar as fases do funil. Ao converter um lead, o sistema verificará duplicados e pré-preencherá a tela de abertura de O.S.
         </div>
       </div>
@@ -397,7 +538,7 @@ export default function LeadsFunnelPage() {
         <div className="flex flex-col lg:flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin select-none">
           {COLUMNS.map((col) => {
             const { count, sum } = getColumnTotals(col.id);
-            const filteredLeads = leads.filter((l) => l.status_funil === col.id);
+            const filteredLeads = leads.filter((l) => l.status === col.id);
             const isOver = dragOverColumn === col.id;
 
             return (
@@ -460,12 +601,12 @@ export default function LeadsFunnelPage() {
                           </div>
 
                           <h4 className="font-bold text-white text-sm tracking-tight leading-tight truncate hover:text-emerald-400 transition-colors">
-                            {lead.nome_cliente}
+                            {lead.name}
                           </h4>
                           
                           <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1.5 truncate">
                             <Wrench className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                            {lead.equipamento_interesse}
+                            {lead.equipment_info}
                           </p>
                         </div>
 
@@ -475,10 +616,10 @@ export default function LeadsFunnelPage() {
                             {lead.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                           
-                          {lead.telefone && (
+                          {lead.phone && (
                             <span className="text-[10px] text-slate-500 flex items-center gap-1">
                               <Phone className="w-3 h-3 text-slate-650" />
-                              {lead.telefone}
+                              {lead.phone}
                             </span>
                           )}
                         </div>
@@ -504,7 +645,7 @@ export default function LeadsFunnelPage() {
             </button>
 
             <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-500" /> Novo Lead de Pré-Vendas
+              <TrendingUp className="w-5 h-5 text-emerald-500" /> Novo Lead de CRM
             </h3>
             <p className="text-xs text-slate-400 mb-6">Qualifique as necessidades do cliente antes de gerar o chamado técnico.</p>
 
@@ -553,6 +694,20 @@ export default function LeadsFunnelPage() {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Descrição do Problema (Opcional)</label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                  <textarea
+                    placeholder="Ex: O aparelho está esquentando e desligando sozinho..."
+                    value={problemDescription}
+                    onChange={(e) => setProblemDescription(e.target.value)}
+                    rows={2}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Origem do Lead</label>
@@ -589,7 +744,7 @@ export default function LeadsFunnelPage() {
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Etapa Inicial no Funil</label>
                 <select
                   value={statusFunil}
-                  onChange={(e) => setStatusFunil(e.target.value as Lead['status_funil'])}
+                  onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                 >
                   <option value="Novo Contato">Novo Contato</option>
@@ -639,11 +794,11 @@ export default function LeadsFunnelPage() {
                       {selectedLead.origem}
                     </span>
                     <span className="text-[10px] font-bold bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-slate-850">
-                      Fase: {selectedLead.status_funil}
+                      Fase: {selectedLead.status}
                     </span>
                   </div>
                   
-                  <h3 className="text-xl font-bold text-white">{selectedLead.nome_cliente}</h3>
+                  <h3 className="text-xl font-bold text-white">{selectedLead.name}</h3>
                   <p className="text-xs text-slate-500 mt-1">Cadastrado em {new Date(selectedLead.created_at).toLocaleString('pt-BR')}</p>
                 </div>
 
@@ -652,16 +807,26 @@ export default function LeadsFunnelPage() {
                     <Wrench className="w-4 h-4 text-slate-450 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Equipamento / Interesse</p>
-                      <p className="text-sm font-semibold text-slate-200">{selectedLead.equipamento_interesse}</p>
+                      <p className="text-sm font-semibold text-slate-200">{selectedLead.equipment_info}</p>
                     </div>
                   </div>
+
+                  {selectedLead.problem_description && (
+                    <div className="flex items-start gap-3 pt-2 border-t border-slate-900/60">
+                      <FileText className="w-4 h-4 text-slate-450 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Descrição do Problema</p>
+                        <p className="text-sm text-slate-250 leading-relaxed">{selectedLead.problem_description}</p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-900/60">
                     <div className="flex items-start gap-3">
                       <Phone className="w-4 h-4 text-slate-450 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Telefone</p>
-                        <p className="text-sm font-semibold text-slate-200">{selectedLead.telefone || '—'}</p>
+                        <p className="text-sm font-semibold text-slate-200">{selectedLead.phone || '—'}</p>
                       </div>
                     </div>
 
@@ -676,7 +841,7 @@ export default function LeadsFunnelPage() {
                     </div>
                   </div>
 
-                  {selectedLead.status_funil === 'Perdido' && selectedLead.motivo_perda && (
+                  {selectedLead.status === 'Perdido' && selectedLead.motivo_perda && (
                     <div className="pt-3 mt-3 border-t border-rose-500/10 bg-rose-500/5 p-3 rounded-lg border border-rose-500/10">
                       <p className="text-[10px] text-rose-400 uppercase font-bold tracking-wider mb-1">Motivo do Descarte (Perdido)</p>
                       <p className="text-xs text-rose-300 italic">&ldquo;{selectedLead.motivo_perda}&rdquo;</p>
@@ -688,18 +853,31 @@ export default function LeadsFunnelPage() {
                   <div className="flex gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => {
-                        setNomeCliente(selectedLead.nome_cliente);
-                        setTelefone(selectedLead.telefone);
-                        setEquipamentoInteresse(selectedLead.equipamento_interesse);
+                        setNomeCliente(selectedLead.name);
+                        setTelefone(selectedLead.phone);
+                        setEquipamentoInteresse(selectedLead.equipment_info);
+                        setProblemDescription(selectedLead.problem_description || '');
                         setOrigem(selectedLead.origem);
                         setValorEstimado(selectedLead.valor_estimado.toString());
-                        setStatusFunil(selectedLead.status_funil);
+                        setStatusFunil(selectedLead.status);
                         setIsEditing(true);
                       }}
                       className="flex-1 sm:flex-initial bg-slate-850 hover:bg-slate-800 text-slate-200 hover:text-white font-bold py-2.5 px-4 rounded-lg text-xs transition-colors cursor-pointer"
                     >
                       Editar Lead
                     </button>
+                    {selectedLead.phone && (
+                      <a
+                        href={`https://wa.me/${selectedLead.phone.replace(/\D/g, '').startsWith('55') ? selectedLead.phone.replace(/\D/g, '') : '55' + selectedLead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                          `Olá ${selectedLead.name}, tudo bem? Sou da equipe da TrustCare. Gostaria de conversar sobre o seu ${selectedLead.equipment_info}.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Phone className="w-3.5 h-3.5" /> WhatsApp
+                      </a>
+                    )}
                     <button
                       onClick={() => handleDeleteLead(selectedLead.id)}
                       className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-400 p-2.5 rounded-lg hover:text-rose-300 transition-colors"
@@ -710,7 +888,7 @@ export default function LeadsFunnelPage() {
                   </div>
 
                   {/* Converter em OS Flow Trigger (Only if not already Won/Lost) */}
-                  {selectedLead.status_funil !== 'Ganho/Convertido' && (
+                  {selectedLead.status !== 'Ganho/Convertido' && (
                     <button
                       onClick={handleConvertToOS}
                       className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-bold py-2.5 px-6 rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 transition-all duration-200 cursor-pointer"
@@ -757,6 +935,17 @@ export default function LeadsFunnelPage() {
                   />
                 </div>
 
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Descrição do Problema (Opcional)</label>
+                  <textarea
+                    placeholder="Descrição detalhada..."
+                    value={problemDescription}
+                    onChange={(e) => setProblemDescription(e.target.value)}
+                    rows={2}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Origem</label>
@@ -790,7 +979,7 @@ export default function LeadsFunnelPage() {
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status do Funil</label>
                   <select
                     value={statusFunil}
-                    onChange={(e) => setStatusFunil(e.target.value as Lead['status_funil'])}
+                    onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
                     <option value="Novo Contato">Novo Contato</option>

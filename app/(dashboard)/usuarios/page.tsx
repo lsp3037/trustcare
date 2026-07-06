@@ -138,7 +138,7 @@ export default function UserManagementPage() {
     verifyAdminAccess();
   }, [router]);
 
-  const fetchUsers = async (forceMock?: boolean) => {
+  async function fetchUsers(forceMock?: boolean) {
     const activeMock = forceMock !== undefined ? forceMock : isMock;
     try {
       setLoading(true);
@@ -172,7 +172,7 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const loadLocalUsers = () => {
     const localProfiles = localStorage.getItem('mock-profiles');

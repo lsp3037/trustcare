@@ -15,6 +15,8 @@ import {
   HelpCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 
 interface ChecklistItemTemplate {
@@ -42,6 +44,8 @@ interface EquipmentCategory {
 }
 
 export default function ChecklistSettingsPage() {
+  const router = useRouter();
+  const { role, loading: userLoading } = useUser();
   const [categories, setCategories] = useState<EquipmentCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [items, setItems] = useState<ChecklistItemTemplate[]>([]);
@@ -52,6 +56,12 @@ export default function ChecklistSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!userLoading && role !== 'admin') {
+      router.push('/dashboard');
+    }
+  }, [role, userLoading, router]);
 
   // Carrega as categorias ao montar o componente
   useEffect(() => {
@@ -232,6 +242,15 @@ export default function ChecklistSettingsPage() {
       setSaving(false);
     }
   };
+
+  if (userLoading || role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <p className="text-sm text-slate-400">Verificando permissões...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">

@@ -43,8 +43,9 @@ export default function LoginPage() {
       if (data?.session) {
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Falha ao autenticar. Tente admin@admin.com / admin123 para testar offline.');
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || 'Falha ao autenticar. Tente admin@admin.com / admin123 para testar offline.');
     } finally {
       setLoading(false);
     }

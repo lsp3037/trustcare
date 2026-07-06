@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Wrench, Mail, Lock, Loader2, ArrowRight, Building, User, Phone } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, Building, User, Phone } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
@@ -62,8 +62,9 @@ export default function RegisterPage() {
           router.push('/login');
         }, 2000);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao criar conta.');
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || 'Erro ao criar conta.');
     } finally {
       setLoading(false);
     }

@@ -11,8 +11,6 @@ import {
   Mail, 
   FileText, 
   ClipboardList, 
-  Calendar, 
-  DollarSign, 
   Loader2, 
   Edit, 
   CheckCircle2, 
@@ -22,8 +20,9 @@ import {
   QrCode,
   Trash2,
   Save,
-  Tag,
-  FolderPlus
+  FolderPlus,
+  X,
+  Wrench
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
@@ -60,6 +59,34 @@ export default function ClientDetailPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [eqCategoryId, setEqCategoryId] = useState('');
   const [editingEqId, setEditingEqId] = useState<string | null>(null);
+
+  // Estados para histórico clínico de checklists
+  const [selectedEqForHistory, setSelectedEqForHistory] = useState<any | null>(null);
+  const [eqChecklistHistory, setEqChecklistHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const handleShowChecklistHistory = async (eq: any) => {
+    setSelectedEqForHistory(eq);
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('service_orders')
+        .select('id, client_id, service_number, entry_checklist, exit_checklist, status, created_at')
+        .eq('equipment_id', eq.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setEqChecklistHistory(data || []);
+    } catch (err) {
+      console.warn('Erro ao carregar histórico no Supabase, buscando local:', err);
+      const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
+      const localOrders = JSON.parse(localOrdersStr);
+      const filtered = localOrders.filter((o: any) => o.equipment_id === eq.id || (o.equipment_details && o.equipment_details.includes(eq.name)));
+      setEqChecklistHistory(filtered);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const fetchClientAndOrders = async () => {
     try {
@@ -692,6 +719,14 @@ export default function ClientDetailPage() {
                         <td className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
+                              type="button"
+                              onClick={() => handleShowChecklistHistory(eq)}
+                              title="Histórico Clínico (Checklists)"
+                              className="p-1.5 bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 rounded-md transition-colors"
+                            >
+                              <ClipboardList className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => handleEditEquipment(eq)}
                               title="Editar Equipamento"
                               className="p-1.5 bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-md transition-colors"
@@ -909,6 +944,140 @@ export default function ClientDetailPage() {
 
         </div>
       </div>
+
+      {/* SLIDE-OVER: Histórico de Checklists (Histórico Clínico) */}
+      {selectedEqForHistory && (
+        <div className="fixed inset-0 z-[100] flex justify-end p-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-l border-slate-850 h-screen w-full max-w-lg p-6 shadow-2xl overflow-y-auto flex flex-col relative">
+            <button 
+              onClick={() => setSelectedEqForHistory(null)}
+              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mb-6">
+              <span className="text-[10px] font-bold text-emerald-450 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                Histórico Clínico
+              </span>
+              <h3 className="text-xl font-bold text-white mt-2 flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-emerald-500" />
+                {selectedEqForHistory.name}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Ref: {selectedEqForHistory.brand} {selectedEqForHistory.model} {selectedEqForHistory.serial_number ? `• S/N: ${selectedEqForHistory.serial_number}` : ''}
+              </p>
+            </div>
+
+            <div className="flex-1 space-y-6">
+              {loadingHistory ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+                  <p className="text-sm text-slate-450">Carregando histórico clínico...</p>
+                </div>
+              ) : eqChecklistHistory.length === 0 ? (
+                <div className="text-center py-16 text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl p-6">
+                  Nenhum checklist registrado para este equipamento em ordens de serviço anteriores.
+                </div>
+              ) : (
+                <div className="relative border-l border-slate-800 ml-3 space-y-8 pb-4">
+                  {eqChecklistHistory.map((historyItem) => {
+                    const entry = historyItem.entry_checklist;
+                    const exit = historyItem.exit_checklist;
+                    
+                    const formatChecklistItems = (checklistObj: any) => {
+                      if (!checklistObj) return null;
+                      
+                      const itemsList = Object.entries(checklistObj).filter(([key]) => !['password_pin', 'general_notes'].includes(key));
+                      
+                      if (itemsList.length === 0) return <span className="text-[10px] text-slate-600 italic block mt-1">Nenhum item preenchido</span>;
+                      
+                      return (
+                        <div className="grid grid-cols-2 gap-2 mt-2 bg-slate-950/40 p-3 rounded-lg border border-slate-900">
+                          {itemsList.map(([key, val]: [string, any]) => {
+                            const isChecked = typeof val === 'object' ? val.checked : !!val;
+                            const note = typeof val === 'object' ? val.observation : '';
+                            return (
+                              <div key={key} className="text-[11px] flex flex-col">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isChecked ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                  <span className="text-slate-350 capitalize truncate max-w-[150px]">{key.replace(/_/g, ' ')}</span>
+                                </div>
+                                {note && <span className="text-[9px] text-slate-500 italic pl-3 truncate" title={note}>Obs: {note}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <div key={historyItem.id} className="relative pl-6">
+                        <span className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        </span>
+                        
+                        <div className="bg-slate-900/50 border border-slate-850 p-4 rounded-xl space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span 
+                              onClick={() => {
+                                setSelectedEqForHistory(null);
+                                router.push(`/dashboard/orders/${historyItem.id}`);
+                              }}
+                              className="text-xs font-bold text-white hover:text-emerald-400 cursor-pointer font-mono"
+                            >
+                              O.S. #{historyItem.service_number || historyItem.id.slice(0, 8)}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-semibold font-mono">
+                              {new Date(historyItem.created_at).toLocaleDateString('pt-BR')}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-500">Status:</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border ${getStatusColor(historyItem.status)}`}>
+                              {historyItem.status}
+                            </span>
+                          </div>
+
+                          {entry && (
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">📋 Checklist de Entrada</span>
+                              {formatChecklistItems(entry)}
+                              {entry.password_pin?.has_password && (
+                                <p className="text-[10px] text-slate-500 bg-slate-950 px-2 py-1 rounded inline-block border border-slate-900 mt-1">
+                                  Senha/PIN: <span className="text-white font-mono">{entry.password_pin.password_value || 'Sim'}</span>
+                                </p>
+                              )}
+                              {entry.general_notes && (
+                                <p className="text-[10px] text-slate-500 italic mt-1 bg-slate-950/20 p-2 rounded border border-slate-900">
+                                  Nota: &quot;{entry.general_notes}&quot;
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {exit && (
+                            <div className="space-y-1 pt-2 border-t border-slate-850/50">
+                              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">🚪 Checklist de Saída</span>
+                              {formatChecklistItems(exit)}
+                              {exit.general_notes && (
+                                <p className="text-[10px] text-slate-500 italic mt-1 bg-slate-950/20 p-2 rounded border border-slate-900">
+                                  Nota: &quot;{exit.general_notes}&quot;
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

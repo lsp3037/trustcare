@@ -28,6 +28,7 @@ import {
 } from 'recharts';
 import DatePickerWithRange from '@/components/DatePickerWithRange';
 import { useCompany } from '@/lib/context/CompanyContext';
+import { useUser } from '@/lib/context/UserContext';
 
 interface DateRange {
   from: Date;
@@ -37,6 +38,7 @@ interface DateRange {
 export default function DashboardOverviewPage() {
   const router = useRouter();
   const { company } = useCompany();
+  const { user, role, isAdmin, loading: userLoading } = useUser();
   const [stats, setStats] = useState({
     billing: 0,
     ticketMedio: 0,
@@ -64,12 +66,6 @@ export default function DashboardOverviewPage() {
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  // Re-executa as buscas sempre que o período mudar
-  useEffect(() => {
-    if (dateRange) {
-      fetchDashboardData(dateRange.from, dateRange.to);
-    }
-  }, [dateRange]);
 
   const processChartDataForRange = (ordersList: any[], from: Date, to: Date) => {
     const daysCount = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -155,11 +151,16 @@ export default function DashboardOverviewPage() {
     try {
       setLoading(true);
       
-      // 1. Busca Ordens de Serviço do Supabase
-      const { data: orders, error } = await supabase
+      // 1. Busca Ordens de Serviço do Supabase (com filtro por técnico se necessário)
+      let query = supabase
         .from('service_orders')
-        .select('*, clients(name)')
-        .order('created_at', { ascending: false });
+        .select('*, clients(name)');
+
+      if (role === 'technician' && user?.id) {
+        query = query.eq('technician_id', user.id);
+      }
+
+      const { data: orders, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         throw error;
@@ -360,6 +361,13 @@ export default function DashboardOverviewPage() {
     }
   };
 
+  // Re-executa as buscas sempre que o período ou o carregamento do usuário mudar
+  useEffect(() => {
+    if (dateRange && !userLoading) {
+      fetchDashboardData(dateRange.from, dateRange.to);
+    }
+  }, [dateRange, userLoading, role]);
+
   const getStatusDotColor = (status: string) => {
     switch (status) {
       case 'Aguardando Equipamento': return 'bg-slate-500';
@@ -418,57 +426,117 @@ export default function DashboardOverviewPage() {
 
       {/* Grid de Cards Estatísticos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: Faturamento */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <DollarSign className="w-5 h-5" />
+        {isAdmin ? (
+          <>
+            {/* Card 1: Faturamento */}
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> +14.5%
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-405">Faturamento Realizado</p>
+              <h3 className="text-2xl font-black text-white mt-1">
+                R$ {stats.billing.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-500 mt-2">Soma de OS Concluídas/Entregues</p>
             </div>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> +14.5%
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-slate-405">Faturamento Realizado</p>
-          <h3 className="text-2xl font-black text-white mt-1">
-            R$ {stats.billing.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </h3>
-          <p className="text-xs text-slate-500 mt-2">Soma de OS Concluídas/Entregues</p>
-        </div>
 
-        {/* Card 2: OS Ativas (Clicável) */}
-        <div 
-          onClick={() => router.push('/dashboard/orders?status=Ativas')}
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
-        >
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
-              <Clock className="w-5 h-5" />
+            {/* Card 2: OS Ativas (Clicável) */}
+            <div 
+              onClick={() => router.push('/dashboard/orders?status=Ativas')}
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
+                  Em progresso <ArrowUpRight className="w-3 h-3" />
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">OS Abertas / Em Análise</p>
+              <h3 className="text-2xl font-black text-white mt-1">{stats.openOrders}</h3>
+              <p className="text-xs text-slate-500 mt-2">Aguardando aprovação ou peças</p>
             </div>
-            <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
-              Em progresso <ArrowUpRight className="w-3 h-3" />
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">OS Abertas / Em Análise</p>
-          <h3 className="text-2xl font-black text-white mt-1">{stats.openOrders}</h3>
-          <p className="text-xs text-slate-500 mt-2">Aguardando aprovação ou peças</p>
-        </div>
 
-        {/* Card 3: Ticket Médio */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <TrendingUp className="w-5 h-5" />
+            {/* Card 3: Ticket Médio */}
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  Caixa
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-405">Ticket Médio</p>
+              <h3 className="text-2xl font-black text-white mt-1">
+                R$ {stats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
+              <p className="text-xs text-slate-500 mt-2">Valor médio por O.S. paga</p>
             </div>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-              Caixa
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-slate-405">Ticket Médio</p>
-          <h3 className="text-2xl font-black text-white mt-1">
-            R$ {stats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </h3>
-          <p className="text-xs text-slate-500 mt-2">Valor médio por O.S. paga</p>
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Card 1: OS Abertas / Em Execução (Não Admin) */}
+            <div 
+              onClick={() => router.push('/dashboard/orders?status=Ativas')}
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  {role === 'technician' ? 'Minha fila' : 'Geral'}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">O.S. Abertas / Em Execução</p>
+              <h3 className="text-2xl font-black text-white mt-1">{stats.openOrders}</h3>
+              <p className="text-xs text-slate-500 mt-2">Aguardando análise ou peças</p>
+            </div>
+
+            {/* Card 2: OS Prontas / Concluídas (Não Admin) */}
+            <div 
+              onClick={() => router.push('/dashboard/orders?status=Concluidas')}
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  Concluídas
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">O.S. Prontas / Entregues</p>
+              <h3 className="text-2xl font-black text-white mt-1">{stats.completedOrders}</h3>
+              <p className="text-xs text-slate-500 mt-2">Finalizadas ou prontas para entrega</p>
+            </div>
+
+            {/* Card 3: Clientes Cadastrados (Não Admin) */}
+            <div 
+              onClick={() => router.push('/dashboard/clients')}
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                  <Users className="w-5 h-5" />
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  Clientes
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">Total de Clientes</p>
+              <h3 className="text-2xl font-black text-white mt-1">{stats.totalClients}</h3>
+              <p className="text-xs text-slate-500 mt-2">Cadastrados na base global</p>
+            </div>
+          </>
+        )}
 
         {/* Card 4: Alertas de Estoque (Clicável - Não afetado por data) */}
         <div 
@@ -492,7 +560,7 @@ export default function DashboardOverviewPage() {
       {/* Grid de Seções Inferiores */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ordens de Serviço Recentes */}
-        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col shadow-lg">
+        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'} bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col shadow-lg`}>
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-bold text-white">Ordens de Serviço Recentes</h3>
@@ -592,101 +660,103 @@ export default function DashboardOverviewPage() {
           </div>
         </div>
 
-        {/* Módulo de Gráfico de Faturamento */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
-          <div>
-            <h3 className="text-lg font-bold text-white mb-1">Faturamento</h3>
-            <p className="text-xs text-slate-500">Histórico do período selecionado.</p>
-            
-            <div className="w-full h-56 mt-6">
-              {chartData.length === 0 ? (
-                <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
-                  Sem dados de faturamento para este período.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.9}/>
-                        <stop offset="95%" stopColor="#0f766e" stopOpacity={0.2}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-800)" />
-                    <XAxis 
-                      dataKey="dia" 
-                      stroke="var(--color-slate-400)" 
-                      fontSize={10} 
-                      tickLine={false} 
-                      axisLine={false}
-                    />
-                    <YAxis 
-                      stroke="var(--color-slate-400)" 
-                      fontSize={10} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tickFormatter={(value) => `R$${value}`}
-                    />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--color-slate-900)', borderColor: 'var(--color-slate-800)', borderRadius: '8px' }}
-                      labelStyle={{ color: 'var(--color-slate-450)', fontSize: '11px', fontWeight: 'bold' }}
-                      itemStyle={{ color: 'var(--color-slate-100)', fontSize: '12px' }}
-                      formatter={(value: any) => [`R$ ${Number(value).toFixed(2)}`, 'Faturamento']}
-                      cursor={{ fill: 'var(--color-slate-800)', opacity: 0.2 }}
-                    />
-                    <Bar 
-                      dataKey="faturamento" 
-                      fill="url(#colorFaturamento)" 
-                      radius={[4, 4, 0, 0]} 
-                      barSize={chartData.length > 20 ? 8 : chartData.length > 10 ? 14 : 24}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+        {/* Módulo de Gráfico de Faturamento (Apenas Admin) */}
+        {isAdmin && (
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Faturamento</h3>
+              <p className="text-xs text-slate-500">Histórico do período selecionado.</p>
+              
+              <div className="w-full h-56 mt-6">
+                {chartData.length === 0 ? (
+                  <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">
+                    Sem dados de faturamento para este período.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.9}/>
+                          <stop offset="95%" stopColor="#0f766e" stopOpacity={0.2}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-800)" />
+                      <XAxis 
+                        dataKey="dia" 
+                        stroke="var(--color-slate-400)" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        stroke="var(--color-slate-400)" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tickFormatter={(value) => `R$${value}`}
+                      />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--color-slate-900)', borderColor: 'var(--color-slate-800)', borderRadius: '8px' }}
+                        labelStyle={{ color: 'var(--color-slate-450)', fontSize: '11px', fontWeight: 'bold' }}
+                        itemStyle={{ color: 'var(--color-slate-100)', fontSize: '12px' }}
+                        formatter={(value: any) => [`R$ ${Number(value).toFixed(2)}`, 'Faturamento']}
+                        cursor={{ fill: 'var(--color-slate-800)', opacity: 0.2 }}
+                      />
+                      <Bar 
+                        dataKey="faturamento" 
+                        fill="url(#colorFaturamento)" 
+                        radius={[4, 4, 0, 0]} 
+                        barSize={chartData.length > 20 ? 8 : chartData.length > 10 ? 14 : 24}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 border-t border-slate-800/80 pt-6">
+              <h4 className="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-slate-500" />
+                Formas de Recebimento
+              </h4>
+              <div className="space-y-4">
+                {Object.keys(paymentDistribution).length === 0 ? (
+                  <div className="text-xs text-slate-500 italic">Nenhum pagamento registrado no período.</div>
+                ) : (
+                  Object.entries(paymentDistribution)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([method, value]) => {
+                    const percent = stats.billing > 0 ? (value / stats.billing) * 100 : 0;
+                    return (
+                      <div key={method}>
+                        <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1.5">
+                          <span>{method}</span>
+                          <span>{percent.toFixed(1)}% <span className="text-[10px] text-slate-500 ml-1 font-mono">(R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</span></span>
+                        </div>
+                        <div className="w-full bg-slate-950 rounded-full h-2 border border-slate-850">
+                          <div 
+                            className={`h-full rounded-full ${method === 'PIX' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]' : method === 'Dinheiro' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`} 
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-slate-800/80 pt-6">
+              <Link
+                href="/dashboard/clients"
+                className="w-full bg-slate-950 hover:bg-slate-800/80 text-slate-350 text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border border-slate-800/80 transition-all"
+              >
+                <Users className="w-4 h-4 text-slate-400" /> Gerenciar Todos os Clientes
+              </Link>
             </div>
           </div>
-
-          <div className="mt-8 border-t border-slate-800/80 pt-6">
-            <h4 className="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-slate-500" />
-              Formas de Recebimento
-            </h4>
-            <div className="space-y-4">
-              {Object.keys(paymentDistribution).length === 0 ? (
-                <div className="text-xs text-slate-500 italic">Nenhum pagamento registrado no período.</div>
-              ) : (
-                Object.entries(paymentDistribution)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([method, value]) => {
-                  const percent = stats.billing > 0 ? (value / stats.billing) * 100 : 0;
-                  return (
-                    <div key={method}>
-                      <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1.5">
-                        <span>{method}</span>
-                        <span>{percent.toFixed(1)}% <span className="text-[10px] text-slate-500 ml-1 font-mono">(R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</span></span>
-                      </div>
-                      <div className="w-full bg-slate-950 rounded-full h-2 border border-slate-850">
-                        <div 
-                          className={`h-full rounded-full ${method === 'PIX' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]' : method === 'Dinheiro' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`} 
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 border-t border-slate-800/80 pt-6">
-            <Link
-              href="/dashboard/clients"
-              className="w-full bg-slate-950 hover:bg-slate-800/80 text-slate-350 text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border border-slate-800/80 transition-all"
-            >
-              <Users className="w-4 h-4 text-slate-400" /> Gerenciar Todos os Clientes
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

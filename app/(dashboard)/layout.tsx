@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
+import { UserProvider, useUser } from '@/lib/context/UserContext';
 import OnboardingModal from '@/components/OnboardingModal';
 
 export default function DashboardLayout({
@@ -30,7 +31,9 @@ export default function DashboardLayout({
 }) {
   return (
     <CompanyProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      <UserProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </UserProvider>
     </CompanyProvider>
   );
 }
@@ -43,11 +46,9 @@ function DashboardLayoutContent({
   const pathname = usePathname();
   const router = useRouter();
   const { company } = useCompany();
+  const { user, role, isAdmin, loading: userLoading } = useUser();
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [userName, setUserName] = useState('Desenvolvedor');
-  const [userRole, setUserRole] = useState('Admin');
-  const [isAdmin, setIsAdmin] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/dashboard/settings'));
 
@@ -87,42 +88,21 @@ function DashboardLayoutContent({
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      // 1. Tenta obter sessão local (mock)
-      const mockSession = localStorage.getItem('os-session');
-      if (mockSession) {
-        const parsed = JSON.parse(mockSession);
-        setUserName(parsed.email.split('@')[0]);
-        const role = parsed.role || 'admin';
-        setIsAdmin(role === 'admin');
-        setUserRole(role === 'admin' ? 'Administrador' : role === 'tecnico' ? 'Técnico' : 'Recepcionista');
-      }
+    if (!userLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, userLoading, router]);
 
-      // 2. Tenta do Supabase Auth
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário');
-        
-        // Busca o profile no banco de dados para ver a role real
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
+  const userName = user?.full_name || 'Usuário';
+  const userRole = role === 'admin' ? 'Administrador' : role === 'technician' ? 'Técnico' : 'Recepcionista';
 
-        if (profile) {
-          const role = profile.role || 'admin';
-          setIsAdmin(role === 'admin');
-          setUserRole(role === 'admin' ? 'Administrador' : role === 'technician' ? 'Técnico' : 'Recepcionista');
-        }
-      } else if (!mockSession) {
-        // Redireciona para o login se não houver nenhuma sessão
-        router.push('/login');
-      }
-    };
-
-    fetchUserData();
-  }, [router]);
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -144,6 +124,7 @@ function DashboardLayoutContent({
         icon: Settings,
         subItems: [
           { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building },
+          { name: 'Equipe e Acessos', href: '/dashboard/settings/team', icon: Users },
           { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList }
         ]
       }
@@ -342,7 +323,7 @@ function DashboardLayoutContent({
         </header>
 
         {/* Page Body */}
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto print:p-0">
+        <main className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">
           {children}
         </main>
       </div>

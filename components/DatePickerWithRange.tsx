@@ -66,7 +66,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
     endOfToday.setHours(23, 59, 59, 999);
 
     let newFrom = new Date(today);
-    let newTo = new Date(endOfToday);
+    const newTo = new Date(endOfToday);
 
     switch (presetName) {
       case 'Hoje':

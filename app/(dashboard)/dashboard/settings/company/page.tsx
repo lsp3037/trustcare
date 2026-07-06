@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCompany } from '@/lib/context/CompanyContext';
+import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 import { 
   Building, 
@@ -17,7 +19,15 @@ import {
 } from 'lucide-react';
 
 export default function CompanySettingsPage() {
+  const router = useRouter();
+  const { role, loading: userLoading } = useUser();
   const { company, loading: contextLoading, refreshCompany } = useCompany();
+
+  useEffect(() => {
+    if (!userLoading && role !== 'admin') {
+      router.push('/dashboard');
+    }
+  }, [role, userLoading, router]);
 
   // Form states
   const [name, setName] = useState('');
@@ -60,6 +70,24 @@ export default function CompanySettingsPage() {
     }
   }, []);
 
+  function validateAndSetFile(selectedFile: File) {
+    // Validate image format
+    if (!selectedFile.type.startsWith('image/')) {
+      setErrorMsg('O arquivo selecionado deve ser uma imagem (JPG, PNG, WEBP).');
+      return;
+    }
+
+    // Validate size (max 2MB)
+    if (selectedFile.size > 2 * 1024 * 1024) {
+      setErrorMsg('O logotipo deve ter no máximo 2MB.');
+      return;
+    }
+
+    setFile(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
+    setErrorMsg('');
+  }
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -78,23 +106,6 @@ export default function CompanySettingsPage() {
     validateAndSetFile(selectedFile);
   };
 
-  const validateAndSetFile = (selectedFile: File) => {
-    // Validate image format
-    if (!selectedFile.type.startsWith('image/')) {
-      setErrorMsg('O arquivo selecionado deve ser uma imagem (JPG, PNG, WEBP).');
-      return;
-    }
-
-    // Validate size (max 2MB)
-    if (selectedFile.size > 2 * 1024 * 1024) {
-      setErrorMsg('O logotipo deve ter no máximo 2MB.');
-      return;
-    }
-
-    setFile(selectedFile);
-    setPreviewUrl(URL.createObjectURL(selectedFile));
-    setErrorMsg('');
-  };
 
   const handleRemovePreview = () => {
     setFile(null);
@@ -192,9 +203,18 @@ export default function CompanySettingsPage() {
     }
   };
 
+  if (userLoading || role !== 'admin') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <p className="text-sm text-slate-400">Verificando permissões...</p>
+      </div>
+    );
+  }
+
   if (contextLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
         <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Carregando configurações da empresa...</p>
       </div>
@@ -210,9 +230,9 @@ export default function CompanySettingsPage() {
         <p className="text-sm text-slate-450 mt-1">Configure os dados de identidade e contato da sua assistência técnica.</p>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 overflow-hidden rounded-none">
         {/* Tab Header */}
-        <div className="border-b border-slate-800 bg-slate-950/40 px-6 py-4 flex items-center justify-between">
+        <div className="border-b-2 border-slate-800 bg-slate-950/80 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Building className="w-5 h-5 text-emerald-500" />
             <h2 className="text-base font-bold text-white">Configurações Gerais</h2>
@@ -223,14 +243,14 @@ export default function CompanySettingsPage() {
         {/* Form Body */}
         <form onSubmit={handleSave} className="p-6 space-y-6">
           {errorMsg && (
-            <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm rounded-xl flex items-start gap-3">
+            <div className="p-4 bg-rose-500/10 border-l-4 border-rose-500 text-rose-400 text-sm flex items-start gap-3 rounded-none">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-xl flex items-start gap-3 animate-in fade-in duration-200">
+            <div className="p-4 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 text-sm flex items-start gap-3 animate-in fade-in duration-200 rounded-none">
               <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
               <span>{successMsg}</span>
             </div>
@@ -246,10 +266,10 @@ export default function CompanySettingsPage() {
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
-                className={`relative w-full aspect-square max-w-[160px] rounded-xl border border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-slate-950/30 ${
+                className={`relative w-full aspect-square max-w-[160px] rounded-none border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-slate-950/30 ${
                   isDragActive 
                     ? 'border-emerald-500 bg-emerald-500/5 shadow-inner' 
-                    : 'border-slate-800 hover:border-emerald-500/30'
+                    : 'border-slate-800 hover:border-emerald-500'
                 }`}
               >
                 {previewUrl ? (
@@ -257,7 +277,7 @@ export default function CompanySettingsPage() {
                     <img src={previewUrl} alt="Logotipo" className="max-w-full max-h-full object-contain" />
                     
                     {/* Hover replacement info */}
-                    <label className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] gap-1.5 rounded-xl font-bold">
+                    <label className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] gap-1.5 rounded-none font-bold">
                       <Upload className="w-4 h-4 text-emerald-400" />
                       <span>Substituir</span>
                       <input 
@@ -286,7 +306,7 @@ export default function CompanySettingsPage() {
 
                 {/* Loading overlay during upload */}
                 {uploading && (
-                  <div className="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center rounded-xl text-emerald-400 text-[10px] gap-2 font-bold">
+                  <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center rounded-none text-emerald-400 text-[10px] gap-2 font-bold">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <span>Enviando...</span>
                   </div>
@@ -322,7 +342,7 @@ export default function CompanySettingsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Trust Care T.I."
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                   />
                 </div>
               </div>
@@ -342,7 +362,7 @@ export default function CompanySettingsPage() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="Ex: (66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                       />
                     </div>
                   </div>
@@ -359,7 +379,7 @@ export default function CompanySettingsPage() {
                         value={whatsapp}
                         onChange={(e) => setWhatsapp(e.target.value)}
                         placeholder="Ex: (66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                       />
                     </div>
                   </div>
@@ -377,7 +397,7 @@ export default function CompanySettingsPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Ex: contato@trustcare.com.br"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                     />
                   </div>
                 </div>
@@ -389,7 +409,7 @@ export default function CompanySettingsPage() {
             <button
               type="submit"
               disabled={saving || uploading}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-slate-800 disabled:to-slate-800 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 disabled:shadow-none cursor-pointer"
+              className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-black font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
             >
               {(saving || uploading) ? (
                 <>
