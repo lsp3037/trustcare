@@ -248,6 +248,8 @@ export default function OrderDetailPage() {
   const [exitChecklist, setExitChecklist] = useState<OrderChecklist>(defaultChecklist);
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [checklistTemplateItems, setChecklistTemplateItems] = useState<ChecklistTemplateItem[]>(DEFAULT_TEMPLATE_ITEMS);
+  const [isEntryOpen, setIsEntryOpen] = useState(true);
+  const [isExitOpen, setIsExitOpen] = useState(true);
 
   // Estados dos Serviços do Catálogo
   const [availableServices, setAvailableServices] = useState<any[]>([]);
@@ -1877,158 +1879,179 @@ export default function OrderDetailPage() {
         </div>
         
         {/* Nova Seção: Checklist de Entrada e Saída (Swiss Technical Minimalism) */}
-        <div className="mt-8 space-y-4">
+        <div className="mt-8 space-y-4 lg:col-span-3">
           <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
             <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Checklist e Condições
           </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={`grid grid-cols-1 ${status === 'Finalizado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-8`}>
             
             {/* Bloco de Entrada (Recebimento) */}
-            <div className="bg-zinc-950 border-2 border-zinc-900 rounded-none p-6 shadow-2xl flex flex-col h-full">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6">
+            <div className="bg-zinc-950 border-2 border-zinc-900 rounded-none p-6 shadow-2xl flex flex-col h-fit">
+              <div 
+                onClick={() => setIsEntryOpen(!isEntryOpen)}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6 cursor-pointer select-none group/header"
+              >
                 <div>
                   <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block mb-0.5">Fase de Recebimento</span>
                   <h3 className="text-sm font-bold font-mono text-emerald-500 uppercase tracking-wider flex items-center gap-2">
                     <span className="w-1.5 h-1.5 bg-emerald-500 animate-pulse" /> Entrada
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-1 uppercase tracking-wider rounded-none self-start sm:self-auto">
-                  Preenchimento Inicial
-                </span>
+                <div className="flex items-center gap-3 self-start sm:self-auto">
+                  <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-1 uppercase tracking-wider rounded-none">
+                    Preenchimento Inicial
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-zinc-500 group-hover/header:text-zinc-300 transition-transform duration-150 ${isEntryOpen ? 'rotate-180' : ''}`} />
+                </div>
               </div>
               
-              <div className="flex-1 space-y-4">
-                {checklistTemplateItems.map((item) => (
-                  <ChecklistItemRow 
-                    key={item.id} 
-                    label={item.label} 
-                    field={item.id} 
-                    checklist={entryChecklist} 
-                    setChecklist={setEntryChecklist} 
-                  />
-                ))}
-                
-                {/* Senha */}
-                <div className="pt-4 border-t border-zinc-900">
-                  <div className="grid grid-cols-[1fr_auto] gap-4 items-center mb-2">
-                    <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">Possui Senha / PIN?</span>
+              {isEntryOpen && (
+                <>
+                  <div className="flex-1 space-y-4">
+                    {checklistTemplateItems.map((item) => (
+                      <ChecklistItemRow 
+                        key={item.id} 
+                        label={item.label} 
+                        field={item.id} 
+                        checklist={entryChecklist} 
+                        setChecklist={setEntryChecklist} 
+                      />
+                    ))}
+                    
+                    {/* Senha */}
+                    <div className="pt-4 border-t border-zinc-900">
+                      <div className="grid grid-cols-[1fr_auto] gap-4 items-center mb-2">
+                        <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">Possui Senha / PIN?</span>
+                        <button
+                          type="button"
+                          onClick={() => setEntryChecklist(prev => ({
+                            ...prev,
+                            password_pin: { ...prev.password_pin, has_password: !prev.password_pin.has_password }
+                          }))}
+                          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-none border transition-colors duration-150 p-0.5 focus:outline-none ${entryChecklist.password_pin.has_password ? 'bg-emerald-950 border-emerald-500' : 'bg-zinc-950 border-zinc-800'}`}
+                        >
+                          <span className={`pointer-events-none inline-block h-full w-4 transform rounded-none transition-transform duration-150 ${entryChecklist.password_pin.has_password ? 'translate-x-5 bg-emerald-500' : 'translate-x-0 bg-zinc-800'}`} />
+                        </button>
+                      </div>
+                      {entryChecklist.password_pin.has_password && (
+                        <input
+                          type="text"
+                          placeholder="[Senha do Equipamento]"
+                          value={entryChecklist.password_pin.password_value}
+                          onChange={(e) => setEntryChecklist(prev => ({
+                            ...prev,
+                            password_pin: { ...prev.password_pin, password_value: e.target.value }
+                          }))}
+                          className="w-full bg-transparent border-b border-zinc-800 focus:border-zinc-650 px-2 py-1.5 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none transition-colors font-mono"
+                        />
+                      )}
+                    </div>
+     
+                    {/* Observações Gerais */}
+                    <div className="pt-4 border-t border-zinc-900">
+                      <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Entrada)</span>
+                      <textarea
+                        rows={2}
+                        placeholder="[Observações adicionais de recebimento]"
+                        value={entryChecklist.general_notes}
+                        onChange={(e) => setEntryChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
+                        className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono"
+                      />
+                    </div>
+                  </div>
+     
+                  <div className="mt-6 pt-6 border-t border-zinc-900">
                     <button
                       type="button"
-                      onClick={() => setEntryChecklist(prev => ({
-                        ...prev,
-                        password_pin: { ...prev.password_pin, has_password: !prev.password_pin.has_password }
-                      }))}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-none border transition-colors duration-150 p-0.5 focus:outline-none ${entryChecklist.password_pin.has_password ? 'bg-emerald-950 border-emerald-500' : 'bg-zinc-950 border-zinc-800'}`}
+                      onClick={() => handleSaveChecklists('entry')}
+                      disabled={savingChecklist}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-500 active:border-b-0 active:translate-y-[2px]"
                     >
-                      <span className={`pointer-events-none inline-block h-full w-4 transform rounded-none transition-transform duration-150 ${entryChecklist.password_pin.has_password ? 'translate-x-5 bg-emerald-500' : 'translate-x-0 bg-zinc-800'}`} />
+                      {savingChecklist ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
+                      <span>Salvar Checklist de Entrada</span>
                     </button>
                   </div>
-                  {entryChecklist.password_pin.has_password && (
-                    <input
-                      type="text"
-                      placeholder="[Senha do Equipamento]"
-                      value={entryChecklist.password_pin.password_value}
-                      onChange={(e) => setEntryChecklist(prev => ({
-                        ...prev,
-                        password_pin: { ...prev.password_pin, password_value: e.target.value }
-                      }))}
-                      className="w-full bg-transparent border-b border-zinc-800 focus:border-zinc-650 px-2 py-1.5 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none transition-colors font-mono"
-                    />
-                  )}
-                </div>
- 
-                {/* Observações Gerais */}
-                <div className="pt-4 border-t border-zinc-900">
-                  <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Entrada)</span>
-                  <textarea
-                    rows={2}
-                    placeholder="[Observações adicionais de recebimento]"
-                    value={entryChecklist.general_notes}
-                    onChange={(e) => setEntryChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
-                    className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono"
-                  />
-                </div>
-              </div>
- 
-              <div className="mt-6 pt-6 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => handleSaveChecklists('entry')}
-                  disabled={savingChecklist}
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-500 active:border-b-0 active:translate-y-[2px]"
-                >
-                  {savingChecklist ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
-                  <span>Salvar Checklist de Entrada</span>
-                </button>
-              </div>
+                </>
+              )}
             </div>
  
-            {/* Bloco de Saída (Entrega) */}
-            <div className={`border-2 p-6 shadow-2xl flex flex-col h-full transition-all duration-300 rounded-none ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'bg-zinc-950 border-zinc-900' : 'bg-black/40 border-zinc-900/40 opacity-40'}`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6">
-                <div>
-                  <span className="text-[9px] font-mono text-zinc-650 uppercase tracking-widest block mb-0.5">Fase de Entrega</span>
-                  <h3 className="text-sm font-bold font-mono text-sky-500 uppercase tracking-wider flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-none bg-sky-500 ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'animate-pulse' : ''}`} /> Saída
-                  </h3>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                  {['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) && (
+            {/* Bloco de Saída (Entrega) - Apenas visível sob status 'Finalizado' */}
+            {status === 'Finalizado' && (
+              <div className="border-2 p-6 shadow-2xl flex flex-col h-fit rounded-none bg-zinc-950 border-zinc-900">
+                <div 
+                  onClick={() => setIsExitOpen(!isExitOpen)}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6 cursor-pointer select-none group/header"
+                >
+                  <div>
+                    <span className="text-[9px] font-mono text-zinc-650 uppercase tracking-widest block mb-0.5">Fase de Entrega</span>
+                    <h3 className="text-sm font-bold font-mono text-sky-500 uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-sky-500 animate-pulse" /> Saída
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
                     <button 
                       type="button"
-                      onClick={() => setExitChecklist(JSON.parse(JSON.stringify(entryChecklist)))}
+                      onClick={(e) => {
+                        e.stopPropagation(); // evitar colapsar ao clicar no botão
+                        setExitChecklist(JSON.parse(JSON.stringify(entryChecklist)));
+                      }}
                       className="text-[10px] font-mono bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 px-2.5 py-1 uppercase tracking-wider cursor-pointer transition-colors rounded-none"
                       title="Copiar as condições registradas na Entrada"
                     >
                       Copiar da Entrada
                     </button>
-                  )}
-                  <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-450 px-2 py-1 uppercase tracking-wider rounded-none">
-                    Revisão Final
-                  </span>
+                    <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-450 px-2 py-1 uppercase tracking-wider rounded-none">
+                      Revisão Final
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-zinc-500 group-hover/header:text-zinc-300 transition-transform duration-150 ${isExitOpen ? 'rotate-180' : ''}`} />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex-1 space-y-4">
-                {checklistTemplateItems.map((item) => (
-                  <ChecklistItemRow 
-                    key={item.id} 
-                    label={item.label} 
-                    field={item.id} 
-                    checklist={exitChecklist} 
-                    setChecklist={setExitChecklist} 
-                    disabled={!['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)} 
-                    color="sky" 
-                  />
-                ))}
                 
-                {/* Observações Gerais */}
-                <div className="pt-4 border-t border-zinc-900">
-                  <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Saída)</span>
-                  <textarea
-                    rows={2}
-                    disabled={!['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)}
-                    placeholder="[Observações adicionais de entrega]"
-                    value={exitChecklist.general_notes}
-                    onChange={(e) => setExitChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
-                    className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono disabled:opacity-50"
-                  />
-                </div>
+                {isExitOpen && (
+                  <>
+                    <div className="flex-1 space-y-4">
+                      {checklistTemplateItems.map((item) => (
+                        <ChecklistItemRow 
+                          key={item.id} 
+                          label={item.label} 
+                          field={item.id} 
+                          checklist={exitChecklist} 
+                          setChecklist={setExitChecklist} 
+                          disabled={false} 
+                          color="sky" 
+                        />
+                      ))}
+                      
+                      {/* Observações Gerais */}
+                      <div className="pt-4 border-t border-zinc-900">
+                        <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Saída)</span>
+                        <textarea
+                          rows={2}
+                          placeholder="[Observações adicionais de entrega]"
+                          value={exitChecklist.general_notes}
+                          onChange={(e) => setExitChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
+                          className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono"
+                        />
+                      </div>
+                    </div>
+       
+                    <div className="mt-6 pt-6 border-t border-zinc-900">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveChecklists('exit')}
+                        disabled={savingChecklist}
+                        className="w-full bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-sky-800 hover:border-sky-500 active:border-b-0 active:translate-y-[2px]"
+                      >
+                        {savingChecklist ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
+                        <span>Salvar Checklist de Saída</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
+            )}
  
-              <div className="mt-6 pt-6 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => handleSaveChecklists('exit')}
-                  disabled={savingChecklist || !['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)}
-                  className="w-full bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-sky-800 hover:border-sky-500 active:border-b-0 active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {savingChecklist ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
-                  <span>Salvar Checklist de Saída</span>
-                </button>
-              </div>
-            </div>
- 
+          </div>
           </div>
         </div>
 
@@ -2052,7 +2075,8 @@ export default function OrderDetailPage() {
           </div>
         </div>
       )}
-      </div>
+
+
 
       {/* 2. LAYOUT EXCLUSIVO DE IMPRESSÃO DA VIA DO CLIENTE (Visível apenas na impressora) */}
       <div className="hidden print:block bg-white text-black min-h-screen p-6 font-sans text-sm">
