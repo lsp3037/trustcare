@@ -103,11 +103,7 @@ export default function LeadsFunnelPage() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setLeads(data as Lead[]);
-      } else {
-        loadLocalLeads();
-      }
+      setLeads(data as Lead[] || []);
     } catch (err) {
       console.warn('Erro ao carregar leads do Supabase, buscando mock local:', err);
       loadLocalLeads();

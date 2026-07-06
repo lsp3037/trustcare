@@ -154,18 +154,15 @@ export default function UserManagementPage() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setUsers(data.map(p => ({
-          id: p.id,
-          name: p.full_name || 'Membro da Equipe',
-          email: p.email || 'usuario@empresa.com',
-          phone: p.phone || '',
-          role: p.role || 'technician',
-          status: 'Ativo'
-        })));
-      } else {
-        loadLocalUsers();
-      }
+      const processed = (data || []).map(p => ({
+        id: p.id,
+        name: p.full_name || 'Membro da Equipe',
+        email: p.email || 'usuario@empresa.com',
+        phone: p.phone || '',
+        role: p.role || 'technician',
+        status: 'Ativo'
+      }));
+      setUsers(processed);
     } catch (err) {
       console.warn('Erro ao carregar usuários do Supabase, usando mock local:', err);
       loadLocalUsers();

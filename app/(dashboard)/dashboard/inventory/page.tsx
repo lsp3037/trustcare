@@ -185,11 +185,7 @@ export default function InventoryPage() {
         throw error;
       }
 
-      if (data && data.length > 0) {
-        setProducts(data);
-      } else {
-        loadLocalProducts();
-      }
+      setProducts(data || []);
     } catch (err) {
       console.warn('Erro ao buscar estoque do Supabase, usando fallback local:', err);
       loadLocalProducts();

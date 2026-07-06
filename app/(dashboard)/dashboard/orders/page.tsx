@@ -71,11 +71,7 @@ function OrdersContent() {
         throw error;
       }
 
-      if (ordersData && ordersData.length > 0) {
-        setOrders(ordersData);
-      } else {
-        loadLocalOrders();
-      }
+      setOrders(ordersData || []);
     } catch (err) {
       console.warn('Erro ao carregar Ordens de Serviço do Supabase, usando fallback local:', err);
       

@@ -81,15 +81,11 @@ export default function ClientsPage() {
         throw error;
       }
 
-      if (data && data.length > 0) {
-        const processed = data.map((c: any, index: number) => ({
-          ...c,
-          client_number: c.client_number || (1001 + index)
-        }));
-        setClients(processed);
-      } else {
-        loadLocalClients();
-      }
+      const processed = (data || []).map((c: any, index: number) => ({
+        ...c,
+        client_number: c.client_number || (1001 + index)
+      }));
+      setClients(processed);
     } catch (err) {
       console.warn('Erro ao carregar clientes do Supabase, usando fallback local:', err);
       loadLocalClients();
