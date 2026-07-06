@@ -150,14 +150,20 @@ const ChecklistItemRow = ({
 }) => {
   const item = (checklist[field] || { checked: false, observation: '' }) as ChecklistItem;
 
-  const colorClasses = color === 'emerald' 
-    ? 'bg-emerald-500 focus:border-emerald-500' 
-    : 'bg-sky-500 focus:border-sky-500';
+  const activeBg = color === 'emerald' 
+    ? 'bg-emerald-950/40 border-emerald-500' 
+    : 'bg-sky-950/40 border-sky-500';
+
+  const knobColor = color === 'emerald'
+    ? 'bg-emerald-500'
+    : 'bg-sky-500';
 
   return (
-    <div className="group">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-bold text-slate-300 uppercase tracking-wide group-hover:text-white transition-colors">{label}</span>
+    <div className="group border-b border-slate-850/80 pb-3 last:border-0">
+      <div className="grid grid-cols-[1fr_auto] gap-4 items-center">
+        <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition-colors pr-2 leading-relaxed break-words">
+          {label}
+        </span>
         <button
           type="button"
           disabled={disabled}
@@ -168,26 +174,36 @@ const ChecklistItemRow = ({
               checked: !(prev[field] || { checked: false, observation: '' }).checked 
             }
           }))}
-          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-sm border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${item.checked ? colorClasses.split(' ')[0] : 'bg-slate-700'}`}
+          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-none border transition-colors duration-150 p-0.5 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+            item.checked 
+              ? activeBg 
+              : 'bg-slate-950 border-slate-800 hover:border-slate-750'
+          }`}
         >
-          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-sm bg-white shadow ring-0 transition duration-200 ease-in-out ${item.checked ? 'translate-x-4' : 'translate-x-0'}`} />
+          <span className={`pointer-events-none inline-block h-full w-4 transform rounded-none transition-transform duration-150 ${
+            item.checked 
+              ? `translate-x-5 ${knobColor}` 
+              : 'translate-x-0 bg-slate-800'
+          }`} />
         </button>
       </div>
       {(item.checked || item.observation.trim() !== '') && (
-        <input
-          type="text"
-          disabled={disabled}
-          placeholder={`Observações sobre ${label.toLowerCase()}...`}
-          value={item.observation}
-          onChange={(e) => setChecklist(prev => ({
-            ...prev,
-            [field]: { 
-              ...(prev[field] || { checked: false, observation: '' }), 
-              observation: e.target.value 
-            }
-          }))}
-          className={`w-full bg-slate-950/50 border-b border-slate-800 px-3 py-1.5 text-xs text-slate-200 focus:outline-none transition-colors disabled:opacity-50 ${colorClasses.split(' ')[1]}`}
-        />
+        <div className="mt-2 pl-1">
+          <input
+            type="text"
+            disabled={disabled}
+            placeholder={`[Nota: ${label.toLowerCase()}]`}
+            value={item.observation}
+            onChange={(e) => setChecklist(prev => ({
+              ...prev,
+              [field]: { 
+                ...(prev[field] || { checked: false, observation: '' }), 
+                observation: e.target.value 
+              }
+            }))}
+            className="w-full bg-transparent border-b border-slate-850 focus:border-slate-700 px-1 py-0.5 text-xs text-slate-350 placeholder:text-slate-750 focus:outline-none transition-colors font-mono"
+          />
+        </div>
       )}
     </div>
   );
@@ -1860,20 +1876,25 @@ export default function OrderDetailPage() {
 
         </div>
         
-        {/* Nova Seção: Checklist de Entrada e Saída (Asymmetric Layered) */}
+        {/* Nova Seção: Checklist de Entrada e Saída (Swiss Technical Minimalism) */}
         <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
             <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Checklist e Condições
           </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             {/* Bloco de Entrada (Recebimento) */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col h-full">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-sm font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Entrada (Recebimento)
-                </h3>
-                <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-bold">PREENCHIMENTO INICIAL</span>
+            <div className="bg-zinc-950 border-2 border-zinc-900 rounded-none p-6 shadow-2xl flex flex-col h-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6">
+                <div>
+                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block mb-0.5">Fase de Recebimento</span>
+                  <h3 className="text-sm font-bold font-mono text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 animate-pulse" /> Entrada
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-1 uppercase tracking-wider rounded-none self-start sm:self-auto">
+                  Preenchimento Inicial
+                </span>
               </div>
               
               <div className="flex-1 space-y-4">
@@ -1888,78 +1909,83 @@ export default function OrderDetailPage() {
                 ))}
                 
                 {/* Senha */}
-                <div className="pt-4 border-t border-slate-800/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Possui Senha / PIN?</span>
+                <div className="pt-4 border-t border-zinc-900">
+                  <div className="grid grid-cols-[1fr_auto] gap-4 items-center mb-2">
+                    <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">Possui Senha / PIN?</span>
                     <button
                       type="button"
                       onClick={() => setEntryChecklist(prev => ({
                         ...prev,
                         password_pin: { ...prev.password_pin, has_password: !prev.password_pin.has_password }
                       }))}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-sm border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${entryChecklist.password_pin.has_password ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-none border transition-colors duration-150 p-0.5 focus:outline-none ${entryChecklist.password_pin.has_password ? 'bg-emerald-950 border-emerald-500' : 'bg-zinc-950 border-zinc-800'}`}
                     >
-                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-sm bg-white shadow ring-0 transition duration-200 ease-in-out ${entryChecklist.password_pin.has_password ? 'translate-x-4' : 'translate-x-0'}`} />
+                      <span className={`pointer-events-none inline-block h-full w-4 transform rounded-none transition-transform duration-150 ${entryChecklist.password_pin.has_password ? 'translate-x-5 bg-emerald-500' : 'translate-x-0 bg-zinc-800'}`} />
                     </button>
                   </div>
                   {entryChecklist.password_pin.has_password && (
                     <input
                       type="text"
-                      placeholder="Ex: 1234 ou Padrão Z"
+                      placeholder="[Senha do Equipamento]"
                       value={entryChecklist.password_pin.password_value}
                       onChange={(e) => setEntryChecklist(prev => ({
                         ...prev,
                         password_pin: { ...prev.password_pin, password_value: e.target.value }
                       }))}
-                      className="w-full bg-slate-950/50 border-b border-slate-800 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-transparent border-b border-zinc-800 focus:border-zinc-650 px-2 py-1.5 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none transition-colors font-mono"
                     />
                   )}
                 </div>
-
+ 
                 {/* Observações Gerais */}
-                <div className="pt-4 border-t border-slate-800/50">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wide block mb-2">Observações Gerais (Entrada)</span>
+                <div className="pt-4 border-t border-zinc-900">
+                  <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Entrada)</span>
                   <textarea
                     rows={2}
-                    placeholder="Outros detalhes sobre o estado de recebimento..."
+                    placeholder="[Observações adicionais de recebimento]"
                     value={entryChecklist.general_notes}
                     onChange={(e) => setEntryChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                    className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono"
                   />
                 </div>
               </div>
-
-              <div className="mt-6 pt-6 border-t border-slate-800">
+ 
+              <div className="mt-6 pt-6 border-t border-zinc-900">
                 <button
                   type="button"
                   onClick={() => handleSaveChecklists('entry')}
                   disabled={savingChecklist}
-                  className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-lg py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-500 active:border-b-0 active:translate-y-[2px]"
                 >
-                  {savingChecklist ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Salvar Checklist de Entrada
+                  {savingChecklist ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
+                  <span>Salvar Checklist de Entrada</span>
                 </button>
               </div>
             </div>
-
+ 
             {/* Bloco de Saída (Entrega) */}
-            <div className={`border rounded-2xl p-6 shadow-xl flex flex-col h-full transition-all duration-300 ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'bg-slate-900 border-slate-800' : 'bg-slate-950/50 border-slate-800/50 opacity-60'}`}>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-sm font-bold text-sky-500 uppercase tracking-wider flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full bg-sky-500 ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'animate-pulse' : ''}`} /> Saída (Entrega)
-                </h3>
-                <div className="flex items-center gap-2">
+            <div className={`border-2 p-6 shadow-2xl flex flex-col h-full transition-all duration-300 rounded-none ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'bg-zinc-950 border-zinc-900' : 'bg-black/40 border-zinc-900/40 opacity-40'}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6">
+                <div>
+                  <span className="text-[9px] font-mono text-zinc-650 uppercase tracking-widest block mb-0.5">Fase de Entrega</span>
+                  <h3 className="text-sm font-bold font-mono text-sky-500 uppercase tracking-wider flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-none bg-sky-500 ${['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) ? 'animate-pulse' : ''}`} /> Saída
+                  </h3>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
                   {['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status) && (
                     <button 
                       type="button"
                       onClick={() => setExitChecklist(JSON.parse(JSON.stringify(entryChecklist)))}
-                      className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-bold cursor-pointer transition-colors"
+                      className="text-[10px] font-mono bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 px-2.5 py-1 uppercase tracking-wider cursor-pointer transition-colors rounded-none"
                       title="Copiar as condições registradas na Entrada"
                     >
-                      COPIAR DA ENTRADA
+                      Copiar da Entrada
                     </button>
                   )}
-                  <span className="text-[10px] bg-slate-900 border border-slate-800 text-slate-500 px-2 py-1 rounded font-bold">REVISÃO FINAL</span>
+                  <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-450 px-2 py-1 uppercase tracking-wider rounded-none">
+                    Revisão Final
+                  </span>
                 </div>
               </div>
               
@@ -1977,32 +2003,32 @@ export default function OrderDetailPage() {
                 ))}
                 
                 {/* Observações Gerais */}
-                <div className="pt-4 border-t border-slate-800/50">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wide block mb-2">Observações Gerais (Saída)</span>
+                <div className="pt-4 border-t border-zinc-900">
+                  <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Saída)</span>
                   <textarea
                     rows={2}
                     disabled={!['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)}
-                    placeholder="Outros detalhes sobre o estado de entrega..."
+                    placeholder="[Observações adicionais de entrega]"
                     value={exitChecklist.general_notes}
                     onChange={(e) => setExitChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition-colors resize-none disabled:opacity-50"
+                    className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono disabled:opacity-50"
                   />
                 </div>
               </div>
-
-              <div className="mt-6 pt-6 border-t border-slate-800">
+ 
+              <div className="mt-6 pt-6 border-t border-zinc-900">
                 <button
                   type="button"
                   onClick={() => handleSaveChecklists('exit')}
                   disabled={savingChecklist || !['Pronto para Retirada', 'Em Testes', 'Finalizado'].includes(status)}
-                  className="w-full bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-lg py-2.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-sky-800 hover:border-sky-500 active:border-b-0 active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {savingChecklist ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Salvar Checklist de Saída
+                  {savingChecklist ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
+                  <span>Salvar Checklist de Saída</span>
                 </button>
               </div>
             </div>
-
+ 
           </div>
         </div>
 
