@@ -57,12 +57,17 @@ function InviteContent() {
         }
 
         if (data) {
-          if (data.used) throw new Error('Este convite já foi utilizado.');
-          if (new Date(data.expires_at) < new Date()) throw new Error('Este convite está expirado.');
+          const invite = data as any;
+          if (invite.used) throw new Error('Este convite já foi utilizado.');
+          if (new Date(invite.expires_at) < new Date()) throw new Error('Este convite está expirado.');
           
-          setInviteData(data);
-          if (data.companies && data.companies.name) {
-            setCompanyName(data.companies.name);
+          setInviteData(invite);
+          const comp = invite.companies;
+          if (comp) {
+            const name = Array.isArray(comp) ? comp[0]?.name : comp.name;
+            if (name) {
+              setCompanyName(name);
+            }
           }
         }
       } catch (err: any) {
