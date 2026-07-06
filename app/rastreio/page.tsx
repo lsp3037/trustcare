@@ -49,6 +49,7 @@ function TrackingContent() {
     { label: 'Aguardando Equipamento', status: 'Aguardando Equipamento', desc: 'Aparelho ainda não entregue na assistência.' },
     { label: 'Em Análise', status: 'Em Análise', desc: 'Aparelho recebido e aguardando diagnóstico.' },
     { label: 'Aguardando Aprovação', status: 'Aguardando Aprovação', desc: 'Orçamento gerado, aguardando aprovação do cliente.' },
+    { label: 'Aprovado', status: 'Aprovado', desc: 'Orçamento aprovado pelo cliente, aguardando início do conserto.' },
     { label: 'Aguardando Peças', status: 'Aguardando Peças', desc: 'Conserto pausado aguardando chegada de peças.' },
     { label: 'Em Execução', status: 'Em Execução', desc: 'Técnico trabalhando no diagnóstico ou conserto.' },
     { label: 'Em Testes', status: 'Em Testes', desc: 'Aparelho montado passando por testes de estresse.' },
@@ -192,6 +193,7 @@ function TrackingContent() {
       case 'Aguardando Equipamento': return 'text-slate-400 border-slate-500/20 bg-slate-500/5';
       case 'Em Análise': return 'text-blue-400 border-blue-500/20 bg-blue-500/5';
       case 'Aguardando Aprovação': return 'text-amber-450 border-amber-550/20 bg-amber-500/5';
+      case 'Aprovado': return 'text-emerald-450 border-emerald-555/20 bg-emerald-500/5';
       case 'Aguardando Peças': return 'text-orange-450 border-orange-500/20 bg-orange-500/5';
       case 'Em Execução': return 'text-sky-400 border-sky-500/20 bg-sky-500/5';
       case 'Em Testes': return 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5';

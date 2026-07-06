@@ -64,6 +64,11 @@ export const STATUS_CONFIG: Record<string, { label: string; colorClass: string; 
     colorClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20', 
     desc: 'Orçamento gerado, aguardando aprovação' 
   },
+  'Aprovado': { 
+    label: 'Aprovado', 
+    colorClass: 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20', 
+    desc: 'Orçamento aprovado pelo cliente, aguardando execução' 
+  },
   'Aguardando Peças': { 
     label: 'Aguardando Peças', 
     colorClass: 'bg-orange-500/10 text-orange-500 border-orange-500/20', 
@@ -2204,7 +2209,7 @@ function PrintDocumentContent({
 
   const getTechnicalReportTitle = (status: string) => {
     const finalStatuses = ['Pronto para Retirada', 'Finalizado'];
-    const initialStatuses = ['Aguardando Equipamento', 'Em Análise', 'Aguardando Aprovação', 'Aguardando Peças', 'Em Execução', 'Em Testes'];
+    const initialStatuses = ['Aguardando Equipamento', 'Em Análise', 'Aguardando Aprovação', 'Aprovado', 'Aguardando Peças', 'Em Execução', 'Em Testes'];
     
     if (finalStatuses.includes(status)) {
       return 'LAUDO TÉCNICO & SERVIÇOS EXECUTADOS';

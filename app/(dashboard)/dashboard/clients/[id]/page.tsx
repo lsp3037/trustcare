@@ -453,6 +453,7 @@ export default function ClientDetailPage() {
       case 'Aguardando Equipamento': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
       case 'Em Análise': return 'bg-blue-500/10 text-blue-450 border-blue-500/20';
       case 'Aguardando Aprovação': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+      case 'Aprovado': return 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20';
       case 'Aguardando Peças': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
       case 'Em Execução': return 'bg-sky-500/10 text-sky-400 border-sky-500/20';
       case 'Em Testes': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';

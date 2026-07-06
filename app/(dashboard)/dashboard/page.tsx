@@ -373,6 +373,7 @@ export default function DashboardOverviewPage() {
       case 'Aguardando Equipamento': return 'bg-slate-500';
       case 'Em Análise': return 'bg-blue-500';
       case 'Aguardando Aprovação': return 'bg-amber-500';
+      case 'Aprovado': return 'bg-emerald-500';
       case 'Aguardando Peças': return 'bg-orange-500';
       case 'Em Execução': return 'bg-sky-500';
       case 'Em Testes': return 'bg-cyan-500';
