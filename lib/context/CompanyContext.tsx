@@ -78,28 +78,21 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Só faz o fetch se houver um usuário logado
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await fetchCompanyData();
-      } else {
-        // Tenta carregar local se não houver sessão ativa
-        const localCompany = localStorage.getItem('mock-company-settings');
-        if (localCompany) {
-          setCompany(JSON.parse(localCompany));
-        }
-        setLoading(false);
-      }
-    };
-
-    checkUser();
-
     // Escuta alterações de login/logout para recarregar dados
+    // onAuthStateChange dispara INITIAL_SESSION imediatamente na montagem
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        await fetchCompanyData();
-      } else {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        if (session) {
+          await fetchCompanyData();
+        } else {
+          // Tenta carregar local se não houver sessão ativa
+          const localCompany = localStorage.getItem('mock-company-settings');
+          if (localCompany) {
+            setCompany(JSON.parse(localCompany));
+          }
+          setLoading(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
         // Limpa se deslogar
         setCompany({
           name: 'Trust Care T.I.',
@@ -108,6 +101,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           logo_url: '',
           whatsapp: ''
         });
+        setLoading(false);
       }
     });
 

@@ -27,7 +27,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async () => {
+  const fetchUserData = async (sessionUser?: any) => {
     try {
       setLoading(true);
       
@@ -53,7 +53,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 2. Tenta do Supabase Auth
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      let authUser = sessionUser;
+      if (!authUser) {
+        const { data } = await supabase.auth.getUser();
+        authUser = data?.user;
+      }
+
       if (authUser) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -69,6 +74,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             full_name: profile.full_name || authUser.user_metadata?.full_name || 'Usuário',
             email: profile.email || authUser.email || ''
           });
+        } else {
+          // Fallback se não houver profile mas houver usuário
+          setUser({
+            id: authUser.id,
+            user_id: authUser.id,
+            role: 'admin',
+            full_name: authUser.user_metadata?.full_name || 'Usuário',
+            email: authUser.email || ''
+          });
         }
       } else {
         setUser(null);
@@ -82,14 +96,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchUserData();
-
-    // Escuta alterações de autenticação
+    // Escuta alterações de autenticação (dispara INITIAL_SESSION imediatamente)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        await fetchUserData();
-      } else {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        if (session?.user) {
+          await fetchUserData(session.user);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setLoading(false);
       }
     });
 
