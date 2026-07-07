@@ -1,20 +1,12 @@
 'use client';
+import { Users, UserPlus, ShieldAlert, Mail, Trash2, X, CheckCircle2, Copy } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
-import { 
-  Users, 
-  UserPlus, 
-  Loader2, 
-  Mail, 
-  ShieldAlert, 
-  CheckCircle2, 
-  X,
-  Trash2,
-  Copy
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 type Profile = {
   id: string;
@@ -170,7 +162,7 @@ export default function TeamSettingsPage() {
   if (userLoading || role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Verificando permissões...</p>
       </div>
     );
@@ -226,7 +218,7 @@ export default function TeamSettingsPage() {
                 <tr>
                   <td colSpan={4} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-emerald-500 animate-spin mb-2" />
+                      <LoadingSpinner className="w-6 h-6 text-emerald-500 animate-spin mb-2" />
                       <span className="text-xs text-slate-500 font-mono">Carregando perfis...</span>
                     </div>
                   </td>
@@ -412,7 +404,7 @@ export default function TeamSettingsPage() {
                     disabled={inviting || !inviteEmail}
                     className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-black font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all cursor-pointer rounded-none"
                   >
-                    {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    {inviting ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                     <span>Gerar Convite</span>
                   </button>
                 )}

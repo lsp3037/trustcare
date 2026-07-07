@@ -171,7 +171,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
       {/* Botão de Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-800 hover:bg-slate-850 hover:text-white text-slate-350 font-semibold py-2 px-4 rounded-lg text-sm transition-all shadow-md cursor-pointer"
+        className="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-800 hover:bg-slate-850 hover:text-white text-slate-350 font-semibold py-2 px-4 rounded-none text-sm transition-all shadow-md cursor-pointer"
       >
         <CalendarIcon className="w-4 h-4 text-blue-500" />
         <span>{formatButtonLabel()}</span>
@@ -182,7 +182,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
 
       {/* Popover do Calendário e Presets */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[100] flex p-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 mt-2 bg-slate-900 border border-slate-800 rounded-none shadow-2xl z-[100] flex p-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-150">
           
           {/* Painel Esquerdo: Presets */}
           <div className="w-36 flex flex-col gap-1 border-r border-slate-850 pr-4">
@@ -191,7 +191,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
               <button
                 key={pName}
                 onClick={() => applyPreset(pName)}
-                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`w-full text-left px-2.5 py-1.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
                   preset === pName
                     ? 'bg-blue-600/15 text-blue-400 border border-blue-500/25'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/40 border border-transparent'
@@ -209,7 +209,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -219,7 +219,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -254,7 +254,7 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
                     key={`day-${dayNum}`}
                     type="button"
                     onClick={() => handleDayClick(dayNum)}
-                    className={`w-7 h-7 rounded-md text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                    className={`w-7 h-7 rounded-none text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
                       selected
                         ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20'
                         : ranged

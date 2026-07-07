@@ -1,8 +1,10 @@
 'use client';
+import { AlertTriangle, Building, Printer } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Printer, Loader2, AlertTriangle, Building, ShieldCheck } from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 
 interface ChecklistTemplateItem {
@@ -226,7 +228,7 @@ export default function TempPrintPreviewPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 min-h-screen bg-slate-950 text-slate-400">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
         <p className="text-sm">Carregando visualização de impressão temporária...</p>
       </div>
     );
@@ -258,7 +260,7 @@ export default function TempPrintPreviewPage() {
       {/* HUD DE AVISO TEMPORÁRIO (Oculto na Impressão) */}
       <div className="print:hidden max-w-4xl mx-auto p-4 bg-slate-900 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 rounded-t-xl">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
+          <div className="p-2 bg-amber-500/10 text-amber-500 rounded-none">
             <Building className="w-5 h-5" />
           </div>
           <div>
@@ -269,13 +271,13 @@ export default function TempPrintPreviewPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.back()}
-            className="px-4 py-2 border border-slate-850 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-semibold transition-all cursor-pointer"
+            className="px-4 py-2 border border-slate-850 hover:bg-slate-800 text-slate-400 hover:text-white rounded-none text-xs font-semibold transition-all cursor-pointer"
           >
             Voltar para OS
           </button>
           <button
             onClick={handlePrint}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/10 cursor-pointer transition-all active:scale-95"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/10 cursor-pointer transition-all active:scale-95"
           >
             <Printer className="w-4 h-4" /> Simular Impressão (Ctrl + P)
           </button>
@@ -287,7 +289,7 @@ export default function TempPrintPreviewPage() {
         <p className="text-xs text-slate-500 mb-6 text-center italic">Abaixo está a folha no formato exato que será enviado para a impressora:</p>
         
         {/* Folha A4 simulada em tela */}
-        <div className="bg-white text-black p-8 rounded-lg shadow-lg border border-slate-205 max-w-[21cm] mx-auto min-h-[29.7cm] flex flex-col justify-between">
+        <div className="bg-white text-black p-8 rounded-none shadow-lg border border-slate-205 max-w-[21cm] mx-auto min-h-[29.7cm] flex flex-col justify-between">
           <PrintDocumentContent
             order={order}
             client={client}

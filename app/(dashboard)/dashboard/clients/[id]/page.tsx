@@ -1,30 +1,13 @@
 'use client';
+import { QrCode, Save, Plus, ClipboardList, X, Wrench, AlertTriangle, ArrowLeft, Edit, CheckCircle2, Building, User, FileText, Phone, Mail, Laptop, Trash2, FolderPlus } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  User, 
-  Building, 
-  Phone, 
-  Mail, 
-  FileText, 
-  ClipboardList, 
-  Loader2, 
-  Edit, 
-  CheckCircle2, 
-  AlertTriangle,
-  Plus,
-  Laptop,
-  QrCode,
-  Trash2,
-  Save,
-  FolderPlus,
-  X,
-  Wrench
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
+import { getStatusColor } from '@/lib/utils/orderStatus';
 
 export default function ClientDetailPage() {
   const router = useRouter();
@@ -448,26 +431,12 @@ export default function ClientDetailPage() {
   };
 
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Aguardando Equipamento': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-      case 'Em Análise': return 'bg-blue-500/10 text-blue-450 border-blue-500/20';
-      case 'Aguardando Aprovação': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'Aprovado': return 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20';
-      case 'Aguardando Peças': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'Em Execução': return 'bg-sky-500/10 text-sky-400 border-sky-500/20';
-      case 'Em Testes': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
-      case 'Pronto para Retirada': return 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20';
-      case 'Finalizado': return 'bg-emerald-600/10 text-emerald-500 border-emerald-600/20';
-      case 'Cancelado': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-    }
-  };
+
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+        <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Carregando detalhes do cliente...</p>
       </div>
     );
@@ -496,7 +465,7 @@ export default function ClientDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
           <div>
             <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span className="text-slate-550 font-mono text-xl bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
+              <span className="text-slate-550 font-mono text-xl bg-slate-900 border border-slate-800 px-3 py-1 rounded-none">
                 #{client.client_number || 'Mock'}
               </span>
               {client.name}
@@ -506,7 +475,7 @@ export default function ClientDetailPage() {
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
+              className="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 transition-colors"
             >
               <Edit className="w-4 h-4 text-slate-400" /> Editar Dados
             </button>
@@ -516,7 +485,7 @@ export default function ClientDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Detalhes do Cliente / Formulário de Edição */}
-        <div className="lg:col-span-1 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl h-fit">
+        <div className="lg:col-span-1 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl h-fit">
           <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3">
             {isEditing ? 'Editar Cadastro' : 'Ficha de Cadastro'}
           </h3>
@@ -524,12 +493,12 @@ export default function ClientDetailPage() {
           {isEditing ? (
             <form onSubmit={handleUpdateClient} className="space-y-4">
               {saveSuccess && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
+                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
                 </div>
               )}
               {saveError && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450">
+                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450">
                   {saveError}
                 </div>
               )}
@@ -564,7 +533,7 @@ export default function ClientDetailPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -576,7 +545,7 @@ export default function ClientDetailPage() {
                   value={document}
                   onChange={(e) => setDocument(e.target.value)}
                   placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -587,7 +556,7 @@ export default function ClientDetailPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Ex: (11) 98765-4321"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -598,7 +567,7 @@ export default function ClientDetailPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Ex: cliente@empresa.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -606,9 +575,9 @@ export default function ClientDetailPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition-all"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-none text-xs flex items-center justify-center gap-1 transition-all"
                 >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Salvar'}
+                  {saving ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : 'Salvar'}
                 </button>
                 <button
                   type="button"
@@ -621,7 +590,7 @@ export default function ClientDetailPage() {
                     setPhone(client.phone || '');
                     setEmail(client.email || '');
                   }}
-                  className="flex-1 bg-slate-950 border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white font-semibold py-2 rounded-lg text-xs transition-colors"
+                  className="flex-1 bg-slate-950 border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white font-semibold py-2 rounded-none text-xs transition-colors"
                 >
                   Cancelar
                 </button>
@@ -631,7 +600,7 @@ export default function ClientDetailPage() {
             <div className="space-y-5">
               {/* Tipo de Cadastro */}
               <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                <div className={`p-2.5 rounded-none ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
                   {client.type === 'PJ' ? <Building className="w-5 h-5" /> : <User className="w-5 h-5" />}
                 </div>
                 <div>
@@ -642,7 +611,7 @@ export default function ClientDetailPage() {
 
               {/* Documento */}
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
@@ -653,7 +622,7 @@ export default function ClientDetailPage() {
 
               {/* Telefone */}
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
@@ -664,7 +633,7 @@ export default function ClientDetailPage() {
 
               {/* Email */}
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div className="overflow-hidden">
@@ -680,7 +649,7 @@ export default function ClientDetailPage() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* Equipamentos Cadastrados */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3 flex items-center gap-2">
               <Laptop className="w-5 h-5 text-indigo-455" /> Equipamentos do Cliente
             </h3>
@@ -723,21 +692,21 @@ export default function ClientDetailPage() {
                               type="button"
                               onClick={() => handleShowChecklistHistory(eq)}
                               title="Histórico Clínico (Checklists)"
-                              className="p-1.5 bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 rounded-md transition-colors"
+                              className="p-1.5 bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 rounded-none transition-colors"
                             >
                               <ClipboardList className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleEditEquipment(eq)}
                               title="Editar Equipamento"
-                              className="p-1.5 bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-md transition-colors"
+                              className="p-1.5 bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-none transition-colors"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteEquipment(eq.id)}
                               title="Excluir Equipamento"
-                              className="p-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-md transition-colors"
+                              className="p-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-none transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -761,12 +730,12 @@ export default function ClientDetailPage() {
               </h4>
               
               {eqSuccess && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
+                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado!
                 </div>
               )}
               {eqError && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450">
+                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450">
                   {eqError}
                 </div>
               )}
@@ -779,7 +748,7 @@ export default function ClientDetailPage() {
                     placeholder="Ex: Notebook Luan"
                     value={eqName}
                     onChange={(e) => setEqName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                     required
                   />
                 </div>
@@ -790,7 +759,7 @@ export default function ClientDetailPage() {
                     <select
                       value={eqCategoryId}
                       onChange={(e) => setEqCategoryId(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                     >
                       <option value="">Selecione...</option>
                       {categories.map(cat => (
@@ -800,7 +769,7 @@ export default function ClientDetailPage() {
                     <button
                       type="button"
                       onClick={handleCreateCategory}
-                      className="px-3 bg-slate-900 border border-slate-800 hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 rounded-lg flex items-center justify-center transition-colors"
+                      className="px-3 bg-slate-900 border border-slate-800 hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 rounded-none flex items-center justify-center transition-colors"
                       title="Nova Categoria"
                     >
                       <FolderPlus className="w-4 h-4" />
@@ -815,7 +784,7 @@ export default function ClientDetailPage() {
                     placeholder="Ex: Dell"
                     value={eqBrand}
                     onChange={(e) => setEqBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
 
@@ -826,7 +795,7 @@ export default function ClientDetailPage() {
                     placeholder="Ex: Latitude 3420"
                     value={eqModel}
                     onChange={(e) => setEqModel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
 
@@ -839,7 +808,7 @@ export default function ClientDetailPage() {
                       placeholder="Ex: PE091728"
                       value={eqSerial}
                       onChange={(e) => setEqSerial(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -857,7 +826,7 @@ export default function ClientDetailPage() {
                       setEqSerial('');
                       setEqCategoryId('');
                     }}
-                    className="bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold py-2 px-5 rounded-lg text-xs transition-colors"
+                    className="bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold py-2 px-5 rounded-none text-xs transition-colors"
                   >
                     Cancelar Edição
                   </button>
@@ -865,9 +834,9 @@ export default function ClientDetailPage() {
                 <button
                   type="submit"
                   disabled={addingEq || eqSuccess}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
                 >
-                  {addingEq ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)} 
+                  {addingEq ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : (editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)} 
                   {editingEqId ? 'Atualizar Equipamento' : 'Adicionar Equipamento'}
                 </button>
               </div>
@@ -875,7 +844,7 @@ export default function ClientDetailPage() {
           </div>
 
           {/* Histórico de Ordens de Serviço */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-3">
                 <div>
@@ -886,7 +855,7 @@ export default function ClientDetailPage() {
                 </div>
                 <Link 
                   href={`/dashboard/orders?new=true&clientId=${client.id}`}
-                  className="bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 font-semibold py-1.5 px-3.5 rounded-lg text-xs flex items-center gap-1.5 transition-all"
+                  className="bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 font-semibold py-1.5 px-3.5 rounded-none text-xs flex items-center gap-1.5 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" /> Abrir OS
                 </Link>
@@ -952,7 +921,7 @@ export default function ClientDetailPage() {
           <div className="bg-slate-900 border-l border-slate-850 h-screen w-full max-w-lg p-6 shadow-2xl overflow-y-auto flex flex-col relative">
             <button 
               onClick={() => setSelectedEqForHistory(null)}
-              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="absolute right-4 top-4 p-1.5 rounded-none hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -973,11 +942,11 @@ export default function ClientDetailPage() {
             <div className="flex-1 space-y-6">
               {loadingHistory ? (
                 <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+                  <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
                   <p className="text-sm text-slate-450">Carregando histórico clínico...</p>
                 </div>
               ) : eqChecklistHistory.length === 0 ? (
-                <div className="text-center py-16 text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl p-6">
+                <div className="text-center py-16 text-slate-500 text-xs border border-dashed border-slate-800 rounded-none p-6">
                   Nenhum checklist registrado para este equipamento em ordens de serviço anteriores.
                 </div>
               ) : (
@@ -994,7 +963,7 @@ export default function ClientDetailPage() {
                       if (itemsList.length === 0) return <span className="text-[10px] text-slate-600 italic block mt-1">Nenhum item preenchido</span>;
                       
                       return (
-                        <div className="grid grid-cols-2 gap-2 mt-2 bg-slate-950/40 p-3 rounded-lg border border-slate-900">
+                        <div className="grid grid-cols-2 gap-2 mt-2 bg-slate-950/40 p-3 rounded-none border border-slate-900">
                           {itemsList.map(([key, val]: [string, any]) => {
                             const isChecked = typeof val === 'object' ? val.checked : !!val;
                             const note = typeof val === 'object' ? val.observation : '';
@@ -1018,7 +987,7 @@ export default function ClientDetailPage() {
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         </span>
                         
-                        <div className="bg-slate-900/50 border border-slate-850 p-4 rounded-xl space-y-3">
+                        <div className="bg-slate-900/50 border border-slate-850 p-4 rounded-none space-y-3">
                           <div className="flex justify-between items-center">
                             <span 
                               onClick={() => {

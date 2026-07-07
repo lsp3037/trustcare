@@ -509,14 +509,14 @@ export default function LeadsFunnelPage() {
             resetForm();
             setIsCreating(true);
           }}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15 hover:shadow-emerald-500/25 transition-all duration-200"
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15 hover:shadow-emerald-500/25 transition-all duration-200"
         >
           <Plus className="w-4 h-4" /> Novo Lead
         </button>
       </div>
 
       {/* Warning/Instructions Info Bar */}
-      <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl flex items-center gap-3.5 text-slate-350 text-xs">
+      <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-none flex items-center gap-3.5 text-slate-350 text-xs">
         <Info className="w-5 h-5 text-emerald-400 shrink-0" />
         <div>
           <span className="font-bold text-white block">CRM Conectado ao Supabase (com sincronização offline local)</span>
@@ -526,7 +526,7 @@ export default function LeadsFunnelPage() {
 
       {/* Kanban Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-sm text-slate-450">Carregando funil de vendas...</p>
         </div>
@@ -544,7 +544,7 @@ export default function LeadsFunnelPage() {
                 onDragEnter={(e) => handleDragEnter(e, col.id)}
                 onDragLeave={() => setDragOverColumn(null)}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className={`flex-1 min-w-[280px] lg:max-w-[320px] bg-slate-900/30 border border-slate-800/80 rounded-2xl p-4 flex flex-col min-h-[600px] transition-all duration-200 ${
+                className={`flex-1 min-w-[280px] lg:max-w-[320px] bg-slate-900/30 border border-slate-800/80 rounded-none p-4 flex flex-col min-h-[600px] transition-all duration-200 ${
                   isOver ? 'border-dashed border-emerald-500/50 bg-emerald-500/5 shadow-md shadow-emerald-500/5' : ''
                 }`}
               >
@@ -567,7 +567,7 @@ export default function LeadsFunnelPage() {
                 {/* Cards Container */}
                 <div className="flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1">
                   {filteredLeads.length === 0 ? (
-                    <div className="h-28 border border-dashed border-slate-800/50 rounded-xl flex items-center justify-center text-center p-4">
+                    <div className="h-28 border border-dashed border-slate-800/50 rounded-none flex items-center justify-center text-center p-4">
                       <p className="text-[11px] text-slate-600">Arraste um lead para esta etapa</p>
                     </div>
                   ) : (
@@ -581,7 +581,7 @@ export default function LeadsFunnelPage() {
                           setSelectedLead(lead);
                           setIsEditing(false);
                         }}
-                        className={`bg-slate-900 border border-slate-800/80 rounded-xl p-4 shadow-sm hover:border-emerald-500/30 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.01] flex flex-col justify-between ${
+                        className={`bg-slate-900 border border-slate-800/80 rounded-none p-4 shadow-sm hover:border-emerald-500/30 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.01] flex flex-col justify-between ${
                           draggedLeadId === lead.id ? 'opacity-40 border-dashed border-emerald-500/20' : ''
                         }`}
                       >
@@ -632,10 +632,10 @@ export default function LeadsFunnelPage() {
       {/* MODAL: Criar Novo Lead */}
       {isCreating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-850 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+          <div className="bg-slate-900 border border-slate-850 rounded-none w-full max-w-md p-6 shadow-2xl relative">
             <button 
               onClick={() => setIsCreating(false)}
-              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="absolute right-4 top-4 p-1.5 rounded-none hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-4.5 h-4.5" />
             </button>
@@ -656,7 +656,7 @@ export default function LeadsFunnelPage() {
                     placeholder="Ex: Ana Paula Souza"
                     value={nomeCliente}
                     onChange={(e) => setNomeCliente(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
@@ -670,7 +670,7 @@ export default function LeadsFunnelPage() {
                     placeholder="Ex: (11) 98888-7777"
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
@@ -685,7 +685,7 @@ export default function LeadsFunnelPage() {
                     placeholder="Ex: MacBook Pro - Troca de Bateria"
                     value={equipamentoInteresse}
                     onChange={(e) => setEquipamentoInteresse(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
@@ -699,7 +699,7 @@ export default function LeadsFunnelPage() {
                     value={problemDescription}
                     onChange={(e) => setProblemDescription(e.target.value)}
                     rows={2}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                   />
                 </div>
               </div>
@@ -710,7 +710,7 @@ export default function LeadsFunnelPage() {
                   <select
                     value={origem}
                     onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Instagram Ads">Instagram Ads</option>
@@ -730,7 +730,7 @@ export default function LeadsFunnelPage() {
                       min="0"
                       value={valorEstimado}
                       onChange={(e) => setValorEstimado(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-9 pr-4 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -741,7 +741,7 @@ export default function LeadsFunnelPage() {
                 <select
                   value={statusFunil}
                   onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                 >
                   <option value="Novo Contato">Novo Contato</option>
                   <option value="Em Negociação">Em Negociação</option>
@@ -754,13 +754,13 @@ export default function LeadsFunnelPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 px-4 rounded-lg text-xs transition-colors cursor-pointer"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 px-4 rounded-none text-xs transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2 px-6 rounded-lg text-xs transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-6 rounded-none text-xs transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
                 >
                   Salvar Lead
                 </button>
@@ -773,10 +773,10 @@ export default function LeadsFunnelPage() {
       {/* MODAL: Visualizar & Editar Detalhes do Lead */}
       {selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-850 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+          <div className="bg-slate-900 border border-slate-850 rounded-none w-full max-w-lg p-6 shadow-2xl relative">
             <button 
               onClick={() => setSelectedLead(null)}
-              className="absolute right-4 top-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="absolute right-4 top-4 p-1.5 rounded-none hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-4.5 h-4.5" />
             </button>
@@ -798,7 +798,7 @@ export default function LeadsFunnelPage() {
                   <p className="text-xs text-slate-500 mt-1">Cadastrado em {new Date(selectedLead.created_at).toLocaleString('pt-BR')}</p>
                 </div>
 
-                <div className="bg-slate-950/60 p-4 border border-slate-850 rounded-xl space-y-3">
+                <div className="bg-slate-950/60 p-4 border border-slate-850 rounded-none space-y-3">
                   <div className="flex items-start gap-3">
                     <Wrench className="w-4 h-4 text-slate-450 shrink-0 mt-0.5" />
                     <div>
@@ -838,7 +838,7 @@ export default function LeadsFunnelPage() {
                   </div>
 
                   {selectedLead.status === 'Perdido' && selectedLead.motivo_perda && (
-                    <div className="pt-3 mt-3 border-t border-rose-500/10 bg-rose-500/5 p-3 rounded-lg border border-rose-500/10">
+                    <div className="pt-3 mt-3 border-t border-rose-500/10 bg-rose-500/5 p-3 rounded-none border border-rose-500/10">
                       <p className="text-[10px] text-rose-400 uppercase font-bold tracking-wider mb-1">Motivo do Descarte (Perdido)</p>
                       <p className="text-xs text-rose-300 italic">&ldquo;{selectedLead.motivo_perda}&rdquo;</p>
                     </div>
@@ -858,7 +858,7 @@ export default function LeadsFunnelPage() {
                         setStatusFunil(selectedLead.status);
                         setIsEditing(true);
                       }}
-                      className="flex-1 sm:flex-initial bg-slate-850 hover:bg-slate-800 text-slate-200 hover:text-white font-bold py-2.5 px-4 rounded-lg text-xs transition-colors cursor-pointer"
+                      className="flex-1 sm:flex-initial bg-slate-850 hover:bg-slate-800 text-slate-200 hover:text-white font-bold py-2.5 px-4 rounded-none text-xs transition-colors cursor-pointer"
                     >
                       Editar Lead
                     </button>
@@ -869,14 +869,14 @@ export default function LeadsFunnelPage() {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-none text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Phone className="w-3.5 h-3.5" /> WhatsApp
                       </a>
                     )}
                     <button
                       onClick={() => handleDeleteLead(selectedLead.id)}
-                      className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-400 p-2.5 rounded-lg hover:text-rose-300 transition-colors"
+                      className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-400 p-2.5 rounded-none hover:text-rose-300 transition-colors"
                       title="Excluir Lead"
                     >
                       <Trash2 className="w-4.5 h-4.5" />
@@ -887,7 +887,7 @@ export default function LeadsFunnelPage() {
                   {selectedLead.status !== 'Ganho/Convertido' && (
                     <button
                       onClick={handleConvertToOS}
-                      className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-bold py-2.5 px-6 rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 transition-all duration-200 cursor-pointer"
+                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-6 rounded-none text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 transition-all duration-200 cursor-pointer"
                     >
                       Convertido: Gerar O.S. <ArrowRight className="w-3.5 h-3.5" />
                     </button>
@@ -906,7 +906,7 @@ export default function LeadsFunnelPage() {
                     required
                     value={nomeCliente}
                     onChange={(e) => setNomeCliente(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -916,7 +916,7 @@ export default function LeadsFunnelPage() {
                     type="text"
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -927,7 +927,7 @@ export default function LeadsFunnelPage() {
                     required
                     value={equipamentoInteresse}
                     onChange={(e) => setEquipamentoInteresse(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -938,7 +938,7 @@ export default function LeadsFunnelPage() {
                     value={problemDescription}
                     onChange={(e) => setProblemDescription(e.target.value)}
                     rows={2}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                   />
                 </div>
 
@@ -948,7 +948,7 @@ export default function LeadsFunnelPage() {
                     <select
                       value={origem}
                       onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                     >
                       <option value="WhatsApp">WhatsApp</option>
                       <option value="Instagram Ads">Instagram Ads</option>
@@ -966,7 +966,7 @@ export default function LeadsFunnelPage() {
                       min="0"
                       value={valorEstimado}
                       onChange={(e) => setValorEstimado(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -976,7 +976,7 @@ export default function LeadsFunnelPage() {
                   <select
                     value={statusFunil}
                     onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
                     <option value="Novo Contato">Novo Contato</option>
                     <option value="Em Negociação">Em Negociação</option>
@@ -990,13 +990,13 @@ export default function LeadsFunnelPage() {
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="bg-slate-800 hover:bg-slate-700 text-slate-350 font-semibold py-2 px-4 rounded-lg text-xs transition-colors cursor-pointer"
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-350 font-semibold py-2 px-4 rounded-none text-xs transition-colors cursor-pointer"
                   >
                     Voltar
                   </button>
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2 px-6 rounded-lg text-xs transition-all cursor-pointer"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-6 rounded-none text-xs transition-all cursor-pointer"
                   >
                     Atualizar Dados
                   </button>
@@ -1010,7 +1010,7 @@ export default function LeadsFunnelPage() {
       {/* MINI-MODAL: Confirmação de Justificativa de Perda (Motivo de Perda) */}
       {showLossReasonModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-sm p-5 shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-none w-full max-w-sm p-5 shadow-2xl">
             <h4 className="font-bold text-white text-base mb-2 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-rose-500" /> Justificar Perda de Lead
             </h4>
@@ -1021,7 +1021,7 @@ export default function LeadsFunnelPage() {
                 <select
                   value={lossReason}
                   onChange={(e) => setLossReason(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   required
                 >
                   <option value="">Selecione um motivo...</option>
@@ -1039,7 +1039,7 @@ export default function LeadsFunnelPage() {
                     placeholder="Digite o motivo customizado..."
                     required
                     onChange={(e) => setLossReason(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
                   />
                 )}
               </div>
@@ -1072,7 +1072,7 @@ export default function LeadsFunnelPage() {
       {/* MINI-MODAL: Confirmação de Duplicado (Opção B) */}
       {showDuplicateModal && duplicateClient && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-md p-6 shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-none w-full max-w-md p-6 shadow-2xl">
             <h4 className="font-bold text-white text-base mb-2 flex items-center gap-2">
               <Building className="w-5 h-5 text-amber-500" /> Vínculo de Cliente Encontrado
             </h4>
@@ -1080,7 +1080,7 @@ export default function LeadsFunnelPage() {
               Encontramos um cadastro de cliente que coincide com os dados de contato do Lead:
             </p>
 
-            <div className="bg-slate-950 p-4 border border-slate-850 rounded-lg space-y-1 mb-6 text-xs text-slate-350">
+            <div className="bg-slate-950 p-4 border border-slate-850 rounded-none space-y-1 mb-6 text-xs text-slate-350">
               <p><strong>Nome:</strong> {duplicateClient.name}</p>
               {duplicateClient.phone && <p><strong>Telefone:</strong> {duplicateClient.phone}</p>}
               {duplicateClient.email && <p><strong>Email:</strong> {duplicateClient.email}</p>}
@@ -1095,14 +1095,14 @@ export default function LeadsFunnelPage() {
               <button
                 type="button"
                 onClick={handleUseExistingClient}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold py-2.5 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-none text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <Check className="w-4 h-4" /> Vincular ao Cliente Existente (Recomendado)
               </button>
               <button
                 type="button"
                 onClick={proceedWithNewClientCreation}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-lg text-xs transition-colors cursor-pointer"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-none text-xs transition-colors cursor-pointer"
               >
                 Criar Novo Cadastro para o Lead
               </button>

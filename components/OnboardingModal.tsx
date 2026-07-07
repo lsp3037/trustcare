@@ -1,21 +1,13 @@
 'use client';
+import { PartyPopper, Sparkles, Building, AlertCircle, Upload, ImageIcon, Phone, Mail, ArrowRight } from 'lucide-react';
+
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { supabase } from '@/lib/supabase/client';
 import { triggerConfetti } from '@/lib/utils/confetti';
-import { 
-  Building, 
-  Phone, 
-  Mail, 
-  Upload, 
-  Loader2, 
-  AlertCircle,
-  Image as ImageIcon,
-  PartyPopper,
-  Sparkles,
-  ArrowRight
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function OnboardingModal() {
   const { company, loading: contextLoading, refreshCompany } = useCompany();
@@ -276,7 +268,7 @@ export default function OnboardingModal() {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh]">
+      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-none shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh]">
         
         {/* Celebration Overlay */}
         {showCelebration && (
@@ -296,7 +288,7 @@ export default function OnboardingModal() {
         {/* Brand/Welcome Left Banner (Mobile: Top) */}
         <div className="md:w-5/12 bg-slate-950/40 p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800">
           <div className="space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-600/10">
+            <div className="w-12 h-12 rounded-none bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-600/10">
               <Building className="w-6 h-6" />
             </div>
             <div>
@@ -319,7 +311,7 @@ export default function OnboardingModal() {
         <form onSubmit={handleSave} className="md:w-7/12 p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
           <div className="space-y-5">
             {errorMsg && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-start gap-2.5">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-none flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{errorMsg}</span>
               </div>
@@ -334,7 +326,7 @@ export default function OnboardingModal() {
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
-                className={`relative w-full h-28 rounded-xl border border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-slate-950/20 ${
+                className={`relative w-full h-28 rounded-none border border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-slate-950/20 ${
                   isDragActive 
                     ? 'border-emerald-500 bg-emerald-500/5' 
                     : 'border-slate-800 hover:border-emerald-500/30'
@@ -345,7 +337,7 @@ export default function OnboardingModal() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={previewUrl} alt="Logotipo" className="max-w-full max-h-full object-contain" />
                     
-                    <label className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[9px] gap-1 rounded-xl font-bold">
+                    <label className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[9px] gap-1 rounded-none font-bold">
                       <Upload className="w-3.5 h-3.5 text-emerald-455" />
                       <span>Alterar Logo</span>
                       <input 
@@ -373,8 +365,8 @@ export default function OnboardingModal() {
                 )}
 
                 {uploading && (
-                  <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center rounded-xl text-emerald-450 text-[9px] gap-1.5 font-bold">
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                  <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center rounded-none text-emerald-450 text-[9px] gap-1.5 font-bold">
+                    <LoadingSpinner className="w-5 h-5 animate-spin" />
                     <span>Enviando logotipo...</span>
                   </div>
                 )}
@@ -395,7 +387,7 @@ export default function OnboardingModal() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Trust Care Assistência"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
                 />
               </div>
             </div>
@@ -415,7 +407,7 @@ export default function OnboardingModal() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Ex: (66) 99999-9999"
-                    className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
                   />
                 </div>
               </div>
@@ -433,7 +425,7 @@ export default function OnboardingModal() {
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     placeholder="Ex: (66) 99999-9999"
-                    className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
                   />
                 </div>
               </div>
@@ -453,7 +445,7 @@ export default function OnboardingModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Ex: contato@suaempresa.com"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
                 />
               </div>
             </div>
@@ -472,11 +464,11 @@ export default function OnboardingModal() {
             <button
               type="submit"
               disabled={saving || uploading}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-slate-800 disabled:to-slate-800 text-white font-bold rounded-lg text-[10px] flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 disabled:shadow-none cursor-pointer"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:from-slate-800 disabled:to-slate-800 text-white font-bold rounded-none text-[10px] flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 disabled:shadow-none cursor-pointer"
             >
               {saving ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
                   <span>Salvando...</span>
                 </>
               ) : (

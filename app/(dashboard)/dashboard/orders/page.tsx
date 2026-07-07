@@ -1,4 +1,5 @@
 'use client';
+import { SlaTracker } from '@/components/ui/SlaTracker';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -415,6 +416,10 @@ function OrdersContent() {
                       <p className="text-xs text-slate-300 line-clamp-2 italic">
                         "{stripHtml(order.reported_problem)}"
                       </p>
+                    </div>
+                    
+                    <div className="mt-3">
+                      <SlaTracker variant="mini" startedAt={order?.analysis_started_at} status={order.status} />
                     </div>
                   </div>
 

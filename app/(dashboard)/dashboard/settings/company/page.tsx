@@ -1,22 +1,13 @@
 'use client';
+import { Building, AlertCircle, CheckCircle2, Upload, ImageIcon, Trash2, Phone, Mail } from 'lucide-react';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
-import { 
-  Building, 
-  Phone, 
-  Mail, 
-  Upload, 
-  Loader2, 
-  CheckCircle2, 
-  AlertCircle,
-  FileText,
-  Trash2,
-  Image as ImageIcon
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function CompanySettingsPage() {
   const router = useRouter();
@@ -206,7 +197,7 @@ export default function CompanySettingsPage() {
   if (userLoading || role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Verificando permissões...</p>
       </div>
     );
@@ -215,7 +206,7 @@ export default function CompanySettingsPage() {
   if (contextLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Carregando configurações da empresa...</p>
       </div>
     );
@@ -307,7 +298,7 @@ export default function CompanySettingsPage() {
                 {/* Loading overlay during upload */}
                 {uploading && (
                   <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center rounded-none text-emerald-400 text-[10px] gap-2 font-bold">
-                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <LoadingSpinner className="w-6 h-6 animate-spin" />
                     <span>Enviando...</span>
                   </div>
                 )}
@@ -413,7 +404,7 @@ export default function CompanySettingsPage() {
             >
               {(saving || uploading) ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
                   <span>Salvando Configurações...</span>
                 </>
               ) : (

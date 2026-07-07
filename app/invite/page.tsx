@@ -3,7 +3,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { Loader2, ShieldAlert, CheckCircle2, User, Key, Building } from 'lucide-react';
+import { ShieldAlert, CheckCircle2, User, Key, Building } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import Link from 'next/link';
 
 function InviteContent() {
@@ -127,7 +128,7 @@ function InviteContent() {
   if (validating) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-slate-400 font-mono text-sm">Validando convite seguro...</p>
       </div>
     );
@@ -230,7 +231,7 @@ function InviteContent() {
               disabled={loading}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-black font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all cursor-pointer rounded-none mt-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar Conta e Acessar'}
+              {loading ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : 'Criar Conta e Acessar'}
             </button>
           </form>
         </div>
@@ -243,7 +244,7 @@ export default function InvitePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin" />
       </div>
     }>
       <InviteContent />

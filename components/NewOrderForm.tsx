@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { 
-  Loader2, 
   CheckCircle2, 
   AlertTriangle, 
   ClipboardList, 
@@ -12,18 +11,23 @@ import {
   Trash2, 
   Wrench, 
   Tag, 
-  Calendar, 
+  Calendar,
   User, 
   Boxes,
   DollarSign,
-  X
+  Info,
+  Clock,
+  Printer,
+  FileText,
+  X 
 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
-  loading: () => <div className="h-32 w-full animate-pulse bg-slate-950 border border-slate-800 rounded-lg" />
+  loading: () => <div className="h-32 w-full animate-pulse bg-slate-950 border border-slate-800 rounded-none" />
 });
 
 const modules = {
@@ -36,8 +40,6 @@ const modules = {
 };
 
 const formats = ['bold', 'italic', 'underline', 'list', 'bullet', 'align'];
-
-
 interface Client {
   id: string;
   name: string;
@@ -826,14 +828,14 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     <>
       <form onSubmit={handleSubmit} className="space-y-6 text-slate-200">
       {success && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
+        <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <p className="font-semibold text-sm">Ordem de Serviço aberta com sucesso!</p>
         </div>
       )}
 
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-450 flex items-center gap-2.5">
+        <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/25 text-rose-450 flex items-center gap-2.5">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <p className="text-xs font-semibold">{errorMsg}</p>
         </div>
@@ -859,7 +861,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   setClientId(val);
                 }
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               required
               disabled={!!queryClientId}
             >
@@ -885,7 +887,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             <select
               value={equipmentId}
               onChange={(e) => setEquipmentId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={!clientId || !!queryEquipmentId}
             >
               {!clientId ? (
@@ -912,7 +914,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                 placeholder="Ex: Notebook Lenovo ThinkPad L14 N/S: PE091728"
                 value={equipmentDetails}
                 onChange={(e) => setEquipmentDetails(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />
             </div>
@@ -925,7 +927,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
               >
                 <option value="Aguardando Equipamento">Aguardando Equipamento</option>
                 <option value="Em Análise">Em Análise</option>
@@ -944,7 +946,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
               >
                 <option value="Baixa">Baixa</option>
                 <option value="Média">Média</option>
@@ -966,7 +968,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             <select
               value={technicianId}
               onChange={(e) => setTechnicianId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
             >
               <option value="">Não atribuído</option>
               {technicians.map((t) => (
@@ -984,7 +986,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               type="date"
               value={deliveryPrediction}
               onChange={(e) => setDeliveryPrediction(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
             />
           </div>
 
@@ -1000,7 +1002,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                 min="0"
                 value={serviceValue}
                 onChange={(e) => setServiceValue(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
@@ -1015,7 +1017,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                 min="0"
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           </div>
@@ -1025,7 +1027,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       {/* Problema Relatado */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-slate-450 uppercase tracking-wider">Problema Relatado / Sintomas</label>
-        <div className="bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+        <div className="bg-slate-950 rounded-none overflow-hidden border border-slate-800">
           <ReactQuill
             theme="snow"
             modules={modules}
@@ -1038,7 +1040,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       </div>
 
       {/* Seção de Peças e Produtos Utilizados */}
-      <div className="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
+      <div className="bg-slate-950/40 border border-slate-900 rounded-none p-5 space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-slate-900 pb-2">
           <Boxes className="w-4 h-4 text-indigo-400" /> Peças e Peças de Reposição Utilizadas
         </h3>
@@ -1057,7 +1059,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   setCurrentProductId(val);
                 }
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="">Selecione um item do estoque...</option>
               {inventory.map((prod) => (
@@ -1078,7 +1080,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               min="1"
               value={currentProductQty}
               onChange={(e) => setCurrentProductQty(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
             />
             {(() => {
               const prod = inventory.find(p => p.id === currentProductId);
@@ -1104,7 +1106,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               if (!prod) return true;
               return (parseInt(currentProductQty) || 0) > prod.quantity;
             })()}
-            className={`font-semibold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 transition-all h-[34px] ${
+            className={`font-semibold py-2 px-4 rounded-none text-xs flex items-center gap-1.5 transition-all h-[34px] ${
               (() => {
                 if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
                 const prod = inventory.find(p => p.id === currentProductId);
@@ -1161,7 +1163,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
       </div>
 
       {/* Seção de Serviços Realizados (Catálogo) */}
-      <div className="bg-slate-950/40 border border-slate-900 rounded-xl p-5 space-y-4">
+      <div className="bg-slate-950/40 border border-slate-900 rounded-none p-5 space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-slate-900 pb-2">
           <Wrench className="w-4 h-4 text-indigo-400" /> Serviços Realizados (Catálogo)
         </h3>
@@ -1173,7 +1175,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             <select
               value={currentServiceId}
               onChange={(e) => handleServiceSelect(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="">Selecione um serviço...</option>
               {availableServices.map((serv) => (
@@ -1191,7 +1193,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               min="1"
               value={currentServiceQty}
               onChange={(e) => setCurrentServiceQty(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 text-center font-mono"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 text-center font-mono"
             />
           </div>
 
@@ -1203,14 +1205,14 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               min="0"
               value={currentServicePrice}
               onChange={(e) => setCurrentServicePrice(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-semibold"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-semibold"
             />
           </div>
 
           <button
             type="button"
             onClick={handleAddService}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 transition-colors h-[34px] shadow-lg shadow-indigo-650/10 shrink-0 cursor-pointer"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-none text-xs flex items-center gap-1.5 transition-colors h-[34px] shadow-lg shadow-indigo-650/10 shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" /> Adicionar Serviço
           </button>
@@ -1272,7 +1274,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             )}
           </div>
 
-          <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex items-center gap-4">
+          <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-none flex items-center gap-4">
             <Tag className="w-6 h-6 text-emerald-450" />
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valor Total da O.S.</p>
@@ -1286,10 +1288,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         <button
           type="submit"
           disabled={loading || success}
-          className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-8 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 transition-all duration-200 disabled:opacity-55"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-8 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 transition-all duration-200 disabled:opacity-55"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <LoadingSpinner className="w-4 h-4 animate-spin" />
           ) : (
             <>
               <ClipboardList className="w-4 h-4" /> Salvar Ordem de Serviço
@@ -1302,7 +1304,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     {/* Modal para Cadastro de Novo Cliente + Equipamento (Fluxo em Etapas com Deslizamento) */}
     {isNewClientModalOpen && (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+        <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-none shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
           
           {/* Cabeçalho */}
           <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
@@ -1315,7 +1317,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                 setIsNewClientModalOpen(false);
                 setClientModalStep(1);
               }}
-              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-none hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1330,7 +1332,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           {/* Formulário com Slider Horizontal */}
           <form onSubmit={handleSaveClient} className="overflow-hidden">
             {clientModalError && (
-              <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+              <div className="mx-6 mt-4 p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2 animate-in fade-in duration-200">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{clientModalError}</span>
               </div>
@@ -1381,7 +1383,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     required={clientModalStep === 1}
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: João da Silva ou Tech Corp Ltda"
                   />
                 </div>
@@ -1392,7 +1394,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newClientDoc}
                     onChange={(e) => setNewClientDoc(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: 000.000.000-00"
                   />
                 </div>
@@ -1403,7 +1405,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newClientPhone}
                     onChange={(e) => setNewClientPhone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: (11) 99999-9999"
                   />
                 </div>
@@ -1414,7 +1416,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="email"
                     value={newClientEmail}
                     onChange={(e) => setNewClientEmail(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: cliente@email.com"
                   />
                 </div>
@@ -1426,14 +1428,14 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                       setIsNewClientModalOpen(false);
                       setClientModalStep(1);
                     }}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-none text-xs transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-none text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     Salvar e Adicionar Equipamento
                   </button>
@@ -1453,7 +1455,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     required={clientModalStep === 2}
                     value={newEqName}
                     onChange={(e) => setNewEqName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: Notebook Dell Inspiron"
                   />
                 </div>
@@ -1464,7 +1466,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newEqBrand}
                     onChange={(e) => setNewEqBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: Dell"
                   />
                 </div>
@@ -1475,7 +1477,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newEqModel}
                     onChange={(e) => setNewEqModel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: L14 Gen 2"
                   />
                 </div>
@@ -1486,7 +1488,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     type="text"
                     value={newEqSerial}
                     onChange={(e) => setNewEqSerial(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                     placeholder="Ex: SN-98765432"
                   />
                 </div>
@@ -1498,17 +1500,17 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                       setClientModalError('');
                       setClientModalStep(1);
                     }}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-none text-xs transition-colors cursor-pointer"
                   >
                     Voltar
                   </button>
                   <button
                     type="submit"
                     disabled={savingClient}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-none text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {savingClient ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
                     ) : (
                       <>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Salvar e Concluir
@@ -1526,7 +1528,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     {/* Modal para Cadastro de Nova Peça no Estoque com Estrutura Hierárquica */}
     {isNewProductModalOpen && (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
+        <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-none shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
           <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Boxes className="w-5 h-5 text-emerald-500" /> Cadastrar Nova Peça
@@ -1534,7 +1536,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             <button
               type="button"
               onClick={() => setIsNewProductModalOpen(false)}
-              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-none hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1542,7 +1544,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
           <form onSubmit={handleSaveProduct} className="p-6 space-y-4">
             {productModalError && (
-              <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2">
+              <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span>{productModalError}</span>
               </div>
@@ -1557,7 +1559,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                 value={newProdName}
                 onChange={(e) => setNewProdName(e.target.value)}
                 disabled={newProdCategory === 'Memória RAM' || newProdCategory === 'SSD'}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-650 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 placeholder={
                   newProdCategory === 'Memória RAM' || newProdCategory === 'SSD'
                     ? 'Gerado automaticamente com base nos atributos...'
@@ -1587,7 +1589,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                       setNewProdName('');
                     }
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   required
                 >
                   <option value="">Selecione...</option>
@@ -1614,7 +1616,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   placeholder="Ex: Kingston"
                   value={newProdBrand}
                   onChange={(e) => setNewProdBrand(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
@@ -1627,7 +1629,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     placeholder="Ex: 1TB / 8GB"
                     value={newProdCapacity}
                     onChange={(e) => setNewProdCapacity(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               )}
@@ -1635,13 +1637,13 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
             {/* Condicionais SSD */}
             {newProdCategory === 'SSD' && (
-              <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-xl animate-in slide-in-from-top-1 duration-200">
+              <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-none animate-in slide-in-from-top-1 duration-200">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia SSD *</label>
                   <select
                     value={newProdSsdTech}
                     onChange={(e) => setNewProdSsdTech(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -1655,7 +1657,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   <select
                     value={newProdSsdGb}
                     onChange={(e) => setNewProdSsdGb(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -1674,13 +1676,13 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
             {/* Condicionais Memória RAM */}
             {newProdCategory === 'Memória RAM' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-xl animate-in slide-in-from-top-1 duration-200">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-none animate-in slide-in-from-top-1 duration-200">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aplicação *</label>
                   <select
                     value={newProdRamApp}
                     onChange={(e) => setNewProdRamApp(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -1693,7 +1695,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   <select
                     value={newProdRamTech}
                     onChange={(e) => setNewProdRamTech(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -1711,7 +1713,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                     placeholder="Ex: 3200MHz"
                     value={newProdRamSpeed}
                     onChange={(e) => setNewProdRamSpeed(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1719,7 +1721,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   <select
                     value={newProdRamGb}
                     onChange={(e) => setNewProdRamGb(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -1744,7 +1746,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   required
                   value={newProdSalePrice}
                   onChange={(e) => setNewProdSalePrice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
                   placeholder="0.00"
                 />
               </div>
@@ -1756,7 +1758,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   min="0"
                   value={newProdQty}
                   onChange={(e) => setNewProdQty(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-105 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             </div>
@@ -1765,17 +1767,17 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               <button
                 type="button"
                 onClick={() => setIsNewProductModalOpen(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-755 text-slate-350 hover:text-slate-100 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-755 text-slate-350 hover:text-slate-100 font-semibold rounded-none text-xs transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={savingProduct}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-none text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {savingProduct ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5" /> Salvar Peça

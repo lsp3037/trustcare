@@ -144,7 +144,7 @@ function DashboardLayoutContent({
         {/* Brand Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
           <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden bg-white/10 p-1">
+            <div className="flex items-center justify-center w-8 h-8 rounded-none overflow-hidden bg-white/10 p-1">
               {company.logo_url ? (
                 <img src={company.logo_url} alt={company.name} className="w-full h-full object-contain" />
               ) : (
@@ -157,15 +157,15 @@ function DashboardLayoutContent({
               </span>
             )}
           </Link>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 text-slate-400 hover:text-white rounded-md hidden lg:block">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 text-slate-400 hover:text-white rounded-none hidden lg:block">
             <Menu className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tenant/Company Info Card */}
         {sidebarOpen && (
-          <div className="mx-4 my-4 p-3 bg-slate-950/50 border border-slate-800/80 rounded-xl flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+          <div className="mx-4 my-4 p-3 bg-slate-950/50 border border-slate-800/80 rounded-none flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-none">
               <Building className="w-4 h-4" />
             </div>
             <div className="overflow-hidden">
@@ -191,7 +191,7 @@ function DashboardLayoutContent({
                       }
                       setSettingsOpen(!settingsOpen);
                     }}
-                    className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out cursor-pointer ${
+                    className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-none text-sm font-medium transition-all duration-200 ease-out cursor-pointer ${
                       isSubActive 
                         ? 'text-emerald-450 bg-slate-800/20' 
                         : 'text-slate-400 hover:text-slate-250 hover:bg-slate-800/30'
@@ -219,7 +219,7 @@ function DashboardLayoutContent({
                                 setSidebarOpen(false);
                               }
                             }}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                            className={`flex items-center gap-3 px-3 py-2 rounded-none text-xs font-semibold transition-all duration-200 ${
                               isActive 
                                 ? 'bg-emerald-600 text-white shadow shadow-emerald-600/10' 
                                 : 'text-slate-455 hover:text-slate-200 hover:bg-slate-800/25'
@@ -250,7 +250,7 @@ function DashboardLayoutContent({
                     setSidebarOpen(false);
                   }
                 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-none text-sm font-medium transition-all duration-200 ease-out ${
                   isActive 
                     ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/15' 
                     : 'text-slate-400 hover:text-slate-250 hover:bg-slate-800/30'
@@ -266,7 +266,7 @@ function DashboardLayoutContent({
         {/* User Card & Logout */}
         <div className="p-3 border-t border-slate-800 bg-slate-900/40">
           {sidebarOpen && (
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-950/30 border border-slate-800/50 mb-3">
+            <div className="flex items-center gap-3 p-2 rounded-none bg-slate-950/30 border border-slate-800/50 mb-3">
               <div className="w-8 h-8 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold uppercase text-sm">
                 {userName.charAt(0)}
               </div>
@@ -278,7 +278,7 @@ function DashboardLayoutContent({
           )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded-none text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-5 h-5 shrink-0" />
             {sidebarOpen && <span>Sair</span>}
@@ -299,7 +299,7 @@ function DashboardLayoutContent({
         {/* Header/Top Bar (Oculto na Impressão) */}
         <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 print:hidden">
           <div className="flex items-center gap-2">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg md:hidden">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-none md:hidden">
               <Menu className="w-5 h-5" />
             </button>
             <h2 className="font-semibold text-slate-200">Painel de Controle</h2>
@@ -309,7 +309,7 @@ function DashboardLayoutContent({
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-slate-455 hover:text-slate-200 hover:bg-slate-800/40 rounded-lg border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
+              className="p-2 text-slate-455 hover:text-slate-200 hover:bg-slate-800/40 rounded-none border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
               title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
             >
               {theme === 'light' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}

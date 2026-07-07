@@ -1,9 +1,11 @@
 'use client';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 
 export default function LoginPage() {
@@ -52,7 +54,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+    <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-8 shadow-2xl">
       <div className="flex flex-col items-center mb-8">
         <div className="mb-4 flex justify-center">
           <img 
@@ -67,7 +69,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleLogin} className="space-y-5">
         {errorMsg && (
-          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
+          <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
             {errorMsg}
           </div>
         )}
@@ -81,7 +83,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seuemail@empresa.com"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
               required
             />
           </div>
@@ -99,7 +101,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
               required
             />
           </div>
@@ -108,10 +110,10 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium py-2.5 px-4 rounded-lg shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55"
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 px-4 rounded-none shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <LoadingSpinner className="w-4 h-4 animate-spin" />
           ) : (
             <>
               Entrar <ArrowRight className="w-4 h-4" />

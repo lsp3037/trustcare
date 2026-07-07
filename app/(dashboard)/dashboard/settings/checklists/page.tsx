@@ -1,19 +1,11 @@
-'use strict';
 'use client';
+'use strict';
+
+import { ArrowLeft, Settings, ClipboardList, Trash2, Plus, CheckCircle2, AlertTriangle, Save, HelpCircle } from 'lucide-react';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  ClipboardList, 
-  Plus, 
-  Trash2, 
-  Save, 
-  Loader2, 
-  CheckCircle2, 
-  AlertTriangle,
-  ArrowLeft,
-  Settings,
-  HelpCircle
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/context/UserContext';
@@ -245,8 +237,8 @@ export default function ChecklistSettingsPage() {
 
   if (userLoading || role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Verificando permissões...</p>
       </div>
     );
@@ -261,7 +253,7 @@ export default function ChecklistSettingsPage() {
           <div className="flex items-center gap-3">
             <Link 
               href="/dashboard"
-              className="p-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-all"
+              className="p-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded-none transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
@@ -275,7 +267,7 @@ export default function ChecklistSettingsPage() {
         </div>
 
         {/* Seleção de Categoria */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Categoria de Equipamento</label>
             <select
@@ -290,7 +282,7 @@ export default function ChecklistSettingsPage() {
                   setLoading(true);
                 }
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-slate-950 border border-slate-800 rounded-none py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
             >
               <option value="">Selecione uma categoria...</option>
               {categories.map(cat => (
@@ -304,7 +296,7 @@ export default function ChecklistSettingsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Editor de Checklist */}
-            <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
+            <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-6">
               
               <div className="flex items-center justify-between border-b border-slate-850 pb-3">
                 <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -317,7 +309,7 @@ export default function ChecklistSettingsPage() {
 
               {loading ? (
                 <div className="flex items-center justify-center py-12 text-slate-500 text-xs gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Carregando template...
+                  <LoadingSpinner className="w-4 h-4 animate-spin text-indigo-500" /> Carregando template...
                 </div>
               ) : items.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-xs">
@@ -328,7 +320,7 @@ export default function ChecklistSettingsPage() {
                   {items.map((item) => (
                     <div 
                       key={item.id} 
-                      className="flex items-center justify-between p-3 bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-xl transition-all"
+                      className="flex items-center justify-between p-3 bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-none transition-all"
                     >
                       <div className="space-y-0.5">
                         <p className="text-xs font-semibold text-slate-200">{item.label}</p>
@@ -353,7 +345,7 @@ export default function ChecklistSettingsPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="p-1.5 bg-slate-900 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-lg transition-colors border border-slate-800/80"
+                          className="p-1.5 bg-slate-900 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-none transition-colors border border-slate-800/80"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -370,11 +362,11 @@ export default function ChecklistSettingsPage() {
                   placeholder="Ex: Estado do teclado, Dobradiças..."
                   value={newItemLabel}
                   onChange={(e) => setNewItemLabel(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-850 rounded-xl py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="flex-1 bg-slate-950 border border-slate-850 rounded-none py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1 transition-colors"
+                  className="px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-none text-xs flex items-center gap-1 transition-colors"
                 >
                   <Plus className="w-4 h-4" /> Adicionar
                 </button>
@@ -386,17 +378,17 @@ export default function ChecklistSettingsPage() {
             <div className="space-y-6">
               
               {/* Box de Ação */}
-              <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
+              <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ações</h4>
                 
                 {saveSuccess && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2 animate-fade-in">
+                  <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2 animate-fade-in">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Configuração salva com sucesso!
                   </div>
                 )}
 
                 {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450 flex items-center gap-2">
+                  <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
                   </div>
                 )}
@@ -405,9 +397,9 @@ export default function ChecklistSettingsPage() {
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Salvar Checklist
+                  {saving ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Salvar Checklist
                 </button>
 
                 <button
@@ -417,14 +409,14 @@ export default function ChecklistSettingsPage() {
                       setItems(DEFAULT_CHECKLIST_ITEMS);
                     }
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-450 hover:text-slate-200 py-2 px-3 rounded-xl text-xs transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-450 hover:text-slate-200 py-2 px-3 rounded-none text-xs transition-colors"
                 >
                   Resetar para Padrão
                 </button>
               </div>
 
               {/* Informações de Apoio */}
-              <div className="bg-slate-900/20 border border-slate-850 rounded-2xl p-6 text-slate-450 space-y-3">
+              <div className="bg-slate-900/20 border border-slate-850 rounded-none p-6 text-slate-450 space-y-3">
                 <h4 className="text-xs font-bold text-slate-350 flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-indigo-400" /> Boas práticas
                 </h4>
@@ -439,7 +431,7 @@ export default function ChecklistSettingsPage() {
 
           </div>
         ) : (
-          <div className="border-2 border-dashed border-slate-800 rounded-2xl p-12 text-center text-slate-500 text-xs">
+          <div className="border-2 border-dashed border-slate-800 rounded-none p-12 text-center text-slate-500 text-xs">
             Selecione uma categoria acima para carregar ou personalizar seu checklist.
           </div>
         )}

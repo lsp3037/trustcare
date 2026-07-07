@@ -1,22 +1,10 @@
 'use client';
+import { Package, Plus, CheckCircle2, Search, AlertCircle, Boxes, Trash2 } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-  Package,
-  Search,
-  Plus,
-  Loader2,
-  AlertTriangle,
-  AlertCircle,
-  TrendingDown,
-  DollarSign,
-  Boxes,
-  CheckCircle2,
-  Tags,
-  Cpu,
-  Trash2
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 
 export default function InventoryPage() {
@@ -427,7 +415,7 @@ export default function InventoryPage() {
               resetForm();
               setIsCreating(true);
             }}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
           >
             <Plus className="w-4 h-4" /> Cadastrar Produto
           </button>
@@ -435,7 +423,7 @@ export default function InventoryPage() {
       </div>
 
       {isCreating ? (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
             <div>
               <h2 className="text-xl font-bold text-white">Cadastrar Produto / Peça</h2>
@@ -443,7 +431,7 @@ export default function InventoryPage() {
             </div>
             <button
               onClick={() => setIsCreating(false)}
-              className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-800/40 transition-colors"
+              className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-none hover:bg-slate-800/40 transition-colors"
             >
               Cancelar
             </button>
@@ -451,14 +439,14 @@ export default function InventoryPage() {
 
           <form onSubmit={handleCreateProduct} className="space-y-4">
             {formSuccess && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
+              <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
                 <CheckCircle2 className="w-5 h-5" />
                 <p className="font-semibold text-sm">Produto cadastrado com sucesso!</p>
               </div>
             )}
 
             {formError && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
+              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
                 {formError}
               </div>
             )}
@@ -471,7 +459,7 @@ export default function InventoryPage() {
                 placeholder="Ex: SSD 1TB Kingston NV2 NVMe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />
             </div>
@@ -483,7 +471,7 @@ export default function InventoryPage() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   required
                 >
                   <option value="">Selecione uma categoria...</option>
@@ -501,7 +489,7 @@ export default function InventoryPage() {
                   placeholder="Ex: Kingston"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -515,7 +503,7 @@ export default function InventoryPage() {
                     placeholder="Ex: 1TB / 8GB / 10m"
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               )}
@@ -523,13 +511,13 @@ export default function InventoryPage() {
 
             {/* Campos Condicionais para Memória RAM */}
             {category === 'Memória RAM' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-xl">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Aplicação</label>
                   <select
                     value={ramApp}
                     onChange={(e) => setRamApp(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -542,7 +530,7 @@ export default function InventoryPage() {
                   <select
                     value={ramTech}
                     onChange={(e) => setRamTech(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -560,7 +548,7 @@ export default function InventoryPage() {
                     placeholder="Ex: 3200MHz"
                     value={ramSpeed}
                     onChange={(e) => setRamSpeed(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -568,7 +556,7 @@ export default function InventoryPage() {
                   <select
                     value={ramGb}
                     onChange={(e) => setRamGb(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -585,13 +573,13 @@ export default function InventoryPage() {
 
             {/* Campos Condicionais para SSD */}
             {category === 'SSD' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tecnologia SSD</label>
                   <select
                     value={ssdTech}
                     onChange={(e) => setSsdTech(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -605,7 +593,7 @@ export default function InventoryPage() {
                   <select
                     value={ssdGb}
                     onChange={(e) => setSsdGb(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -631,7 +619,7 @@ export default function InventoryPage() {
                   placeholder="Gerado automaticamente..."
                   value={sku}
                   disabled
-                  className="w-full bg-slate-950/55 border border-slate-850 rounded-lg py-2 px-3 text-sm text-slate-400 focus:outline-none cursor-not-allowed opacity-60 transition-colors"
+                  className="w-full bg-slate-950/55 border border-slate-850 rounded-none py-2 px-3 text-sm text-slate-400 focus:outline-none cursor-not-allowed opacity-60 transition-colors"
                   required
                 />
               </div>
@@ -644,7 +632,7 @@ export default function InventoryPage() {
                   min="0"
                   value={minStockAlert}
                   onChange={(e) => setMinStockAlert(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -659,7 +647,7 @@ export default function InventoryPage() {
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -673,7 +661,7 @@ export default function InventoryPage() {
                   min="0"
                   value={costPrice}
                   onChange={(e) => setCostPrice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -687,7 +675,7 @@ export default function InventoryPage() {
                   min="0"
                   value={salePrice}
                   onChange={(e) => setSalePrice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -698,10 +686,10 @@ export default function InventoryPage() {
               <button
                 type="submit"
                 disabled={submitting || formSuccess}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200 disabled:opacity-55"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-6 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200 disabled:opacity-55"
               >
                 {submitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <LoadingSpinner className="w-4 h-4 animate-spin" />
                 ) : (
                   'Salvar Produto'
                 )}
@@ -713,18 +701,18 @@ export default function InventoryPage() {
         <>
           {/* Barra de Busca e Filtro Ativo */}
           <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-xl border border-slate-800/60 shadow-sm">
+            <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-none border border-slate-800/60 shadow-sm">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="text"
                 placeholder="Buscar por produto, marca, categoria ou SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
             {showLowStockOnly && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-xs font-semibold text-rose-400">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-none text-xs font-semibold text-rose-400">
                 <span>Filtro: Apenas Estoque Baixo</span>
                 <button
                   onClick={() => {
@@ -752,7 +740,7 @@ export default function InventoryPage() {
                   setFilterSale('');
                   setFilterStatus('');
                 }}
-                className="bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-350 hover:text-white px-3 py-2 text-xs font-semibold rounded-lg border border-slate-800 transition-all cursor-pointer"
+                className="bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-350 hover:text-white px-3 py-2 text-xs font-semibold rounded-none border border-slate-800 transition-all cursor-pointer"
               >
                 Limpar Filtros das Colunas
               </button>
@@ -761,18 +749,18 @@ export default function InventoryPage() {
 
           {/* Listagem de Estoque */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+              <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
               <p className="text-sm text-slate-400">Carregando inventário...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900 text-center px-4">
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900 text-center px-4">
               <AlertCircle className="w-12 h-12 text-slate-650 mb-4" />
               <h3 className="text-lg font-bold text-slate-300">Nenhum produto em estoque</h3>
               <p className="text-sm text-slate-500 mt-1 max-w-xs">Tente redefinir seus filtros ou cadastrar peças.</p>
             </div>
           ) : (
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl overflow-hidden shadow-lg">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none overflow-hidden shadow-lg">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
@@ -877,7 +865,7 @@ export default function InventoryPage() {
                           </td>
                           <td className="py-4 px-6 font-bold text-slate-200">
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-lg shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-450' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-450'}`}>
+                              <div className={`p-1.5 rounded-none shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-450' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-450'}`}>
                                 <Boxes className="w-4 h-4" />
                               </div>
                               <Link href={`/dashboard/inventory/${p.id}`} className="truncate max-w-[280px] md:max-w-md lg:max-w-lg hover:text-blue-400 hover:underline transition-colors">
@@ -913,7 +901,7 @@ export default function InventoryPage() {
                           <td className="py-4 px-6 text-center">
                             <button
                               onClick={() => handleDeleteProduct(p.id)}
-                              className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg transition-colors"
+                              className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-none transition-colors"
                               title="Excluir produto"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -932,7 +920,7 @@ export default function InventoryPage() {
 
       {/* Barra de Ações em Massa - Estoque */}
       {selectedProductIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-2xl py-3.5 px-6 shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-none py-3.5 px-6 shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <span className="text-xs font-semibold text-slate-300">
             <strong className="text-white">{selectedProductIds.length}</strong> {selectedProductIds.length === 1 ? 'produto selecionado' : 'produtos selecionados'}
           </span>
@@ -940,7 +928,7 @@ export default function InventoryPage() {
           <button
             onClick={handleBulkDeleteProducts}
             disabled={deletingBulk}
-            className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-450 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-450 font-bold py-1.5 px-3 rounded-none text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" /> Excluir Selecionados
           </button>

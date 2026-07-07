@@ -17,6 +17,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { getStatusDotColor } from '@/lib/utils/orderStatus';
 import { 
   ResponsiveContainer, 
   BarChart, 
@@ -151,27 +152,63 @@ export default function DashboardOverviewPage() {
     try {
       setLoading(true);
       
-      // 1. Busca Ordens de Serviço do Supabase (com filtro por técnico se necessário)
-      let query = supabase
-        .from('service_orders')
-        .select('*, clients(name)');
+      // Ajuste de datas para cobrir do início ao fim do dia no fuso horário local
+      const fromDate = new Date(from);
+      fromDate.setHours(0, 0, 0, 0);
+      
+      const toDate = new Date(to);
+      toDate.setHours(23, 59, 59, 999);
+
+      // Strings no formato YYYY-MM-DD no fuso local para comparar com payment_date (coluna tipo date)
+      const fromDateStr = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-${String(fromDate.getDate()).padStart(2, '0')}`;
+      const toDateStr = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, '0')}-${String(toDate.getDate()).padStart(2, '0')}`;
+
+      // 1. Busca Ordens de Serviço do Supabase em duas queries (Evitando erros de sintaxe no .or do PostgREST)
+      let queryCreated = supabase.from('service_orders').select('*, clients(name)')
+        .gte('created_at', fromDate.toISOString())
+        .lte('created_at', toDate.toISOString());
+
+      let queryPaid = supabase.from('service_orders').select('*, clients(name)')
+        .gte('payment_date', fromDateStr)
+        .lte('payment_date', toDateStr);
 
       if (role === 'technician' && user?.id) {
-        query = query.eq('technician_id', user.id);
+        queryCreated = queryCreated.eq('technician_id', user.id);
+        queryPaid = queryPaid.eq('technician_id', user.id);
       }
 
-      const { data: orders, error } = await query.order('created_at', { ascending: false });
+      const [
+        { data: createdOrders, error: errCreated },
+        { data: paidOrders, error: errPaid }
+      ] = await Promise.all([
+        queryCreated.order('created_at', { ascending: false }),
+        queryPaid.order('created_at', { ascending: false })
+      ]);
 
-      if (error) {
-        throw error;
+      if (errCreated) throw errCreated;
+      if (errPaid && errPaid.code !== '42703') { 
+        // 42703 = column does not exist (em caso de migration falha)
+        // Lançar o erro apenas se não for coluna inexistente
+        throw errPaid;
       }
+
+      // Merge results avoiding duplicates
+      const ordersMap = new Map();
+      if (createdOrders) {
+        createdOrders.forEach(o => ordersMap.set(o.id, o));
+      }
+      if (paidOrders) {
+        paidOrders.forEach(o => ordersMap.set(o.id, o));
+      }
+      
+      const orders = Array.from(ordersMap.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       if (orders && orders.length > 0) {
         // Filtragem por período localmente para flexibilidade
         const filteredByDate = orders.filter(o => {
           if (!o.created_at) return false;
           const orderDate = new Date(o.created_at);
-          return orderDate >= from && orderDate <= to;
+          return orderDate >= fromDate && orderDate <= toDate;
         });
 
         setRecentOrders(filteredByDate.slice(0, 5));
@@ -181,7 +218,7 @@ export default function DashboardOverviewPage() {
           const dateToUse = o.payment_date || o.created_at;
           if (!dateToUse) return false;
           const pDate = new Date(dateToUse);
-          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && pDate >= from && pDate <= to;
+          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && pDate >= fromDate && pDate <= toDate;
         });
 
         // Faturamento Realizado (Caixa)
@@ -224,7 +261,7 @@ export default function DashboardOverviewPage() {
           pfCount: pf
         });
 
-        setChartData(processChartDataForRange(orders, from, to));
+        setChartData(processChartDataForRange(orders, fromDate, toDate));
       } else {
         const isCustomCompany = company && company.name !== 'Trust Care T.I.';
         if (isCustomCompany) {
@@ -368,22 +405,6 @@ export default function DashboardOverviewPage() {
     }
   }, [dateRange, userLoading, role]);
 
-  const getStatusDotColor = (status: string) => {
-    switch (status) {
-      case 'Aguardando Equipamento': return 'bg-slate-500';
-      case 'Em Análise': return 'bg-blue-500';
-      case 'Aguardando Aprovação': return 'bg-amber-500';
-      case 'Aprovado': return 'bg-emerald-500';
-      case 'Aguardando Peças': return 'bg-orange-500';
-      case 'Em Execução': return 'bg-sky-500';
-      case 'Em Testes': return 'bg-cyan-500';
-      case 'Pronto para Retirada': return 'bg-emerald-500';
-      case 'Finalizado': return 'bg-emerald-600';
-      case 'Cancelado': return 'bg-rose-500';
-      default: return 'bg-slate-400';
-    }
-  };
-
   const formatEquipmentDetails = (details: string) => {
     if (!details) return '—';
     return details.replace(/\s*\(S\/N:\s*(—|null|undefined|)?\)/gi, '').trim();
@@ -412,13 +433,13 @@ export default function DashboardOverviewPage() {
           
           <Link
             href="/dashboard/orders"
-            className="bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-white text-slate-350 font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors shadow-md"
+            className="bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-white text-slate-350 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center justify-center gap-2 transition-colors shadow-md"
           >
             Ver Todas OS
           </Link>
           <Link
             href="/dashboard/orders?new=true"
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
           >
             <Plus className="w-4 h-4" /> Nova OS
           </Link>
@@ -430,9 +451,9 @@ export default function DashboardOverviewPage() {
         {isAdmin ? (
           <>
             {/* Card 1: Faturamento */}
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none">
                   <DollarSign className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -449,10 +470,10 @@ export default function DashboardOverviewPage() {
             {/* Card 2: OS Ativas (Clicável) */}
             <div 
               onClick={() => router.push('/dashboard/orders?status=Ativas')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <Clock className="w-5 h-5" />
                 </div>
                 <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
@@ -465,9 +486,9 @@ export default function DashboardOverviewPage() {
             </div>
 
             {/* Card 3: Ticket Médio */}
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none">
                   <TrendingUp className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
@@ -486,10 +507,10 @@ export default function DashboardOverviewPage() {
             {/* Card 1: OS Abertas / Em Execução (Não Admin) */}
             <div 
               onClick={() => router.push('/dashboard/orders?status=Ativas')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <Clock className="w-5 h-5" />
                 </div>
                 <span className="text-xs text-slate-500 font-medium">
@@ -504,10 +525,10 @@ export default function DashboardOverviewPage() {
             {/* Card 2: OS Prontas / Concluídas (Não Admin) */}
             <div 
               onClick={() => router.push('/dashboard/orders?status=Concluidas')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <span className="text-xs text-slate-500 font-medium">
@@ -522,10 +543,10 @@ export default function DashboardOverviewPage() {
             {/* Card 3: Clientes Cadastrados (Não Admin) */}
             <div 
               onClick={() => router.push('/dashboard/clients')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-colors">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <Users className="w-5 h-5" />
                 </div>
                 <span className="text-xs text-slate-500 font-medium">
@@ -542,10 +563,10 @@ export default function DashboardOverviewPage() {
         {/* Card 4: Alertas de Estoque (Clicável - Não afetado por data) */}
         <div 
           onClick={() => router.push('/dashboard/inventory?filter=low_stock')}
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg group-hover:bg-rose-500/20 transition-colors">
+            <div className="p-2 bg-rose-500/10 text-rose-400 rounded-none group-hover:bg-rose-500/20 transition-colors">
               <Package className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-bold text-rose-455 bg-rose-500/10 px-2 py-0.5 rounded-full flex items-center gap-1 group-hover:bg-rose-500/20 transition-colors">
@@ -561,7 +582,7 @@ export default function DashboardOverviewPage() {
       {/* Grid de Seções Inferiores */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ordens de Serviço Recentes */}
-        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'} bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col shadow-lg`}>
+        <div className={`${isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'} bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 flex flex-col shadow-lg`}>
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-bold text-white">Ordens de Serviço Recentes</h3>
@@ -610,13 +631,13 @@ export default function DashboardOverviewPage() {
                             e.stopPropagation();
                             setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
                           }}
-                          className="p-1.5 hover:bg-slate-800/60 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                          className="p-1.5 hover:bg-slate-800/60 rounded-none text-slate-400 hover:text-white transition-colors cursor-pointer"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
 
                         {activeDropdownId === order.id && (
-                          <div className="absolute right-4 mt-1 w-40 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl z-50 p-1 py-1.5 text-left animate-in fade-in duration-100">
+                          <div className="absolute right-4 mt-1 w-40 bg-slate-950 border border-slate-800 rounded-none shadow-2xl z-50 p-1 py-1.5 text-left animate-in fade-in duration-100">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -663,7 +684,7 @@ export default function DashboardOverviewPage() {
 
         {/* Módulo de Gráfico de Faturamento (Apenas Admin) */}
         {isAdmin && (
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-2xl p-6 flex flex-col justify-between shadow-lg">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 flex flex-col justify-between shadow-lg">
             <div>
               <h3 className="text-lg font-bold text-white mb-1">Faturamento</h3>
               <p className="text-xs text-slate-500">Histórico do período selecionado.</p>
@@ -751,7 +772,7 @@ export default function DashboardOverviewPage() {
             <div className="mt-6 border-t border-slate-800/80 pt-6">
               <Link
                 href="/dashboard/clients"
-                className="w-full bg-slate-950 hover:bg-slate-800/80 text-slate-350 text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border border-slate-800/80 transition-all"
+                className="w-full bg-slate-950 hover:bg-slate-800/80 text-slate-350 text-xs font-semibold py-2.5 px-4 rounded-none flex items-center justify-center gap-2 border border-slate-800/80 transition-all"
               >
                 <Users className="w-4 h-4 text-slate-400" /> Gerenciar Todos os Clientes
               </Link>

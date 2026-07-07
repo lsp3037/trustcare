@@ -1,50 +1,20 @@
 'use client';
+import { Users, Plus, CheckCircle2, FileText, User, Building, Phone, Mail, Laptop, QrCode, Search, AlertCircle } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Loader2, 
-  AlertCircle,
-  Building,
-  User,
-  Phone,
-  Mail,
-  FileText,
-  CheckCircle2,
-  X,
-  Laptop,
-  QrCode
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
-
-const WhatsAppIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 24 24" 
-    className={className} 
-    fill="currentColor" 
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.358 5.03l-1.373 5.016 5.137-1.348a9.97 9.97 0 004.866 1.28h.004c5.507 0 9.99-4.478 9.99-9.986 0-2.67-1.04-5.18-2.932-7.07A9.92 9.92 0 0012.012 2zm5.72 14.242c-.25.706-1.464 1.294-2.007 1.348-.48.047-.946.064-3.03-.755-2.668-1.05-4.388-3.766-4.52-3.942-.136-.176-1.1-1.464-1.1-2.79 0-1.328.697-1.98.946-2.242.25-.262.544-.328.726-.328h.518c.163 0 .385-.062.59.43.21.503.714 1.742.775 1.868.062.126.103.272.019.44-.083.167-.126.272-.25.419-.126.146-.263.327-.376.44-.126.126-.26.262-.11.517.15.25.666 1.097 1.428 1.776.98.874 1.802 1.144 2.057 1.272.25.126.398.106.545-.062.146-.17.63-.732.8-.98.17-.25.337-.21.562-.126.224.084 1.428.673 1.674.797.247.126.41.188.47.293.06.104.06.602-.19 1.308z"/>
-  </svg>
-);
-
-const getWhatsAppLink = (phone: string) => {
-  const digits = phone.replace(/\D/g, '');
-  let cleanPhone = digits;
-  if (cleanPhone.length === 10 || cleanPhone.length === 11) {
-    cleanPhone = '55' + cleanPhone;
-  }
-  return `https://wa.me/${cleanPhone}`;
-};
+import { useUser } from '@/lib/context/UserContext';
+import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 
 export default function ClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const { user, role, loading: userLoading } = useUser();
   const [loading, setLoading] = useState(true);
   
   // Estados para formulário de Novo Cliente
@@ -296,7 +266,7 @@ export default function ClientsPage() {
         {!isCreating && (
           <button
             onClick={() => setIsCreating(true)}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200"
+            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200"
           >
             <Plus className="w-4 h-4" /> Novo Cliente
           </button>
@@ -304,7 +274,7 @@ export default function ClientsPage() {
       </div>
 
       {isCreating ? (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
             <div>
               <h2 className="text-xl font-bold text-white">Adicionar Novo Cliente</h2>
@@ -312,7 +282,7 @@ export default function ClientsPage() {
             </div>
             <button
               onClick={handleCloseModal}
-              className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-800/40 transition-colors"
+              className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-none hover:bg-slate-800/40 transition-colors"
             >
               Cancelar
             </button>
@@ -320,14 +290,14 @@ export default function ClientsPage() {
 
           <form onSubmit={handleCreateClient} className="space-y-5">
             {formSuccess && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
+              <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
                 <CheckCircle2 className="w-5 h-5" />
                 <p className="font-semibold text-sm">Cliente cadastrado com sucesso!</p>
               </div>
             )}
 
             {formError && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
+              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
                 {formError}
               </div>
             )}
@@ -375,7 +345,7 @@ export default function ClientsPage() {
                     value={document}
                     onChange={(e) => setDocument(e.target.value)}
                     disabled={submitting || createdClient !== null}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -398,7 +368,7 @@ export default function ClientsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={submitting || createdClient !== null}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   required
                 />
               </div>
@@ -416,7 +386,7 @@ export default function ClientsPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={submitting || createdClient !== null}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -432,7 +402,7 @@ export default function ClientsPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={submitting || createdClient !== null}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -444,10 +414,10 @@ export default function ClientsPage() {
                 <button
                   type="submit"
                   disabled={submitting || formSuccess}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-6 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200 disabled:opacity-55"
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-6 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200 disabled:opacity-55"
                 >
                   {submitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <LoadingSpinner className="w-4 h-4 animate-spin" />
                   ) : (
                     'Salvar Cliente'
                   )}
@@ -470,7 +440,7 @@ export default function ClientsPage() {
 
               {/* Lista de equipamentos adicionados na sessão */}
               {addedEquipments.length > 0 && (
-                <div className="bg-slate-950/45 rounded-xl border border-slate-800/80 overflow-hidden shadow-md">
+                <div className="bg-slate-950/45 rounded-none border border-slate-800/80 overflow-hidden shadow-md">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider bg-slate-950/30">
@@ -508,16 +478,16 @@ export default function ClientsPage() {
               )}
 
               {/* Formulário de novo equipamento */}
-              <form onSubmit={handleCreateEquipment} className="space-y-4 bg-slate-950/45 p-5 rounded-xl border border-slate-800/80">
+              <form onSubmit={handleCreateEquipment} className="space-y-4 bg-slate-950/45 p-5 rounded-none border border-slate-800/80">
                 <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Novo Equipamento</h4>
 
                 {eqSuccess && (
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
+                  <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado com sucesso!
                   </div>
                 )}
                 {eqError && (
-                  <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
+                  <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
                     {eqError}
                   </div>
                 )}
@@ -530,7 +500,7 @@ export default function ClientsPage() {
                       placeholder="Ex: Notebook do Cliente"
                       value={eqName}
                       onChange={(e) => setEqName(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                   </div>
@@ -542,7 +512,7 @@ export default function ClientsPage() {
                       placeholder="Ex: Lenovo"
                       value={eqBrand}
                       onChange={(e) => setEqBrand(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
 
@@ -553,7 +523,7 @@ export default function ClientsPage() {
                       placeholder="Ex: ThinkPad E14"
                       value={eqModel}
                       onChange={(e) => setEqModel(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
 
@@ -566,7 +536,7 @@ export default function ClientsPage() {
                         placeholder="Ex: PF1A2B3C"
                         value={eqSerial}
                         onChange={(e) => setEqSerial(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -576,10 +546,10 @@ export default function ClientsPage() {
                   <button
                     type="submit"
                     disabled={addingEq}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10 disabled:opacity-50"
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10 disabled:opacity-50"
                   >
                     {addingEq ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
                     ) : (
                       <Plus className="w-3.5 h-3.5" />
                     )}
@@ -592,7 +562,7 @@ export default function ClientsPage() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold py-2.5 px-6 rounded-none text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   Concluir Cadastro
                 </button>
@@ -603,7 +573,7 @@ export default function ClientsPage() {
                     setIsCreating(false);
                     router.push(`/dashboard/orders?new=true&client_id=${createdClient?.id}${lastEqId ? `&equipment_id=${lastEqId}` : ''}`);
                   }}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/15 cursor-pointer"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-none text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/15 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" /> Concluir e Criar O.S.
                 </button>
@@ -614,31 +584,31 @@ export default function ClientsPage() {
       ) : (
         <>
           {/* Campo de Busca */}
-          <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-xl">
+          <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-none">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               type="text"
               placeholder="Buscar por nome, documento ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
           {/* Listagem de Clientes */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+              <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
               <p className="text-sm text-slate-400">Carregando clientes...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900 text-center px-4">
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900 text-center px-4">
               <AlertCircle className="w-12 h-12 text-slate-650 mb-4" />
               <h3 className="text-lg font-bold text-slate-300">Nenhum cliente encontrado</h3>
               <p className="text-sm text-slate-500 mt-1 max-w-xs">Tente ajustar seus termos de pesquisa.</p>
             </div>
           ) : (
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
@@ -658,7 +628,7 @@ export default function ClientsPage() {
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-200">
                           <div className="flex items-center gap-3">
-                            <div className={`p-1.5 rounded-lg shrink-0 ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                            <div className={`p-1.5 rounded-none shrink-0 ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
                               {client.type === 'PJ' ? <Building className="w-4 h-4" /> : <User className="w-4 h-4" />}
                             </div>
                             <Link href={`/dashboard/clients/${client.id}`} className="truncate max-w-[200px] md:max-w-xs hover:text-blue-400 hover:underline transition-colors">
@@ -677,16 +647,10 @@ export default function ClientsPage() {
                             <div className="flex items-center gap-1.5">
                               <Phone className="w-3.5 h-3.5 text-slate-500" />
                               <span>{client.phone}</span>
-                              <a 
-                                href={getWhatsAppLink(client.phone)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-emerald-500 hover:text-emerald-400 p-0.5 hover:bg-emerald-500/10 rounded transition-colors ml-1"
-                                title="Enviar mensagem no WhatsApp"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <WhatsAppIcon className="w-3.5 h-3.5" />
-                              </a>
+                              <WhatsAppButton 
+                                phone={client.phone} 
+                                className="p-1.5 rounded-none shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+                              />
                             </div>
                           )}
                           {client.email && (

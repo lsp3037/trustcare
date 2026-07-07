@@ -1,9 +1,11 @@
 'use client';
+import { Building, User, Phone, Mail, Lock, ArrowRight } from 'lucide-react';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, ArrowRight, Building, User, Phone } from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
@@ -38,21 +40,7 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        console.warn('Erro ao registrar no Supabase:', error.message);
-        
-        // Fallback local para testes offline
-        localStorage.setItem('os-session', JSON.stringify({ 
-          email, 
-          companyId: 'mock-tenant-id', 
-          role: 'admin', 
-          company_name: companyName,
-          whatsapp: whatsapp,
-          phone: whatsapp // Telefone = Whatsapp
-        }));
-        setSuccess(true);
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+        setErrorMsg(error.message);
         return;
       }
 
@@ -71,7 +59,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+    <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-8 shadow-2xl">
       <div className="flex flex-col items-center mb-8">
         <div className="mb-4 flex justify-center">
           <img 
@@ -85,14 +73,14 @@ export default function RegisterPage() {
       </div>
 
       {success ? (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-center text-emerald-400">
+        <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-center text-emerald-400">
           <p className="font-semibold text-sm">Empresa cadastrada com sucesso!</p>
           <p className="text-xs text-slate-400 mt-1">Redirecionando...</p>
         </div>
       ) : (
         <form onSubmit={handleRegister} className="space-y-4">
           {errorMsg && (
-            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
+            <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
               {errorMsg}
             </div>
           )}
@@ -106,7 +94,7 @@ export default function RegisterPage() {
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Ex: Assistência Técnica Express"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -121,7 +109,7 @@ export default function RegisterPage() {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="Ex: João Silva"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -136,7 +124,7 @@ export default function RegisterPage() {
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="Ex: (66) 99999-9999"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -151,7 +139,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seuemail@empresa.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -166,7 +154,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -175,10 +163,10 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-medium py-2.5 px-4 rounded-lg shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55"
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-4 rounded-none shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55"
           >
             {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoadingSpinner className="w-4 h-4 animate-spin" />
             ) : (
               <>
                 Cadastrar Empresa <ArrowRight className="w-4 h-4" />

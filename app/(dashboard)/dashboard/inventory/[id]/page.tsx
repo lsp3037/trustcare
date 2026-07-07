@@ -1,25 +1,11 @@
 'use client';
+import { AlertTriangle, ArrowLeft, Edit, Trash2, CheckCircle2, Layers, Award, Cpu, Database, Calendar, DollarSign, Percent } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  Package, 
-  Trash2, 
-  Edit, 
-  Boxes, 
-  DollarSign, 
-  Percent, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Loader2,
-  Calendar,
-  Layers,
-  Award,
-  Database,
-  Cpu
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 
 export default function ProductDetailPage() {
@@ -269,8 +255,8 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+        <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
         <p className="text-sm text-slate-400">Carregando detalhes do produto...</p>
       </div>
     );
@@ -302,7 +288,7 @@ export default function ProductDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
           <div>
             <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span className="text-slate-550 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg uppercase tracking-wider">
+              <span className="text-slate-550 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-none uppercase tracking-wider">
                 SKU: {product.sku}
               </span>
               {product.name}
@@ -314,7 +300,7 @@ export default function ProductDetailPage() {
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center gap-1.5 transition-colors"
+                className="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center gap-1.5 transition-colors"
               >
                 <Edit className="w-4 h-4 text-slate-400" /> Editar Produto
               </button>
@@ -322,9 +308,9 @@ export default function ProductDetailPage() {
             <button
               onClick={handleDeleteProduct}
               disabled={deleting}
-              className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-400 font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center gap-1.5 transition-all disabled:opacity-50"
+              className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-400 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center gap-1.5 transition-all disabled:opacity-50"
             >
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir Produto
+              {deleting ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir Produto
             </button>
           </div>
         </div>
@@ -332,7 +318,7 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Painel de Cadastro / Edição */}
-        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl h-fit">
+        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 md:p-8 shadow-2xl h-fit">
           <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3">
             {isEditing ? 'Editar Especificações' : 'Especificações Técnicas'}
           </h3>
@@ -340,12 +326,12 @@ export default function ProductDetailPage() {
           {isEditing ? (
             <form onSubmit={handleUpdateProduct} className="space-y-4">
               {saveSuccess && (
-                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
+                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
                 </div>
               )}
               {saveError && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
+                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
                   {saveError}
                 </div>
               )}
@@ -357,7 +343,7 @@ export default function ProductDetailPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -369,7 +355,7 @@ export default function ProductDetailPage() {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -384,7 +370,7 @@ export default function ProductDetailPage() {
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -397,7 +383,7 @@ export default function ProductDetailPage() {
                       type="text"
                       value={capacity}
                       onChange={(e) => setCapacity(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
                 )}
@@ -405,13 +391,13 @@ export default function ProductDetailPage() {
 
               {/* Campos Condicionais para Memória RAM */}
               {category === 'Memória RAM' && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-xl">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Aplicação</label>
                     <select
                       value={ramApp}
                       onChange={(e) => setRamApp(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="PC">PC (Desktop)</option>
                       <option value="Notebook">Notebook</option>
@@ -422,7 +408,7 @@ export default function ProductDetailPage() {
                     <select
                       value={ramTech}
                       onChange={(e) => setRamTech(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="DDR">DDR</option>
                       <option value="DDR2">DDR2</option>
@@ -438,7 +424,7 @@ export default function ProductDetailPage() {
                       placeholder="Ex: 3200MHz"
                       value={ramSpeed}
                       onChange={(e) => setRamSpeed(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -446,7 +432,7 @@ export default function ProductDetailPage() {
                     <select
                       value={ramGb}
                       onChange={(e) => setRamGb(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="2GB">2GB</option>
                       <option value="4GB">4GB</option>
@@ -461,13 +447,13 @@ export default function ProductDetailPage() {
 
               {/* Campos Condicionais para SSD */}
               {category === 'SSD' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tecnologia SSD</label>
                     <select
                       value={ssdTech}
                       onChange={(e) => setSsdTech(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="SATA III">SATA III</option>
                       <option value="NVMe">NVMe</option>
@@ -479,7 +465,7 @@ export default function ProductDetailPage() {
                     <select
                       value={ssdGb}
                       onChange={(e) => setSsdGb(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="120GB">120GB</option>
                       <option value="240GB">240GB</option>
@@ -501,7 +487,7 @@ export default function ProductDetailPage() {
                     type="text"
                     value={sku}
                     disabled
-                    className="w-full bg-slate-950/55 border border-slate-850 rounded-lg py-2 px-3 text-sm text-slate-400 focus:outline-none cursor-not-allowed opacity-60 transition-colors"
+                    className="w-full bg-slate-950/55 border border-slate-850 rounded-none py-2 px-3 text-sm text-slate-400 focus:outline-none cursor-not-allowed opacity-60 transition-colors"
                     required
                   />
                 </div>
@@ -513,7 +499,7 @@ export default function ProductDetailPage() {
                     type="number"
                     value={minStockAlert}
                     onChange={(e) => setMinStockAlert(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -527,7 +513,7 @@ export default function ProductDetailPage() {
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -540,7 +526,7 @@ export default function ProductDetailPage() {
                     step="0.01"
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -553,7 +539,7 @@ export default function ProductDetailPage() {
                     step="0.01"
                     value={salePrice}
                     onChange={(e) => setSalePrice(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -563,9 +549,9 @@ export default function ProductDetailPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2 px-6 rounded-lg text-sm flex items-center justify-center gap-1.5 transition-all"
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-none text-sm flex items-center justify-center gap-1.5 transition-all"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
+                  {saving ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
                 </button>
                 <button
                   type="button"
@@ -581,7 +567,7 @@ export default function ProductDetailPage() {
                     setSalePrice(product.sale_price.toString());
                     setMinStockAlert(product.min_stock_alert.toString());
                   }}
-                  className="bg-slate-950 border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white font-semibold py-2 px-6 rounded-lg text-sm transition-colors"
+                  className="bg-slate-950 border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white font-semibold py-2 px-6 rounded-none text-sm transition-colors"
                 >
                   Cancelar
                 </button>
@@ -592,7 +578,7 @@ export default function ProductDetailPage() {
               {/* Detalhes Técnicos */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                     <Layers className="w-5 h-5" />
                   </div>
                   <div>
@@ -602,7 +588,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
@@ -612,7 +598,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                     <Cpu className="w-5 h-5" />
                   </div>
                   <div>
@@ -625,7 +611,7 @@ export default function ProductDetailPage() {
               {/* Detalhes de Registro */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                     <Database className="w-5 h-5" />
                   </div>
                   <div>
@@ -635,7 +621,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div>
@@ -654,7 +640,7 @@ export default function ProductDetailPage() {
         <div className="lg:col-span-1 space-y-6">
           
           {/* Card de Quantidades / Status */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Estado do Estoque</h4>
             
             <div className="space-y-6">
@@ -683,7 +669,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Indicador visual de alerta */}
-              <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-1.5">
+              <div className="p-3 bg-slate-950/40 rounded-none border border-slate-800/80 text-xs text-slate-400 space-y-1.5">
                 <div className="flex justify-between font-semibold">
                   <span>Ponto de Alerta:</span>
                   <span className="text-slate-200">{product.min_stock_alert} un</span>
@@ -698,7 +684,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Card Financeiro / Margens */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Análise Comercial</h4>
             
             <div className="space-y-4">
@@ -718,7 +704,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Margem de lucro bruto */}
-              <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex justify-between items-center text-xs">
+              <div className="p-3 bg-emerald-500/5 rounded-none border border-emerald-500/10 flex justify-between items-center text-xs">
                 <span className="text-slate-400 font-semibold flex items-center gap-1">
                   <Percent className="w-3.5 h-3.5 text-emerald-500" /> Margem de Lucro:
                 </span>

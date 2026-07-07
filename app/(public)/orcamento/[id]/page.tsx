@@ -1,20 +1,10 @@
 'use client';
+import { AlertTriangle, CheckCircle2, Shield, User, Wrench, ChevronDown, FileSignature, Check } from 'lucide-react';
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import {
-  CheckCircle2,
-  Wrench,
-  Boxes,
-  FileText,
-  Check,
-  Loader2,
-  AlertTriangle,
-  ChevronDown,
-  User,
-  Shield,
-  FileSignature
-} from 'lucide-react';
+
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 
 // Componente do Canvas para Desenho da Assinatura
@@ -263,7 +253,7 @@ export default function PublicOrderBudgetPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-slate-100 flex flex-col items-center justify-center p-6 font-mono">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
         <p className="text-xs uppercase tracking-widest text-slate-500">Acessando central de orçamentos...</p>
       </div>
     );
@@ -503,7 +493,7 @@ O prazo estimado para início da execução dos serviços é de 2 a 5 dias útei
             >
               {submitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <LoadingSpinner className="w-4 h-4 animate-spin" />
                   <span>Processando Aprovação...</span>
                 </>
               ) : (
