@@ -1,5 +1,5 @@
 'use client';
-import { Users, Plus, CheckCircle2, FileText, User, Building, Phone, Mail, Laptop, QrCode, Search, AlertCircle } from 'lucide-react';
+import { Users, Plus, CheckCircle2, FileText, User, Building, Phone, Mail, Laptop, QrCode, Search, AlertCircle, X } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -243,6 +243,36 @@ export default function ClientsPage() {
     setEqSuccess(false);
     setEqError('');
     fetchClients();
+  };
+
+  const handleDeleteClient = async (id: string) => {
+    const confirmDelete = window.confirm('Deseja realmente excluir este cliente? Esta ação não pode ser desfeita.');
+    if (!confirmDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setClients(prev => prev.filter(c => c.id !== id));
+      alert('Cliente excluído com sucesso!');
+    } catch (err: any) {
+      console.warn('Erro ao excluir cliente no Supabase, tentando excluir localmente:', err.message);
+      
+      const localClients = localStorage.getItem('mock-clients');
+      if (localClients) {
+        const parsed = JSON.parse(localClients);
+        const filtered = parsed.filter((c: any) => c.id !== id);
+        localStorage.setItem('mock-clients', JSON.stringify(filtered));
+        setClients(prev => prev.filter(c => c.id !== id));
+        alert('Cliente excluído com sucesso (local)!');
+      } else {
+        alert(`Erro ao excluir cliente: ${err.message || 'Erro desconhecido'}`);
+      }
+    }
   };
 
   const filteredClients = clients.filter((client) => {
@@ -618,6 +648,7 @@ export default function ClientsPage() {
                       <th className="py-4 px-6">Tipo</th>
                       <th className="py-4 px-6">Documento</th>
                       <th className="py-4 px-6">Contato</th>
+                      <th className="py-4 px-6 text-center">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/40">
@@ -659,6 +690,16 @@ export default function ClientsPage() {
                               <span className="hover:text-blue-400 cursor-pointer">{client.email}</span>
                             </div>
                           )}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClient(client.id)}
+                            className="p-1.5 text-slate-500 hover:text-rose-500 rounded-none hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            title="Excluir Cliente"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))}

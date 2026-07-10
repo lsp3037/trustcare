@@ -24,8 +24,8 @@ export function OrderDetailsDataFetcher({ id }: { id: string }) {
           return;
         }
 
-        let initialOrder = osData;
-        let initialClient = osData.clients;
+        const initialOrder = osData;
+        const initialClient = osData.clients;
         let checklistTemplateItems = DEFAULT_TEMPLATE_ITEMS;
 
         if (osData.equipment_id) {
