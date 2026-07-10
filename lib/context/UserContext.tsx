@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
 export type UserRole = 'admin' | 'technician' | 'viewer';
@@ -26,10 +26,15 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const userRef = useRef<UserProfile | null>(null);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const fetchUserData = async (sessionUser?: any, forceLoading = false) => {
     try {
-      if (!user || forceLoading) {
+      if (!userRef.current || forceLoading) {
         setLoading(true);
       }
       
