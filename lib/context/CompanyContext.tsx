@@ -30,9 +30,11 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchCompanyData = async () => {
+  const fetchCompanyData = async (forceLoading = false) => {
     try {
-      setLoading(true);
+      if (forceLoading) {
+        setLoading(true);
+      }
       // Busca a empresa associada ao usuário autenticado (a política RLS de select_company cuida do filtro automático por tenant)
       const { data, error } = await supabase
         .from('companies')
@@ -111,7 +113,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <CompanyContext.Provider value={{ company, loading, refreshCompany: fetchCompanyData }}>
+    <CompanyContext.Provider value={{ company, loading, refreshCompany: () => fetchCompanyData(true) }}>
       {children}
     </CompanyContext.Provider>
   );

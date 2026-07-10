@@ -27,9 +27,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (sessionUser?: any) => {
+  const fetchUserData = async (sessionUser?: any, forceLoading = false) => {
     try {
-      setLoading(true);
+      if (!user || forceLoading) {
+        setLoading(true);
+      }
       
       // 1. Tenta pegar sessão local/mock
       const mockSession = localStorage.getItem('os-session');
@@ -121,7 +123,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     role: user?.role || null,
     isAdmin: user?.role === 'admin',
     loading,
-    refreshUser: fetchUserData
+    refreshUser: () => fetchUserData(undefined, true)
   };
 
   return (
