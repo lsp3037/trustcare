@@ -260,6 +260,11 @@ export default function ClientsPage() {
       setClients(prev => prev.filter(c => c.id !== id));
       alert('Cliente excluído com sucesso!');
     } catch (err: any) {
+      if (err.code === '23503' || err.message?.includes('foreign key constraint') || err.message?.includes('violates foreign key')) {
+        alert('Não é possível excluir este cliente porque ele possui histórico de Ordens de Serviço vinculadas.');
+        return;
+      }
+
       console.warn('Erro ao excluir cliente no Supabase, tentando excluir localmente:', err.message);
       
       const localClients = localStorage.getItem('mock-clients');
