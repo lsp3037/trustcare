@@ -26,6 +26,8 @@ export function AddExpenseModal({ onClose, onSuccess }: AddExpenseModalProps) {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Marketing');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [recurrence, setRecurrence] = useState('Única');
+  const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,6 +60,8 @@ export function AddExpenseModal({ onClose, onSuccess }: AddExpenseModalProps) {
           amount: val,
           category,
           expense_date: new Date(expenseDate).toISOString(),
+          recurrence,
+          end_date: (recurrence !== 'Única' && endDate) ? new Date(endDate).toISOString() : null,
         });
 
       if (insertError) throw insertError;
@@ -139,19 +143,55 @@ export function AddExpenseModal({ onClose, onSuccess }: AddExpenseModalProps) {
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                Data da Despesa
-              </label>
-              <input
-                type="date"
-                value={expenseDate}
-                onChange={(e) => setExpenseDate(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  Data Inicial
+                </label>
+                <input
+                  type="date"
+                  value={expenseDate}
+                  onChange={(e) => setExpenseDate(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Recorrência
+                </label>
+                <select
+                  value={recurrence}
+                  onChange={(e) => setRecurrence(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                >
+                  <option value="Única">Única</option>
+                  <option value="Diária">Diária</option>
+                  <option value="Semanal">Semanal</option>
+                  <option value="Mensal">Mensal</option>
+                  <option value="Anual">Anual</option>
+                </select>
+              </div>
             </div>
+
+            {recurrence !== 'Única' && (
+              <div className="space-y-1 animate-fadeIn">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  Recorrente até (Opcional)
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="Sem data de término"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                />
+                <span className="text-[10px] text-slate-500 block">Deixe em branco para correr por tempo indeterminado.</span>
+              </div>
+            )}
 
             {error && (
               <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-none animate-fadeIn">

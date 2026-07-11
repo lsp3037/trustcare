@@ -57,11 +57,61 @@ interface Expense {
   category: string;
   expense_date: string;
   created_at: string;
+  recurrence?: string;
+  end_date?: string | null;
 }
 
 const PAID_STATUSES = ['Finalizado', 'Pronto para Retirada', 'Entregue'];
 
 // ─── Chart Helpers ────────────────────────────────────────────────────────────
+
+function projectExpenses(expenses: Expense[], from: Date, to: Date): Expense[] {
+  const projected: Expense[] = [];
+
+  expenses.forEach((e) => {
+    const start = new Date(e.expense_date);
+    if (start > to) return;
+
+    const recurrence = e.recurrence || 'Única';
+    const end = e.end_date ? new Date(e.end_date) : null;
+    const limit = end && end < to ? end : to;
+
+    if (recurrence === 'Única') {
+      if (start >= from && start <= to) {
+        projected.push(e);
+      }
+      return;
+    }
+
+    const current = new Date(start);
+    // Para evitar loops infinitos caso a data inicial seja inválida
+    if (isNaN(current.getTime())) return;
+
+    while (current <= limit) {
+      if (current >= from) {
+        projected.push({
+          ...e,
+          id: `${e.id}-proj-${current.toISOString().split('T')[0]}`,
+          expense_date: current.toISOString(),
+        });
+      }
+
+      if (recurrence === 'Diária') {
+        current.setDate(current.getDate() + 1);
+      } else if (recurrence === 'Semanal') {
+        current.setDate(current.getDate() + 7);
+      } else if (recurrence === 'Mensal') {
+        current.setMonth(current.getMonth() + 1);
+      } else if (recurrence === 'Anual') {
+        current.setFullYear(current.getFullYear() + 1);
+      } else {
+        break;
+      }
+    }
+  });
+
+  return projected.sort((a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime());
+}
 
 function calculateOrderPartsCost(order: Order): number {
   if (!order.service_order_items) return 0;
@@ -234,10 +284,11 @@ export default function FinanceiroPage() {
     if (!confirmDelete) return;
 
     try {
+      const baseId = id.includes('-proj-') ? id.split('-proj-')[0] : id;
       const { error } = await supabase
         .from('company_expenses')
         .delete()
-        .eq('id', id);
+        .eq('id', baseId);
 
       if (error) throw error;
       fetchData();
@@ -269,8 +320,8 @@ export default function FinanceiroPage() {
     (o) => PAID_STATUSES.includes(o.status) && !o.pago
   );
 
-  // Despesas gerais do período
-  const periodExpenses = expenses.filter((e) => inRange(e.expense_date));
+  // Projeta e filtra despesas gerais no período selecionado
+  const periodExpenses = projectExpenses(expenses, dateRange.from, dateRange.to);
 
   // Cálculos Financeiros
   const receitaRecebida = paidOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
@@ -524,7 +575,14 @@ export default function FinanceiroPage() {
                           {exp.expense_date ? new Date(exp.expense_date).toLocaleDateString('pt-BR') : '—'}
                         </td>
                         <td className="py-3 px-4 text-slate-200 font-semibold truncate max-w-[200px]">
-                          {exp.description}
+                          <div className="flex flex-col gap-0.5">
+                            <span>{exp.description}</span>
+                            {exp.recurrence && exp.recurrence !== 'Única' && (
+                              <span className="text-[9px] text-rose-400 font-mono font-semibold uppercase tracking-wider">
+                                ⟳ {exp.recurrence}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-[11px] font-semibold px-2 py-0.5 border border-slate-700 bg-slate-800/80 text-slate-300 rounded-none">
