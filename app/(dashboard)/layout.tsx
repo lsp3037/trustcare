@@ -17,7 +17,8 @@ import {
   Settings,
   TrendingUp,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Banknote
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -114,6 +115,7 @@ function DashboardLayoutContent({
     { name: 'Dashboard & Relatórios', href: '/dashboard', icon: BarChart3 },
     { name: 'Funil de Leads', href: '/dashboard/leads', icon: TrendingUp },
     { name: 'Ordens de Serviço', href: '/dashboard/orders', icon: ClipboardList },
+    ...(isAdmin ? [{ name: 'Financeiro', href: '/dashboard/financeiro', icon: Banknote }] : []),
     { name: 'Clientes', href: '/dashboard/clients', icon: Users },
     { name: 'Estoque', href: '/dashboard/inventory', icon: Package },
     { name: 'Serviços', href: '/dashboard/services', icon: Wrench },
