@@ -20,6 +20,7 @@ import {
 interface BarEntry {
   dia: string;
   faturamento: number;
+  custos: number;
 }
 
 interface FinanceiroBarChartProps {
@@ -29,11 +30,16 @@ interface FinanceiroBarChartProps {
 const CustomTooltipBar = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-none p-3 text-xs shadow-xl">
-      <p className="text-slate-400 mb-1">{label}</p>
-      <p className="font-semibold text-emerald-400 tabular-nums">
-        R$ {Number(payload[0].value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-      </p>
+    <div className="bg-slate-900 border border-slate-700 rounded-none p-3 text-xs shadow-xl space-y-1">
+      <p className="text-slate-300 font-semibold mb-1">{label}</p>
+      {payload.map((item: any, index: number) => (
+        <div key={index} className="flex justify-between gap-4">
+          <span className="text-slate-400">{item.name === 'faturamento' ? 'Recebido' : 'Custos/Despesas'}:</span>
+          <span className={`font-semibold tabular-nums ${item.name === 'faturamento' ? 'text-emerald-400' : 'text-rose-400'}`}>
+            R$ {Number(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      ))}
     </div>
   );
 };
@@ -57,7 +63,12 @@ export function FinanceiroBarChart({ data }: FinanceiroBarChartProps) {
           width={44}
         />
         <Tooltip content={<CustomTooltipBar />} cursor={{ fill: '#1e293b' }} />
-        <Bar dataKey="faturamento" fill="#10b981" radius={[0, 0, 0, 0]} maxBarSize={36} />
+        <Legend
+          formatter={(value) => <span style={{ color: '#94a3b8', fontSize: 11 }}>{value === 'faturamento' ? 'Recebido' : 'Custos/Despesas'}</span>}
+          wrapperStyle={{ paddingTop: 8 }}
+        />
+        <Bar name="faturamento" dataKey="faturamento" fill="#10b981" radius={[0, 0, 0, 0]} maxBarSize={20} />
+        <Bar name="custos" dataKey="custos" fill="#ef4444" radius={[0, 0, 0, 0]} maxBarSize={20} />
       </BarChart>
     </ResponsiveContainer>
   );

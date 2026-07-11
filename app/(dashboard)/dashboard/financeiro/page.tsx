@@ -8,6 +8,9 @@ import {
   TrendingUp,
   Download,
   RefreshCw,
+  Plus,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
@@ -17,8 +20,19 @@ import { KpiCard } from './_components/KpiCard';
 import { PaymentTable } from './_components/PaymentTable';
 import { FinanceiroBarChart, FinanceiroPieChart } from './_components/FinanceiroChart';
 import { exportToCsv } from '@/lib/utils/exportCsv';
+import { AddExpenseModal } from './_components/AddExpenseModal';
 
 interface DateRange { from: Date; to: Date; }
+
+interface OrderItem {
+  quantity: number;
+  products_inventory: {
+    cost_price: number;
+  } | {
+    cost_price: number;
+  }[] | null;
+}
+
 interface Order {
   id: string;
   codigo_os?: string;
@@ -29,18 +43,38 @@ interface Order {
   payment_method?: string;
   pago?: boolean;
   clients?: { name: string };
+  service_order_items?: OrderItem[];
 }
 
-// Raw shape returned by Supabase (joined table comes as array)
 interface RawOrder extends Omit<Order, 'clients'> {
   clients?: { name: string } | { name: string }[] | null;
 }
 
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  expense_date: string;
+  created_at: string;
+}
+
 const PAID_STATUSES = ['Finalizado', 'Pronto para Retirada', 'Entregue'];
 
-// Chart helpers ──────────────────────────────────────────────────────────────
+// ─── Chart Helpers ────────────────────────────────────────────────────────────
 
-function buildBarData(orders: Order[], from: Date, to: Date) {
+function calculateOrderPartsCost(order: Order): number {
+  if (!order.service_order_items) return 0;
+  return order.service_order_items.reduce((sum, item) => {
+    const rawCost = item.products_inventory;
+    const cost = Array.isArray(rawCost)
+      ? (rawCost[0]?.cost_price || 0)
+      : (rawCost?.cost_price || 0);
+    return sum + (item.quantity * cost);
+  }, 0);
+}
+
+function buildBarData(orders: Order[], expenses: Expense[], from: Date, to: Date) {
   const daysCount = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const showByDay = daysCount <= 35;
 
@@ -52,20 +86,34 @@ function buildBarData(orders: Order[], from: Date, to: Date) {
         dia: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
         rawDate: d.toISOString().split('T')[0],
         faturamento: 0,
+        custos: 0,
       };
     });
+
+    // Soma faturamento e custo de peças das OS pagas
     orders.forEach((o) => {
       const d = (o.payment_date || o.created_at)?.split('T')[0];
       const slot = days.find((x) => x.rawDate === d);
       if (slot && PAID_STATUSES.includes(o.status)) {
         slot.faturamento += Number(o.total_value || 0);
+        slot.custos += calculateOrderPartsCost(o);
       }
     });
+
+    // Soma despesas gerais
+    expenses.forEach((e) => {
+      const d = e.expense_date?.split('T')[0];
+      const slot = days.find((x) => x.rawDate === d);
+      if (slot) {
+        slot.custos += Number(e.amount || 0);
+      }
+    });
+
     return days;
   }
 
   // Group by week
-  const weeks: { dia: string; from: Date; to: Date; faturamento: number }[] = [];
+  const weeks: { dia: string; from: Date; to: Date; faturamento: number; custos: number; }[] = [];
   const cur = new Date(from);
   while (cur <= to) {
     const end = new Date(cur);
@@ -75,15 +123,31 @@ function buildBarData(orders: Order[], from: Date, to: Date) {
       from: new Date(cur),
       to: end > to ? to : end,
       faturamento: 0,
+      custos: 0,
     });
     cur.setDate(cur.getDate() + 7);
   }
+
+  // Soma faturamento e custo de peças das OS pagas
   orders.forEach((o) => {
     if (!PAID_STATUSES.includes(o.status)) return;
     const d = new Date(o.payment_date || o.created_at);
     const slot = weeks.find((w) => d >= w.from && d <= w.to);
-    if (slot) slot.faturamento += Number(o.total_value || 0);
+    if (slot) {
+      slot.faturamento += Number(o.total_value || 0);
+      slot.custos += calculateOrderPartsCost(o);
+    }
   });
+
+  // Soma despesas gerais
+  expenses.forEach((e) => {
+    const d = new Date(e.expense_date);
+    const slot = weeks.find((w) => d >= w.from && d <= w.to);
+    if (slot) {
+      slot.custos += Number(e.amount || 0);
+    }
+  });
+
   return weeks;
 }
 
@@ -108,8 +172,10 @@ export default function FinanceiroPage() {
 
   const [dateRange, setDateRange] = useState<DateRange>({ from: defaultFrom, to: defaultTo });
   const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'pendentes' | 'recebidos'>('pendentes');
+  const [activeTab, setActiveTab] = useState<'pendentes' | 'recebidos' | 'despesas'>('pendentes');
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
 
   // Redirect non-admins
   useEffect(() => {
@@ -118,32 +184,67 @@ export default function FinanceiroPage() {
     }
   }, [isAdmin, userLoading, router]);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Busca Ordens de Serviço com itens de ordem de serviço e custo do produto associado
+      const { data: osData, error: osError } = await supabase
         .from('service_orders')
-        .select('id, codigo_os, total_value, status, created_at, payment_date, payment_method, pago, clients(name)')
+        .select(`
+          id, codigo_os, total_value, status, created_at, payment_date, payment_method, pago,
+          clients(name),
+          service_order_items(quantity, products_inventory(cost_price))
+        `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (osError) throw osError;
+
       // Supabase returns joined tables as arrays; normalize to object
-      const normalized = ((data as RawOrder[]) ?? []).map((o) => ({
+      const normalizedOrders = ((osData as RawOrder[]) ?? []).map((o) => ({
         ...o,
         clients: Array.isArray(o.clients) ? o.clients[0] : (o.clients ?? undefined),
       })) as Order[];
-      setAllOrders(normalized);
+      setAllOrders(normalizedOrders);
+
+      // 2. Busca Despesas Gerais
+      const { data: expensesData, error: expError } = await supabase
+        .from('company_expenses')
+        .select('*')
+        .order('expense_date', { ascending: false });
+
+      if (expError) throw expError;
+      setExpenses((expensesData as Expense[]) ?? []);
+
     } catch (err) {
-      console.warn('Financeiro: erro ao carregar OS', err);
+      console.warn('Financeiro: erro ao carregar dados', err);
       setAllOrders([]);
+      setExpenses([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    fetchData();
+  }, [fetchData]);
+
+  // Excluir despesa
+  const handleDeleteExpense = async (id: string) => {
+    const confirmDelete = window.confirm('Deseja realmente excluir esta despesa?');
+    if (!confirmDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('company_expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchData();
+    } catch (err: any) {
+      alert(`Erro ao excluir despesa: ${err.message}`);
+    }
+  };
 
   // Filter by date range ──────────────────────────────────────────────────────
 
@@ -158,9 +259,6 @@ export default function FinanceiroPage() {
 
   const periodOrders = allOrders.filter((o) => inRange(o.created_at));
 
-  // OS concluídas no período (faturamento)
-  const billedOrders = periodOrders.filter((o) => PAID_STATUSES.includes(o.status));
-
   // OS efetivamente pagas no período (caixa)
   const paidOrders = allOrders.filter(
     (o) => o.pago === true && inRange(o.payment_date || o.created_at) && PAID_STATUSES.includes(o.status)
@@ -171,12 +269,26 @@ export default function FinanceiroPage() {
     (o) => PAID_STATUSES.includes(o.status) && !o.pago
   );
 
-  const receitaBruta = billedOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
+  // Despesas gerais do período
+  const periodExpenses = expenses.filter((e) => inRange(e.expense_date));
+
+  // Cálculos Financeiros
   const receitaRecebida = paidOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
   const aReceber = pendingOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
-  const ticketMedio = paidOrders.length > 0 ? receitaRecebida / paidOrders.length : 0;
 
-  const barData = buildBarData(paidOrders, dateRange.from, dateRange.to);
+  // Custo de peças das OS pagas
+  const totalPartsCost = paidOrders.reduce((s, o) => s + calculateOrderPartsCost(o), 0);
+
+  // Despesas gerais do período
+  const totalGeneralExpenses = periodExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+  // Custos acumulados
+  const totalCustos = totalPartsCost + totalGeneralExpenses;
+
+  // Lucro líquido real (Receita Recebida - Custos)
+  const lucroLiquido = receitaRecebida - totalCustos;
+
+  const barData = buildBarData(paidOrders, periodExpenses, dateRange.from, dateRange.to);
   const pieData = buildPieData(paidOrders);
 
   const fmtCurrency = (v: number) =>
@@ -191,7 +303,7 @@ export default function FinanceiroPage() {
         Status: o.status,
         'Criada em': o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '',
       })),
-      'trustcare_pendentes'
+      'trustcare_recebiveis_pendentes'
     );
   };
 
@@ -204,7 +316,19 @@ export default function FinanceiroPage() {
         'Forma de Pagamento': o.payment_method ?? '',
         'Pago em': o.payment_date ? new Date(o.payment_date).toLocaleDateString('pt-BR') : '',
       })),
-      'trustcare_recebidos'
+      'trustcare_faturamento_recebido'
+    );
+  };
+
+  const handleExportExpenses = () => {
+    exportToCsv(
+      periodExpenses.map((e) => ({
+        Descrição: e.description,
+        Valor: Number(e.amount).toFixed(2).replace('.', ','),
+        Categoria: e.category,
+        Data: e.expense_date ? new Date(e.expense_date).toLocaleDateString('pt-BR') : '',
+      })),
+      'trustcare_despesas'
     );
   };
 
@@ -218,17 +342,25 @@ export default function FinanceiroPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-screen-xl mx-auto">
+      {/* Add Expense Modal */}
+      {isAddExpenseOpen && (
+        <AddExpenseModal
+          onClose={() => setIsAddExpenseOpen(false)}
+          onSuccess={fetchData}
+        />
+      )}
+
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-white tracking-tight">Financeiro</h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Controle de receitas e recebíveis
+            Controle de fluxo de caixa, custos de peças e lucratividade
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchOrders}
+            onClick={fetchData}
             className="p-2 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 rounded-none transition-colors"
             title="Atualizar"
           >
@@ -241,18 +373,25 @@ export default function FinanceiroPage() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
-          title="Receita Bruta"
-          value={loading ? '...' : fmtCurrency(receitaBruta)}
-          subtitle={`${billedOrders.length} OS concluídas`}
-          icon={TrendingUp}
-          accentColor="blue"
-        />
-        <KpiCard
-          title="Receita Recebida"
+          title="Faturamento (Caixa)"
           value={loading ? '...' : fmtCurrency(receitaRecebida)}
-          subtitle={`${paidOrders.length} OS pagas`}
+          subtitle={`${paidOrders.length} OS pagas no período`}
           icon={CheckCircle2}
           accentColor="emerald"
+        />
+        <KpiCard
+          title="Custos Operacionais"
+          value={loading ? '...' : fmtCurrency(totalCustos)}
+          subtitle={`Peças: ${fmtCurrency(totalPartsCost)} | Despesas: ${fmtCurrency(totalGeneralExpenses)}`}
+          icon={TrendingUp}
+          accentColor="rose"
+        />
+        <KpiCard
+          title="Lucro Líquido"
+          value={loading ? '...' : fmtCurrency(lucroLiquido)}
+          subtitle="Faturamento - Custos acumulados"
+          icon={DollarSign}
+          accentColor={lucroLiquido >= 0 ? 'emerald' : 'rose'}
         />
         <KpiCard
           title="A Receber"
@@ -261,20 +400,13 @@ export default function FinanceiroPage() {
           icon={Clock}
           accentColor="amber"
         />
-        <KpiCard
-          title="Ticket Médio"
-          value={loading ? '...' : fmtCurrency(ticketMedio)}
-          subtitle="Por OS paga no período"
-          icon={DollarSign}
-          accentColor="rose"
-        />
       </div>
 
       {/* ── Charts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-none p-5">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Faturamento Recebido no Período
+            Comparativo Faturamento vs Custos
           </h2>
           {loading ? (
             <div className="h-[220px] flex items-center justify-center">
@@ -286,7 +418,7 @@ export default function FinanceiroPage() {
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-none p-5">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Por Forma de Pagamento
+            Faturamento por Forma de Pagamento
           </h2>
           {loading ? (
             <div className="h-[220px] flex items-center justify-center">
@@ -298,15 +430,15 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* ── Tabs: Pendentes / Recebidos ── */}
+      {/* ── Tabs: Pendentes / Recebidos / Despesas Gerais ── */}
       <div className="bg-slate-900 border border-slate-800 rounded-none">
         {/* Tab bar */}
-        <div className="flex border-b border-slate-800">
-          {(['pendentes', 'recebidos'] as const).map((tab) => (
+        <div className="flex border-b border-slate-800 overflow-x-auto">
+          {(['pendentes', 'recebidos', 'despesas'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 ${
+              className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === tab
                   ? 'border-emerald-500 text-emerald-400'
                   : 'border-transparent text-slate-500 hover:text-slate-300'
@@ -314,13 +446,30 @@ export default function FinanceiroPage() {
             >
               {tab === 'pendentes'
                 ? `A Receber (${pendingOrders.length})`
-                : `Recebidos (${paidOrders.length})`}
+                : tab === 'recebidos'
+                  ? `Faturamento Recebido (${paidOrders.length})`
+                  : `Despesas Gerais (${periodExpenses.length})`}
             </button>
           ))}
-          <div className="ml-auto flex items-center px-4">
+          <div className="ml-auto flex items-center px-4 gap-2 py-2 sm:py-0">
+            {activeTab === 'despesas' && (
+              <button
+                onClick={() => setIsAddExpenseOpen(true)}
+                className="flex items-center gap-1 text-xs bg-rose-600 hover:bg-rose-500 text-white font-medium px-3 py-1.5 rounded-none transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Nova Despesa
+              </button>
+            )}
             <button
-              onClick={activeTab === 'pendentes' ? handleExportPending : handleExportPaid}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-600 px-3 py-1.5 rounded-none transition-colors"
+              onClick={
+                activeTab === 'pendentes'
+                  ? handleExportPending
+                  : activeTab === 'recebidos'
+                    ? handleExportPaid
+                    : handleExportExpenses
+              }
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-600 px-3 py-1.5 rounded-none transition-colors whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5" />
               Exportar CSV
@@ -328,7 +477,7 @@ export default function FinanceiroPage() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Tab Content */}
         <div className="p-2">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -338,10 +487,64 @@ export default function FinanceiroPage() {
             <PaymentTable
               orders={pendingOrders}
               mode="pending"
-              onPaymentSuccess={() => fetchOrders()}
+              onPaymentSuccess={fetchData}
             />
-          ) : (
+          ) : activeTab === 'recebidos' ? (
             <PaymentTable orders={paidOrders} mode="paid" />
+          ) : (
+            /* Despesas Gerais Table */
+            <div className="overflow-x-auto">
+              {periodExpenses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500 gap-2">
+                  <AlertTriangle className="w-8 h-8 opacity-30 text-rose-500" />
+                  <p className="text-sm">Nenhuma despesa geral registrada neste período.</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-800">
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Data</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Descrição</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Categoria</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Valor</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {periodExpenses.map((exp) => (
+                      <tr
+                        key={exp.id}
+                        className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
+                      >
+                        <td className="py-3 px-4 text-slate-400 text-xs font-medium">
+                          {exp.expense_date ? new Date(exp.expense_date).toLocaleDateString('pt-BR') : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-slate-200 font-semibold truncate max-w-[200px]">
+                          {exp.description}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-[11px] font-semibold px-2 py-0.5 border border-slate-700 bg-slate-800/80 text-slate-300 rounded-none">
+                            {exp.category}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-rose-400 tabular-nums">
+                          {fmtCurrency(Number(exp.amount))}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => handleDeleteExpense(exp.id)}
+                            className="text-slate-500 hover:text-rose-500 transition-colors p-1 rounded-none"
+                            title="Excluir Despesa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           )}
         </div>
       </div>
