@@ -1,7 +1,9 @@
--- Migration: Módulo Financeiro
--- Adiciona coluna payment_status padronizada nas ordens de serviço
+-- 1. Garante a existência das colunas de pagamento legadas
+ALTER TABLE public.service_orders 
+  ADD COLUMN IF NOT EXISTS payment_date TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS payment_method TEXT;
 
--- 1. Adiciona coluna payment_status (controle mais granular que o booleano 'pago')
+-- 2. Adiciona coluna payment_status (controle mais granular que o booleano 'pago')
 ALTER TABLE public.service_orders
   ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'pendente'
   CHECK (payment_status IN ('pendente', 'pago', 'parcial'));
