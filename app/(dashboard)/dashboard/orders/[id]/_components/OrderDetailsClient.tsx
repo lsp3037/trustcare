@@ -43,8 +43,12 @@ export function OrderDetailsClient({
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [paymentMethod, setPaymentMethod] = useState<string>('PIX');
+  const [paymentDate, setPaymentDate] = useState<string>(
+    order?.payment_date
+      ? new Date(order.payment_date).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0]
+  );
+  const [paymentMethod, setPaymentMethod] = useState<string>(order?.payment_method || 'Pix');
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState<string>('');
   
   const [priority, setPriority] = useState(order?.priority || 'Média');
@@ -263,7 +267,10 @@ export function OrderDetailsClient({
         service_value: parseFloat(serviceValue) || 0,
         discount: parseFloat(discount) || 0,
         total_value: parseFloat(totalValue) || 0,
-        pago: status === 'Finalizado' ? pago : false,
+        pago,
+        payment_status: pago ? 'pago' : 'pendente',
+        payment_method: pago ? paymentMethod : null,
+        payment_date: pago ? new Date(paymentDate).toISOString() : null,
         media: mediaFiles.map(m => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type }))
       };
       
@@ -391,9 +398,16 @@ export function OrderDetailsClient({
     setStatus(pendingStatusUpdate);
     setUpdatingStatus(true);
     try {
-      const { error: updateErr } = await supabase.from('service_orders').update({ status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod }).eq('id', id);
+      const { error: updateErr } = await supabase.from('service_orders').update({
+        status: pendingStatusUpdate,
+        payment_date: new Date(paymentDate).toISOString(),
+        payment_method: paymentMethod,
+        pago: true,
+        payment_status: 'pago'
+      }).eq('id', id);
       if (updateErr) throw updateErr;
-      setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod } : null);
+      setPago(true);
+      setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod, pago: true } : null);
       setSuccessMsg('Status e fluxo de caixa atualizados em tempo real!');
     } catch (err: any) {
       setErrorMsg(`Erro ao atualizar caixa: ${err.message}`);
@@ -483,12 +497,57 @@ export function OrderDetailsClient({
                 </div>
               </div>
 
-              {status === 'Finalizado' && (
-                <div className="flex items-center gap-3 p-4 bg-slate-950/40 border border-slate-800 rounded-none">
-                  <input type="checkbox" id="pago-checkbox" checked={pago} onChange={(e) => setPago(e.target.checked)} className="w-4 h-4 rounded-none border-slate-800 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer" />
-                  <label htmlFor="pago-checkbox" className="text-xs font-bold text-slate-100 font-mono uppercase tracking-widest cursor-pointer select-none">
-                    Ordem de Serviço Paga
-                  </label>
+              {(status === 'Finalizado' || status === 'Entregue' || status === 'Pronto para Retirada') && (
+                <div className="space-y-4 p-4 bg-slate-950/40 border border-slate-800 rounded-none">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="pago-checkbox" 
+                      checked={pago} 
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPago(checked);
+                        if (checked && !paymentDate) {
+                          setPaymentDate(new Date().toISOString().split('T')[0]);
+                        }
+                      }} 
+                      className="w-4 h-4 rounded-none border-slate-800 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer" 
+                    />
+                    <label htmlFor="pago-checkbox" className="text-xs font-bold text-slate-100 font-mono uppercase tracking-widest cursor-pointer select-none">
+                      Ordem de Serviço Paga
+                    </label>
+                  </div>
+
+                  {pago && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-800/40 animate-fadeIn">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Forma de Pagamento</label>
+                        <select 
+                          value={paymentMethod} 
+                          onChange={(e) => setPaymentMethod(e.target.value)} 
+                          className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono transition-colors"
+                        >
+                          <option value="Pix">Pix</option>
+                          <option value="Cartão de Crédito">Cartão de Crédito</option>
+                          <option value="Cartão de Débito">Cartão de Débito</option>
+                          <option value="Dinheiro">Dinheiro</option>
+                          <option value="Transferência Bancária">Transferência Bancária</option>
+                          <option value="Boleto Bancário">Boleto Bancário</option>
+                          <option value="Outro">Outro</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Data do Pagamento</label>
+                        <input 
+                          type="date" 
+                          value={paymentDate} 
+                          onChange={(e) => setPaymentDate(e.target.value)} 
+                          className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono transition-colors" 
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -540,10 +599,13 @@ export function OrderDetailsClient({
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Forma de Pagamento</label>
                 <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm font-mono text-slate-100 focus:outline-none focus:border-emerald-500">
-                  <option value="PIX">PIX</option>
+                  <option value="Pix">Pix</option>
                   <option value="Cartão de Crédito">Cartão de Crédito</option>
                   <option value="Cartão de Débito">Cartão de Débito</option>
                   <option value="Dinheiro">Dinheiro</option>
+                  <option value="Transferência Bancária">Transferência Bancária</option>
+                  <option value="Boleto Bancário">Boleto Bancário</option>
+                  <option value="Outro">Outro</option>
                 </select>
               </div>
             </div>

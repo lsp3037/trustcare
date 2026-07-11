@@ -490,7 +490,11 @@ export default function FinanceiroPage() {
               onPaymentSuccess={fetchData}
             />
           ) : activeTab === 'recebidos' ? (
-            <PaymentTable orders={paidOrders} mode="paid" />
+            <PaymentTable
+              orders={paidOrders}
+              mode="paid"
+              onPaymentSuccess={fetchData}
+            />
           ) : (
             /* Despesas Gerais Table */
             <div className="overflow-x-auto">

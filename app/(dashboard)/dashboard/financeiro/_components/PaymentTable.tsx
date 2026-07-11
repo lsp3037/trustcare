@@ -1,7 +1,6 @@
 'use client';
-
 import React from 'react';
-import { CheckCircle2, ExternalLink, Banknote } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Banknote, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { MarkAsPaidModal } from './MarkAsPaidModal';
 
@@ -132,6 +131,16 @@ export function PaymentTable({ orders, mode, onPaymentSuccess }: PaymentTablePro
                       >
                         <CheckCircle2 className="w-3 h-3" />
                         Pago
+                      </button>
+                    )}
+                    {mode === 'paid' && (
+                      <button
+                        onClick={() => setModalOrder(order)}
+                        className="text-xs font-medium px-2 py-1 bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 rounded-none transition-colors flex items-center gap-1"
+                        title="Alterar/Selecionar forma de pagamento"
+                      >
+                        <CreditCard className="w-3 h-3 text-slate-400" />
+                        Alterar
                       </button>
                     )}
                   </div>

@@ -19,6 +19,8 @@ interface MarkAsPaidModalProps {
     id: string;
     codigo_os?: string;
     total_value: number;
+    payment_method?: string;
+    payment_date?: string;
     clients?: { name: string };
   };
   onClose: () => void;
@@ -26,8 +28,12 @@ interface MarkAsPaidModalProps {
 }
 
 export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalProps) {
-  const [method, setMethod] = useState('Pix');
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [method, setMethod] = useState(order.payment_method || 'Pix');
+  const [paymentDate, setPaymentDate] = useState(
+    order.payment_date
+      ? new Date(order.payment_date).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0]
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
