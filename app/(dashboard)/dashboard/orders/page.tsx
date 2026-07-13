@@ -14,7 +14,9 @@ import {
   Eye,
   Calendar,
   DollarSign,
-  Trash2
+  Trash2,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import NewOrderForm from '@/components/NewOrderForm';
@@ -41,6 +43,19 @@ function OrdersContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'Todos');
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('orders-view-mode') as 'grid' | 'table';
+    if (saved === 'grid' || saved === 'table') {
+      setViewMode(saved);
+    }
+  }, []);
+
+  const handleSetViewMode = (mode: 'grid' | 'table') => {
+    setViewMode(mode);
+    localStorage.setItem('orders-view-mode', mode);
+  };
 
   const fetchOrdersAndClients = async () => {
     try {
@@ -330,7 +345,7 @@ function OrdersContent() {
               />
             </div>
 
-            {/* Filtro de Status */}
+            {/* Filtro de Status e Controle de Visualização */}
             <div className="flex items-center gap-3 w-full md:w-auto shrink-0 justify-end">
               <Filter className="w-4 h-4 text-slate-400" />
               <select
@@ -350,6 +365,27 @@ function OrdersContent() {
                 <option value="Finalizado">Finalizado</option>
                 <option value="Cancelado">Cancelado</option>
               </select>
+
+              <div className="h-8 w-px bg-slate-800 hidden sm:block mx-1" />
+
+              <div className="flex items-center bg-slate-950 border border-slate-850 p-1 rounded-lg shrink-0 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => handleSetViewMode('grid')}
+                  className={`p-1.5 rounded transition-all duration-200 ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
+                  title="Visualização em Cards"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetViewMode('table')}
+                  className={`p-1.5 rounded transition-all duration-200 ${viewMode === 'table' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
+                  title="Visualização em Tabela"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -365,7 +401,7 @@ function OrdersContent() {
               <h3 className="text-lg font-bold text-slate-300">Nenhuma Ordem de Serviço encontrada</h3>
               <p className="text-sm text-slate-500 mt-1 max-w-sm">Tente redefinir seus filtros de busca ou crie uma nova OS.</p>
             </div>
-          ) : (
+          ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredOrders.map((order) => (
                 <div 
@@ -424,7 +460,7 @@ function OrdersContent() {
                   </div>
 
                   {/* Rodapé do Card */}
-                  <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                  <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-450">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-500" />
                       {new Date(order.created_at).toLocaleDateString('pt-BR')}
@@ -438,6 +474,97 @@ function OrdersContent() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="bg-slate-900/40 border border-slate-900 rounded-xl overflow-hidden shadow-lg animate-fadeIn">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-900/50 text-slate-450">
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider w-8">
+                        <input
+                          type="checkbox"
+                          checked={filteredOrders.length > 0 && filteredOrders.every(o => selectedOrderIds.includes(o.id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedOrderIds(filteredOrders.map(o => o.id));
+                            } else {
+                              setSelectedOrderIds([]);
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">OS</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">Cliente</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">Equipamento</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">Status</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider hidden lg:table-cell">SLA / Prazo</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider hidden md:table-cell">Criação</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider text-right">Valor</th>
+                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider text-center w-12">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.map((order) => (
+                      <tr
+                        key={order.id}
+                        onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                        className="border-b border-slate-800/60 hover:bg-slate-900/20 transition-colors group cursor-pointer"
+                      >
+                        <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(order.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOrderIds([...selectedOrderIds, order.id]);
+                              } else {
+                                setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-xs text-slate-350">
+                          {order.codigo_os || order.id.slice(0, 8).toUpperCase()}
+                        </td>
+                        <td className="py-3 px-4 text-slate-200 font-bold group-hover:text-blue-450 transition-colors">
+                          {order.clients?.name || 'Cliente'}
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 text-xs font-semibold">
+                          {order.equipment_details}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border whitespace-nowrap uppercase tracking-wider ${getStatusColor(order.status)}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 hidden lg:table-cell">
+                          <div className="w-44">
+                            <SlaTracker variant="mini" startedAt={order?.analysis_started_at} status={order.status} />
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 text-xs hidden md:table-cell">
+                          {new Date(order.created_at).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-slate-200 tabular-nums">
+                          R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                            className="text-slate-500 hover:text-blue-450 transition-colors p-1"
+                            title="Visualizar OS"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

@@ -19,6 +19,18 @@ import argparse
 import subprocess
 from pathlib import Path
 
+# Reconfigure stdout and stderr to UTF-8 to avoid encoding errors with emojis on Windows
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 # Detect agent directory name dynamically
 AGENT_DIR = Path(".agents") if Path(".agents").exists() else Path(".agents")
 PID_FILE = AGENT_DIR / "preview.pid"
