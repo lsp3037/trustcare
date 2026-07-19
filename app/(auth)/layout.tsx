@@ -6,7 +6,7 @@ const features = [
   { icon: Users,         text: 'Gestão completa de clientes PF e PJ' },
   { icon: Package,       text: 'Controle de estoque com alertas de nível baixo' },
   { icon: BarChart3,     text: 'Dashboard de faturamento e relatórios por período' },
-  { icon: ShieldCheck,   text: 'Multi-tenant seguro com isolamento por empresa' },
+  { icon: ShieldCheck,   text: 'Privacidade total com dados 100% protegidos' },
 ];
 
 export default function AuthLayout({
