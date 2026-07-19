@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
+import { getSubdomain } from '@/lib/utils/subdomain';
 
 // Componente do Canvas para Desenho da Assinatura
 const SignaturePad = ({ onSave, onClear }: { onSave: (base64: string) => void; onClear: () => void }) => {
@@ -155,6 +156,17 @@ export default function PublicOrderBudgetPage() {
         .select('*')
         .eq('id', osData.company_id)
         .single();
+      
+      // Validação de subdomínio para isolamento SaaS
+      if (typeof window !== 'undefined') {
+        const activeSubdomain = getSubdomain(window.location.hostname, new URLSearchParams(window.location.search));
+        if (compData && compData.subdomain && activeSubdomain && compData.subdomain !== activeSubdomain) {
+          setErrorMsg('Orçamento não encontrado no sistema.');
+          setOrder(null);
+          return;
+        }
+      }
+      
       setCompany(compData);
 
       // C. Buscar dados do Cliente

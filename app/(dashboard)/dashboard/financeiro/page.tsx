@@ -11,6 +11,8 @@ import {
   Plus,
   Trash2,
   AlertTriangle,
+  Pencil,
+  CalendarOff,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
@@ -226,6 +228,7 @@ export default function FinanceiroPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pendentes' | 'recebidos' | 'despesas'>('pendentes');
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
 
   // Redirect non-admins
   useEffect(() => {
@@ -294,6 +297,41 @@ export default function FinanceiroPage() {
       fetchData();
     } catch (err: any) {
       alert(`Erro ao excluir despesa: ${err.message}`);
+    }
+  };
+
+  // Encerrar despesa recorrente
+  const handleEndRecurrence = async (id: string) => {
+    const confirmEnd = window.confirm('Deseja realmente encerrar a recorrência desta despesa a partir de hoje?');
+    if (!confirmEnd) return;
+
+    try {
+      const baseId = id.includes('-proj-') ? id.split('-proj-')[0] : id;
+      // Define a data de encerramento como hoje (fim do dia local ou data atual)
+      const todayStr = new Date().toISOString();
+      const { error } = await supabase
+        .from('company_expenses')
+        .update({ end_date: todayStr })
+        .eq('id', baseId);
+
+      if (error) throw error;
+      fetchData();
+    } catch (err: any) {
+      alert(`Erro ao encerrar despesa recorrente: ${err.message}`);
+    }
+  };
+
+  // Editar despesa
+  const handleEditExpense = (expense: Expense) => {
+    // Se for uma despesa projetada, precisamos obter o ID original limpo do banco
+    const baseId = expense.id.includes('-proj-') ? expense.id.split('-proj-')[0] : expense.id;
+    // Buscamos a despesa original da lista de despesas carregadas
+    const originalExpense = expenses.find((e) => e.id === baseId);
+    if (originalExpense) {
+      setExpenseToEdit(originalExpense);
+      setIsAddExpenseOpen(true);
+    } else {
+      alert('Despesa original não encontrada.');
     }
   };
 
@@ -396,7 +434,11 @@ export default function FinanceiroPage() {
       {/* Add Expense Modal */}
       {isAddExpenseOpen && (
         <AddExpenseModal
-          onClose={() => setIsAddExpenseOpen(false)}
+          expenseToEdit={expenseToEdit || undefined}
+          onClose={() => {
+            setIsAddExpenseOpen(false);
+            setExpenseToEdit(null);
+          }}
           onSuccess={fetchData}
         />
       )}
@@ -580,6 +622,7 @@ export default function FinanceiroPage() {
                             {exp.recurrence && exp.recurrence !== 'Única' && (
                               <span className="text-[9px] text-rose-400 font-mono font-semibold uppercase tracking-wider">
                                 ⟳ {exp.recurrence}
+                                {exp.end_date && ` (Até ${new Date(exp.end_date).toLocaleDateString('pt-BR')})`}
                               </span>
                             )}
                           </div>
@@ -593,13 +636,33 @@ export default function FinanceiroPage() {
                           {fmtCurrency(Number(exp.amount))}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => handleDeleteExpense(exp.id)}
-                            className="text-slate-500 hover:text-rose-500 transition-colors p-1 rounded-none"
-                            title="Excluir Despesa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleEditExpense(exp)}
+                              className="text-slate-500 hover:text-blue-400 transition-colors p-1 rounded-none"
+                              title="Editar Despesa"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+
+                            {exp.recurrence && exp.recurrence !== 'Única' && !exp.end_date && (
+                              <button
+                                onClick={() => handleEndRecurrence(exp.id)}
+                                className="text-slate-500 hover:text-amber-500 transition-colors p-1 rounded-none"
+                                title="Encerrar Recorrência"
+                              >
+                                <CalendarOff className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => handleDeleteExpense(exp.id)}
+                              className="text-slate-500 hover:text-rose-500 transition-colors p-1 rounded-none"
+                              title="Excluir Despesa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

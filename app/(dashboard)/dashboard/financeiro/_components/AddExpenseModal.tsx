@@ -15,19 +15,38 @@ const EXPENSE_CATEGORIES = [
   'Outros',
 ];
 
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  expense_date: string;
+  recurrence?: string;
+  end_date?: string | null;
+}
+
 interface AddExpenseModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  expenseToEdit?: Expense;
 }
 
-export function AddExpenseModal({ onClose, onSuccess }: AddExpenseModalProps) {
+export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpenseModalProps) {
   const { company } = useCompany();
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Marketing');
-  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
-  const [recurrence, setRecurrence] = useState('Única');
-  const [endDate, setEndDate] = useState('');
+  const [description, setDescription] = useState(expenseToEdit?.description || '');
+  const [amount, setAmount] = useState(expenseToEdit?.amount ? String(expenseToEdit.amount) : '');
+  const [category, setCategory] = useState(expenseToEdit?.category || 'Marketing');
+  const [expenseDate, setExpenseDate] = useState(
+    expenseToEdit?.expense_date
+      ? new Date(expenseToEdit.expense_date).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0]
+  );
+  const [recurrence, setRecurrence] = useState(expenseToEdit?.recurrence || 'Única');
+  const [endDate, setEndDate] = useState(
+    expenseToEdit?.end_date
+      ? new Date(expenseToEdit.end_date).toISOString().split('T')[0]
+      : ''
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -52,19 +71,35 @@ export function AddExpenseModal({ onClose, onSuccess }: AddExpenseModalProps) {
         throw new Error('Nenhuma empresa encontrada no contexto.');
       }
 
-      const { error: insertError } = await supabase
-        .from('company_expenses')
-        .insert({
-          company_id: companyId,
-          description: description.trim(),
-          amount: val,
-          category,
-          expense_date: new Date(expenseDate).toISOString(),
-          recurrence,
-          end_date: (recurrence !== 'Única' && endDate) ? new Date(endDate).toISOString() : null,
-        });
+      if (expenseToEdit) {
+        const { error: updateError } = await supabase
+          .from('company_expenses')
+          .update({
+            description: description.trim(),
+            amount: val,
+            category,
+            expense_date: new Date(expenseDate).toISOString(),
+            recurrence,
+            end_date: (recurrence !== 'Única' && endDate) ? new Date(endDate).toISOString() : null,
+          })
+          .eq('id', expenseToEdit.id);
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('company_expenses')
+          .insert({
+            company_id: companyId,
+            description: description.trim(),
+            amount: val,
+            category,
+            expense_date: new Date(expenseDate).toISOString(),
+            recurrence,
+            end_date: (recurrence !== 'Única' && endDate) ? new Date(endDate).toISOString() : null,
+          });
+
+        if (insertError) throw insertError;
+      }
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -84,7 +119,9 @@ export function AddExpenseModal({ onClose, onSuccess }: AddExpenseModalProps) {
             <div className="p-1.5 bg-rose-500/10 text-rose-400 rounded-none">
               <DollarSign className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-semibold text-white">Cadastrar Despesa</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {expenseToEdit ? 'Editar Despesa' : 'Cadastrar Despesa'}
+            </h2>
           </div>
           <button
             onClick={onClose}

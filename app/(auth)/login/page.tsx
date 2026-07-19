@@ -1,5 +1,6 @@
 'use client';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -57,10 +58,13 @@ export default function LoginPage() {
     <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-8 shadow-2xl">
       <div className="flex flex-col items-center mb-8">
         <div className="mb-4 flex justify-center">
-          <img 
-            src="/logo.png" 
-            alt="Trust Care Logo" 
-            className="h-20 w-auto object-contain"
+          <Image
+            src="/logo.png"
+            alt="Trust Care Logo"
+            width={80}
+            height={80}
+            className="object-contain"
+            priority
           />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-white">Trust Care - Consultoria em T.I</h1>

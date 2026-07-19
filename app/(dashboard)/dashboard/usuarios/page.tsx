@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
+import { useCompany } from '@/lib/context/CompanyContext';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 
 // Static permissions definition to display inside the registration modal
@@ -36,6 +37,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 export default function UserManagementPage() {
   const { user, role, loading: userLoading } = useUser();
   const router = useRouter();
+  const { maxTechnicians, isReadOnly } = useCompany();
   const [loading, setLoading] = useState(true);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [isMock, setIsMock] = useState(false);
@@ -131,6 +133,19 @@ export default function UserManagementPage() {
     setFormError('');
     setFormSuccess(false);
     setGeneratedInviteLink('');
+
+    if (isReadOnly) {
+      setFormError('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível gerar novos convites.');
+      setSubmitting(false);
+      return;
+    }
+
+    const activeTechs = users.filter(u => u.role === 'admin' || u.role === 'technician').length;
+    if (selectedRole !== 'viewer' && activeTechs >= maxTechnicians) {
+      setFormError(`Limite de técnicos ativos atingido (${activeTechs} de ${maxTechnicians} permitidos no seu plano). Atualize seu plano para convidar mais técnicos.`);
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -492,6 +507,20 @@ export default function UserManagementPage() {
                 </div>
               )}
 
+              {!formSuccess && (
+                <>
+                  {isReadOnly ? (
+                    <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
+                      Sua conta está em modo apenas-leitura. Regularize o faturamento para poder convidar novos membros.
+                    </div>
+                  ) : (selectedRole !== 'viewer' && users.filter(u => u.role === 'admin' || u.role === 'technician').length >= maxTechnicians) ? (
+                    <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
+                      Limite de técnicos atingido ({users.filter(u => u.role === 'admin' || u.role === 'technician').length} de {maxTechnicians} permitidos no seu plano). Atualize o plano para poder adicionar mais técnicos.
+                    </div>
+                  ) : null}
+                </>
+              )}
+
               {formSuccess && generatedInviteLink ? (
                 <div className="space-y-4">
                   <div className="p-4 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
@@ -560,7 +589,7 @@ export default function UserManagementPage() {
                   <div className="flex gap-3 pt-4 border-t border-slate-850">
                     <button
                       type="submit"
-                      disabled={submitting}
+                      disabled={submitting || isReadOnly || (selectedRole !== 'viewer' && users.filter(u => u.role === 'admin' || u.role === 'technician').length >= maxTechnicians)}
                       className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-blue-500/10 cursor-pointer disabled:opacity-50"
                     >
                       {submitting ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : <><UserPlus className="w-3.5 h-3.5" /> Gerar Convite</>}

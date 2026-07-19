@@ -109,8 +109,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           await fetchUserData(session.user);
         } else {
-          setUser(null);
-          setLoading(false);
+          // Se houver uma sessão mock no localStorage, mantêm o login mockado
+          const mockSession = typeof window !== 'undefined' ? localStorage.getItem('os-session') : null;
+          if (mockSession) {
+            await fetchUserData(undefined, true);
+          } else {
+            setUser(null);
+            setLoading(false);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);

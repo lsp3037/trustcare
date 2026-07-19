@@ -30,7 +30,7 @@ export function OrderDetailsClient({
   checklistTemplateItems
 }: any) {
   const router = useRouter();
-  const { company } = useCompany();
+  const { company, isReadOnly } = useCompany();
 
   const [order, setOrder] = useState<any>(initialOrder);
   const [client, setClient] = useState<any>(initialClient);
@@ -235,6 +235,10 @@ export function OrderDetailsClient({
   };
 
   const handleSaveChecklists = async (type: 'entry' | 'exit') => {
+    if (isReadOnly) {
+      setErrorMsg('A conta está em modo apenas-leitura devido a atraso no pagamento. Alterações de checklist não são permitidas.');
+      return;
+    }
     setSavingChecklist(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -253,6 +257,10 @@ export function OrderDetailsClient({
   };
 
   const handleSaveChanges = async () => {
+    if (isReadOnly) {
+      setErrorMsg('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível salvar alterações da OS.');
+      return;
+    }
     setSaving(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -349,6 +357,10 @@ export function OrderDetailsClient({
   const handleDeleteOrder = async () => {
     const confirmDelete = window.confirm("Deseja realmente excluir esta Ordem de Serviço?");
     if (!confirmDelete) return;
+    if (isReadOnly) {
+      setErrorMsg('A conta está em modo apenas-leitura devido a atraso no pagamento. Exclusão de OS não é permitida.');
+      return;
+    }
     setSaving(true);
     setErrorMsg('');
     try {

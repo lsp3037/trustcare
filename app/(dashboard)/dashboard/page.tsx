@@ -36,6 +36,22 @@ interface DateRange {
   to: Date;
 }
 
+interface ServiceOrder {
+  id: string;
+  codigo_os: string;
+  status: string;
+  total_value: number;
+  payment_date?: string;
+  created_at: string;
+  clients: { name: string } | null;
+}
+
+interface ChartDay {
+  dia: string;
+  rawDate?: string;
+  faturamento: number;
+}
+
 export default function DashboardOverviewPage() {
   const router = useRouter();
   const { company } = useCompany();
@@ -51,8 +67,8 @@ export default function DashboardOverviewPage() {
     pfCount: 0
   });
   const [paymentDistribution, setPaymentDistribution] = useState<Record<string, number>>({});
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<ServiceOrder[]>([]);
+  const [chartData, setChartData] = useState<ChartDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   
@@ -96,15 +112,6 @@ export default function DashboardOverviewPage() {
           }
         }
       });
-
-      // Se tudo estiver zerado (ex: primeiro uso), coloca valores mock de teste para não ficar em branco
-      const totalBilling = days.reduce((sum, d) => sum + d.faturamento, 0);
-      if (totalBilling === 0 && daysCount >= 5) {
-        // Popula as últimas 5 barras com valores simulados se tudo estiver zerado
-        for (let i = Math.max(0, daysCount - 5); i < daysCount; i++) {
-          days[i].faturamento = (i + 1) * 100;
-        }
-      }
 
       return days;
     } else {
@@ -448,9 +455,30 @@ export default function DashboardOverviewPage() {
 
       {/* Grid de Cards Estatísticos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {isAdmin ? (
+        {loading ? (
+          // Skeleton dos cards de métrica
           <>
-            {/* Card 1: Faturamento */}
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-slate-900/60 border border-slate-800/60 rounded-none p-6 animate-pulse"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-9 h-9 bg-slate-800" />
+                  <div className="w-12 h-4 bg-slate-800" />
+                </div>
+                <div className="h-3 w-28 bg-slate-800 mb-2" />
+                <div className="h-7 w-20 bg-slate-800 mb-2" />
+                <div className="h-2 w-32 bg-slate-800/60" />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {isAdmin ? (
+              <>
+                {/* Card 1: Faturamento */}
             <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none">
@@ -577,6 +605,8 @@ export default function DashboardOverviewPage() {
           <h3 className="text-2xl font-black text-white mt-1">{stats.lowStockCount}</h3>
           <p className="text-xs text-slate-500 mt-2">Itens abaixo do estoque mínimo</p>
         </div>
+        </>
+        )}
       </div>
 
       {/* Grid de Seções Inferiores */}
@@ -595,8 +625,18 @@ export default function DashboardOverviewPage() {
 
           <div className="flex-1 overflow-x-auto">
             {recentOrders.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-slate-500 text-xs gap-2">
-                <span>Nenhuma movimentação de OS recente neste período.</span>
+              <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
+                <div className="p-3 bg-slate-800/60 text-slate-600">
+                  <ClipboardList className="w-8 h-8" />
+                </div>
+                <p className="text-sm font-semibold text-slate-500">Nenhuma OS no período selecionado</p>
+                <p className="text-xs text-slate-600 max-w-xs">Ajuste o filtro de datas ou crie uma nova Ordem de Serviço para começar.</p>
+                <Link
+                  href="/dashboard/orders?new=true"
+                  className="mt-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/50 px-4 py-1.5 transition-all"
+                >
+                  + Nova OS
+                </Link>
               </div>
             ) : (
               <table className="w-full text-left text-sm border-collapse">

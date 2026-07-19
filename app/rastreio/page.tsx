@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
+import { getSubdomain } from '@/lib/utils/subdomain';
 
 // Define public service order structure
 interface PublicOrder {
@@ -62,8 +63,17 @@ function TrackingContent() {
     setOrder(null);
 
     try {
-      // 1. Try to fetch from Supabase using public secure RPC (query handles prefix matching)
-      const { data, error } = await supabase.rpc('get_public_service_order', { search_query: id });
+      // Resolve active subdomain for filtering (allows local subdomain simulation via ?subdomain=)
+      let activeSubdomain = null;
+      if (typeof window !== 'undefined') {
+        activeSubdomain = getSubdomain(window.location.hostname, new URLSearchParams(window.location.search));
+      }
+
+      // 1. Try to fetch from Supabase using public secure RPC (query handles prefix matching + subdomain validation)
+      const { data, error } = await supabase.rpc('get_public_service_order', { 
+        search_query: id,
+        tenant_subdomain: activeSubdomain || undefined
+      });
 
       if (error) {
         throw error;

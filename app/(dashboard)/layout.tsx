@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
 import { UserProvider, useUser } from '@/lib/context/UserContext';
 import OnboardingModal from '@/components/OnboardingModal';
+import Image from 'next/image';
 
 export default function DashboardLayout({
   children,
@@ -46,7 +47,7 @@ function DashboardLayoutContent({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { company } = useCompany();
+  const { company, isReadOnly } = useCompany();
   const { user, role, isAdmin, loading: userLoading } = useUser();
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -99,8 +100,33 @@ function DashboardLayoutContent({
 
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-slate-950 flex">
+        {/* Sidebar skeleton */}
+        <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+          <div className="h-16 border-b border-slate-800 flex items-center px-4 gap-3">
+            <div className="w-8 h-8 bg-slate-800 animate-pulse" />
+            <div className="h-4 w-28 bg-slate-800 animate-pulse" />
+          </div>
+          <div className="p-4 space-y-2">
+            <div className="h-10 bg-slate-800/60 animate-pulse" />
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-9 bg-slate-800/40 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+            ))}
+          </div>
+        </div>
+        {/* Main content skeleton */}
+        <div className="flex-1 flex flex-col">
+          <div className="h-16 border-b border-slate-900 bg-slate-950/40" />
+          <div className="p-8 space-y-6">
+            <div className="h-7 w-48 bg-slate-800 animate-pulse" />
+            <div className="grid grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-28 bg-slate-900 border border-slate-800 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              ))}
+            </div>
+            <div className="h-64 bg-slate-900 border border-slate-800 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -120,7 +146,7 @@ function DashboardLayoutContent({
     { name: 'Estoque', href: '/dashboard/inventory', icon: Package },
     { name: 'Serviços', href: '/dashboard/services', icon: Wrench },
     ...(isAdmin ? [
-      { name: 'Usuários', href: '/usuarios', icon: Users },
+      { name: 'Usuários', href: '/dashboard/usuarios', icon: Users },
       { 
         name: 'Configurações', 
         icon: Settings,
@@ -148,9 +174,9 @@ function DashboardLayoutContent({
           <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
             <div className="flex items-center justify-center w-8 h-8 rounded-none overflow-hidden bg-white/10 p-1">
               {company.logo_url ? (
-                <img src={company.logo_url} alt={company.name} className="w-full h-full object-contain" />
+                <Image src={company.logo_url} alt={company.name} width={32} height={32} className="w-full h-full object-contain" />
               ) : (
-                <img src="/logo.png" alt="Trust Care" className="w-full h-full object-contain" />
+                <Image src="/logo.png" alt="Trust Care" width={32} height={32} className="w-full h-full object-contain" />
               )}
             </div>
             {sidebarOpen && (
@@ -159,7 +185,11 @@ function DashboardLayoutContent({
               </span>
             )}
           </Link>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 text-slate-400 hover:text-white rounded-none hidden lg:block">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'}
+            className="p-1 text-slate-400 hover:text-white rounded-none hidden lg:block"
+          >
             <Menu className="w-5 h-5" />
           </button>
         </div>
@@ -301,7 +331,11 @@ function DashboardLayoutContent({
         {/* Header/Top Bar (Oculto na Impressão) */}
         <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 print:hidden">
           <div className="flex items-center gap-2">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-none md:hidden">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-none md:hidden"
+            >
               <Menu className="w-5 h-5" />
             </button>
             <h2 className="font-semibold text-slate-200">Painel de Controle</h2>
@@ -311,18 +345,22 @@ function DashboardLayoutContent({
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
+              aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
               className="p-2 text-slate-455 hover:text-slate-200 hover:bg-slate-800/40 rounded-none border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
               title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
             >
               {theme === 'light' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
             </button>
 
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-slate-400 font-semibold bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800">
-              Conexão Supabase OK
-            </span>
           </div>
         </header>
+
+        {isReadOnly && (
+          <div className="bg-rose-950/40 border-b border-rose-900/60 text-rose-200 px-6 py-2.5 text-center text-sm font-medium flex items-center justify-center gap-2 print:hidden">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+            <span>Assinatura atrasada: A conta entrou em modo de apenas-leitura. Regularize o faturamento para reabilitar novas OS e cadastros.</span>
+          </div>
+        )}
 
         {/* Page Body */}
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">

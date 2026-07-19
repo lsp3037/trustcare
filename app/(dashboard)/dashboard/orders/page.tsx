@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import NewOrderForm from '@/components/NewOrderForm';
+import { useCompany } from '@/lib/context/CompanyContext';
 
 const stripHtml = (html: string) => {
   if (!html) return '';
@@ -32,14 +33,31 @@ const stripHtml = (html: string) => {
     .replace(/&quot;/g, '"');
 };
 
+interface ServiceOrder {
+  id: string;
+  codigo_os: string;
+  status: string;
+  total_value: number;
+  created_at: string;
+  reported_problem?: string;
+  technical_report?: string;
+  clients: { name: string } | null;
+}
+
+interface Client {
+  id: string;
+  name: string;
+}
+
 // Componente Wrapper para lidar com a busca de query params com Suspense no Next.js
 function OrdersContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { isReadOnly } = useCompany();
   const isCreating = searchParams.get('new') === 'true';
 
-  const [orders, setOrders] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
+  const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'Todos');
   const [loading, setLoading] = useState(true);
@@ -298,8 +316,15 @@ function OrdersContent() {
         </div>
         {!isCreating && (
           <button
-            onClick={() => router.push('/dashboard/orders?new=true')}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 transition-all duration-200"
+            onClick={() => {
+              if (isReadOnly) {
+                alert('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível criar novas OS.');
+                return;
+              }
+              router.push('/dashboard/orders?new=true');
+            }}
+            disabled={isReadOnly}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" /> Nova Ordem de Serviço
           </button>
@@ -320,14 +345,20 @@ function OrdersContent() {
               Cancelar
             </button>
           </div>
-          {/* O componente de formulário completo que desenvolveremos na Etapa 4 */}
-          <NewOrderForm 
-            clients={clients} 
-            onSuccess={() => {
-              fetchOrdersAndClients();
-              router.push('/dashboard/orders');
-            }} 
-          />
+          
+          {isReadOnly ? (
+            <div className="p-6 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-center text-sm font-semibold">
+              A criação de Ordens de Serviço está desabilitada temporariamente. A conta do tenant está em modo de apenas-leitura por faturamento pendente no Asaas.
+            </div>
+          ) : (
+            <NewOrderForm 
+              clients={clients} 
+              onSuccess={() => {
+                fetchOrdersAndClients();
+                router.push('/dashboard/orders');
+              }} 
+            />
+          )}
         </div>
       ) : (
         <>
@@ -396,10 +427,29 @@ function OrdersContent() {
               <p className="text-sm text-slate-400">Carregando ordens de serviço...</p>
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-xl border border-slate-900 text-center px-4">
-              <AlertCircle className="w-12 h-12 text-slate-650 mb-4" />
-              <h3 className="text-lg font-bold text-slate-300">Nenhuma Ordem de Serviço encontrada</h3>
-              <p className="text-sm text-slate-500 mt-1 max-w-sm">Tente redefinir seus filtros de busca ou crie uma nova OS.</p>
+            <div className="flex flex-col items-center justify-center py-24 text-center px-6 gap-4">
+              <div className="p-4 bg-slate-800/50 border border-slate-800 text-slate-600">
+                <ClipboardList className="w-10 h-10" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-400">
+                  {searchTerm || statusFilter !== 'Todos' ? 'Nenhuma OS encontrada com esses filtros' : 'Nenhuma Ordem de Serviço criada ainda'}
+                </h3>
+                <p className="text-sm text-slate-600 mt-1 max-w-sm mx-auto">
+                  {searchTerm || statusFilter !== 'Todos'
+                    ? 'Tente limpar os filtros de busca ou status para ver todas as OS.'
+                    : 'Crie sua primeira Ordem de Serviço para começar a gerenciar os atendimentos da sua assistência.'
+                  }
+                </p>
+              </div>
+              {(!searchTerm && statusFilter === 'Todos') && (
+                <button
+                  onClick={() => router.push('/dashboard/orders?new=true')}
+                  className="mt-1 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-5 py-2 transition-colors flex items-center gap-2 shadow-lg shadow-emerald-600/15"
+                >
+                  <Plus className="w-4 h-4" /> Criar Primeira OS
+                </button>
+              )}
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

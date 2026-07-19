@@ -3,18 +3,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
-interface Company {
+export type SubscriptionPlan = 'basico' | 'profissional' | 'premium';
+export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'trialing';
+
+export interface Company {
   id?: string;
   name: string;
   phone: string;
   email: string;
   logo_url: string;
   whatsapp?: string;
+  subscription_plan?: SubscriptionPlan;
+  subscription_status?: SubscriptionStatus;
+  subscription_expires_at?: string;
+  subdomain?: string;
 }
 
-interface CompanyContextType {
+export interface CompanyContextType {
   company: Company;
   loading: boolean;
+  isReadOnly: boolean;
+  maxTechnicians: number;
+  maxStorageBytes: bigint;
   refreshCompany: () => Promise<void>;
 }
 
@@ -26,7 +36,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     phone: '(66) 99999-9999',
     email: 'contato@trustcare.com.br',
     logo_url: '',
-    whatsapp: ''
+    whatsapp: '',
+    subscription_plan: 'basico',
+    subscription_status: 'trialing'
   });
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +62,11 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           phone: data.phone || '(66) 99999-9999',
           email: data.email || 'contato@trustcare.com.br',
           logo_url: data.logo_url || '',
-          whatsapp: data.whatsapp || ''
+          whatsapp: data.whatsapp || '',
+          subscription_plan: (data.subscription_plan || 'basico') as SubscriptionPlan,
+          subscription_status: (data.subscription_status || 'trialing') as SubscriptionStatus,
+          subscription_expires_at: data.subscription_expires_at || '',
+          subdomain: data.subdomain || ''
         };
         setCompany(companyObj);
         // Salva localmente para uso offline também
@@ -69,7 +85,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           phone: '(66) 99999-9999',
           email: 'contato@trustcare.com.br',
           logo_url: '',
-          whatsapp: ''
+          whatsapp: '',
+          subscription_plan: 'basico' as SubscriptionPlan,
+          subscription_status: 'trialing' as SubscriptionStatus
         };
         localStorage.setItem('mock-company-settings', JSON.stringify(defaultCompany));
         setCompany(defaultCompany);
@@ -101,7 +119,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           phone: '(66) 99999-9999',
           email: 'contato@trustcare.com.br',
           logo_url: '',
-          whatsapp: ''
+          whatsapp: '',
+          subscription_plan: 'basico',
+          subscription_status: 'trialing'
         });
         setLoading(false);
       }
@@ -112,8 +132,43 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Determina se a empresa está em modo apenas-leitura (atraso de mais de 5 dias ou cancelado)
+  const isReadOnly = React.useMemo(() => {
+    if (!company.subscription_status) return false;
+    if (company.subscription_status === 'canceled') return true;
+    if (company.subscription_status === 'past_due') {
+      if (!company.subscription_expires_at) return false;
+      const expiresDate = new Date(company.subscription_expires_at);
+      const gracePeriodEnd = new Date(expiresDate.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 dias
+      return new Date() > gracePeriodEnd;
+    }
+    return false;
+  }, [company.subscription_status, company.subscription_expires_at]);
+
+  // Cotas operacionais baseadas no plano
+  const maxTechnicians = React.useMemo(() => {
+    const plan = company.subscription_plan || 'basico';
+    if (plan === 'premium') return 20;
+    if (plan === 'profissional') return 6;
+    return 2; // Básico
+  }, [company.subscription_plan]);
+
+  const maxStorageBytes = React.useMemo(() => {
+    const plan = company.subscription_plan || 'basico';
+    if (plan === 'premium') return 21474836480n; // 20 GB
+    if (plan === 'profissional') return 5368709120n; // 5 GB
+    return 1073741824n; // 1 GB
+  }, [company.subscription_plan]);
+
   return (
-    <CompanyContext.Provider value={{ company, loading, refreshCompany: () => fetchCompanyData(true) }}>
+    <CompanyContext.Provider value={{ 
+      company, 
+      loading, 
+      isReadOnly, 
+      maxTechnicians, 
+      maxStorageBytes, 
+      refreshCompany: () => fetchCompanyData(true) 
+    }}>
       {children}
     </CompanyContext.Provider>
   );
