@@ -105,8 +105,8 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* ── Painel Direito: Formulário de Cadastro (Adaptável Claro/Escuro) ── */}
-      <div className="flex-1 bg-slate-900/60 light:bg-slate-50/90 p-8 flex flex-col justify-center transition-colors duration-200">
+      {/* ── Painel Direito: Formulário de Cadastro (Fixo Claro) ── */}
+      <div className="flex-1 bg-slate-50 p-8 flex flex-col justify-center transition-colors duration-200">
         <div className="w-full max-w-sm mx-auto space-y-5">
 
           {/* Header Mobile / Info */}
@@ -118,39 +118,39 @@ export default function RegisterPage() {
               height={50} 
               className="object-contain"
             />
-            <h1 className="text-xl font-bold text-white light:text-slate-900">Trust Care</h1>
-            <p className="text-xs text-slate-400 light:text-slate-500">Cadastre seu Tenant/Empresa</p>
+            <h1 className="text-xl font-bold text-slate-900">Trust Care</h1>
+            <p className="text-xs text-slate-500">Cadastre seu Tenant/Empresa</p>
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-white light:text-slate-900 hidden md:block">Nova Conta</h2>
-            <p className="text-xs text-slate-400 light:text-slate-500">Preencha os dados abaixo para se cadastrar.</p>
+            <h2 className="text-lg font-bold text-slate-900 hidden md:block">Nova Conta</h2>
+            <p className="text-xs text-slate-500">Preencha os dados abaixo para se cadastrar.</p>
           </div>
 
           {success ? (
-            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-center text-emerald-400">
+            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-center text-emerald-600">
               <p className="font-semibold text-sm">Empresa cadastrada com sucesso!</p>
-              <p className="text-xs text-slate-400 mt-1">Redirecionando para a tela de login...</p>
+              <p className="text-xs text-slate-500 mt-1">Redirecionando para a tela de login...</p>
             </div>
           ) : (
             <form onSubmit={handleRegister} className="space-y-3.5">
               {errorMsg && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600">
                   {errorMsg}
                 </div>
               )}
 
               {/* Nome da Empresa */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">Nome da Empresa (Tenant)</label>
+                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Nome da Empresa (Tenant)</label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Ex: Assistência Express"
-                    className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                     required
                   />
                 </div>
@@ -158,15 +158,15 @@ export default function RegisterPage() {
 
               {/* Seu Nome */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">Seu Nome</label>
+                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Seu Nome</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Ex: João Silva"
-                    className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                     required
                   />
                 </div>
@@ -174,15 +174,15 @@ export default function RegisterPage() {
 
               {/* WhatsApp */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">WhatsApp da Empresa</label>
+                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">WhatsApp da Empresa</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     placeholder="Ex: (66) 99999-9999"
-                    className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                     required
                   />
                 </div>
@@ -190,15 +190,15 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">Email Corporativo</label>
+                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Email Corporativo</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seuemail@empresa.com"
-                    className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                     required
                   />
                 </div>
@@ -206,15 +206,15 @@ export default function RegisterPage() {
 
               {/* Senha */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">Senha</label>
+                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Senha</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
-                    className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                     required
                   />
                 </div>
@@ -238,10 +238,10 @@ export default function RegisterPage() {
           )}
 
           {/* Login Link */}
-          <div className="text-center pt-2 border-t border-slate-800/40 light:border-slate-200/80">
-            <p className="text-xs text-slate-455 light:text-slate-500">
+          <div className="text-center pt-2 border-t border-slate-200/80">
+            <p className="text-xs text-slate-500">
               Já possui cadastro?{' '}
-              <Link href="/login" className="text-blue-450 light:text-blue-600 font-bold hover:underline transition-all">
+              <Link href="/login" className="text-blue-600 font-bold hover:underline transition-all">
                 Fazer Login
               </Link>
             </p>

@@ -102,8 +102,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Painel Direito: Formulário de Autenticação (Adaptável Claro/Escuro) ── */}
-      <div className="flex-1 bg-slate-900/60 light:bg-slate-50/90 p-8 flex flex-col justify-center transition-colors duration-200">
+      {/* ── Painel Direito: Formulário de Autenticação (Fixo Claro) ── */}
+      <div className="flex-1 bg-slate-50 p-8 flex flex-col justify-center transition-colors duration-200">
         <div className="w-full max-w-sm mx-auto space-y-6">
           
           {/* Header Mobile / Info */}
@@ -115,33 +115,33 @@ export default function LoginPage() {
               height={60} 
               className="object-contain"
             />
-            <h1 className="text-xl font-bold text-white light:text-slate-900">Trust Care</h1>
-            <p className="text-xs text-slate-400 light:text-slate-500">Gerenciamento de Ordens de Serviço</p>
+            <h1 className="text-xl font-bold text-slate-900">Trust Care</h1>
+            <p className="text-xs text-slate-500">Gerenciamento de Ordens de Serviço</p>
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-white light:text-slate-900 hidden md:block">Acessar Plataforma</h2>
-            <p className="text-xs text-slate-400 light:text-slate-500">Entre com suas credenciais para continuar.</p>
+            <h2 className="text-lg font-bold text-slate-900 hidden md:block">Acessar Plataforma</h2>
+            <p className="text-xs text-slate-500">Entre com suas credenciais para continuar.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600">
                 {errorMsg}
               </div>
             )}
 
             {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">Email</label>
+              <label className="text-[11px] font-bold text-slate-650 uppercase tracking-wider">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seuemail@empresa.com"
-                  className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                   required
                 />
               </div>
@@ -150,17 +150,17 @@ export default function LoginPage() {
             {/* Senha Field */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-[11px] font-bold text-slate-400 light:text-slate-600 uppercase tracking-wider">Senha</label>
-                <a href="#" className="text-xs text-blue-400 light:text-blue-600 hover:underline transition-all">Esqueceu a senha?</a>
+                <label className="text-[11px] font-bold text-slate-650 uppercase tracking-wider">Senha</label>
+                <a href="#" className="text-xs text-blue-600 hover:underline transition-all">Esqueceu a senha?</a>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-950 light:bg-white border border-slate-800 light:border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-100 light:text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
                   required
                 />
               </div>
@@ -173,9 +173,9 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={keepConnected}
                 onChange={(e) => setKeepConnected(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-850 bg-slate-950 text-blue-600 focus:ring-blue-500/20 cursor-pointer"
+                className="w-4 h-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500/20 cursor-pointer"
               />
-              <label htmlFor="keep-connected" className="ml-2 text-xs text-slate-400 light:text-slate-600 cursor-pointer select-none">
+              <label htmlFor="keep-connected" className="ml-2 text-xs text-slate-600 cursor-pointer select-none">
                 Manter conectado
               </label>
             </div>
@@ -199,17 +199,17 @@ export default function LoginPage() {
           {/* Botão Auxiliar: Problema de Acesso */}
           <a
             href="mailto:suporte@trustcare.com.br?subject=Problema de Acesso - Trust Care"
-            className="w-full border border-slate-800 light:border-slate-200 hover:bg-slate-800/25 light:hover:bg-slate-100 text-xs font-semibold py-2.5 rounded-lg text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 text-center flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="w-full border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold py-2.5 rounded-lg text-slate-600 hover:text-slate-900 text-center flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
-            <HelpCircle className="w-4 h-4" />
+            <HelpCircle className="w-4 h-4 text-slate-400" />
             Problema de acesso
           </a>
 
           {/* Cadastro Link */}
-          <div className="text-center pt-2 border-t border-slate-800/40 light:border-slate-200/80">
-            <p className="text-xs text-slate-455 light:text-slate-500">
+          <div className="text-center pt-2 border-t border-slate-200/80">
+            <p className="text-xs text-slate-500">
               Não tem uma conta?{' '}
-              <Link href="/register" className="text-blue-450 light:text-blue-600 font-bold hover:underline transition-all">
+              <Link href="/register" className="text-blue-600 font-bold hover:underline transition-all">
                 Cadastre seu Tenant/Empresa
               </Link>
             </p>
