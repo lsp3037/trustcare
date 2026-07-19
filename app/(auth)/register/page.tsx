@@ -79,8 +79,8 @@ export default function RegisterPage() {
             <Image
               src="/logo.png"
               alt="Trust Care Logo"
-              width={64}
-              height={64}
+              width={100}
+              height={100}
               className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(16,185,129,0.15)]"
               priority
             />
@@ -114,8 +114,8 @@ export default function RegisterPage() {
             <Image 
               src="/logo.png" 
               alt="Trust Care Logo" 
-              width={50}
-              height={50} 
+              width={80}
+              height={80} 
               className="object-contain"
             />
             <h1 className="text-xl font-bold text-slate-900">Trust Care</h1>

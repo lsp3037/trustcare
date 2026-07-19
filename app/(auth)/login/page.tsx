@@ -76,8 +76,8 @@ export default function LoginPage() {
             <Image
               src="/logo.png"
               alt="Trust Care Logo"
-              width={64}
-              height={64}
+              width={100}
+              height={100}
               className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(59,130,246,0.2)]"
               priority
             />
@@ -111,8 +111,8 @@ export default function LoginPage() {
             <Image 
               src="/logo.png" 
               alt="Trust Care Logo" 
-              width={60}
-              height={60} 
+              width={80}
+              height={80} 
               className="object-contain"
             />
             <h1 className="text-xl font-bold text-slate-900">Trust Care</h1>
