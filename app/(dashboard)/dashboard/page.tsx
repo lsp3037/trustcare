@@ -43,6 +43,7 @@ interface ServiceOrder {
   total_value: number;
   payment_date?: string;
   created_at: string;
+  equipment_details?: string;
   clients: { name: string } | null;
 }
 
@@ -653,8 +654,8 @@ export default function DashboardOverviewPage() {
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-800/10 transition-colors">
                       <td className="py-4 pr-2 font-semibold text-slate-200">{order.clients?.name || 'Cliente'}</td>
-                      <td className="py-4 pr-2 text-slate-400 truncate max-w-[200px]" title={order.equipment_details}>
-                        {formatEquipmentDetails(order.equipment_details)}
+                      <td className="py-4 pr-2 text-slate-400 truncate max-w-[200px]" title={order.equipment_details || ''}>
+                        {formatEquipmentDetails(order.equipment_details || '')}
                       </td>
                       <td className="py-4 pr-2">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">

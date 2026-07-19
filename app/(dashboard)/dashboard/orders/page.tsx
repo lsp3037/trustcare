@@ -40,13 +40,18 @@ interface ServiceOrder {
   total_value: number;
   created_at: string;
   reported_problem?: string;
-  technical_report?: string;
+  technical_report?: string | null;
+  equipment_details?: string;
+  client_id?: string;
+  pago?: boolean;
+  analysis_started_at?: string;
   clients: { name: string } | null;
 }
 
 interface Client {
   id: string;
   name: string;
+  type: string;
 }
 
 // Componente Wrapper para lidar com a busca de query params com Suspense no Next.js
@@ -499,8 +504,8 @@ function OrdersContent() {
                     {/* Problema Reportado */}
                     <div className="p-3 bg-slate-950/40 rounded-lg border border-slate-900">
                       <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Problema Reportado:</p>
-                      <p className="text-xs text-slate-300 line-clamp-2 italic">
-                        "{stripHtml(order.reported_problem)}"
+                      <p className="text-xs text-slate-305 line-clamp-2 italic">
+                        "{stripHtml(order.reported_problem || '')}"
                       </p>
                     </div>
                     

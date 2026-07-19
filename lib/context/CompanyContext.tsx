@@ -155,9 +155,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
   const maxStorageBytes = React.useMemo(() => {
     const plan = company.subscription_plan || 'basico';
-    if (plan === 'premium') return 21474836480n; // 20 GB
-    if (plan === 'profissional') return 5368709120n; // 5 GB
-    return 1073741824n; // 1 GB
+    if (plan === 'premium') return BigInt(21474836480); // 20 GB
+    if (plan === 'profissional') return BigInt(5368709120); // 5 GB
+    return BigInt(1073741824); // 1 GB
   }, [company.subscription_plan]);
 
   return (
