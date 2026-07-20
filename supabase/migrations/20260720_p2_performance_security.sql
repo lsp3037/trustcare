@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_leads_company_status
 
 -- Rate limit por IP + path
 CREATE INDEX IF NOT EXISTS idx_rate_limit_ip_path
-  ON rate_limit_hits(client_ip, target_path, hit_at);
+  ON rate_limit_hits(ip_address, request_path, created_at);
 
 
 -- ──────────────────────────────────────────────
