@@ -1,9 +1,32 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+/**
+ * Proxy Router — Trust Care (Next.js 16)
+ * Handles admin auth, customer portal auth, and dynamic subdomain routing.
+ */
 export async function proxy(request: NextRequest) {
+  // 1. Detect dynamic subdomains
+  const host = request.headers.get('host') || '';
+  const hostname = host.split(':')[0];
+  const parts = hostname.split('.');
+  
+  let subdomain = '';
+  if (parts.length > 2 && parts[0] !== 'www') {
+    subdomain = parts[0];
+  } else if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'www') {
+    subdomain = parts[0];
+  }
+
+  const requestHeaders = new Headers(request.headers);
+  if (subdomain) {
+    requestHeaders.set('x-tenant-subdomain', subdomain);
+  }
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   });
 
   const supabase = createServerClient(
@@ -17,7 +40,9 @@ export async function proxy(request: NextRequest) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({
-            request,
+            request: {
+              headers: requestHeaders,
+            },
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -27,29 +52,43 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Recupera o usuário autenticado de forma segura pelo token do cookie
+  // Authenticate admin/technician session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
   
-  // Verifica se há sessão mock ou usuário real do Supabase
+  // Verification flags
   const isMockAuthenticated = request.cookies.get('os-session-mock')?.value === 'true';
-  const isAuthenticated = !!user || isMockAuthenticated;
+  const isAdminAuthenticated = !!user || isMockAuthenticated;
 
-  // 1. Bloqueio de rotas protegidas do dashboard
-  if (pathname.startsWith('/dashboard') && !isAuthenticated) {
+  const isPortalAuthenticated = request.cookies.get('portal-session-mock')?.value === 'true';
+
+  // 2. Admin dashboard route protection
+  if (pathname.startsWith('/dashboard') && !isAdminAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
-  // 2. Redirecionamento de rotas de auth caso o usuário já esteja logado
-  if ((pathname === '/login' || pathname === '/register') && isAuthenticated) {
+  if ((pathname === '/login' || pathname === '/register') && isAdminAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
+  // 3. Customer Portal route protection
+  if (pathname.startsWith('/portal/dashboard') && !isPortalAuthenticated) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/portal';
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === '/portal' && isPortalAuthenticated) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/portal/dashboard';
     return NextResponse.redirect(url);
   }
 
@@ -59,7 +98,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Intercepta todas as rotas exceto arquivos estáticos
+     * Intercepts all routes except static assets
      */
     '/((?!_next/static|_next/image|favicon.ico|logo.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
