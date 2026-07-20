@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronRight,
   Banknote,
-  CreditCard
+  CreditCard,
+  Calendar
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -139,6 +140,7 @@ function DashboardLayoutContent({
     { name: 'Dashboard & Relatórios', href: '/dashboard', icon: BarChart3 },
     { name: 'Funil de Leads', href: '/dashboard/leads', icon: TrendingUp },
     { name: 'Ordens de Serviço', href: '/dashboard/orders', icon: ClipboardList },
+    { name: 'Agenda & Prazos', href: '/dashboard/agenda', icon: Calendar },
     ...(isAdmin ? [{ name: 'Financeiro', href: '/dashboard/financeiro', icon: Banknote }] : []),
     { name: 'Clientes', href: '/dashboard/clients', icon: Users },
     { name: 'Estoque', href: '/dashboard/inventory', icon: Package },
