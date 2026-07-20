@@ -24,6 +24,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
+import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
@@ -367,6 +368,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     e.preventDefault();
     if (!newClientName || !newEqName) {
       setClientModalError('Por favor, preencha os campos obrigatórios (*).');
+      return;
+    }
+    if (newClientDoc && !validateDocument(newClientDoc)) {
+      setClientModalError('CPF ou CNPJ inválido. Por favor, verifique os dígitos.');
       return;
     }
     setSavingClient(true);
@@ -1410,9 +1415,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
                   <input
                     type="text"
                     value={newClientDoc}
-                    onChange={(e) => setNewClientDoc(e.target.value)}
+                    onChange={(e) => setNewClientDoc(formatDocument(e.target.value))}
+                    maxLength={18}
                     className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                    placeholder="Ex: 000.000.000-00"
+                    placeholder="Ex: 000.000.000-00 ou 00.000.000/0000-00"
                   />
                 </div>
 

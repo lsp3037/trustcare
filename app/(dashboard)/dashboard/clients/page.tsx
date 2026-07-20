@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
+import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -91,6 +92,10 @@ export default function ClientsPage() {
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (document && !validateDocument(document)) {
+      setFormError('CPF ou CNPJ inválido. Por favor, verifique os dígitos.');
+      return;
+    }
     setSubmitting(true);
     setFormError('');
     setFormSuccess(false);
@@ -378,7 +383,8 @@ export default function ClientsPage() {
                     type="text"
                     placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
                     value={document}
-                    onChange={(e) => setDocument(e.target.value)}
+                    onChange={(e) => setDocument(formatDocument(e.target.value))}
+                    maxLength={18}
                     disabled={submitting || createdClient !== null}
                     className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />

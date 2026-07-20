@@ -1,11 +1,13 @@
 'use client';
-import { AlertTriangle, Building, Printer } from 'lucide-react';
+import { AlertTriangle, Building, Printer, FileText } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface ChecklistTemplateItem {
   id: string;
@@ -221,9 +223,71 @@ export default function TempPrintPreviewPage() {
     fetchAllData();
   }, [id]);
 
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+
   const handlePrint = () => {
     window.print();
   };
+
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('print-sheet');
+    if (!element) return;
+
+    setDownloadingPDF(true);
+    try {
+      // Pequeno scroll para o topo para garantir captura perfeita
+      window.scrollTo(0, 0);
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`OS_${order?.codigo_os || id}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && order) {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('download') === 'true') {
+        const timer = setTimeout(() => {
+          handleDownloadPDF();
+        }, 1200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loading, order]);
 
   if (loading) {
     return (
@@ -276,6 +340,14 @@ export default function TempPrintPreviewPage() {
             Voltar para OS
           </button>
           <button
+            onClick={handleDownloadPDF}
+            disabled={downloadingPDF}
+            className="px-4 py-2 bg-indigo-650 hover:bg-indigo-500 disabled:bg-indigo-950/40 disabled:text-slate-500 text-white rounded-none text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-650/10 cursor-pointer transition-all active:scale-95"
+          >
+            {downloadingPDF ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+            Baixar PDF
+          </button>
+          <button
             onClick={handlePrint}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/10 cursor-pointer transition-all active:scale-95"
           >
@@ -289,7 +361,7 @@ export default function TempPrintPreviewPage() {
         <p className="text-xs text-slate-500 mb-6 text-center italic">Abaixo está a folha no formato exato que será enviado para a impressora:</p>
         
         {/* Folha A4 simulada em tela */}
-        <div className="bg-white text-black p-8 rounded-none shadow-lg border border-slate-205 max-w-[21cm] mx-auto min-h-[29.7cm] flex flex-col justify-between">
+        <div id="print-sheet" className="bg-white text-black p-8 rounded-none shadow-lg border border-slate-205 max-w-[21cm] mx-auto min-h-[29.7cm] flex flex-col justify-between">
           <PrintDocumentContent
             order={order}
             client={client}
