@@ -1,6 +1,5 @@
 'use client';
-import React from 'react';
-import { DollarSign, Tag, Boxes, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, Tag, Boxes, Plus, Trash2, AlertTriangle } from 'lucide-react';
 
 interface FinancialSectionProps {
   serviceValue: string;
@@ -26,6 +25,8 @@ interface FinancialSectionProps {
   selectedServices: any[];
   handleRemoveService: (id: string) => void;
   totalValue: string;
+  productAddError: string;
+  setProductAddError: (v: string) => void;
 }
 
 export function FinancialSection({
@@ -42,7 +43,8 @@ export function FinancialSection({
   currentServicePrice, setCurrentServicePrice,
   handleAddService,
   selectedServices, handleRemoveService,
-  totalValue
+  totalValue,
+  productAddError, setProductAddError
 }: FinancialSectionProps) {
   return (
     <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-6 h-fit">
@@ -78,7 +80,10 @@ export function FinancialSection({
         <div className="space-y-2">
           <select
             value={currentProductId}
-            onChange={(e) => setCurrentProductId(e.target.value)}
+            onChange={(e) => {
+              setCurrentProductId(e.target.value);
+              setProductAddError('');
+            }}
             className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-150 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
           >
             <option value="">Buscar peça no estoque...</option>
@@ -94,18 +99,74 @@ export function FinancialSection({
                 <input
                   type="number" min="1" placeholder="Qtd"
                   value={currentProductQty}
-                  onChange={(e) => setCurrentProductQty(e.target.value)}
+                  onChange={(e) => {
+                    setCurrentProductQty(e.target.value);
+                    setProductAddError('');
+                  }}
                   className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors text-center font-mono"
                 />
+                {(() => {
+                  const prod = inventory.find(p => p.id === currentProductId);
+                  if (prod) {
+                    const qty = parseInt(currentProductQty) || 0;
+                    const existingItem = selectedProducts.find((p) => p.product_id === currentProductId);
+                    const existingQty = existingItem ? existingItem.quantity : 0;
+                    const stockAvailable = prod.quantity + existingQty;
+                    const over = qty > stockAvailable;
+                    const isLow = prod.quantity <= prod.min_stock_alert;
+                    return (
+                      <div className="space-y-0.5 mt-1 text-[10px] leading-tight">
+                        <span className={`block font-semibold ${over ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>
+                          Saldo + Alocado: {stockAvailable} un
+                        </span>
+                        {!over && isLow && (
+                          <span className="text-[9px] text-amber-500 font-semibold flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-amber-500" /> Estoque Baixo (Mín: {prod.min_stock_alert})
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
               <button
                 type="button" onClick={handleAddProduct}
-                disabled={!currentProductId}
-                className="flex-1 font-semibold font-mono uppercase tracking-wider py-2 px-4 rounded-none text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-md bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white cursor-pointer"
+                disabled={(() => {
+                  if (!currentProductId) return true;
+                  const prod = inventory.find(p => p.id === currentProductId);
+                  if (!prod) return true;
+                  const qty = parseInt(currentProductQty) || 0;
+                  const existingItem = selectedProducts.find((p) => p.product_id === currentProductId);
+                  const existingQty = existingItem ? existingItem.quantity : 0;
+                  const stockAvailable = prod.quantity + existingQty;
+                  return qty > stockAvailable || qty <= 0 || isNaN(qty);
+                })()}
+                className={`flex-1 font-semibold font-mono uppercase tracking-wider py-2 px-4 rounded-none text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-md text-white cursor-pointer ${
+                  (() => {
+                    if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
+                    const prod = inventory.find(p => p.id === currentProductId);
+                    const qty = parseInt(currentProductQty) || 0;
+                    const existingItem = selectedProducts.find((p) => p.product_id === currentProductId);
+                    const existingQty = existingItem ? existingItem.quantity : 0;
+                    const stockAvailable = prod.quantity + existingQty;
+                    if (!prod || qty > stockAvailable) {
+                      return 'bg-rose-950/20 text-rose-550 border border-rose-900/50 cursor-not-allowed';
+                    }
+                    return 'bg-emerald-600 hover:bg-emerald-500';
+                  })()
+                }`}
               >
                 <Plus className="w-3.5 h-3.5" /> Adicionar Peça
               </button>
             </div>
+
+            {productAddError && (
+              <div className="p-2.5 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450 font-bold flex items-center gap-1.5 animate-in fade-in duration-200">
+                <AlertTriangle className="w-4 h-4 text-rose-500" />
+                {productAddError}
+              </div>
+            )}
           </div>
         </div>
       </div>

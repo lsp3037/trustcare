@@ -573,6 +573,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     }
   };
 
+  const [productAddError, setProductAddError] = useState('');
+
   // Adiciona produto ao chamado
   const handleAddProduct = () => {
     if (!currentProductId) return;
@@ -581,21 +583,24 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     if (!prod) return;
 
     const qty = parseInt(currentProductQty) || 1;
-    if (qty > prod.quantity) {
-      alert(`Quantidade indisponível no estoque. Saldo atual: ${prod.quantity} un`);
+    const existsItem = selectedProducts.find((p) => p.product_id === currentProductId);
+    const existingQty = existsItem ? existsItem.quantity : 0;
+    const totalNeeded = qty + existingQty;
+
+    if (totalNeeded > prod.quantity) {
+      setProductAddError(`Quantidade indisponível. Saldo máximo no estoque: ${prod.quantity} un`);
       return;
     }
 
-    // Verifica se já está adicionado
-    const existsIndex = selectedProducts.findIndex((p) => p.product_id === currentProductId);
-    if (existsIndex >= 0) {
-      const updated = [...selectedProducts];
-      const newQty = updated[existsIndex].quantity + qty;
-      if (newQty > prod.quantity) {
-        alert(`A quantidade total excede o saldo do estoque (${prod.quantity} un)`);
-        return;
-      }
-      updated[existsIndex].quantity = newQty;
+    setProductAddError('');
+
+    if (existsItem) {
+      const updated = selectedProducts.map((p) => {
+        if (p.product_id === currentProductId) {
+          return { ...p, quantity: totalNeeded };
+        }
+        return p;
+      });
       setSelectedProducts(updated);
     } else {
       setSelectedProducts([
@@ -1036,80 +1041,101 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           <Boxes className="w-4 h-4 text-indigo-400" /> Peças e Peças de Reposição Utilizadas
         </h3>
 
-        {/* Formulário interno para adicionar peça */}
-        <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1 space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Produto em Estoque</label>
-            <select
-              value={currentProductId}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === 'create_new_product') {
-                  setIsNewProductModalOpen(true);
-                } else {
-                  setCurrentProductId(val);
-                }
-              }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
-            >
-              <option value="">Selecione um item do estoque...</option>
-              {inventory.map((prod) => (
-                <option key={prod.id} value={prod.id} disabled={prod.quantity === 0}>
-                  {prod.name} (Qtd: {prod.quantity} | R$ {prod.sale_price.toFixed(2)})
+        {/* Base de formulário com suporte a erros inline */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Produto em Estoque</label>
+              <select
+                value={currentProductId}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'create_new_product') {
+                    setIsNewProductModalOpen(true);
+                  } else {
+                    setCurrentProductId(val);
+                    setProductAddError('');
+                  }
+                }}
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="">Selecione um item do estoque...</option>
+                {inventory.map((prod) => (
+                  <option key={prod.id} value={prod.id} disabled={prod.quantity === 0}>
+                    {prod.name} (Qtd: {prod.quantity} | R$ {prod.sale_price.toFixed(2)})
+                  </option>
+                ))}
+                <option value="create_new_product" className="text-emerald-500 font-semibold">
+                  ➕ Cadastrar Nova Peça/Serviço
                 </option>
-              ))}
-              <option value="create_new_product" className="text-emerald-500 font-semibold">
-                ➕ Cadastrar Nova Peça/Serviço
-              </option>
-            </select>
-          </div>
+              </select>
+            </div>
 
-          <div className="w-24 space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quantidade</label>
-            <input
-              type="number"
-              min="1"
-              value={currentProductQty}
-              onChange={(e) => setCurrentProductQty(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-            />
-            {(() => {
-              const prod = inventory.find(p => p.id === currentProductId);
-              if (prod) {
-                const qty = parseInt(currentProductQty) || 0;
-                const over = qty > prod.quantity;
-                return (
-                  <span className={`text-[10px] block mt-0.5 font-semibold ${over ? 'text-rose-500 animate-pulse' : 'text-slate-500'}`}>
-                    Estoque: {prod.quantity} un
-                  </span>
-                );
-              }
-              return null;
-            })()}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAddProduct}
-            disabled={(() => {
-              if (!currentProductId) return true;
-              const prod = inventory.find(p => p.id === currentProductId);
-              if (!prod) return true;
-              return (parseInt(currentProductQty) || 0) > prod.quantity;
-            })()}
-            className={`font-semibold py-2 px-4 rounded-none text-xs flex items-center gap-1.5 transition-all h-[34px] ${
-              (() => {
-                if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
+            <div className="w-24 space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quantidade</label>
+              <input
+                type="number"
+                min="1"
+                value={currentProductQty}
+                onChange={(e) => {
+                  setCurrentProductQty(e.target.value);
+                  setProductAddError('');
+                }}
+                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+              />
+              {(() => {
                 const prod = inventory.find(p => p.id === currentProductId);
-                if (!prod || (parseInt(currentProductQty) || 0) > prod.quantity) {
-                  return 'bg-rose-950/20 text-rose-550 border border-rose-900/50 cursor-not-allowed';
+                if (prod) {
+                  const qty = parseInt(currentProductQty) || 0;
+                  const over = qty > prod.quantity;
+                  const isLow = prod.quantity <= prod.min_stock_alert;
+                  return (
+                    <div className="space-y-0.5 mt-1">
+                      <span className={`text-[10px] block font-semibold ${over ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>
+                        Estoque: {prod.quantity} un
+                      </span>
+                      {!over && isLow && (
+                        <span className="text-[9px] text-amber-500 font-semibold flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-amber-500" /> Estoque Baixo (Mín: {prod.min_stock_alert})
+                        </span>
+                      )}
+                    </div>
+                  );
                 }
-                return 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-650/10 cursor-pointer';
-              })()
-            }`}
-          >
-            <Plus className="w-3.5 h-3.5" /> Adicionar Peça
-          </button>
+                return null;
+              })()}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddProduct}
+              disabled={(() => {
+                if (!currentProductId) return true;
+                const prod = inventory.find(p => p.id === currentProductId);
+                if (!prod) return true;
+                return (parseInt(currentProductQty) || 0) > prod.quantity;
+              })()}
+              className={`font-semibold py-2 px-4 rounded-none text-xs flex items-center gap-1.5 transition-all h-[34px] ${
+                (() => {
+                  if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
+                  const prod = inventory.find(p => p.id === currentProductId);
+                  if (!prod || (parseInt(currentProductQty) || 0) > prod.quantity) {
+                    return 'bg-rose-950/20 text-rose-550 border border-rose-900/50 cursor-not-allowed';
+                  }
+                  return 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-650/10 cursor-pointer';
+                })()
+              }`}
+            >
+              <Plus className="w-3.5 h-3.5" /> Adicionar Peça
+            </button>
+          </div>
+
+          {productAddError && (
+            <div className="p-2.5 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450 font-bold flex items-center gap-1.5 animate-in fade-in duration-200">
+              <AlertTriangle className="w-4 h-4 text-rose-500" />
+              {productAddError}
+            </div>
+          )}
         </div>
 
         {/* Lista de Peças Selecionadas */}

@@ -73,6 +73,7 @@ export function OrderDetailsClient({
   const [selectedProducts, setSelectedProducts] = useState<any[]>(initialSelectedProducts || []);
   const [currentProductId, setCurrentProductId] = useState('');
   const [currentProductQty, setCurrentProductQty] = useState('1');
+  const [productAddError, setProductAddError] = useState('');
 
   const [selectedServices, setSelectedServices] = useState<any[]>(initialSelectedServices || []);
   const [currentServiceId, setCurrentServiceId] = useState('');
@@ -102,9 +103,11 @@ export function OrderDetailsClient({
     const stockAvailable = prod.quantity + existingQty;
 
     if (qty > stockAvailable) {
-      alert(`Quantidade indisponível no estoque. Saldo atual + alocado: ${stockAvailable} un`);
+      setProductAddError(`Quantidade indisponível no estoque. Saldo atual + alocado: ${stockAvailable} un`);
       return;
     }
+
+    setProductAddError('');
 
     if (existingItem) {
       const updated = selectedProducts.map((p) => {
@@ -569,6 +572,7 @@ export function OrderDetailsClient({
               selectedProducts={selectedProducts} handleRemoveProduct={handleRemoveProduct} availableServices={availableServices} currentServiceId={currentServiceId} handleServiceSelect={handleServiceSelect}
               currentServiceQty={currentServiceQty} setCurrentServiceQty={setCurrentServiceQty} currentServicePrice={currentServicePrice} setCurrentServicePrice={setCurrentServicePrice} handleAddService={handleAddService}
               selectedServices={selectedServices} handleRemoveService={handleRemoveService} totalValue={totalValue}
+              productAddError={productAddError} setProductAddError={setProductAddError}
             />
             
             <OrderActions handleDeleteOrder={handleDeleteOrder} handleSaveChanges={handleSaveChanges} saving={saving} />
