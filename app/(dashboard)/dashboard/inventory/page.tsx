@@ -783,6 +783,7 @@ export default function InventoryPage() {
                       <th className="py-4 px-6 text-center">SKU</th>
                       <th className="py-4 px-6">Categoria</th>
                       <th className="py-4 px-6 text-center">Marca</th>
+                      <th className="py-4 px-6 text-center">Qtd</th>
                       <th className="py-4 px-6 text-center">Status</th>
                       <th className="py-4 px-6 text-center">Ações</th>
                     </tr>
@@ -824,6 +825,15 @@ export default function InventoryPage() {
                           placeholder="Marca..."
                           value={filterBrand}
                           onChange={(e) => setFilterBrand(e.target.value)}
+                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
+                        />
+                      </td>
+                      <td className="py-2 px-6">
+                        <input
+                          type="text"
+                          placeholder="Qtd..."
+                          value={filterQuantity}
+                          onChange={(e) => setFilterQuantity(e.target.value)}
                           className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
                         />
                       </td>
@@ -880,6 +890,9 @@ export default function InventoryPage() {
                             </span>
                           </td>
                           <td className="py-4 px-6 text-center text-slate-300 font-semibold">{p.brand || '—'}</td>
+                          <td className="py-4 px-6 text-center font-mono font-bold text-slate-200">
+                            {p.quantity} <span className="text-[10px] text-slate-500 font-normal">/ {p.min_stock_alert}</span>
+                          </td>
                           <td className="py-4 px-6 text-center">
                             {isOut ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">

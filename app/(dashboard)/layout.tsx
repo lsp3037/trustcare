@@ -18,13 +18,15 @@ import {
   TrendingUp,
   ChevronDown,
   ChevronRight,
-  Banknote
+  Banknote,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
 import { UserProvider, useUser } from '@/lib/context/UserContext';
 import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
+import SubscriptionBlockedScreen from '@/components/SubscriptionBlockedScreen';
 
 export default function DashboardLayout({
   children,
@@ -89,11 +91,6 @@ function DashboardLayoutContent({
     }
   };
 
-  useEffect(() => {
-    if (!userLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, userLoading, router]);
 
   const userName = user?.full_name || 'Usuário';
   const userRole = role === 'admin' ? 'Administrador' : role === 'technician' ? 'Técnico' : 'Recepcionista';
@@ -134,6 +131,7 @@ function DashboardLayoutContent({
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('os-session');
+    document.cookie = "os-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     router.push('/login');
   };
 
@@ -153,7 +151,8 @@ function DashboardLayoutContent({
         subItems: [
           { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building },
           { name: 'Equipe e Acessos', href: '/dashboard/settings/team', icon: Users },
-          { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList }
+          { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList },
+          { name: 'Assinatura e Faturamento', href: '/dashboard/settings/billing', icon: CreditCard }
         ]
       }
     ] : [])
@@ -364,7 +363,11 @@ function DashboardLayoutContent({
 
         {/* Page Body */}
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">
-          {children}
+          {company.subscription_status === 'canceled' || isReadOnly ? (
+            <SubscriptionBlockedScreen companyName={company.name} status={company.subscription_status || ''} />
+          ) : (
+            children
+          )}
         </main>
       </div>
     </div>

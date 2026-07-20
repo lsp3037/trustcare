@@ -31,6 +31,11 @@ function TrackingContent() {
 
   // Page states
   const [searchId, setSearchId] = useState('');
+  const [stage, setStage] = useState<'search' | 'otp' | 'result'>('search');
+  const [tempTokenId, setTempTokenId] = useState('');
+  const [maskedEmail, setMaskedEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [devToken, setDevToken] = useState('');
   const [order, setOrder] = useState<PublicOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -48,9 +53,8 @@ function TrackingContent() {
     { label: 'Finalizado', status: 'Finalizado', desc: 'Equipamento entregue e finalizado.' }
   ];
 
-  // Load order data
-  const loadOrder = async (rawId: string) => {
-    // Strip leading hash character
+  // Request verification token
+  const requestToken = async (rawId: string) => {
     const id = rawId.trim().replace(/^#/, '');
 
     if (!id || id.length < 8) {
@@ -61,40 +65,24 @@ function TrackingContent() {
     setLoading(true);
     setErrorMsg('');
     setOrder(null);
+    setDevToken('');
 
     try {
-      // Resolve active subdomain for filtering (allows local subdomain simulation via ?subdomain=)
       let activeSubdomain = null;
       if (typeof window !== 'undefined') {
         activeSubdomain = getSubdomain(window.location.hostname, new URLSearchParams(window.location.search));
       }
 
-      // 1. Try to fetch from Supabase using public secure RPC (query handles prefix matching + subdomain validation)
-      const { data, error } = await supabase.rpc('get_public_service_order', { 
-        search_query: id,
-        tenant_subdomain: activeSubdomain || undefined
+      const res = await fetch('/api/rastreio/request-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ searchId: id, subdomain: activeSubdomain })
       });
 
-      if (error) {
-        throw error;
-      }
+      const data = await res.json();
 
-      if (data && data.length > 0) {
-        const orderData = data[0];
-        setOrder({
-          id: orderData.id,
-          status: orderData.status,
-          equipment_name: orderData.equipment_name,
-          equipment_brand: orderData.equipment_brand,
-          equipment_model: orderData.equipment_model,
-          reported_problem: orderData.reported_problem,
-          technical_report: orderData.technical_report,
-          created_at: orderData.created_at,
-          delivery_prediction: orderData.delivery_prediction,
-          codigo_os: orderData.codigo_os
-        });
-      } else {
-        // 2. Offline fallback (check localStorage for development/testing demo)
+      if (!res.ok) {
+        // Fallback for local storage/mocking if database record is missing (useful for offline/dev)
         const localOrders = localStorage.getItem('mock-orders');
         if (localOrders) {
           const parsedOrders = JSON.parse(localOrders);
@@ -104,35 +92,51 @@ function TrackingContent() {
           );
 
           if (foundLocal) {
-            setOrder({
-              id: foundLocal.id,
-              status: foundLocal.status,
-              equipment_name: foundLocal.equipment_details?.split(' ')[0] || 'Equipamento',
-              equipment_brand: foundLocal.equipment_details?.split(' ')[1] || '',
-              equipment_model: foundLocal.equipment_details?.split(' ').slice(2).join(' ') || '',
-              reported_problem: foundLocal.reported_problem || 'Não informado',
-              technical_report: foundLocal.technical_report,
-              created_at: foundLocal.created_at,
-              delivery_prediction: foundLocal.delivery_prediction,
-              codigo_os: foundLocal.codigo_os
-            });
-          } else {
-            setErrorMsg('Ordem de serviço não encontrada. Verifique o código e tente novamente.');
+            // Simulated development token send
+            setTempTokenId('mock-token-id');
+            setMaskedEmail('admin@trustcare.com.br (Mock Local)');
+            setDevToken('123456');
+            setStage('otp');
+            return;
           }
-        } else {
-          setErrorMsg('Ordem de serviço não encontrada. Verifique o código e tente novamente.');
         }
+        throw new Error(data.error || 'Ordem de serviço não encontrada.');
       }
+
+      setTempTokenId(data.tempTokenId);
+      setMaskedEmail(data.maskedEmail);
+      if (data.devToken) {
+        setDevToken(data.devToken);
+      }
+      setStage('otp');
     } catch (err: any) {
-      console.warn('Erro ao consultar banco online, tentando local:', err.message);
-      // Local check on direct error
+      setErrorMsg(err.message || 'Erro ao processar solicitação. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Verify the 6-digit token and get OS details
+  const verifyToken = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!otpCode || otpCode.length !== 6) {
+      setErrorMsg('Por favor, insira o código de 6 dígitos.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+
+    // Handle mock token for offline development
+    if (tempTokenId === 'mock-token-id' && otpCode === '123456') {
       const localOrders = localStorage.getItem('mock-orders');
       if (localOrders) {
         const parsedOrders = JSON.parse(localOrders);
-        const cleanTarget = id.toLowerCase();
+        const cleanTarget = searchId.trim().replace(/^#/, '').toLowerCase();
         const foundLocal = parsedOrders.find((o: any) => 
           o.id.toLowerCase().startsWith(cleanTarget)
         );
+
         if (foundLocal) {
           setOrder({
             id: foundLocal.id,
@@ -146,10 +150,29 @@ function TrackingContent() {
             delivery_prediction: foundLocal.delivery_prediction,
             codigo_os: foundLocal.codigo_os
           });
+          setStage('result');
+          setLoading(false);
           return;
         }
       }
-      setErrorMsg('Falha ao buscar ordem de serviço no servidor. Tente novamente mais tarde.');
+    }
+
+    try {
+      const res = await fetch('/api/rastreio/verify-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempTokenId, code: otpCode })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Código incorreto ou expirado.');
+      }
+
+      setOrder(data.order);
+      setStage('result');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Falha ao verificar código. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -158,15 +181,13 @@ function TrackingContent() {
   useEffect(() => {
     if (queryId) {
       setSearchId(queryId);
-      loadOrder(queryId);
+      requestToken(queryId);
     } else {
-      // Handle scenario where URL contains fragment instead of proper query parameter
-      // e.g. /rastreio?id=#0e15ff9a -> window.location.hash gets "#0e15ff9a"
       const hash = window.location.hash;
       if (hash && hash.length >= 8) {
         const cleanHash = hash.replace(/^#/, '');
         setSearchId(cleanHash);
-        loadOrder(cleanHash);
+        requestToken(cleanHash);
       }
     }
   }, [queryId]);
@@ -178,6 +199,7 @@ function TrackingContent() {
       router.push(`/rastreio?id=${cleanId}`);
     }
   };
+
 
   // Helper to determine active steps
   const getStepIndex = (currentStatus: string) => {
@@ -230,7 +252,7 @@ function TrackingContent() {
       <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-4xl w-full mx-auto z-5">
         
         {/* Search Panel if not loaded or when searching */}
-        {!order && !loading && (
+        {stage === 'search' && !loading && (
           <div className="w-full max-w-xl space-y-8 py-12">
             <div className="text-center space-y-3">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
@@ -281,16 +303,98 @@ function TrackingContent() {
           </div>
         )}
 
+        {/* OTP Verification Panel */}
+        {stage === 'otp' && !loading && (
+          <div className="w-full max-w-xl space-y-8 py-12 animate-fadeIn">
+            <div className="text-center space-y-3">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                <Lock className="w-3.5 h-3.5" /> Verificação de Segurança
+              </span>
+              <h1 className="text-2xl font-extrabold text-white tracking-tight sm:text-3xl">
+                Digite o código de acesso
+              </h1>
+              <p className="text-sm text-slate-400 max-w-md mx-auto">
+                Enviamos um código de verificação para o e-mail cadastrado:<br />
+                <strong className="text-blue-400">{maskedEmail}</strong>
+              </p>
+            </div>
+
+            <form onSubmit={verifyToken} className="space-y-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-emerald-600 rounded-none blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
+                <div className="relative flex items-center bg-slate-900 border border-slate-800 rounded-none p-2.5">
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    placeholder="Código de 6 dígitos"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1 bg-transparent border-0 text-center text-lg font-mono tracking-widest text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-0 py-2"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-none text-xs transition-all shadow-lg shadow-emerald-500/15 cursor-pointer shrink-0"
+                  >
+                    Verificar
+                  </button>
+                </div>
+              </div>
+
+              {devToken && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-none text-center">
+                  <button
+                    type="button"
+                    onClick={() => setOtpCode(devToken)}
+                    className="text-xs text-blue-400 hover:text-blue-300 underline font-mono"
+                  >
+                    [Modo de Testes] Clique aqui para auto-preencher o código: {devToken}
+                  </button>
+                </div>
+              )}
+
+              {errorMsg && (
+                <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStage('search');
+                    setErrorMsg('');
+                    setOtpCode('');
+                  }}
+                  className="text-xs font-semibold text-slate-450 hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Voltar para busca
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => requestToken(searchId)}
+                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Reenviar código
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Loading Spinner */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
             <LoadingSpinner className="w-10 h-10 text-blue-500 animate-spin" />
-            <p className="text-sm text-slate-400 font-medium">Buscando informações da ordem de serviço...</p>
+            <p className="text-sm text-slate-400 font-medium">Processando solicitação...</p>
           </div>
         )}
 
         {/* Displaying Order Details & Timeline */}
-        {order && !loading && (
+        {stage === 'result' && order && !loading && (
           <div className="w-full space-y-8 py-8 animate-fadeIn">
             {/* Navigation / Header details */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-900 pb-6">
@@ -298,6 +402,10 @@ function TrackingContent() {
                 onClick={() => {
                   setOrder(null);
                   setSearchId('');
+                  setStage('search');
+                  setOtpCode('');
+                  setTempTokenId('');
+                  setDevToken('');
                   router.push('/rastreio');
                 }}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors self-start"

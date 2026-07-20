@@ -785,15 +785,6 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               quantity: item.quantity,
               unit_price: item.unit_price,
             });
-
-            // Baixa estoque (Online)
-            const prod = inventory.find(p => p.id === item.product_id);
-            if (prod) {
-              await supabase
-                .from('products_inventory')
-                .update({ quantity: Math.max(0, prod.quantity - item.quantity) })
-                .eq('id', item.product_id);
-            }
           }
         }
 

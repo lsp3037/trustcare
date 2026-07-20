@@ -256,6 +256,25 @@ export function OrderDetailsClient({
     }
   };
 
+  const triggerWebhook = async (newStatus: string) => {
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          order_id: id,
+          equipment: order?.equipment_details || 'Equipamento',
+          client_name: client?.name || 'Cliente',
+          client_phone: client?.phone || '',
+          tracking_url: `${window.location.origin}/rastreio?id=${id}`
+        })
+      });
+    } catch (webhookErr) {
+      console.warn('Erro ao disparar fluxo de notificação:', webhookErr);
+    }
+  };
+
   const handleSaveChanges = async () => {
     if (isReadOnly) {
       setErrorMsg('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível salvar alterações da OS.');
@@ -285,14 +304,6 @@ export function OrderDetailsClient({
       const { data: updatedOs, error: updateErr } = await supabase.from('service_orders').update(updatedOsData).eq('id', id).select().single();
       if (updateErr) throw updateErr;
 
-      const { data: oldItems } = await supabase.from('service_order_items').select('*').eq('service_order_id', id);
-      if (oldItems && oldItems.length > 0) {
-        for (const oldItem of oldItems) {
-          const { data: prod } = await supabase.from('products_inventory').select('quantity').eq('id', oldItem.product_id).single();
-          if (prod) await supabase.from('products_inventory').update({ quantity: prod.quantity + oldItem.quantity }).eq('id', oldItem.product_id);
-        }
-      }
-      
       await supabase.from('service_order_items').delete().eq('service_order_id', id);
 
       for (const item of selectedProducts) {
@@ -303,8 +314,6 @@ export function OrderDetailsClient({
           quantity: item.quantity,
           unit_price: item.unit_price,
         });
-        const { data: prod } = await supabase.from('products_inventory').select('quantity').eq('id', item.product_id).single();
-        if (prod) await supabase.from('products_inventory').update({ quantity: Math.max(0, prod.quantity - item.quantity) }).eq('id', item.product_id);
       }
 
       await supabase.from('order_services').delete().eq('os_id', id);
@@ -319,28 +328,9 @@ export function OrderDetailsClient({
         });
       }
 
-      const criticalStatuses = ['Aguardando Peças', 'Pronto para Retirada', 'Cancelado'];
-      const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL;
       const statusChanged = order && order.status !== status;
-      if (webhookUrl && statusChanged && criticalStatuses.includes(status)) {
-        try {
-          await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              event: 'order_status_changed',
-              order_id: id,
-              status: status,
-              equipment: order?.equipment_details || 'Equipamento',
-              client_name: client?.name || 'Cliente',
-              client_phone: client?.phone || '',
-              tracking_url: `${window.location.origin}/rastreio?id=${id}`
-            }),
-            mode: 'cors'
-          });
-        } catch (webhookErr) {
-          console.warn('Falha ao enviar webhook:', webhookErr);
-        }
+      if (statusChanged) {
+        await triggerWebhook(status);
       }
       
       setSuccessMsg('Ordem de Serviço atualizada com sucesso no banco de dados!');
@@ -364,14 +354,6 @@ export function OrderDetailsClient({
     setSaving(true);
     setErrorMsg('');
     try {
-      const { data: oldItems } = await supabase.from('service_order_items').select('*').eq('service_order_id', id);
-      if (oldItems && oldItems.length > 0) {
-        for (const oldItem of oldItems) {
-          const { data: prod } = await supabase.from('products_inventory').select('quantity').eq('id', oldItem.product_id).single();
-          if (prod) await supabase.from('products_inventory').update({ quantity: prod.quantity + oldItem.quantity }).eq('id', oldItem.product_id);
-        }
-      }
-      await supabase.from('service_order_items').delete().eq('service_order_id', id);
       const { error: deleteErr } = await supabase.from('service_orders').delete().eq('id', id);
       if (deleteErr) throw deleteErr;
       setSuccessMsg('Ordem de Serviço excluída com sucesso!');
@@ -398,6 +380,8 @@ export function OrderDetailsClient({
       setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
       setSuccessMsg('Status atualizado em tempo real!');
       setTimeout(() => setSuccessMsg(''), 3000);
+      
+      await triggerWebhook(newStatus);
     } catch (err: any) {
       setErrorMsg(`Erro ao atualizar status: ${err.message}`);
     } finally {
@@ -421,6 +405,8 @@ export function OrderDetailsClient({
       setPago(true);
       setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod, pago: true } : null);
       setSuccessMsg('Status e fluxo de caixa atualizados em tempo real!');
+      
+      await triggerWebhook(pendingStatusUpdate);
     } catch (err: any) {
       setErrorMsg(`Erro ao atualizar caixa: ${err.message}`);
     } finally {
