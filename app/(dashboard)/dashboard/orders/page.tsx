@@ -16,11 +16,13 @@ import {
   DollarSign,
   Trash2,
   LayoutGrid,
-  List
+  List,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import NewOrderForm from '@/components/NewOrderForm';
 import { useCompany } from '@/lib/context/CompanyContext';
+import { exportOrdersToCsv } from '@/lib/utils/csvExport';
 
 const stripHtml = (html: string) => {
   if (!html) return '';
@@ -320,19 +322,27 @@ function OrdersContent() {
           <p className="text-slate-400 mt-1">Acompanhe e gerencie as Ordens de Serviço (OS).</p>
         </div>
         {!isCreating && (
-          <button
-            onClick={() => {
-              if (isReadOnly) {
-                alert('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível criar novas OS.');
-                return;
-              }
-              router.push('/dashboard/orders?new=true');
-            }}
-            disabled={isReadOnly}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4" /> Nova Ordem de Serviço
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => exportOrdersToCsv(filteredOrders)}
+              className="bg-slate-950 hover:bg-slate-900 text-slate-300 border border-slate-800 font-semibold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-emerald-500" /> Exportar CSV
+            </button>
+            <button
+              onClick={() => {
+                if (isReadOnly) {
+                  alert('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível criar novas OS.');
+                  return;
+                }
+                router.push('/dashboard/orders?new=true');
+              }}
+              disabled={isReadOnly}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:shadow-blue-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4" /> Nova Ordem de Serviço
+            </button>
+          </div>
         )}
       </div>
 

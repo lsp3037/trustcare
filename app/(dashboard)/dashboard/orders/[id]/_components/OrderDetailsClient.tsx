@@ -423,7 +423,15 @@ export function OrderDetailsClient({
   return (
     <>
       <div className="space-y-8 print:hidden">
-        <OrderHeader order={order} client={client} status={status} priority={priority} />
+        <OrderHeader
+          order={order}
+          client={client}
+          company={company}
+          selectedProducts={selectedProducts}
+          selectedServices={selectedServices}
+          status={status}
+          priority={priority}
+        />
 
         {successMsg && (
           <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5 shadow-lg">

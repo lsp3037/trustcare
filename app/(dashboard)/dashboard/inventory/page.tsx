@@ -1,11 +1,12 @@
 'use client';
-import { Package, Plus, CheckCircle2, Search, AlertCircle, Boxes, Trash2 } from 'lucide-react';
+import { Package, Plus, CheckCircle2, Search, AlertCircle, Boxes, Trash2, Download } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase/client';
+import { exportInventoryToCsv } from '@/lib/utils/csvExport';
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -410,15 +411,23 @@ export default function InventoryPage() {
           <p className="text-slate-400 mt-1">Gerencie peças de reposição e componentes da assistência.</p>
         </div>
         {!isCreating && (
-          <button
-            onClick={() => {
-              resetForm();
-              setIsCreating(true);
-            }}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
-          >
-            <Plus className="w-4 h-4" /> Cadastrar Produto
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => exportInventoryToCsv(filteredProducts)}
+              className="bg-slate-950 hover:bg-slate-900 text-slate-300 border border-slate-800 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-emerald-500" /> Exportar CSV
+            </button>
+            <button
+              onClick={() => {
+                resetForm();
+                setIsCreating(true);
+              }}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
+            >
+              <Plus className="w-4 h-4" /> Cadastrar Produto
+            </button>
+          </div>
         )}
       </div>
 

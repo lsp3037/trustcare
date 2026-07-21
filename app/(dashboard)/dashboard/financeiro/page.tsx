@@ -21,7 +21,7 @@ import DatePickerWithRange from '@/components/DatePickerWithRange';
 import { KpiCard } from './_components/KpiCard';
 import { PaymentTable } from './_components/PaymentTable';
 import { FinanceiroBarChart, FinanceiroPieChart } from './_components/FinanceiroChart';
-import { exportToCsv } from '@/lib/utils/exportCsv';
+import { exportFinancialToCsv, exportToCsv } from '@/lib/utils/csvExport';
 import { AddExpenseModal } from './_components/AddExpenseModal';
 
 interface DateRange { from: Date; to: Date; }
@@ -452,6 +452,32 @@ export default function FinanceiroPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const transactions = [
+                ...paidOrders.map(o => ({
+                  date: o.payment_date || o.created_at,
+                  type: 'income',
+                  description: `OS #${o.codigo_os || (o.id ? o.id.slice(0, 8) : '')} - ${o.clients?.name || 'Cliente'}`,
+                  amount: o.total_value,
+                  status: 'Pago'
+                })),
+                ...periodExpenses.map(e => ({
+                  date: e.expense_date,
+                  type: 'expense',
+                  description: `${e.description} (${e.category})`,
+                  amount: e.amount,
+                  status: e.recurrence || 'Único'
+                }))
+              ];
+              exportFinancialToCsv(transactions);
+            }}
+            className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 bg-slate-950 flex items-center gap-1.5 transition-colors cursor-pointer"
+            title="Exportar Relatório CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="hidden sm:inline">Exportar CSV</span>
+          </button>
           <button
             onClick={fetchData}
             className="p-2 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 rounded-none transition-colors"
