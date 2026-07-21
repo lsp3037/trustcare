@@ -407,7 +407,7 @@ export default function InventoryPage() {
           <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
             <Package className="w-8 h-8 text-emerald-500" /> Estoque de Produtos
           </h1>
-          <p className="text-slate-405 mt-1">Gerencie peças de reposição e componentes da assistência.</p>
+          <p className="text-slate-400 mt-1">Gerencie peças de reposição e componentes da assistência.</p>
         </div>
         {!isCreating && (
           <button
@@ -526,7 +526,7 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tecnologia</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia</label>
                   <select
                     value={ramTech}
                     onChange={(e) => setRamTech(e.target.value)}
@@ -542,7 +542,7 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Velocidade</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Velocidade</label>
                   <input
                     type="text"
                     placeholder="Ex: 3200MHz"
@@ -552,7 +552,7 @@ export default function InventoryPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tamanho (GB)</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB)</label>
                   <select
                     value={ramGb}
                     onChange={(e) => setRamGb(e.target.value)}
@@ -575,7 +575,7 @@ export default function InventoryPage() {
             {category === 'SSD' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tecnologia SSD</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia SSD</label>
                   <select
                     value={ssdTech}
                     onChange={(e) => setSsdTech(e.target.value)}
@@ -589,7 +589,7 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tamanho (GB/TB)</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB/TB)</label>
                   <select
                     value={ssdGb}
                     onChange={(e) => setSsdGb(e.target.value)}

@@ -41,6 +41,8 @@ export default function ClientDetailPage() {
   // Estados para Categorias e CRUD de Equipamentos
   const [categories, setCategories] = useState<any[]>([]);
   const [eqCategoryId, setEqCategoryId] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [editingEqId, setEditingEqId] = useState<string | null>(null);
 
   // Estados para histórico clínico de checklists
@@ -391,9 +393,13 @@ export default function ClientDetailPage() {
     window.document.getElementById('equipment-form')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleCreateCategory = async () => {
-    const catName = window.prompt('Digite o nome da nova categoria:');
-    if (!catName || !catName.trim()) return;
+  const handleSaveCategory = async () => {
+    if (!newCategoryName || !newCategoryName.trim()) {
+      setIsCreatingCategory(false);
+      return;
+    }
+
+    const catName = newCategoryName.trim();
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -405,7 +411,7 @@ export default function ClientDetailPage() {
 
       const { data, error } = await supabase
         .from('equipment_categories')
-        .insert({ name: catName.trim(), company_id: companyId })
+        .insert({ name: catName, company_id: companyId })
         .select()
         .single();
       
@@ -413,11 +419,13 @@ export default function ClientDetailPage() {
         console.warn('Fallback mock categories:', error);
         const mockCats = localStorage.getItem('mock-equipment-categories');
         const allCats = mockCats ? JSON.parse(mockCats) : [];
-        const newCat = { id: `mock-cat-${Date.now()}`, name: catName.trim() };
+        const newCat = { id: `mock-cat-${Date.now()}`, name: catName };
         allCats.push(newCat);
         localStorage.setItem('mock-equipment-categories', JSON.stringify(allCats));
         setCategories(allCats);
         setEqCategoryId(newCat.id);
+        setIsCreatingCategory(false);
+        setNewCategoryName('');
         return;
       }
 
@@ -427,6 +435,9 @@ export default function ClientDetailPage() {
       }
     } catch (err) {
       alert('Erro ao criar categoria.');
+    } finally {
+      setIsCreatingCategory(false);
+      setNewCategoryName('');
     }
   };
 
@@ -600,7 +611,7 @@ export default function ClientDetailPage() {
             <div className="space-y-5">
               {/* Tipo de Cadastro */}
               <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-none ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                <div className={`p-2.5 rounded-none ${client.type === 'PJ' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-200'}`}>
                   {client.type === 'PJ' ? <Building className="w-5 h-5" /> : <User className="w-5 h-5" />}
                 </div>
                 <div>
@@ -651,7 +662,7 @@ export default function ClientDetailPage() {
           {/* Equipamentos Cadastrados */}
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3 flex items-center gap-2">
-              <Laptop className="w-5 h-5 text-indigo-455" /> Equipamentos do Cliente
+              <Laptop className="w-5 h-5 text-emerald-400" /> Equipamentos do Cliente
             </h3>
 
             {/* Listagem de Equipamentos */}
@@ -678,7 +689,7 @@ export default function ClientDetailPage() {
                         <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
                         <td className="py-2.5 px-3 text-slate-400">
                           {eq.equipment_categories?.name ? (
-                            <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
+                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-none text-[10px] font-bold">
                               {eq.equipment_categories.name}
                             </span>
                           ) : '—'}
@@ -699,7 +710,7 @@ export default function ClientDetailPage() {
                             <button
                               onClick={() => handleEditEquipment(eq)}
                               title="Editar Equipamento"
-                              className="p-1.5 bg-slate-800 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-none transition-colors"
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-none transition-colors"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
@@ -723,9 +734,9 @@ export default function ClientDetailPage() {
             <form id="equipment-form" onSubmit={handleSaveEquipment} className="border-t border-slate-850 pt-5 space-y-4">
               <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
                 {editingEqId ? (
-                  <><Edit className="w-4 h-4 text-indigo-400" /> Atualizar Equipamento</>
+                  <><Edit className="w-4 h-4 text-emerald-400" /> Atualizar Equipamento</>
                 ) : (
-                  <><Plus className="w-4 h-4 text-indigo-400" /> Cadastrar Novo Equipamento</>
+                  <><Plus className="w-4 h-4 text-emerald-400" /> Cadastrar Novo Equipamento</>
                 )}
               </h4>
               
@@ -748,7 +759,7 @@ export default function ClientDetailPage() {
                     placeholder="Ex: Notebook Luan"
                     value={eqName}
                     onChange={(e) => setEqName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                     required
                   />
                 </div>
@@ -759,7 +770,7 @@ export default function ClientDetailPage() {
                     <select
                       value={eqCategoryId}
                       onChange={(e) => setEqCategoryId(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                     >
                       <option value="">Selecione...</option>
                       {categories.map(cat => (
@@ -768,14 +779,47 @@ export default function ClientDetailPage() {
                     </select>
                     <button
                       type="button"
-                      onClick={handleCreateCategory}
-                      className="px-3 bg-slate-900 border border-slate-800 hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 rounded-none flex items-center justify-center transition-colors"
+                      onClick={() => setIsCreatingCategory(!isCreatingCategory)}
+                      className="px-3 bg-slate-900 border border-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-400 rounded-none flex items-center justify-center transition-colors cursor-pointer"
                       title="Nova Categoria"
                     >
                       <FolderPlus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
+
+                {isCreatingCategory && (
+                  <div className="col-span-1 md:col-span-2 space-y-1 animate-in slide-in-from-top-1 duration-150">
+                    <label className="text-[9px] font-bold text-emerald-450 uppercase tracking-wider font-mono">Nova Categoria Inline</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Nome da categoria"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-1.5 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveCategory}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-none transition-colors cursor-pointer"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreatingCategory(false);
+                          setNewCategoryName('');
+                        }}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-350 text-xs rounded-none transition-colors cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Marca</label>
@@ -784,7 +828,7 @@ export default function ClientDetailPage() {
                     placeholder="Ex: Dell"
                     value={eqBrand}
                     onChange={(e) => setEqBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -795,7 +839,7 @@ export default function ClientDetailPage() {
                     placeholder="Ex: Latitude 3420"
                     value={eqModel}
                     onChange={(e) => setEqModel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -808,7 +852,7 @@ export default function ClientDetailPage() {
                       placeholder="Ex: PE091728"
                       value={eqSerial}
                       onChange={(e) => setEqSerial(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -834,7 +878,7 @@ export default function ClientDetailPage() {
                 <button
                   type="submit"
                   disabled={addingEq || eqSuccess}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   {addingEq ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : (editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)} 
                   {editingEqId ? 'Atualizar Equipamento' : 'Adicionar Equipamento'}

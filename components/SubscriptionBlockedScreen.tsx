@@ -25,10 +25,6 @@ export default function SubscriptionBlockedScreen({ companyName, status }: Subsc
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-4 font-sans select-none">
-      {/* Background radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.08),transparent_70%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(30,58,138,0.05),transparent_50%)] pointer-events-none" />
-
       <div className="w-full max-w-lg bg-slate-900 border border-slate-800 p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
         {/* Top visual warning */}
         <div className="flex justify-center">
@@ -38,7 +34,7 @@ export default function SubscriptionBlockedScreen({ companyName, status }: Subsc
         </div>
 
         <div className="space-y-2">
-          <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full">
+          <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-none font-mono">
             Acesso Suspenso
           </span>
           <h1 className="text-2xl font-black text-white tracking-tight">
@@ -53,22 +49,22 @@ export default function SubscriptionBlockedScreen({ companyName, status }: Subsc
 
         {/* Info Box */}
         <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-none text-left space-y-3">
-          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-            <CreditCard className="w-4 h-4 text-blue-500" />
+          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+            <CreditCard className="w-4 h-4 text-emerald-400" />
             Informações sobre o plano
           </h3>
-          <p className="text-xs text-slate-455 leading-relaxed">
+          <p className="text-xs text-slate-400 leading-relaxed">
             Seus dados cadastrados, clientes e histórico de ordens de serviço continuam armazenados com total segurança. Assim que a assinatura for restabelecida, o acesso total será liberado instantaneamente.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2 font-mono">
           <a
             href="https://wa.me/5565999620703?text=Ol%C3%A1!%20Gostaria%20de%20reativar%20minha%20assinatura%20do%20Trust%20Care%20para%20a%20empresa%20"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-none text-xs transition-all shadow-lg shadow-blue-500/15 flex items-center justify-center gap-2 cursor-pointer"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-none text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" /> Falar com Suporte (Reativar)
           </a>

@@ -99,7 +99,7 @@ export function SlaTracker({ startedAt, status, variant = 'full' }: SlaTrackerPr
           </span>
           <span className={cn(
             "text-xs font-bold font-mono",
-            isOverdue ? "text-rose-450" : "text-slate-300"
+            isOverdue ? "text-rose-400" : "text-slate-300"
           )}>{elapsedTime}</span>
         </div>
       </div>
@@ -134,7 +134,7 @@ export function SlaTracker({ startedAt, status, variant = 'full' }: SlaTrackerPr
 
       <div className="w-full h-1 bg-slate-900 mt-3 rounded-none overflow-hidden">
         <div 
-          className={cn("h-full transition-all duration-1000", isOverdue ? "bg-rose-500" : "bg-blue-500")}
+          className={cn("h-full transition-all duration-1000", isOverdue ? "bg-rose-500" : "bg-emerald-500")}
           style={{ width: `${progressPercent}%` }}
         />
       </div>
@@ -142,7 +142,7 @@ export function SlaTracker({ startedAt, status, variant = 'full' }: SlaTrackerPr
       <div className="flex justify-between items-center mt-2">
         <span className={cn(
           "text-[10px] font-mono",
-          isOverdue ? "text-rose-450 font-bold" : "text-slate-400"
+          isOverdue ? "text-rose-400 font-bold" : "text-slate-400"
         )}>
           {remainingTime}
         </span>

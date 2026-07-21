@@ -496,7 +496,7 @@ export default function UserManagementPage() {
                 <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
                   <UserPlus className="w-5 h-5 text-blue-500" /> Convidar Novo Membro
                 </h3>
-                <p className="text-xs text-slate-455 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Um link de convite será gerado. O membro convidado define sua própria senha ao aceitar.
                 </p>
               </div>
@@ -619,7 +619,7 @@ export default function UserManagementPage() {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-white">{roleDetails.title}</h4>
-                      <p className="text-[10px] text-slate-455 uppercase font-mono">Nível de Acesso</p>
+                      <p className="text-[10px] text-slate-400 uppercase font-mono">Nível de Acesso</p>
                     </div>
                   </div>
                   <p className="text-xs text-slate-300 mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
@@ -663,7 +663,7 @@ export default function UserManagementPage() {
                 <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
                   <Shield className="w-5 h-5 text-blue-500" /> Editar Usuário
                 </h3>
-                <p className="text-xs text-slate-455 mt-1">Atualize as informações do membro da sua equipe.</p>
+                <p className="text-xs text-slate-400 mt-1">Atualize as informações do membro da sua equipe.</p>
               </div>
 
               <form onSubmit={handleUpdateUser} className="space-y-4">
@@ -768,7 +768,7 @@ export default function UserManagementPage() {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-white">{roleDetails.title}</h4>
-                      <p className="text-[10px] text-slate-455 uppercase font-mono">Nível de Acesso</p>
+                      <p className="text-[10px] text-slate-400 uppercase font-mono">Nível de Acesso</p>
                     </div>
                   </div>
                   <p className="text-xs text-slate-300 mt-4 leading-relaxed font-sans">{roleDetails.description}</p>

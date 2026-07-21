@@ -11,6 +11,13 @@
   --color-slate-850: #1b253b;
   --font-inter: var(--font-inter);
   --font-jetbrains: var(--font-jetbrains-mono);
+  
+  --color-slate-405: #94a3b8;
+  --color-slate-455: #94a3b8;
+  --color-slate-350: #cbd5e1;
+  --color-emerald-450: #34d399;
+  --color-rose-455: #f43f5e;
+  --color-rose-450: #f43f5e;
 }
 
 @theme inline {

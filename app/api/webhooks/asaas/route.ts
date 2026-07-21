@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     // 2. Fallback: Se não encontrou por externalReference, busca no banco por asaas_customer_id ou asaas_subscription_id
     if (!companyId) {
-      let query = supabaseAdmin.from('companies').select('id');
+      const query = supabaseAdmin.from('companies').select('id');
       
       if (subscriptionAsaasId) {
         const { data } = await query.eq('asaas_subscription_id', subscriptionAsaasId).maybeSingle();

@@ -72,6 +72,7 @@ export default function DashboardOverviewPage() {
   const [chartData, setChartData] = useState<ChartDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const [statusModalOrder, setStatusModalOrder] = useState<ServiceOrder | null>(null);
   
   // Estado para armazenar o período global selecionado
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
@@ -480,17 +481,17 @@ export default function DashboardOverviewPage() {
             {isAdmin ? (
               <>
                 {/* Card 1: Faturamento */}
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none">
                   <DollarSign className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-none border border-emerald-500/20 flex items-center gap-1 font-mono">
                   <TrendingUp className="w-3 h-3" /> +14.5%
                 </span>
               </div>
-              <p className="text-sm font-semibold text-slate-405">Faturamento Realizado</p>
-              <h3 className="text-2xl font-black text-white mt-1">
+              <p className="text-sm font-semibold text-slate-400">Faturamento Realizado</p>
+              <h3 className="text-2xl font-mono font-black text-white mt-1">
                 R$ {stats.billing.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
               <p className="text-xs text-slate-500 mt-2">Soma de OS Concluídas/Entregues</p>
@@ -499,33 +500,33 @@ export default function DashboardOverviewPage() {
             {/* Card 2: OS Ativas (Clicável) */}
             <div 
               onClick={() => router.push('/dashboard/orders?status=Ativas')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <Clock className="w-5 h-5" />
                 </div>
-                <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
+                <span className="text-xs text-slate-500 font-medium flex items-center gap-1 group-hover:text-emerald-400 transition-colors font-mono">
                   Em progresso <ArrowUpRight className="w-3 h-3" />
                 </span>
               </div>
-              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">OS Abertas / Em Análise</p>
-              <h3 className="text-2xl font-black text-white mt-1">{stats.openOrders}</h3>
+              <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">OS Abertas / Em Análise</p>
+              <h3 className="text-2xl font-mono font-black text-white mt-1">{stats.openOrders}</h3>
               <p className="text-xs text-slate-500 mt-2">Aguardando aprovação ou peças</p>
             </div>
 
             {/* Card 3: Ticket Médio */}
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none">
                   <TrendingUp className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-none border border-emerald-500/20 font-mono">
                   Caixa
                 </span>
               </div>
-              <p className="text-sm font-semibold text-slate-405">Ticket Médio</p>
-              <h3 className="text-2xl font-black text-white mt-1">
+              <p className="text-sm font-semibold text-slate-400">Ticket Médio</p>
+              <h3 className="text-2xl font-mono font-black text-white mt-1">
                 R$ {stats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
               <p className="text-xs text-slate-500 mt-2">Valor médio por O.S. paga</p>
@@ -536,54 +537,54 @@ export default function DashboardOverviewPage() {
             {/* Card 1: OS Abertas / Em Execução (Não Admin) */}
             <div 
               onClick={() => router.push('/dashboard/orders?status=Ativas')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <Clock className="w-5 h-5" />
                 </div>
-                <span className="text-xs text-slate-500 font-medium">
+                <span className="text-xs text-slate-500 font-medium font-mono">
                   {role === 'technician' ? 'Minha fila' : 'Geral'}
                 </span>
               </div>
-              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">O.S. Abertas / Em Execução</p>
-              <h3 className="text-2xl font-black text-white mt-1">{stats.openOrders}</h3>
+              <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">O.S. Abertas / Em Execução</p>
+              <h3 className="text-2xl font-mono font-black text-white mt-1">{stats.openOrders}</h3>
               <p className="text-xs text-slate-500 mt-2">Aguardando análise ou peças</p>
             </div>
 
             {/* Card 2: OS Prontas / Concluídas (Não Admin) */}
             <div 
               onClick={() => router.push('/dashboard/orders?status=Concluidas')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <span className="text-xs text-slate-500 font-medium">
+                <span className="text-xs text-slate-500 font-medium font-mono">
                   Concluídas
                 </span>
               </div>
-              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">O.S. Prontas / Entregues</p>
-              <h3 className="text-2xl font-black text-white mt-1">{stats.completedOrders}</h3>
+              <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">O.S. Prontas / Entregues</p>
+              <h3 className="text-2xl font-mono font-black text-white mt-1">{stats.completedOrders}</h3>
               <p className="text-xs text-slate-500 mt-2">Finalizadas ou prontas para entrega</p>
             </div>
 
             {/* Card 3: Clientes Cadastrados (Não Admin) */}
             <div 
               onClick={() => router.push('/dashboard/clients')}
-              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+              className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 cursor-pointer group"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-none group-hover:bg-emerald-500/20 transition-colors">
                   <Users className="w-5 h-5" />
                 </div>
-                <span className="text-xs text-slate-500 font-medium">
+                <span className="text-xs text-slate-500 font-medium font-mono">
                   Clientes
                 </span>
               </div>
-              <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">Total de Clientes</p>
-              <h3 className="text-2xl font-black text-white mt-1">{stats.totalClients}</h3>
+              <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">Total de Clientes</p>
+              <h3 className="text-2xl font-mono font-black text-white mt-1">{stats.totalClients}</h3>
               <p className="text-xs text-slate-500 mt-2">Cadastrados na base global</p>
             </div>
           </>
@@ -592,18 +593,18 @@ export default function DashboardOverviewPage() {
         {/* Card 4: Alertas de Estoque (Clicável - Não afetado por data) */}
         <div 
           onClick={() => router.push('/dashboard/inventory?filter=low_stock')}
-          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer group"
+          className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-emerald-500/30 cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="p-2 bg-rose-500/10 text-rose-400 rounded-none group-hover:bg-rose-500/20 transition-colors">
               <Package className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold text-rose-455 bg-rose-500/10 px-2 py-0.5 rounded-full flex items-center gap-1 group-hover:bg-rose-500/20 transition-colors">
+            <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-none border border-rose-500/20 flex items-center gap-1 group-hover:bg-rose-500/20 transition-colors font-mono">
               Crítico <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="text-sm font-semibold text-slate-405 group-hover:text-slate-350 transition-colors">Produtos com Estoque Baixo</p>
-          <h3 className="text-2xl font-black text-white mt-1">{stats.lowStockCount}</h3>
+          <p className="text-sm font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">Produtos com Estoque Baixo</p>
+          <h3 className="text-2xl font-mono font-black text-white mt-1">{stats.lowStockCount}</h3>
           <p className="text-xs text-slate-500 mt-2">Itens abaixo do estoque mínimo</p>
         </div>
         </>
@@ -619,7 +620,7 @@ export default function DashboardOverviewPage() {
               <h3 className="text-lg font-bold text-white">Ordens de Serviço Recentes</h3>
               <p className="text-xs text-slate-500 mt-0.5">Movimentações no período selecionado.</p>
             </div>
-            <Link href="/dashboard/orders" className="text-xs text-emerald-450 hover:text-emerald-400 font-semibold flex items-center gap-1 transition-colors">
+            <Link href="/dashboard/orders" className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 transition-colors">
               Ver mais <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
@@ -658,12 +659,12 @@ export default function DashboardOverviewPage() {
                         {formatEquipmentDetails(order.equipment_details || '')}
                       </td>
                       <td className="py-4 pr-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
-                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getStatusDotColor(order.status)}`} />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700 font-mono">
+                          <span className={`w-2 h-2 rounded-none shrink-0 ${getStatusDotColor(order.status)}`} />
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-4 text-right font-bold text-slate-200">
+                      <td className="py-4 text-right font-bold text-slate-200 font-mono">
                         R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-3.5 text-right relative pr-4">
@@ -685,7 +686,7 @@ export default function DashboardOverviewPage() {
                                 setActiveDropdownId(null);
                                 router.push(`/dashboard/orders/${order.id}`);
                               }}
-                              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
                             >
                               Ver Detalhes
                             </button>
@@ -693,12 +694,9 @@ export default function DashboardOverviewPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownId(null);
-                                const newStatus = prompt("Digite o novo status (Aguardando Equipamento, Em Análise, Aguardando Aprovação, Aguardando Peças, Em Execução, Em Testes, Pronto para Retirada, Finalizado, Cancelado):", order.status);
-                                if (newStatus) {
-                                  handleUpdateStatus(order.id, newStatus);
-                                }
+                                setStatusModalOrder(order);
                               }}
-                              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
                             >
                               Alterar Status
                             </button>
@@ -708,7 +706,7 @@ export default function DashboardOverviewPage() {
                                 setActiveDropdownId(null);
                                 window.print();
                               }}
-                              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
                             >
                               Imprimir OS
                             </button>
@@ -793,13 +791,13 @@ export default function DashboardOverviewPage() {
                     const percent = stats.billing > 0 ? (value / stats.billing) * 100 : 0;
                     return (
                       <div key={method}>
-                        <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1.5">
+                        <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1.5 font-mono">
                           <span>{method}</span>
                           <span>{percent.toFixed(1)}% <span className="text-[10px] text-slate-500 ml-1 font-mono">(R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</span></span>
                         </div>
-                        <div className="w-full bg-slate-950 rounded-full h-2 border border-slate-850">
+                        <div className="w-full bg-slate-950 rounded-none h-2 border border-slate-850">
                           <div 
-                            className={`h-full rounded-full ${method === 'PIX' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]' : method === 'Dinheiro' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]'}`} 
+                            className={`h-full rounded-none ${method === 'PIX' ? 'bg-emerald-600' : method === 'Dinheiro' ? 'bg-emerald-500' : 'bg-slate-400'}`} 
                             style={{ width: `${percent}%` }}
                           />
                         </div>
@@ -821,6 +819,56 @@ export default function DashboardOverviewPage() {
           </div>
         )}
       </div>
+      {/* Modal de Alteração de Status Customizado - Swiss Technical Minimalism */}
+      {statusModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-250">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-6 rounded-none space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Alterar Status da OS</h3>
+              <button 
+                onClick={() => setStatusModalOrder(null)} 
+                className="text-slate-400 hover:text-white text-[10px] font-bold font-mono tracking-wider cursor-pointer border border-slate-800 px-2 py-1 hover:bg-slate-850 transition-colors rounded-none"
+              >
+                CANCELAR
+              </button>
+            </div>
+            
+            <div className="flex justify-between items-center bg-slate-950 p-2.5 border border-slate-800 font-mono text-xs">
+              <span className="text-slate-500 font-bold">CÓDIGO OS:</span>
+              <span className="text-white font-black">{statusModalOrder.codigo_os}</span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-1.5 pt-2">
+              {[
+                'Aguardando Equipamento',
+                'Em Análise',
+                'Aguardando Aprovação',
+                'Aguardando Peças',
+                'Em Execução',
+                'Em Testes',
+                'Pronto para Retirada',
+                'Finalizado',
+                'Cancelado'
+              ].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    handleUpdateStatus(statusModalOrder.id, status);
+                    setStatusModalOrder(null);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs font-mono border rounded-none transition-colors cursor-pointer ${
+                    statusModalOrder.status === status
+                      ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400 font-bold'
+                      : 'bg-slate-950 border-slate-800/80 text-slate-300 hover:bg-slate-850 hover:text-white'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

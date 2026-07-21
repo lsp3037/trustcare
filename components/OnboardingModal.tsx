@@ -334,7 +334,6 @@ export default function OnboardingModal() {
               >
                 {previewUrl ? (
                   <div className="relative w-full h-full p-2.5 flex items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={previewUrl} alt="Logotipo" className="max-w-full max-h-full object-contain" />
                     
                     <label className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[9px] gap-1 rounded-none font-bold">

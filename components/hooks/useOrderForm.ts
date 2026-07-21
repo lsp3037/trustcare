@@ -15,7 +15,7 @@ export interface Client {
 
 export interface UseOrderFormProps {
   clients: Client[];
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -640,7 +640,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       }
 
       setSuccess(true);
-      setTimeout(() => { onSuccess(); }, 1000);
+      setTimeout(() => { onSuccess?.(); }, 1000);
     } catch (err: any) {
       setErrorMsg(err.message || 'Erro inesperado ao criar OS.');
     } finally {

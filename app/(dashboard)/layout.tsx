@@ -49,6 +49,20 @@ function DashboardLayoutContent({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
+  const getHeaderTitle = () => {
+    if (pathname === '/dashboard') return 'Painel de Controle';
+    if (pathname.startsWith('/dashboard/orders')) return 'Ordens de Serviço';
+    if (pathname.startsWith('/dashboard/clients')) return 'Clientes';
+    if (pathname.startsWith('/dashboard/inventory')) return 'Controle de Estoque';
+    if (pathname.startsWith('/dashboard/settings')) return 'Configurações';
+    if (pathname.startsWith('/dashboard/financial') || pathname.startsWith('/dashboard/financeiro')) return 'Financeiro & Relatórios';
+    if (pathname.startsWith('/dashboard/leads')) return 'Funil de Leads';
+    if (pathname.startsWith('/dashboard/agenda')) return 'Agenda & Prazos';
+    if (pathname.startsWith('/dashboard/services')) return 'Serviços';
+    if (pathname.startsWith('/dashboard/usuarios')) return 'Usuários';
+    return 'Painel de Controle';
+  };
   const router = useRouter();
   const { company, isReadOnly } = useCompany();
   const { user, role, isAdmin, loading: userLoading } = useUser();
@@ -181,7 +195,7 @@ function DashboardLayoutContent({
               )}
             </div>
             {sidebarOpen && (
-              <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent truncate max-w-[150px]">
+              <span className="tracking-tight text-white font-bold truncate max-w-[150px]">
                 {company.name}
               </span>
             )}
@@ -194,19 +208,6 @@ function DashboardLayoutContent({
             <Menu className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Tenant/Company Info Card */}
-        {sidebarOpen && (
-          <div className="mx-4 my-4 p-3 bg-slate-950/50 border border-slate-800/80 rounded-none flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-none">
-              <Building className="w-4 h-4" />
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tenant Ativo</p>
-              <p className="text-sm font-bold text-slate-200 truncate">{company.name}</p>
-            </div>
-          </div>
-        )}
 
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 space-y-1 py-4">
@@ -226,8 +227,8 @@ function DashboardLayoutContent({
                     }}
                     className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-none text-sm font-medium transition-all duration-200 ease-out cursor-pointer ${
                       isSubActive 
-                        ? 'text-emerald-450 bg-slate-800/20' 
-                        : 'text-slate-400 hover:text-slate-250 hover:bg-slate-800/30'
+                        ? 'text-emerald-400 bg-slate-800/20' 
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -255,7 +256,7 @@ function DashboardLayoutContent({
                             className={`flex items-center gap-3 px-3 py-2 rounded-none text-xs font-semibold transition-all duration-200 ${
                               isActive 
                                 ? 'bg-emerald-600 text-white shadow shadow-emerald-600/10' 
-                                : 'text-slate-455 hover:text-slate-200 hover:bg-slate-800/25'
+                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/25'
                             }`}
                           >
                             <SubIcon className="w-4 h-4 shrink-0" />
@@ -339,7 +340,7 @@ function DashboardLayoutContent({
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="font-semibold text-slate-200">Painel de Controle</h2>
+            <h2 className="font-semibold text-slate-200">{getHeaderTitle()}</h2>
           </div>
           
           <div className="flex items-center gap-4">
@@ -347,10 +348,10 @@ function DashboardLayoutContent({
             <button
               onClick={toggleTheme}
               aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-              className="p-2 text-slate-455 hover:text-slate-200 hover:bg-slate-800/40 rounded-none border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
+              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 rounded-none border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
               title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
             >
-              {theme === 'light' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              {theme === 'light' ? <Moon className="w-4 h-4 text-emerald-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
             </button>
 
           </div>

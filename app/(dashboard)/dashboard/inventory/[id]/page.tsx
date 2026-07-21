@@ -404,7 +404,7 @@ export default function ProductDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tecnologia</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia</label>
                     <select
                       value={ramTech}
                       onChange={(e) => setRamTech(e.target.value)}
@@ -418,7 +418,7 @@ export default function ProductDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Velocidade</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Velocidade</label>
                     <input
                       type="text"
                       placeholder="Ex: 3200MHz"
@@ -428,7 +428,7 @@ export default function ProductDetailPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tamanho (GB)</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB)</label>
                     <select
                       value={ramGb}
                       onChange={(e) => setRamGb(e.target.value)}
@@ -449,7 +449,7 @@ export default function ProductDetailPage() {
               {category === 'SSD' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tecnologia SSD</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia SSD</label>
                     <select
                       value={ssdTech}
                       onChange={(e) => setSsdTech(e.target.value)}
@@ -461,7 +461,7 @@ export default function ProductDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Tamanho (GB/TB)</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB/TB)</label>
                     <select
                       value={ssdGb}
                       onChange={(e) => setSsdGb(e.target.value)}
