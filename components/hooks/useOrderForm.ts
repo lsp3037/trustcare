@@ -639,6 +639,24 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         }
       }
 
+      const selClient = clientsList.find(c => c.id === clientId);
+      if (selClient) {
+        try {
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status: 'Abertura',
+              order_id: insertedOs.id,
+              equipment: equipmentDetails || 'Equipamento',
+              client_name: selClient.name,
+              client_email: (selClient as any).email || '',
+              tracking_url: `${typeof window !== 'undefined' ? window.location.origin : ''}/rastreio?id=${insertedOs.id}`,
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
       setSuccess(true);
       setTimeout(() => { onSuccess?.(); }, 1000);
     } catch (err: any) {

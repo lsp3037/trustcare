@@ -269,8 +269,11 @@ export function OrderDetailsClient({
           order_id: id,
           equipment: order?.equipment_details || 'Equipamento',
           client_name: client?.name || 'Cliente',
+          client_email: client?.email || '',
           client_phone: client?.phone || '',
-          tracking_url: `${window.location.origin}/rastreio?id=${id}`
+          tracking_url: `${window.location.origin}/rastreio?id=${id}`,
+          budget_url: `${window.location.origin}/orcamento/${id}`,
+          total_value: order?.total_value ? parseFloat(order.total_value).toFixed(2) : undefined,
         })
       });
     } catch (webhookErr) {
