@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
+const MAX_ATTEMPTS = 5;
+
 export async function POST(req: Request) {
   try {
     const { tempTokenId, code } = await req.json();
@@ -9,12 +11,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Parâmetros inválidos.' }, { status: 400 });
     }
 
-    // 1. Buscar a verificação de token no banco
+    // 0. Throttle por IP para dificultar automação/força bruta distribuída
+    const forwarded = req.headers.get('x-forwarded-for');
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+    const { data: allowed } = await supabaseAdmin.rpc('check_and_clean_rate_limit', {
+      client_ip: clientIp,
+      target_path: '/api/rastreio/verify-token',
+    });
+    if (allowed === false) {
+      return NextResponse.json({ error: 'Muitas tentativas. Aguarde um instante e tente novamente.' }, { status: 429 });
+    }
+
+    // 1. Buscar o registro do token (sem filtrar pelo código, para poder
+    // controlar o número de tentativas mesmo quando o código está errado)
     const { data: verification, error: verifyError } = await supabaseAdmin
       .from('os_verifications')
-      .select('*, service_orders(company_id)')
+      .select('*')
       .eq('id', tempTokenId)
-      .eq('code', code.trim())
       .single();
 
     if (verifyError || !verification) {
@@ -28,6 +41,20 @@ export async function POST(req: Request) {
       // Deletar o token expirado para limpeza
       await supabaseAdmin.from('os_verifications').delete().eq('id', tempTokenId);
       return NextResponse.json({ error: 'O código de verificação expirou. Solicite um novo.' }, { status: 400 });
+    }
+
+    // 2b. Bloquear após muitas tentativas incorretas (proteção contra força bruta do código de 6 dígitos)
+    if (verification.attempts >= MAX_ATTEMPTS) {
+      await supabaseAdmin.from('os_verifications').delete().eq('id', tempTokenId);
+      return NextResponse.json({ error: 'Número máximo de tentativas excedido. Solicite um novo código.' }, { status: 429 });
+    }
+
+    if (verification.code !== code.trim()) {
+      await supabaseAdmin
+        .from('os_verifications')
+        .update({ attempts: verification.attempts + 1 })
+        .eq('id', tempTokenId);
+      return NextResponse.json({ error: 'Código de verificação incorreto ou inválido.' }, { status: 400 });
     }
 
     // 3. Buscar os detalhes da Ordem de Serviço

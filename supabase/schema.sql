@@ -15,9 +15,9 @@ CREATE TABLE public.plans (
 
 -- Popula os planos padrões com as novas cotas oficiais
 INSERT INTO public.plans (id, name, max_technicians, max_storage_bytes) VALUES
-('basico', 'Básico', 2, 1073741824), -- 1 GB
-('profissional', 'Profissional', 6, 5368709120), -- 5 GB
-('premium', 'Premium', 20, 21474836480) -- 20 GB
+('starter', 'Starter', 1, 1073741824), -- 1 GB
+('pro', 'Pro', 3, 5368709120), -- 5 GB
+('premium', 'Premium', 99999, 53687091200) -- 50 GB
 ON CONFLICT (id) DO NOTHING;
 
 -- 1. Tabela de Empresas (Tenants)
@@ -28,7 +28,7 @@ CREATE TABLE public.companies (
     email TEXT,
     logo_url TEXT,
     whatsapp TEXT,
-    subscription_plan TEXT NOT NULL DEFAULT 'basico' REFERENCES public.plans(id),
+    subscription_plan TEXT NOT NULL DEFAULT 'starter' REFERENCES public.plans(id),
     subscription_status TEXT NOT NULL DEFAULT 'trialing' CHECK (subscription_status IN ('active', 'past_due', 'canceled', 'trialing')),
     subscription_expires_at TIMESTAMPTZ,
     asaas_customer_id TEXT UNIQUE,

@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
-import { CreditCard, AlertCircle, CheckCircle2, ShieldCheck, Users, HardDrive, ExternalLink } from 'lucide-react';
+import { CreditCard, AlertCircle, CheckCircle2, ShieldCheck, Users, HardDrive, ExternalLink, Loader2 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function BillingSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { role, loading: userLoading } = useUser();
   const { company, loading: contextLoading, maxTechnicians, maxStorageBytes } = useCompany();
 
@@ -17,12 +18,22 @@ export default function BillingSettingsPage() {
   const [techCount, setTechCount] = useState(0);
   const [storageUsed, setStorageUsed] = useState<bigint>(BigInt(0));
   const [loadingStats, setLoadingStats] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userLoading && role !== 'admin') {
       router.push('/dashboard');
     }
   }, [role, userLoading, router]);
+
+  useEffect(() => {
+    if (searchParams.get('checkout_success') === 'true') {
+      setSuccessMessage('Assinatura ativada com sucesso! Bem-vindo(a) ao seu novo plano.');
+      // Remove o param da URL para não aparecer no reload
+      router.replace('/dashboard/settings/billing');
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     async function loadStats() {
@@ -64,7 +75,6 @@ export default function BillingSettingsPage() {
     );
   }
 
-  // Format bytes helper
   const formatBytes = (bytes: bigint) => {
     const kb = Number(bytes) / 1024;
     const mb = kb / 1024;
@@ -75,15 +85,15 @@ export default function BillingSettingsPage() {
   };
 
   const planNames: Record<string, string> = {
-    basico: 'Básico',
-    profissional: 'Profissional',
+    starter: 'Starter',
+    pro: 'Pro',
     premium: 'Premium'
   };
 
   const planPrices: Record<string, string> = {
-    basico: 'R$ 99/mês',
-    profissional: 'R$ 199/mês',
-    premium: 'R$ 399/mês'
+    starter: 'R$ 29,90/mês',
+    pro: 'R$ 69,90/mês',
+    premium: 'R$ 149,90/mês'
   };
 
   const statusColors: Record<string, string> = {
@@ -100,7 +110,7 @@ export default function BillingSettingsPage() {
     canceled: 'Cancelado / Suspenso'
   };
 
-  const currentPlan = company.subscription_plan || 'basico';
+  const currentPlan = company.subscription_plan || 'starter';
   const currentStatus = company.subscription_status || 'trialing';
 
   // Calculate percentage of usage
@@ -109,12 +119,33 @@ export default function BillingSettingsPage() {
     ? Number((storageUsed * BigInt(100)) / maxStorageBytes) 
     : 0;
 
-  // Pre-filled WhatsApp link for manual checkout or upgrade
-  const getWhatsAppLink = (intent: string) => {
-    const text = encodeURIComponent(
-      `Olá! Sou o administrador da empresa "${company.name}" (ID: ${company.id}) no Trust Care. Gostaria de solicitar suporte comercial referente a: ${intent}.`
-    );
-    return `https://wa.me/5565999620703?text=${text}`;
+  const handleSubscribe = async (planId: string) => {
+    try {
+      setCheckoutLoading(planId);
+      const res = await fetch('/api/checkout/asaas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao gerar link de pagamento');
+      }
+
+      if (data.url) {
+        if (data.url.startsWith('http')) {
+          window.location.href = data.url;
+        } else {
+          router.push(data.url);
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Erro inesperado ao gerar checkout.');
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   return (
@@ -129,6 +160,13 @@ export default function BillingSettingsPage() {
           Gerencie o plano da sua empresa, consulte faturas e verifique limites de uso dos recursos.
         </p>
       </div>
+
+      {successMessage && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium rounded-none flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5" />
+          {successMessage}
+        </div>
+      )}
 
       {/* Main Billing Card */}
       <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-none relative overflow-hidden">
@@ -150,36 +188,27 @@ export default function BillingSettingsPage() {
             </h2>
             {company.subscription_expires_at && (
               <p className="text-xs text-slate-400">
-                {currentStatus === 'trialing' ? 'O período de testes expira em: ' : 'Próxima renovação em: '}
+                {currentStatus === 'trialing' ? 'O período de testes de 7 dias expira em: ' : 'Próxima renovação em: '}
                 <strong className="text-slate-200">
                   {new Date(company.subscription_expires_at).toLocaleDateString('pt-BR')}
                 </strong>
               </p>
             )}
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-            {currentStatus === 'trialing' || currentStatus === 'past_due' ? (
-              <a
-                href={getWhatsAppLink('Ativação de Assinatura')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded-none text-xs transition-all shadow-lg shadow-blue-500/15 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                Ativar Assinatura <ExternalLink className="w-4 h-4" />
-              </a>
-            ) : (
-              <a
-                href={getWhatsAppLink('Alteração de Plano')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-slate-950 hover:bg-slate-900 text-slate-300 border border-slate-800 font-bold py-2.5 px-6 rounded-none text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                Alterar Plano <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
-          </div>
         </div>
+
+        {/* Trial Banner */}
+        {currentStatus === 'trialing' && (
+          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-none text-xs text-blue-400 flex items-start gap-2.5">
+            <CheckCircle2 className="w-4.5 h-4.5 shrink-0 mt-0.5 text-blue-500" />
+            <div className="space-y-1">
+              <p className="font-bold">Aproveite seus 7 dias de Teste Grátis!</p>
+              <p className="text-slate-300 leading-relaxed">
+                Você tem acesso total à plataforma. Para não perder seus dados após esse período, escolha o plano ideal abaixo.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Warning Banner if past_due */}
         {currentStatus === 'past_due' && (
@@ -205,18 +234,18 @@ export default function BillingSettingsPage() {
               Técnicos Ativos
             </h3>
             <span className="text-xs font-mono font-bold text-slate-400">
-              {loadingStats ? '...' : `${techCount} / ${maxTechnicians}`}
+              {loadingStats ? '...' : `${techCount} / ${maxTechnicians > 1000 ? 'Ilimitado' : maxTechnicians}`}
             </span>
           </div>
 
           <div className="w-full bg-slate-950 h-2 rounded-none overflow-hidden">
             <div 
               className="bg-blue-500 h-full transition-all duration-500" 
-              style={{ width: `${loadingStats ? 0 : techPercent}%` }} 
+              style={{ width: `${loadingStats || maxTechnicians > 1000 ? 0 : techPercent}%` }} 
             />
           </div>
           <p className="text-[10px] text-slate-500 leading-relaxed">
-            Seu plano permite até {maxTechnicians} contas de técnicos ativos simultaneamente no painel.
+            Seu plano permite {maxTechnicians > 1000 ? 'usuários ilimitados' : `até ${maxTechnicians} contas de técnicos ativos simultaneamente`} no painel.
           </p>
         </div>
 
@@ -252,54 +281,108 @@ export default function BillingSettingsPage() {
             Tabela Comparativa de Planos
           </h3>
           <p className="text-[10px] text-slate-500 mt-1">
-            Escolha o plano ideal conforme o crescimento da sua assistência técnica de TI.
+            Profissionalize sua assistência técnica hoje mesmo. Atualize ou assine o plano ideal.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 border border-slate-800 bg-slate-950 divide-y md:divide-y-0 md:divide-x divide-slate-800">
-          {/* Plan Básico */}
-          <div className={`p-6 space-y-4 transition-all duration-300 ${currentPlan === 'basico' ? 'bg-slate-900/40' : ''}`}>
-            <div className="space-y-1">
-              <h4 className="text-sm font-extrabold text-white">Plano Básico</h4>
-              <p className="text-2xl font-black text-white">R$ 99<span className="text-xs font-normal text-slate-500"> /mês</span></p>
+          {/* Plan Starter */}
+          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'starter' && currentStatus !== 'trialing' ? 'bg-slate-900/40' : ''}`}>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-extrabold text-white">Starter</h4>
+                <p className="text-2xl font-black text-white">R$ 29,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
+                <p className="text-[10px] text-slate-500">Menos de 1 real por dia para aposentar sua planilha.</p>
+              </div>
+              <ul className="text-xs text-slate-400 space-y-2.5">
+                <li className="flex items-center gap-2">✓ 1 Usuário</li>
+                <li className="flex items-center gap-2">✓ OS Ilimitadas</li>
+                <li className="flex items-center gap-2">✓ Gestão de Clientes</li>
+                <li className="flex items-center gap-2">✓ Orçamentos Simples</li>
+                <li className="flex items-center gap-2">✓ 1 GB de Armazenamento</li>
+              </ul>
             </div>
-            <ul className="text-xs text-slate-400 space-y-2.5">
-              <li className="flex items-center gap-2">✓ Até 2 técnicos ativos</li>
-              <li className="flex items-center gap-2">✓ 1 GB de armazenamento</li>
-              <li className="flex items-center gap-2">✓ Rastreamento de OS</li>
-              <li className="flex items-center gap-2">✓ Suporte via Email</li>
-            </ul>
+            
+            <button
+              onClick={() => handleSubscribe('starter')}
+              disabled={checkoutLoading !== null}
+              className={`w-full font-bold py-2.5 px-4 rounded-none text-xs transition-all flex items-center justify-center gap-2 ${
+                currentPlan === 'starter' && currentStatus !== 'trialing'
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700'
+              }`}
+            >
+              {checkoutLoading === 'starter' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+               currentPlan === 'starter' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Starter'}
+            </button>
           </div>
 
-          {/* Plan Profissional */}
-          <div className={`p-6 space-y-4 transition-all duration-300 ${currentPlan === 'profissional' ? 'bg-slate-900/40' : ''}`}>
-            <div className="space-y-1">
-              <h4 className="text-sm font-extrabold text-white flex items-center gap-1.5">
-                Plano Profissional
-                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">Recomendado</span>
-              </h4>
-              <p className="text-2xl font-black text-white">R$ 199<span className="text-xs font-normal text-slate-500"> /mês</span></p>
+          {/* Plan Pro */}
+          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 relative ${currentPlan === 'pro' && currentStatus !== 'trialing' ? 'bg-slate-900/40' : ''}`}>
+            {/* Sweet Spot Highlight */}
+            <div className="absolute top-0 inset-x-0 h-1 bg-blue-500" />
+            
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-extrabold text-white flex items-center gap-1.5">
+                  Pro
+                  <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">Recomendado</span>
+                </h4>
+                <p className="text-2xl font-black text-white">R$ 69,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
+                <p className="text-[10px] text-slate-500">Ideal para o balcão e a bancada.</p>
+              </div>
+              <ul className="text-xs text-slate-200 space-y-2.5">
+                <li className="flex items-center gap-2">✓ Até 3 Usuários</li>
+                <li className="flex items-center gap-2 font-bold text-white">✓ Controle de Estoque</li>
+                <li className="flex items-center gap-2 font-bold text-white">✓ Módulo Financeiro</li>
+                <li className="flex items-center gap-2 font-bold text-white">✓ Painel Público de Rastreio</li>
+                <li className="flex items-center gap-2">✓ 5 GB de Armazenamento</li>
+              </ul>
             </div>
-            <ul className="text-xs text-slate-400 space-y-2.5">
-              <li className="flex items-center gap-2 text-slate-200">✓ Até 6 técnicos ativos</li>
-              <li className="flex items-center gap-2 text-slate-200">✓ 5 GB de armazenamento</li>
-              <li className="flex items-center gap-2 text-slate-200">✓ Rastreamento de OS</li>
-              <li className="flex items-center gap-2 text-slate-200">✓ Suporte via WhatsApp</li>
-            </ul>
+
+            <button
+              onClick={() => handleSubscribe('pro')}
+              disabled={checkoutLoading !== null}
+              className={`w-full font-bold py-2.5 px-4 rounded-none text-xs transition-all shadow-lg flex items-center justify-center gap-2 ${
+                currentPlan === 'pro' && currentStatus !== 'trialing'
+                  ? 'bg-blue-900/50 text-blue-300 cursor-not-allowed border border-blue-800' 
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/15'
+              }`}
+            >
+              {checkoutLoading === 'pro' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+               currentPlan === 'pro' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Pro'}
+            </button>
           </div>
 
           {/* Plan Premium */}
-          <div className={`p-6 space-y-4 transition-all duration-300 ${currentPlan === 'premium' ? 'bg-slate-900/40' : ''}`}>
-            <div className="space-y-1">
-              <h4 className="text-sm font-extrabold text-white">Plano Premium</h4>
-              <p className="text-2xl font-black text-white">R$ 399<span className="text-xs font-normal text-slate-500"> /mês</span></p>
+          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'premium' && currentStatus !== 'trialing' ? 'bg-slate-900/40' : ''}`}>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-extrabold text-white">Premium</h4>
+                <p className="text-2xl font-black text-white">R$ 149,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
+                <p className="text-[10px] text-slate-500">Para operações em grande escala.</p>
+              </div>
+              <ul className="text-xs text-slate-400 space-y-2.5">
+                <li className="flex items-center gap-2">✓ Usuários Ilimitados</li>
+                <li className="flex items-center gap-2">✓ Gestão de Múltiplas Filiais</li>
+                <li className="flex items-center gap-2">✓ Relatórios Avançados (BI)</li>
+                <li className="flex items-center gap-2">✓ Suporte Prioritário</li>
+                <li className="flex items-center gap-2">✓ 50 GB de Armazenamento</li>
+              </ul>
             </div>
-            <ul className="text-xs text-slate-400 space-y-2.5">
-              <li className="flex items-center gap-2">✓ Até 20 técnicos ativos</li>
-              <li className="flex items-center gap-2">✓ 20 GB de armazenamento</li>
-              <li className="flex items-center gap-2">✓ API pública integrada</li>
-              <li className="flex items-center gap-2">✓ Suporte priorizado 24/7</li>
-            </ul>
+
+            <button
+              onClick={() => handleSubscribe('premium')}
+              disabled={checkoutLoading !== null}
+              className={`w-full font-bold py-2.5 px-4 rounded-none text-xs transition-all flex items-center justify-center gap-2 ${
+                currentPlan === 'premium' && currentStatus !== 'trialing'
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700'
+              }`}
+            >
+              {checkoutLoading === 'premium' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
+               currentPlan === 'premium' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Premium'}
+            </button>
           </div>
         </div>
       </div>

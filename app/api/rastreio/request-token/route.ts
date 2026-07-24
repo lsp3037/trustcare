@@ -16,6 +16,17 @@ function maskEmail(email: string): string {
 
 export async function POST(req: Request) {
   try {
+    // Throttle por IP para dificultar automação/spam de e-mails de código
+    const forwarded = req.headers.get('x-forwarded-for');
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+    const { data: allowed } = await supabaseAdmin.rpc('check_and_clean_rate_limit', {
+      client_ip: clientIp,
+      target_path: '/api/rastreio/request-token',
+    });
+    if (allowed === false) {
+      return NextResponse.json({ error: 'Muitas tentativas. Aguarde um instante e tente novamente.' }, { status: 429 });
+    }
+
     const { searchId, subdomain } = await req.json();
     const cleanId = searchId.trim().replace(/^#/, '');
 

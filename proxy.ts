@@ -60,10 +60,22 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
   // Verification flags
+  const isDev = process.env.NODE_ENV === 'development';
   const isMockAuthenticated = request.cookies.get('os-session-mock')?.value === 'true';
-  const isAdminAuthenticated = !!user || isMockAuthenticated;
+  // Permitir mock apenas em ambiente local de desenvolvimento
+  const isAdminAuthenticated = !!user || (isDev && isMockAuthenticated);
 
   const isPortalAuthenticated = request.cookies.get('portal-session-mock')?.value === 'true';
+
+  // Backoffice (God Mode) protection
+  if (pathname.startsWith('/backoffice')) {
+    const godModeEmail = 'lsp3037@gmail.com';
+    if (!user || user.email !== godModeEmail) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+  }
 
   // 2. Admin dashboard route protection
   if (pathname.startsWith('/dashboard') && !isAdminAuthenticated) {

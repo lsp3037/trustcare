@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
-export type SubscriptionPlan = 'basico' | 'profissional' | 'premium';
+export type SubscriptionPlan = 'starter' | 'pro' | 'premium';
 export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'trialing';
 
 export interface Company {
@@ -37,7 +37,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     email: 'contato@trustcare.com.br',
     logo_url: '',
     whatsapp: '',
-    subscription_plan: 'basico',
+    subscription_plan: 'starter',
     subscription_status: 'trialing'
   });
   const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           email: data.email || 'contato@trustcare.com.br',
           logo_url: data.logo_url || '',
           whatsapp: data.whatsapp || '',
-          subscription_plan: (data.subscription_plan || 'basico') as SubscriptionPlan,
+          subscription_plan: (data.subscription_plan || 'starter') as SubscriptionPlan,
           subscription_status: (data.subscription_status || 'trialing') as SubscriptionStatus,
           subscription_expires_at: data.subscription_expires_at || '',
           subdomain: data.subdomain || ''
@@ -86,7 +86,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           email: 'contato@trustcare.com.br',
           logo_url: '',
           whatsapp: '',
-          subscription_plan: 'basico' as SubscriptionPlan,
+          subscription_plan: 'starter' as SubscriptionPlan,
           subscription_status: 'trialing' as SubscriptionStatus
         };
         localStorage.setItem('mock-company-settings', JSON.stringify(defaultCompany));
@@ -120,7 +120,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           email: 'contato@trustcare.com.br',
           logo_url: '',
           whatsapp: '',
-          subscription_plan: 'basico',
+          subscription_plan: 'starter',
           subscription_status: 'trialing'
         });
         setLoading(false);
@@ -147,17 +147,17 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
   // Cotas operacionais baseadas no plano
   const maxTechnicians = React.useMemo(() => {
-    const plan = company.subscription_plan || 'basico';
-    if (plan === 'premium') return 20;
-    if (plan === 'profissional') return 6;
-    return 2; // Básico
+    const plan = company.subscription_plan || 'starter';
+    if (plan === 'premium') return 99999;
+    if (plan === 'pro') return 3;
+    return 1; // starter
   }, [company.subscription_plan]);
 
   const maxStorageBytes = React.useMemo(() => {
-    const plan = company.subscription_plan || 'basico';
-    if (plan === 'premium') return BigInt(21474836480); // 20 GB
-    if (plan === 'profissional') return BigInt(5368709120); // 5 GB
-    return BigInt(1073741824); // 1 GB
+    const plan = company.subscription_plan || 'starter';
+    if (plan === 'premium') return BigInt(53687091200); // 50 GB
+    if (plan === 'pro') return BigInt(5368709120); // 5 GB
+    return BigInt(1073741824); // 1 GB (starter)
   }, [company.subscription_plan]);
 
   return (

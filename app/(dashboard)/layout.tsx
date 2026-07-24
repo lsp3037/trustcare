@@ -70,6 +70,7 @@ function DashboardLayoutContent({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/dashboard/settings'));
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (pathname.startsWith('/dashboard/settings')) {
@@ -110,7 +111,7 @@ function DashboardLayoutContent({
   const userName = user?.full_name || 'Usuário';
   const userRole = role === 'admin' ? 'Administrador' : role === 'technician' ? 'Técnico' : 'Recepcionista';
 
-  if (userLoading) {
+  if (userLoading || isLoggingOut) {
     return (
       <div className="min-h-screen bg-slate-950 flex">
         {/* Sidebar skeleton */}
@@ -143,7 +144,9 @@ function DashboardLayoutContent({
     );
   }
 
+
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await supabase.auth.signOut();
     localStorage.removeItem('os-session');
     document.cookie = "os-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";

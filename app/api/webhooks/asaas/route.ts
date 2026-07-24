@@ -6,6 +6,13 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 export async function POST(req: Request) {
   try {
+    const accessToken = req.headers.get('asaas-access-token');
+    // Ensure you have ASAAS_WEBHOOK_TOKEN defined in your environment variables
+    if (!accessToken || accessToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
+      console.warn('[Asaas Webhook] Token de acesso inválido ou ausente.');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const payload = await req.json();
     console.log('[Asaas Webhook] Evento recebido:', payload.event);
 
@@ -107,7 +114,7 @@ export async function POST(req: Request) {
       updateData.asaas_subscription_id = subscriptionAsaasId;
     }
     // Se o webhook trouxe uma mudança de plano estruturada, atualiza
-    if (targetPlan && ['basico', 'profissional', 'premium'].includes(targetPlan)) {
+    if (targetPlan && ['starter', 'pro', 'premium'].includes(targetPlan)) {
       updateData.subscription_plan = targetPlan;
     }
 

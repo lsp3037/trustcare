@@ -61,14 +61,36 @@ export function OrderHeader({
               onClick={handleDownloadPdf}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-none text-xs font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-md"
             >
-              <FileText className="w-4 h-4" /> Baixar PDF Oficial
+              <FileText className="w-4 h-4" /> PDF
             </button>
             <Link 
               href={`/dashboard/orders/${order?.id}/temp-print`} 
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-none text-xs font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer border border-slate-700"
             >
-              <Printer className="w-4 h-4" /> Imprimir Via
+              <Printer className="w-4 h-4" /> Via
             </Link>
+            
+            <button
+              type="button"
+              onClick={() => {
+                const url = `${window.location.origin}/orcamento/${order?.id}`;
+                navigator.clipboard.writeText(url);
+                alert('Link do orçamento copiado para a área de transferência!');
+              }}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-none text-xs font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer border border-slate-700"
+            >
+              Copiar Link
+            </button>
+
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Olá ${client?.name || ''}, seu orçamento (OS #${order?.codigo_os || order?.id?.slice(0, 8)}) está pronto para aprovação. Acesse: ${typeof window !== 'undefined' ? window.location.origin : ''}/orcamento/${order?.id}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none text-xs font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-md"
+            >
+              WhatsApp
+            </a>
+
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider bg-slate-950 border border-slate-850 px-2.5 py-1.5 rounded-none">
               Prioridade: <strong className={priority === 'Alta' ? 'text-rose-400' : priority === 'Média' ? 'text-amber-400' : 'text-slate-400'}>{priority}</strong>
             </span>

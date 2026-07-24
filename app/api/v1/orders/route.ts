@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // Autentica a requisição via cabeçalho x-api-key
 async function authenticateRequest(req: Request) {
   const apiKey = req.headers.get('x-api-key');
   if (!apiKey) return null;
 
-  // Fallback local/mock
-  if (apiKey === 'mock-api-key') {
-    return 'mock-tenant-id';
-  }
-
   try {
-    const { data: company, error } = await supabase
+    const { data: company, error } = await supabaseAdmin
       .from('companies')
       .select('id')
       .eq('api_key', apiKey)
@@ -37,26 +32,18 @@ export async function GET(req: Request) {
   }
 
   try {
-    // 1. Busca no Supabase
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await supabaseAdmin
       .from('service_orders')
       .select('id, codigo_os, equipment_details, reported_problem, status, priority, total_value, created_at')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('[API Orders] Erro Supabase, tentando local:', error.message);
+      console.warn('[API Orders] Erro Supabase:', error.message);
+      return NextResponse.json({ error: 'Erro ao buscar ordens.' }, { status: 500 });
     }
 
-    let finalOrders = orders || [];
-
-    // 2. Fallback offline local
-    if (finalOrders.length === 0 && companyId === 'mock-tenant-id') {
-      const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
-      finalOrders = JSON.parse(localOrdersStr);
-    }
-
-    return NextResponse.json({ orders: finalOrders });
+    return NextResponse.json({ orders: orders || [] });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
   }
@@ -95,29 +82,15 @@ export async function POST(req: Request) {
       total_value: 0
     };
 
-    // 1. Insere no Supabase
-    const { data: insertedOs, error } = await supabase
+    const { data: insertedOs, error } = await supabaseAdmin
       .from('service_orders')
       .insert(osData)
       .select()
       .single();
 
     if (error) {
-      console.warn('[API Orders] Erro Supabase ao criar OS, salvando local:', error.message);
-
-      // Fallback offline local
-      const mockOrders = localStorage.getItem('mock-orders') || '[]';
-      const parsed = JSON.parse(mockOrders);
-      const newOsId = `mock-os-${Date.now()}`;
-      const newOs = {
-        id: newOsId,
-        ...osData,
-        created_at: new Date().toISOString()
-      };
-      parsed.push(newOs);
-      localStorage.setItem('mock-orders', JSON.stringify(parsed));
-
-      return NextResponse.json({ success: true, order: newOs }, { status: 201 });
+      console.warn('[API Orders] Erro Supabase ao criar OS:', error.message);
+      return NextResponse.json({ error: 'Erro ao criar ordem.' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, order: insertedOs }, { status: 201 });
