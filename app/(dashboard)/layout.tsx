@@ -43,7 +43,7 @@ function navItemClasses({
   nested?: boolean;
 }) {
   return cn(
-    'flex items-center gap-3 px-3 transition-colors duration-150',
+    'flex items-center gap-3 px-3 transition-colors duration-150 rounded-xl',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
     nested ? 'py-2 text-small font-medium' : 'py-2.5 text-body font-medium',
     active
