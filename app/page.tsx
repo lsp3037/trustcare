@@ -43,26 +43,26 @@ const dores = [
   {
     code: '01',
     icon: ClipboardList,
-    title: 'Quantos aparelhos estão na bancada agora?',
-    desc: 'Sem um painel único, é fácil perder a conta de quantos equipamentos estão parados e em que status cada um tá — na sua cabeça, numa planilha ou num caderno.',
+    title: 'Controle total da sua bancada',
+    desc: 'Sem um painel central, gabinetes, notebooks e componentes se misturam. Saiba exatamente qual máquina está aguardando peça, qual está em testes de estabilidade e o que já pode ser entregue.',
   },
   {
     code: '02',
     icon: PhoneCall,
-    title: '"E aí, ficou pronto?"',
-    desc: 'O cliente liga de novo porque não existe outro jeito de saber. Cada ligação é bancada parada e tempo que você não recupera.',
+    title: 'Fim das mensagens "Meu PC já tá pronto?"',
+    desc: 'Cada vez que você para uma montagem complexa ou limpeza térmica para responder o WhatsApp, perde foco. Automatize os avisos de status e deixe o cliente acompanhar o processo sozinho.',
   },
   {
     code: '03',
     icon: ShieldAlert,
-    title: 'Garantia que ninguém lembra de honrar',
-    desc: 'Peça ou serviço com prazo de garantia que só existe na palavra — e vira dor de cabeça quando o cliente volta reclamando.',
+    title: 'Controle de garantias de hardware',
+    desc: 'Entregar um upgrade e não registrar os prazos das peças novas (como memórias, SSDs ou processadores) é prejuízo na certa. Registre prazos de peças e serviços direto na O.S.',
   },
   {
     code: '04',
     icon: TrendingDown,
-    title: 'Fim do mês sem saber se deu lucro',
-    desc: 'Dinheiro entrou, dinheiro saiu — mas ninguém separou o que foi lucro de verdade do que foi só giro de caixa.',
+    title: 'Você está pagando para consertar?',
+    desc: 'O dinheiro entra, você repassa para fornecedores de peças, mas sobra quanto? Separe rapidamente o que é custo de hardware do que é o lucro real da sua mão de obra especializada.',
   },
 ];
 
