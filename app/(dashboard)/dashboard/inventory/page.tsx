@@ -1,5 +1,5 @@
 'use client';
-import { Package, Plus, CheckCircle2, Search, AlertCircle, Boxes, Trash2, Download } from 'lucide-react';
+import { Package, Plus, CheckCircle2, Search, AlertCircle, Boxes, Trash2, Download, MoreHorizontal } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -14,6 +14,13 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = () => setActiveDropdownId(null);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -911,16 +918,41 @@ export default function InventoryPage() {
                               </Badge>
                             )}
                           </td>
-                          <td className="py-4 px-6 text-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="px-1.5 text-danger hover:text-danger"
-                              onClick={() => handleDeleteProduct(p.id)}
-                              title="Excluir produto"
+                          <td className="py-4 px-6 text-center relative">
+                            <button
+                              type="button"
+                              aria-label={`Ações do produto ${p.name}`}
+                              aria-expanded={activeDropdownId === p.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(activeDropdownId === p.id ? null : p.id);
+                              }}
+                              className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+
+                            {activeDropdownId === p.id && (
+                              <div className="absolute right-8 top-1/2 -translate-y-1/2 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
+                                <Link
+                                  href={`/dashboard/inventory/${p.id}`}
+                                  className="block w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
+                                >
+                                  Ver Detalhes
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveDropdownId(null);
+                                    handleDeleteProduct(p.id);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-small font-medium text-danger hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  Excluir Produto
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );

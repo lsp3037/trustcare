@@ -1,5 +1,5 @@
 'use client';
-import { Users, Plus, CheckCircle2, FileText, User, Building, Phone, Mail, Laptop, QrCode, Search, AlertCircle, X } from 'lucide-react';
+import { QrCode, Building, User, FileText, Phone, Mail, Laptop, Trash2, FolderPlus, MoreHorizontal, Users, Plus, CheckCircle2, Search, AlertCircle, X } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -15,6 +15,14 @@ import { formatDocument, validateDocument } from '@/lib/utils/documentValidation
 export default function ClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<any[]>([]);
+  const [filteredClients, setFilteredClients] = useState<any[]>([]);
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = () => setActiveDropdownId(null);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const { user, role, loading: userLoading } = useUser();
   const [loading, setLoading] = useState(true);
@@ -688,17 +696,41 @@ export default function ClientsPage() {
                             </div>
                           )}
                         </td>
-                        <td className="py-4 px-6 text-center">
-                          <Button
+                        <td className="py-4 px-6 text-center relative">
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="px-1.5 text-text-subtle hover:text-danger"
-                            onClick={() => handleDeleteClient(client.id)}
-                            title="Excluir Cliente"
+                            aria-label={`Ações do cliente ${client.name}`}
+                            aria-expanded={activeDropdownId === client.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownId(activeDropdownId === client.id ? null : client.id);
+                            }}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                           >
-                            <X className="w-4 h-4" />
-                          </Button>
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+
+                          {activeDropdownId === client.id && (
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
+                              <Link
+                                href={`/dashboard/clients/${client.id}`}
+                                className="block w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
+                              >
+                                Ver Detalhes
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(null);
+                                  handleDeleteClient(client.id);
+                                }}
+                                className="w-full text-left px-3 py-2 text-small font-medium text-danger hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                              >
+                                Excluir Cliente
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

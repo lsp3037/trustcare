@@ -14,9 +14,8 @@ import {
   TR,
   TH,
   TD,
-  Modal,
 } from '@/components/ui';
-import { OS_STATUS_FLOW, getStatusDot } from '@/lib/design/status';
+import { OS_STATUS_FLOW } from '@/lib/design/status';
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -31,8 +30,7 @@ import {
   Trash2,
   LayoutGrid,
   List,
-  Download,
-  MoreHorizontal
+  Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import NewOrderForm from '@/components/NewOrderForm';
@@ -85,38 +83,6 @@ function OrdersContent() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'Todos');
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
-  const [statusModalOrder, setStatusModalOrder] = useState<ServiceOrder | null>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = () => {
-      setActiveDropdownId(null);
-    };
-    window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
-  }, []);
-
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('service_orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
-      
-      if (error) throw error;
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-    } catch (err) {
-      console.warn('Erro ao atualizar online, aplicando localmente:', err);
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsed = JSON.parse(localOrders);
-        const updated = parsed.map((o: any) => o.id === orderId ? { ...o, status: newStatus } : o);
-        localStorage.setItem('mock-orders', JSON.stringify(updated));
-        setOrders(updated);
-      }
-    }
-  };
 
   useEffect(() => {
     const saved = localStorage.getItem('orders-view-mode') as 'grid' | 'table';
@@ -662,42 +628,16 @@ function OrdersContent() {
                       <TD align="right" numeric className="font-semibold">
                         R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TD>
-                      <TD align="center" className="relative pr-0" onClick={(e) => e.stopPropagation()}>
+                      <TD align="center" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
-                          aria-label={`Ações da OS ${order.codigo_os}`}
-                          aria-expanded={activeDropdownId === order.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
-                          }}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                          className="p-1 text-text-subtle hover:text-text transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          title="Visualizar OS"
+                          aria-label={`Visualizar OS ${order.codigo_os || order.id.slice(0, 8)}`}
                         >
-                          <MoreHorizontal className="w-4 h-4" />
+                          <Eye className="w-4 h-4" aria-hidden />
                         </button>
-
-                        {activeDropdownId === order.id && (
-                          <div className="absolute right-0 mt-1 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
-                            {[
-                              { label: 'Ver Detalhes', run: () => router.push(`/dashboard/orders/${order.id}`) },
-                              { label: 'Alterar Status', run: () => setStatusModalOrder(order) },
-                              { label: 'Imprimir OS', run: () => window.print() },
-                            ].map((item) => (
-                              <button
-                                key={item.label}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveDropdownId(null);
-                                  item.run();
-                                }}
-                                className="w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
-                              >
-                                {item.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
                       </TD>
                     </TR>
                   ))}
@@ -740,59 +680,17 @@ function OrdersContent() {
           <Button
             variant="danger"
             size="sm"
+            icon={<Trash2 className="w-3.5 h-3.5" />}
+            loading={updatingBulk}
             onClick={handleBulkDelete}
-            disabled={updatingBulk}
-            className="w-full sm:w-auto"
           >
-            <Trash2 className="w-4 h-4" />
-            Excluir {selectedOrderIds.length} OS{selectedOrderIds.length > 1 ? 's' : ''}
+            Excluir OS
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedOrderIds([])}>
             Limpar
           </Button>
         </div>
       )}
-
-      {/* Alteração de Status Single */}
-      <Modal
-        open={Boolean(statusModalOrder)}
-        onClose={() => setStatusModalOrder(null)}
-        title="Alterar Status da OS"
-        description={statusModalOrder ? `OS ${statusModalOrder.codigo_os}` : undefined}
-        size="sm"
-        footer={
-          <Button variant="ghost" onClick={() => setStatusModalOrder(null)}>
-            Cancelar
-          </Button>
-        }
-      >
-        <div className="grid grid-cols-1 gap-1.5">
-          {OS_STATUS_FLOW.map((status) => {
-            const current = statusModalOrder?.status === status;
-            return (
-              <button
-                key={status}
-                type="button"
-                aria-current={current || undefined}
-                onClick={() => {
-                  if (statusModalOrder) handleUpdateStatus(statusModalOrder.id, status);
-                  setStatusModalOrder(null);
-                }}
-                className={cn(
-                  'w-full flex items-center gap-2.5 text-left px-3 py-2 text-small border transition-colors cursor-pointer rounded-xl',
-                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
-                  current
-                    ? 'bg-brand/10 border-brand text-brand font-semibold'
-                    : 'bg-surface-sunken border-border text-text-muted hover:border-border-strong hover:text-text',
-                )}
-              >
-                <span className={cn('w-2 h-2 shrink-0', getStatusDot(status))} aria-hidden />
-                {status}
-              </button>
-            );
-          })}
-        </div>
-      </Modal>
     </div>
   );
 }

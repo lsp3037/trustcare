@@ -1,5 +1,5 @@
 'use client';
-import { Wrench, Edit3, Trash2, Sparkles, X, CheckCircle2, AlertCircle, ToggleRight, ToggleLeft, Plus, Search } from 'lucide-react';
+import { Wrench, Edit3, Trash2, Sparkles, X, CheckCircle2, AlertCircle, ToggleRight, ToggleLeft, Plus, Search, MoreHorizontal } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 
@@ -22,6 +22,13 @@ export default function ServicesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'todos' | 'ativos' | 'inativos'>('todos');
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = () => setActiveDropdownId(null);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
 
   // Estados do formulário (Modal lateral / Drawer)
   const [isOpen, setIsOpen] = useState(false);
@@ -320,23 +327,46 @@ export default function ServicesPage() {
                         {service.ativo ? 'Ativo' : 'Inativo'}
                       </button>
                     </td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(service)}
-                          className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 p-1.5 rounded-xl transition-colors cursor-pointer"
-                          title="Editar serviço"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteService(service.id)}
-                          className="text-rose-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-xl transition-colors cursor-pointer"
-                          title="Excluir serviço"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <td className="py-4 px-6 text-center relative">
+                      <button
+                        type="button"
+                        aria-label={`Ações do serviço ${service.nome}`}
+                        aria-expanded={activeDropdownId === service.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdownId(activeDropdownId === service.id ? null : service.id);
+                        }}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+
+                      {activeDropdownId === service.id && (
+                        <div className="absolute right-8 top-1/2 -translate-y-1/2 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownId(null);
+                              handleOpenEdit(service);
+                            }}
+                            className="w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
+                          >
+                            Editar Serviço
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownId(null);
+                              handleDeleteService(service.id);
+                            }}
+                            className="w-full text-left px-3 py-2 text-small font-medium text-danger hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Excluir Serviço
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
