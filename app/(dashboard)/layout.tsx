@@ -12,6 +12,8 @@ import {
   Wrench, 
   Building,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Sun,
   Moon,
   Settings,
@@ -213,13 +215,13 @@ function DashboardLayoutContent({
         'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-raised border-r border-border transition-all duration-300 print:hidden',
         sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-20',
       )}>
-        {/* Brand Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+        {/* Brand Logo & Toggle */}
+        <div className={cn("flex border-b border-border shrink-0 transition-all duration-300", sidebarOpen ? "h-16 items-center justify-between px-4" : "flex-col items-center py-4 gap-4")}>
           <Link
             href="/dashboard"
             className="flex items-center gap-2.5 min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            <div className="flex items-center justify-center w-8 h-8 shrink-0 overflow-hidden bg-surface-sunken p-1">
+            <div className="flex items-center justify-center w-8 h-8 shrink-0 overflow-hidden bg-surface-sunken p-1 rounded-lg">
               {company.logo_url ? (
                 <Image src={company.logo_url} alt={company.name} width={32} height={32} className="w-full h-full object-contain" />
               ) : (
@@ -236,9 +238,9 @@ function DashboardLayoutContent({
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-label={sidebarOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
-            className="p-1 shrink-0 text-text-muted hover:text-text transition-colors cursor-pointer hidden lg:block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="p-1.5 shrink-0 text-text-muted hover:text-text hover:bg-surface-overlay rounded-lg transition-colors cursor-pointer hidden lg:flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            <Menu className="w-5 h-5" aria-hidden />
+            {sidebarOpen ? <PanelLeftClose className="w-5 h-5" aria-hidden /> : <PanelLeftOpen className="w-5 h-5" aria-hidden />}
           </button>
         </div>
 
@@ -250,7 +252,7 @@ function DashboardLayoutContent({
             if ('subItems' in item && item.subItems) {
               const isSubActive = item.subItems.some(sub => pathname === sub.href);
               return (
-                <div key={`sub-group-${index}`} className="space-y-1">
+                <div key={`sub-group-${index}`} className="space-y-1 relative group">
                   <button
                     type="button"
                     aria-expanded={settingsOpen}
@@ -263,8 +265,6 @@ function DashboardLayoutContent({
                     className={cn(
                       navItemClasses({ active: false, collapsed: !sidebarOpen }),
                       'w-full justify-between cursor-pointer',
-                      // O grupo não fica "ativo" como um link — quem marca a
-                      // posição é o sub-item. Aqui só a cor de texto sinaliza.
                       isSubActive && 'text-brand',
                     )}
                   >
@@ -278,6 +278,11 @@ function DashboardLayoutContent({
                         : <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
                     )}
                   </button>
+                  {!sidebarOpen && (
+                    <div className="absolute left-full ml-2 top-2 px-3 py-1.5 bg-surface-raised border border-border text-text text-sm font-medium rounded-xl shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                      {item.name}
+                    </div>
+                  )}
                   {settingsOpen && sidebarOpen && (
                     <div className="pl-6 space-y-1 mt-1">
                       {item.subItems.map((sub) => {
@@ -309,28 +314,33 @@ function DashboardLayoutContent({
             // Normal Link
             const isActive = pathname === item.href;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive ? 'page' : undefined}
-                title={!sidebarOpen ? item.name : undefined}
-                onClick={() => {
-                  if (item.href === '/dashboard/inventory') {
-                    window.dispatchEvent(new Event('nav-estoque-click'));
-                  }
-                  if (window.innerWidth < 768) {
-                    setSidebarOpen(false);
-                  }
-                }}
-                className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
-              >
-                <Icon className="w-5 h-5 shrink-0" aria-hidden />
-                {sidebarOpen ? (
-                  <span className="truncate">{item.name}</span>
-                ) : (
-                  <span className="sr-only">{item.name}</span>
+              <div key={item.href} className="relative group">
+                <Link
+                  href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => {
+                    if (item.href === '/dashboard/inventory') {
+                      window.dispatchEvent(new Event('nav-estoque-click'));
+                    }
+                    if (window.innerWidth < 768) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
+                >
+                  <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                  {sidebarOpen ? (
+                    <span className="truncate">{item.name}</span>
+                  ) : (
+                    <span className="sr-only">{item.name}</span>
+                  )}
+                </Link>
+                {!sidebarOpen && (
+                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-surface-raised border border-border text-text text-sm font-medium rounded-xl shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                    {item.name}
+                  </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>

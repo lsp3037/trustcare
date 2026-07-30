@@ -24,6 +24,18 @@ interface FinancialChartSectionProps {
 /** Recharts recebe cor por prop, não por classe — os valores saem dos tokens. */
 const AXIS = 'var(--color-text-subtle)';
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-surface-raised border border-border rounded-2xl p-3 shadow-md">
+      <p className="text-text-muted text-xs font-semibold mb-1">{label}</p>
+      <p className="text-text text-sm font-semibold tabular-nums">
+        Faturamento : <span className="text-brand">R$ {Number(payload[0].value).toFixed(2)}</span>
+      </p>
+    </div>
+  );
+};
+
 export function FinancialChartSection({ chartData, paymentDistribution, billingTotal }: FinancialChartSectionProps) {
   return (
     <Card className="flex flex-col justify-between">
@@ -59,14 +71,7 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
                   tickFormatter={(value) => `R$${value}`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--color-surface-overlay)',
-                    borderColor: 'var(--color-border-strong)',
-                    borderRadius: 0,
-                  }}
-                  labelStyle={{ color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 600 }}
-                  itemStyle={{ color: 'var(--color-text)', fontSize: '12px' }}
-                  formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Faturamento']}
+                  content={<CustomTooltip />}
                   cursor={{ fill: 'var(--color-border)', opacity: 0.35 }}
                 />
                 <Bar
