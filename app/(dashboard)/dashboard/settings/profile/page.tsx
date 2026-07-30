@@ -3,13 +3,16 @@
 import React, { useState } from 'react';
 import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
-import { Shield, User, Lock, Mail, Smartphone, Save, AlertTriangle } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { Shield, User, Lock, Mail, Smartphone, Save, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ProfileSettingsPage() {
   const { user, refreshUser } = useUser();
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Status feedback states
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Form states
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -31,6 +34,8 @@ export default function ProfileSettingsPage() {
     if (!user?.user_id) return;
 
     setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
       const { error } = await supabase
         .from('profiles')
@@ -43,10 +48,10 @@ export default function ProfileSettingsPage() {
       if (error) throw error;
 
       await refreshUser();
-      toast.success('Perfil atualizado com sucesso!');
+      setSuccessMsg('Perfil atualizado com sucesso!');
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'Erro ao atualizar perfil.');
+      setErrorMsg(err.message || 'Erro ao atualizar perfil.');
     } finally {
       setLoading(false);
     }
@@ -54,12 +59,15 @@ export default function ProfileSettingsPage() {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
     if (newPassword !== confirmPassword) {
-      toast.error('As senhas não conferem.');
+      setErrorMsg('As senhas não conferem.');
       return;
     }
     if (newPassword.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres.');
+      setErrorMsg('A senha deve ter no mínimo 6 caracteres.');
       return;
     }
 
@@ -71,12 +79,12 @@ export default function ProfileSettingsPage() {
 
       if (error) throw error;
 
-      toast.success('Senha atualizada com sucesso!');
+      setSuccessMsg('Senha atualizada com sucesso!');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || 'Erro ao atualizar senha.');
+      setErrorMsg(err.message || 'Erro ao atualizar senha.');
     } finally {
       setPasswordLoading(false);
     }
@@ -88,6 +96,20 @@ export default function ProfileSettingsPage() {
         <h1 className="text-2xl font-bold text-text">Meu Perfil</h1>
         <p className="text-text-muted mt-1">Gerencie suas informações pessoais e de acesso à plataforma.</p>
       </div>
+
+      {successMsg && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-4 py-3 rounded-xl flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
+          <p className="text-sm font-medium">{successMsg}</p>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="text-sm font-medium">{errorMsg}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
