@@ -12,6 +12,9 @@ import {
   CheckCircle2,
   ClipboardList,
   PhoneCall,
+  MessageCircle,
+  ShieldCheck,
+  Wallet,
   ShieldAlert,
   TrendingDown,
   Laptop,
@@ -42,25 +45,25 @@ const perforation = {
 const dores = [
   {
     code: '01',
-    imgSrc: '/landing/icon_os.jpg',
+    icon: ClipboardList,
     title: 'Controle total da sua bancada',
     desc: 'Sem um painel central, gabinetes, notebooks e componentes se misturam. Saiba exatamente qual máquina está aguardando peça, qual está em testes de estabilidade e o que já pode ser entregue.',
   },
   {
     code: '02',
-    imgSrc: '/landing/icon_whatsapp.jpg',
+    icon: MessageCircle,
     title: 'Fim das mensagens "Meu PC já tá pronto?"',
     desc: 'Cada vez que você para uma montagem complexa ou limpeza térmica para responder o WhatsApp, perde foco. Automatize os avisos de status e deixe o cliente acompanhar o processo sozinho.',
   },
   {
     code: '03',
-    imgSrc: '/landing/icon_garantia.jpg',
+    icon: ShieldCheck,
     title: 'Controle de garantias de hardware',
     desc: 'Entregar um upgrade e não registrar os prazos das peças novas (como memórias, SSDs ou processadores) é prejuízo na certa. Registre prazos de peças e serviços direto na O.S.',
   },
   {
     code: '04',
-    imgSrc: '/landing/icon_lucro.jpg',
+    icon: Wallet,
     title: 'Você está pagando para consertar?',
     desc: 'O dinheiro entra, você repassa para fornecedores de peças, mas sobra quanto? Separe rapidamente o que é custo de hardware do que é o lucro real da sua mão de obra especializada.',
   },
@@ -299,18 +302,16 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {dores.map((item) => {
+              const Icon = item.icon;
               return (
                 <div
                   key={item.code}
-                  className="bg-slate-950 border border-slate-900 rounded-2xl p-6 flex flex-col hover:-translate-y-0.5 hover:shadow-md transition-all group overflow-hidden"
+                  className="bg-slate-950 border border-slate-900 rounded-2xl p-6 flex flex-col hover:-translate-y-0.5 hover:shadow-md transition-all group"
                 >
-                  <div className="mb-5 relative w-20 h-20 bg-slate-900 rounded-xl overflow-hidden shadow-inner border border-white/5">
-                    <Image
-                      src={item.imgSrc}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="mb-5">
+                    <div className="inline-flex p-3 rounded-full backdrop-blur-md border border-white/5 bg-rose-500/15 text-rose-500 group-hover:bg-rose-500/25 transition-colors">
+                      <Icon className="w-5 h-5" />
+                    </div>
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
