@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = [
@@ -150,21 +151,15 @@ export default function AgendaPage() {
 
         {/* Controles de Navegação Flutuantes */}
         <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-none shadow-md">
-          <button
-            onClick={handlePrevMonth}
-            className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-850 transition-all cursor-pointer rounded-none"
-          >
+          <Button variant="ghost" size="sm" className="px-1.5" onClick={handlePrevMonth}>
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
           <span className="text-xs font-bold uppercase tracking-widest px-4 text-slate-200 min-w-[140px] text-center font-mono">
             {MONTHS[month]} {year}
           </span>
-          <button
-            onClick={handleNextMonth}
-            className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-850 transition-all cursor-pointer rounded-none"
-          >
+          <Button variant="ghost" size="sm" className="px-1.5" onClick={handleNextMonth}>
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -184,7 +179,7 @@ export default function AgendaPage() {
             {/* Dias da Semana */}
             <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-950/40 text-center">
               {WEEKDAYS.map((day) => (
-                <div key={day} className="py-3 text-xs font-bold uppercase tracking-wider text-slate-450 border-r border-slate-800/30 last:border-0">
+                <div key={day} className="py-3 text-xs font-bold uppercase tracking-wider text-slate-400 border-r border-slate-800/30 last:border-0">
                   {day}
                 </div>
               ))}
@@ -215,7 +210,7 @@ export default function AgendaPage() {
                         {date.getDate()}
                       </span>
                       {dayOrders.length > 0 && (
-                        <span className="text-[9px] font-extrabold bg-slate-850 border border-slate-800 text-slate-350 px-1.5 py-0.5 rounded-none font-mono">
+                        <span className="text-[9px] font-extrabold bg-slate-850 border border-slate-800 text-slate-300 px-1.5 py-0.5 rounded-none font-mono">
                           {dayOrders.length} OS
                         </span>
                       )}
@@ -260,15 +255,15 @@ export default function AgendaPage() {
             <span className="font-bold text-slate-400 uppercase tracking-wider">Legendas de Prazo:</span>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-emerald-500/10 border border-emerald-500/25" />
-              <span className="text-slate-350">Pronto / Finalizado</span>
+              <span className="text-slate-300">Pronto / Finalizado</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-rose-500/10 border border-rose-500/25" />
-              <span className="text-slate-350">Urgente (Prioridade Alta)</span>
+              <span className="text-slate-300">Urgente (Prioridade Alta)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-500/10 border border-blue-500/25" />
-              <span className="text-slate-350">Prazos de Bancada (Normal)</span>
+              <span className="text-slate-300">Prazos de Bancada (Normal)</span>
             </div>
           </div>
         </div>
@@ -313,14 +308,14 @@ export default function AgendaPage() {
                       </div>
 
                       <div>
-                        <h4 className="text-xs font-bold text-slate-250 truncate">{os.equipment_details}</h4>
+                        <h4 className="text-xs font-bold text-slate-200 truncate">{os.equipment_details}</h4>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 uppercase ${
                             isHigh ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800/60 text-slate-400'
                           }`}>
                             {os.priority}
                           </span>
-                          <span className="text-[9px] text-slate-450 truncate font-semibold">
+                          <span className="text-[9px] text-slate-400 truncate font-semibold">
                             {os.status}
                           </span>
                         </div>

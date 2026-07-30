@@ -1,14 +1,35 @@
 'use client';
-import { CheckCircle2, AlertTriangle, FileText, ChevronDown, Check, Calendar, DollarSign } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, FileText, ChevronDown, Check } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import {
+  LoadingSpinner,
+  Card,
+  CardTitle,
+  Button,
+  Modal,
+  Field,
+  Input,
+  Select,
+} from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
+import { cn } from '@/lib/utils';
+
+/** Formas de pagamento — estava duplicado nos dois seletores deste arquivo. */
+const PAYMENT_METHODS = [
+  'Pix',
+  'Cartão de Crédito',
+  'Cartão de Débito',
+  'Dinheiro',
+  'Transferência Bancária',
+  'Boleto Bancário',
+  'Outro',
+] as const;
 
 import { OrderChecklist, ChecklistTemplateItem } from './types';
-import { STATUS_CONFIG, defaultChecklist } from './constants';
+import { OS_STATUS_FLOW, defaultChecklist } from './constants';
 
 import { OrderHeader } from './OrderHeader';
 import { ClientInfoCard } from './ClientInfoCard';
@@ -312,14 +333,16 @@ export function OrderDetailsClient({
 
       await supabase.from('service_order_items').delete().eq('service_order_id', id);
 
-      for (const item of selectedProducts) {
-        await supabase.from('service_order_items').insert({
-          company_id: order.company_id,
-          service_order_id: id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-        });
+      if (status !== 'Cancelado') {
+        for (const item of selectedProducts) {
+          await supabase.from('service_order_items').insert({
+            company_id: order.company_id,
+            service_order_id: id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          });
+        }
       }
 
       await supabase.from('order_services').delete().eq('os_id', id);
@@ -384,6 +407,9 @@ export function OrderDetailsClient({
       const { error: updateErr } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', id);
       if (updateErr) throw updateErr;
       setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
+      if (newStatus === 'Cancelado') {
+        setSelectedProducts([]);
+      }
       setSuccessMsg('Status atualizado em tempo real!');
       setTimeout(() => setSuccessMsg(''), 3000);
       
@@ -434,15 +460,21 @@ export function OrderDetailsClient({
         />
 
         {successMsg && (
-          <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5 shadow-lg">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <p className="font-semibold text-sm font-mono tracking-wide">{successMsg}</p>
+          <div
+            role="status"
+            className="p-4 bg-success/10 border border-success/25 text-success flex items-center gap-2.5"
+          >
+            <CheckCircle2 className="w-5 h-5 shrink-0" aria-hidden />
+            <p className="text-small font-semibold">{successMsg}</p>
           </div>
         )}
         {errorMsg && (
-          <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/25 text-rose-450 flex items-center gap-2.5 shadow-lg">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <p className="text-xs font-semibold font-mono tracking-wide">{errorMsg}</p>
+          <div
+            role="alert"
+            className="p-4 bg-danger/10 border border-danger/25 text-danger flex items-center gap-2.5"
+          >
+            <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />
+            <p className="text-small font-semibold">{errorMsg}</p>
           </div>
         )}
 
@@ -455,124 +487,132 @@ export function OrderDetailsClient({
               technicalReport={technicalReport} setTechnicalReport={setTechnicalReport}
             />
 
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-6">
-              <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3 font-mono">
-                <FileText className="w-5 h-5 text-indigo-400" /> Status e Operacional
-              </h3>
+            <Card className="space-y-6">
+              <CardTitle className="flex items-center gap-2 border-b border-border pb-3">
+                <FileText className="w-5 h-5 text-text-subtle" aria-hidden /> Status e Operacional
+              </CardTitle>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Dropdown de Status (Simplificado para o layout) */}
-                <div className="space-y-1.5 relative">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status da OS</label>
-                  <div>
-                    <button
-                      type="button" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 flex items-center justify-between hover:border-slate-700 transition-colors focus:outline-none focus:border-blue-500"
-                    >
-                      <span className="font-semibold font-mono text-xs">{status}</span>
-                      {updatingStatus ? <LoadingSpinner className="w-4 h-4 text-emerald-500 animate-spin" /> : <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`} />}
-                    </button>
-                    {isStatusDropdownOpen && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setIsStatusDropdownOpen(false)} />
-                        <div className="absolute left-0 right-0 mt-1.5 bg-slate-950 border border-slate-850 rounded-none shadow-2xl z-25 p-1 space-y-1 max-h-[300px] overflow-y-auto">
-                          {Object.keys(STATUS_CONFIG).map((statusKey) => (
-                            <button
-                              key={statusKey} type="button"
-                              onClick={() => { handleStatusChange(statusKey); setIsStatusDropdownOpen(false); }}
-                              className={`w-full text-left py-2 px-3 flex items-center justify-between text-[10px] font-mono transition-colors uppercase tracking-wider ${status === statusKey ? 'bg-slate-900 text-white font-bold' : 'text-slate-400 hover:bg-slate-900/50 hover:text-white'}`}
-                            >
-                              <span>{statusKey}</span>
-                              {status === statusKey && <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
-                            </button>
-                          ))}
-                        </div>
-                      </>
+                {/* Dropdown de Status */}
+                <Field label="Status da OS" className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                    aria-expanded={isStatusDropdownOpen}
+                    className="w-full bg-surface-sunken border border-border py-2 px-3 text-sm text-text flex items-center justify-between gap-2 hover:border-border-strong transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  >
+                    <span className="font-semibold truncate">{status}</span>
+                    {updatingStatus ? (
+                      <LoadingSpinner className="w-4 h-4 text-brand shrink-0" />
+                    ) : (
+                      <ChevronDown
+                        className={cn(
+                          'w-4 h-4 text-text-subtle shrink-0 transition-transform',
+                          isStatusDropdownOpen && 'rotate-180',
+                        )}
+                        aria-hidden
+                      />
                     )}
-                  </div>
-                </div>
+                  </button>
+                  {isStatusDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsStatusDropdownOpen(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface-overlay border border-border shadow-2xl z-20 p-1 max-h-[300px] overflow-y-auto">
+                        {OS_STATUS_FLOW.map((statusKey) => (
+                          <button
+                            key={statusKey}
+                            type="button"
+                            aria-current={status === statusKey || undefined}
+                            onClick={() => { handleStatusChange(statusKey); setIsStatusDropdownOpen(false); }}
+                            className={cn(
+                              'w-full text-left py-2 px-3 flex items-center justify-between gap-2 text-small transition-colors cursor-pointer',
+                              status === statusKey
+                                ? 'bg-surface-sunken text-text font-semibold'
+                                : 'text-text-muted hover:bg-surface-sunken hover:text-text',
+                            )}
+                          >
+                            <span>{statusKey}</span>
+                            {status === statusKey && <Check className="w-3.5 h-3.5 text-brand shrink-0" aria-hidden />}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </Field>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Prioridade</label>
-                  <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono transition-colors">
-                    <option value="Baixa">BAIXA</option>
-                    <option value="Média">MÉDIA</option>
-                    <option value="Alta">ALTA</option>
-                  </select>
-                </div>
+                <Select
+                  label="Prioridade"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
+                  <option value="Baixa">Baixa</option>
+                  <option value="Média">Média</option>
+                  <option value="Alta">Alta</option>
+                </Select>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-blue-500" /> Previsão de Entrega
-                  </label>
-                  <input type="date" value={deliveryPrediction} onChange={(e) => setDeliveryPrediction(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono transition-colors" />
-                </div>
+                <Input
+                  label="Previsão de Entrega"
+                  type="date"
+                  value={deliveryPrediction}
+                  onChange={(e) => setDeliveryPrediction(e.target.value)}
+                  className="font-mono"
+                />
               </div>
 
               {(status === 'Finalizado' || status === 'Entregue' || status === 'Pronto para Retirada') && (
-                <div className="space-y-4 p-4 bg-slate-950/40 border border-slate-800 rounded-none">
+                <div className="space-y-4 p-4 bg-surface-sunken border border-border">
                   <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox" 
-                      id="pago-checkbox" 
-                      checked={pago} 
+                    <input
+                      type="checkbox"
+                      id="pago-checkbox"
+                      checked={pago}
                       onChange={(e) => {
                         const checked = e.target.checked;
                         setPago(checked);
                         if (checked && !paymentDate) {
                           setPaymentDate(new Date().toISOString().split('T')[0]);
                         }
-                      }} 
-                      className="w-4 h-4 rounded-none border-slate-800 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer" 
+                      }}
+                      className="w-4 h-4 border-border bg-surface-sunken accent-brand cursor-pointer"
                     />
-                    <label htmlFor="pago-checkbox" className="text-xs font-bold text-slate-100 font-mono uppercase tracking-widest cursor-pointer select-none">
+                    <label htmlFor="pago-checkbox" className="text-small font-semibold text-text cursor-pointer select-none">
                       Ordem de Serviço Paga
                     </label>
                   </div>
 
                   {pago && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-800/40 animate-fadeIn">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Forma de Pagamento</label>
-                        <select 
-                          value={paymentMethod} 
-                          onChange={(e) => setPaymentMethod(e.target.value)} 
-                          className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono transition-colors"
-                        >
-                          <option value="Pix">Pix</option>
-                          <option value="Cartão de Crédito">Cartão de Crédito</option>
-                          <option value="Cartão de Débito">Cartão de Débito</option>
-                          <option value="Dinheiro">Dinheiro</option>
-                          <option value="Transferência Bancária">Transferência Bancária</option>
-                          <option value="Boleto Bancário">Boleto Bancário</option>
-                          <option value="Outro">Outro</option>
-                        </select>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-border">
+                      <Select
+                        label="Forma de Pagamento"
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      >
+                        {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </Select>
 
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Data do Pagamento</label>
-                        <input 
-                          type="date" 
-                          value={paymentDate} 
-                          onChange={(e) => setPaymentDate(e.target.value)} 
-                          className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-mono transition-colors" 
-                        />
-                      </div>
+                      <Input
+                        label="Data do Pagamento"
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.target.value)}
+                        className="font-mono"
+                      />
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Técnico Responsável</label>
-                <select value={technicianId} onChange={(e) => setTechnicianId(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-xs font-mono text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
-                  <option value="">Nenhum técnico atribuído...</option>
-                  {technicians.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </div>
+              <Select
+                label="Técnico Responsável"
+                value={technicianId}
+                onChange={(e) => setTechnicianId(e.target.value)}
+              >
+                <option value="">Nenhum técnico atribuído...</option>
+                {technicians.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </Select>
 
               <AttachmentsSection mediaFiles={mediaFiles} uploading={uploading} handleFileUpload={handleFileUpload} handleRemoveFile={handleRemoveFile} previewImage={previewImage} setPreviewImage={setPreviewImage} />
-            </div>
+            </Card>
 
           </div>
 
@@ -596,39 +636,38 @@ export function OrderDetailsClient({
         </div>
       </div>
 
-      {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-none w-full max-w-md shadow-2xl">
-            <div className="p-6 border-b border-slate-850">
-              <h2 className="text-base font-bold font-mono uppercase text-white flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-emerald-500" /> Finalização e Caixa
-              </h2>
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Data do Pagamento</label>
-                <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm font-mono text-slate-100 focus:outline-none focus:border-emerald-500" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Forma de Pagamento</label>
-                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm font-mono text-slate-100 focus:outline-none focus:border-emerald-500">
-                  <option value="Pix">Pix</option>
-                  <option value="Cartão de Crédito">Cartão de Crédito</option>
-                  <option value="Cartão de Débito">Cartão de Débito</option>
-                  <option value="Dinheiro">Dinheiro</option>
-                  <option value="Transferência Bancária">Transferência Bancária</option>
-                  <option value="Boleto Bancário">Boleto Bancário</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              </div>
-            </div>
-            <div className="p-4 bg-slate-950 border-t border-slate-850 flex justify-end gap-3">
-              <button type="button" onClick={() => setIsPaymentModalOpen(false)} className="px-4 py-2 text-[10px] font-bold font-mono tracking-wider uppercase text-slate-400 hover:text-white transition-colors">Cancelar</button>
-              <button type="button" onClick={handleConfirmPaymentAndStatus} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none text-[10px] font-bold font-mono tracking-wider uppercase">Confirmar</button>
-            </div>
-          </div>
+      <Modal
+        open={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        title="Finalização e Caixa"
+        description={`Registre o recebimento para mover a OS para "${pendingStatusUpdate}".`}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsPaymentModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmPaymentAndStatus}>Confirmar</Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          <Input
+            label="Data do Pagamento"
+            type="date"
+            value={paymentDate}
+            onChange={(e) => setPaymentDate(e.target.value)}
+            className="font-mono"
+          />
+          <Select
+            label="Forma de Pagamento"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          >
+            {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+          </Select>
         </div>
-      )}
+      </Modal>
     </>
   );
 }

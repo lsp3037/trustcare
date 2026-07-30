@@ -6,6 +6,7 @@ import { User, FileText, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-rea
 import { supabase } from '@/lib/supabase/client';
 import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui';
 
 export default function PortalLoginPage() {
   const router = useRouter();
@@ -155,19 +156,9 @@ export default function PortalLoginPage() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 px-4 rounded-none flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {loading ? (
-              <LoadingSpinner />
-            ) : (
-              <>
-                Acessar Portal <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          <Button type="submit" fullWidth className="py-3 h-auto" loading={loading} icon={<ArrowRight className="w-4 h-4" />}>
+            Acessar Portal
+          </Button>
         </form>
       </div>
     </div>

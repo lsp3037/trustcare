@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, CreditCard, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 
 const PAYMENT_METHODS = [
@@ -73,12 +74,9 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
             </div>
             <h2 className="text-sm font-semibold text-white">Registrar Pagamento</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1 rounded-none"
-          >
+          <Button variant="ghost" size="sm" className="px-1" onClick={onClose} aria-label="Fechar">
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
@@ -127,26 +125,17 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
 
         {/* Footer */}
         <div className="flex gap-3 p-5 border-t border-slate-800">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 text-sm text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-white transition-colors rounded-none"
-          >
+          <Button variant="secondary" className="flex-1" onClick={onClose}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
+            className="flex-1"
+            loading={loading}
+            icon={<CheckCircle className="w-4 h-4" />}
             onClick={handleConfirm}
-            disabled={loading}
-            className="flex-1 py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors rounded-none disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                Confirmar Pagamento
-              </>
-            )}
-          </button>
+            Confirmar Pagamento
+          </Button>
         </div>
       </div>
     </div>

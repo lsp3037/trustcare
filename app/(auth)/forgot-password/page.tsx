@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
@@ -45,13 +45,13 @@ export default function ForgotPasswordPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-center text-white mb-2">Recuperar Senha</h2>
-          <p className="text-neutral-400 text-center mb-8 text-sm">
+          <p className="text-slate-400 text-center mb-8 text-sm">
             Digite seu e-mail cadastrado e enviaremos um link para você redefinir sua senha.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1">
                 E-mail
               </label>
               <input
@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder:text-neutral-600"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder:text-slate-600"
                 required
               />
             </div>
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/login"
-              className="inline-flex items-center text-sm text-neutral-400 hover:text-white transition-colors"
+              className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar para o Login

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { buttonClasses } from '@/components/ui';
 
 interface DateRange {
   from: Date;
@@ -170,31 +171,39 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
     <div className="relative inline-block text-left" ref={containerRef}>
       {/* Botão de Trigger */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-800 hover:bg-slate-850 hover:text-white text-slate-350 font-semibold py-2 px-4 rounded-none text-sm transition-all shadow-md cursor-pointer"
+        aria-expanded={isOpen}
+        aria-label={`Período: ${formatButtonLabel()} (${preset})`}
+        className={buttonClasses({
+          variant: 'secondary',
+          className: 'gap-2',
+        })}
       >
-        <CalendarIcon className="w-4 h-4 text-blue-500" />
-        <span>{formatButtonLabel()}</span>
-        <span className="text-[10px] text-slate-500 font-bold bg-slate-950 px-1.5 py-0.5 rounded">
+        <CalendarIcon className="w-4 h-4 text-text-subtle" aria-hidden />
+        <span className="font-mono tabular-nums">{formatButtonLabel()}</span>
+        <span className="text-caption text-text-subtle bg-surface-sunken border border-border px-1.5 py-0.5">
           {preset}
         </span>
       </button>
 
       {/* Popover do Calendário e Presets */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 bg-slate-900 border border-slate-800 rounded-none shadow-2xl z-[100] flex p-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-150">
-          
+        <div className="absolute right-0 mt-2 bg-surface-overlay border border-border shadow-2xl z-[100] flex p-4 gap-4">
+
           {/* Painel Esquerdo: Presets */}
-          <div className="w-36 flex flex-col gap-1 border-r border-slate-850 pr-4">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 pl-2">Filtros Rápidos</span>
+          <div className="w-36 flex flex-col gap-1 border-r border-border pr-4">
+            <span className="text-caption uppercase tracking-wider text-text-subtle mb-2 pl-2">Filtros Rápidos</span>
             {['Hoje', 'Últimos 7 dias', 'Últimos 30 dias', 'Este Mês'].map((pName) => (
               <button
                 key={pName}
+                type="button"
+                aria-current={preset === pName || undefined}
                 onClick={() => applyPreset(pName)}
-                className={`w-full text-left px-2.5 py-1.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
+                className={`w-full text-left px-2.5 py-1.5 text-small font-semibold border transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                   preset === pName
-                    ? 'bg-blue-600/15 text-blue-400 border border-blue-500/25'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40 border border-transparent'
+                    ? 'bg-brand/10 text-brand border-brand/25'
+                    : 'text-text-muted hover:text-text hover:bg-surface-sunken border-transparent'
                 }`}
               >
                 {pName}
@@ -209,24 +218,26 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
+                aria-label="Mês anterior"
+                className="p-1 text-text-muted hover:text-text hover:bg-surface-sunken transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-bold text-slate-200">
+              <span className="text-small font-semibold text-text">
                 {monthsNames[month]} {year}
               </span>
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
+                aria-label="Próximo mês"
+                className="p-1 text-text-muted hover:text-text hover:bg-surface-sunken transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
             {/* Cabeçalho da Semana */}
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <div className="grid grid-cols-7 gap-1 text-center text-caption text-text-subtle uppercase tracking-wider mb-1">
               <span>D</span>
               <span>S</span>
               <span>T</span>
@@ -254,12 +265,13 @@ export default function DatePickerWithRange({ onChange, defaultPreset = 'Último
                     key={`day-${dayNum}`}
                     type="button"
                     onClick={() => handleDayClick(dayNum)}
-                    className={`w-7 h-7 rounded-none text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                    aria-pressed={selected}
+                    className={`w-7 h-7 text-small font-mono tabular-nums transition-colors flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand ${
                       selected
-                        ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20'
+                        ? 'bg-brand text-brand-contrast font-semibold'
                         : ranged
-                        ? 'bg-blue-500/10 text-blue-450 rounded-none'
-                        : 'text-slate-355 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-brand/10 text-brand'
+                        : 'text-text-muted hover:bg-surface-sunken hover:text-text'
                     }`}
                   >
                     {dayNum}

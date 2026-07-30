@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ShieldAlert, Users, CreditCard, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui';
 
 export const revalidate = 0; // Disable cache for god mode
 
@@ -37,14 +38,14 @@ export default async function BackofficePage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Tenants (Empresas)</h2>
-          <p className="text-neutral-400 mt-1">Gestão global de todas as empresas cadastradas no SaaS.</p>
+          <p className="text-slate-400 mt-1">Gestão global de todas as empresas cadastradas no SaaS.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-neutral-400 font-medium">Total de Empresas</h3>
+            <h3 className="text-slate-400 font-medium">Total de Empresas</h3>
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <BuildingIcon className="w-5 h-5 text-blue-500" />
             </div>
@@ -52,9 +53,9 @@ export default async function BackofficePage() {
           <p className="text-4xl font-bold text-white">{totalTenants}</p>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-neutral-400 font-medium">Assinaturas Ativas</h3>
+            <h3 className="text-slate-400 font-medium">Assinaturas Ativas</h3>
             <div className="p-2 bg-emerald-500/10 rounded-lg">
               <Activity className="w-5 h-5 text-emerald-500" />
             </div>
@@ -62,7 +63,7 @@ export default async function BackofficePage() {
           <p className="text-4xl font-bold text-emerald-500">{activeTenants}</p>
         </div>
 
-        <div className="bg-neutral-900 border-red-500/30 border rounded-xl p-6 shadow-[0_0_15px_rgba(239,68,68,0.1)] relative overflow-hidden">
+        <div className="bg-slate-900 border-red-500/30 border rounded-xl p-6 shadow-[0_0_15px_rgba(239,68,68,0.1)] relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 blur-2xl rounded-full"></div>
           <div className="flex items-center justify-between mb-4 relative z-10">
             <h3 className="text-red-400 font-medium">Status de Segurança</h3>
@@ -74,13 +75,13 @@ export default async function BackofficePage() {
         </div>
       </div>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-neutral-800">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-800">
           <h3 className="text-lg font-semibold text-white">Listagem de Tenants</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-neutral-300">
-            <thead className="bg-neutral-950/50 text-neutral-400 text-xs uppercase font-medium">
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="bg-slate-950/50 text-slate-400 text-xs uppercase font-medium">
               <tr>
                 <th className="px-6 py-4">Empresa</th>
                 <th className="px-6 py-4">Subdomínio</th>
@@ -90,49 +91,49 @@ export default async function BackofficePage() {
                 <th className="px-6 py-4">Cadastro</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-800">
+            <tbody className="divide-y divide-slate-800">
               {companies?.map((company) => (
-                <tr key={company.id} className="hover:bg-neutral-800/50 transition-colors">
+                <tr key={company.id} className="hover:bg-slate-800/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-white">{company.name}</td>
-                  <td className="px-6 py-4 text-neutral-400">{company.subdomain || '-'}</td>
+                  <td className="px-6 py-4 text-slate-400">{company.subdomain || '-'}</td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-800 text-neutral-200 capitalize border border-neutral-700">
-                      {company.subscription_plan || 'Nenhum'}
-                    </span>
+                    <Badge className="capitalize">{company.subscription_plan || 'Nenhum'}</Badge>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      company.subscription_status === 'active' 
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                        : company.subscription_status === 'past_due'
-                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                        : company.subscription_status === 'canceled'
-                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                        : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                    }`}>
+                    <Badge
+                      tone={
+                        company.subscription_status === 'active'
+                          ? 'success'
+                          : company.subscription_status === 'past_due'
+                          ? 'warning'
+                          : company.subscription_status === 'canceled'
+                          ? 'danger'
+                          : 'neutral'
+                      }
+                    >
                       {company.subscription_status || 'Trial'}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3 text-xs">
-                      <span className="flex items-center text-neutral-400" title="Ordens de Serviço">
+                      <span className="flex items-center text-slate-400" title="Ordens de Serviço">
                         <Activity className="w-3 h-3 mr-1" />
                         {company.service_orders?.[0]?.count || 0}
                       </span>
-                      <span className="flex items-center text-neutral-400" title="Usuários Ativos">
+                      <span className="flex items-center text-slate-400" title="Usuários Ativos">
                         <Users className="w-3 h-3 mr-1" />
                         {company.profiles?.[0]?.count || 0}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-neutral-400">
+                  <td className="px-6 py-4 text-slate-400">
                     {new Date(company.created_at).toLocaleDateString('pt-BR')}
                   </td>
                 </tr>
               ))}
               {(!companies || companies.length === 0) && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-neutral-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                     Nenhuma empresa encontrada no banco de dados.
                   </td>
                 </tr>

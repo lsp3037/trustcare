@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, Badge, EmptyState } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { exportInventoryToCsv } from '@/lib/utils/csvExport';
 
@@ -412,21 +413,22 @@ export default function InventoryPage() {
         </div>
         {!isCreating && (
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="secondary"
+              icon={<Download className="w-4 h-4 text-emerald-500" />}
               onClick={() => exportInventoryToCsv(filteredProducts)}
-              className="bg-slate-950 hover:bg-slate-900 text-slate-300 border border-slate-800 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
-              <Download className="w-4 h-4 text-emerald-500" /> Exportar CSV
-            </button>
-            <button
+              Exportar CSV
+            </Button>
+            <Button
+              icon={<Plus className="w-4 h-4" />}
               onClick={() => {
                 resetForm();
                 setIsCreating(true);
               }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200"
             >
-              <Plus className="w-4 h-4" /> Cadastrar Produto
-            </button>
+              Cadastrar Produto
+            </Button>
           </div>
         )}
       </div>
@@ -438,12 +440,9 @@ export default function InventoryPage() {
               <h2 className="text-xl font-bold text-white">Cadastrar Produto / Peça</h2>
               <p className="text-xs text-slate-400 mt-0.5">Cadastre um item no inventário.</p>
             </div>
-            <button
-              onClick={() => setIsCreating(false)}
-              className="text-xs font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-none hover:bg-slate-800/40 transition-colors"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
               Cancelar
-            </button>
+            </Button>
           </div>
 
           <form onSubmit={handleCreateProduct} className="space-y-4">
@@ -455,7 +454,7 @@ export default function InventoryPage() {
             )}
 
             {formError && (
-              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
+              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                 {formError}
               </div>
             )}
@@ -522,7 +521,7 @@ export default function InventoryPage() {
             {category === 'Memória RAM' && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Aplicação</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aplicação</label>
                   <select
                     value={ramApp}
                     onChange={(e) => setRamApp(e.target.value)}
@@ -692,17 +691,9 @@ export default function InventoryPage() {
 
             {/* Ações */}
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
-              <button
-                type="submit"
-                disabled={submitting || formSuccess}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-6 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/15 transition-all duration-200 disabled:opacity-55"
-              >
-                {submitting ? (
-                  <LoadingSpinner className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Salvar Produto'
-                )}
-              </button>
+              <Button type="submit" loading={submitting} disabled={formSuccess}>
+                Salvar Produto
+              </Button>
             </div>
           </form>
         </div>
@@ -723,21 +714,25 @@ export default function InventoryPage() {
             {showLowStockOnly && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-none text-xs font-semibold text-rose-400">
                 <span>Filtro: Apenas Estoque Baixo</span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 px-0.5 h-auto text-danger hover:text-danger"
                   onClick={() => {
                     setShowLowStockOnly(false);
                     if (typeof window !== 'undefined') {
                       window.history.replaceState({}, '', window.location.pathname);
                     }
                   }}
-                  className="hover:text-rose-300 font-bold transition-colors ml-1 p-0.5 rounded hover:bg-rose-500/10"
                 >
                   ✕
-                </button>
+                </Button>
               </div>
             )}
             {hasActiveFilters && (
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setFilterName('');
                   setFilterSku('');
@@ -749,10 +744,9 @@ export default function InventoryPage() {
                   setFilterSale('');
                   setFilterStatus('');
                 }}
-                className="bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-350 hover:text-white px-3 py-2 text-xs font-semibold rounded-none border border-slate-800 transition-all cursor-pointer"
               >
                 Limpar Filtros das Colunas
-              </button>
+              </Button>
             )}
           </div>
 
@@ -763,10 +757,12 @@ export default function InventoryPage() {
               <p className="text-sm text-slate-400">Carregando inventário...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900 text-center px-4">
-              <AlertCircle className="w-12 h-12 text-slate-650 mb-4" />
-              <h3 className="text-lg font-bold text-slate-300">Nenhum produto em estoque</h3>
-              <p className="text-sm text-slate-500 mt-1 max-w-xs">Tente redefinir seus filtros ou cadastrar peças.</p>
+            <div className="bg-slate-900/20 rounded-none border border-slate-900">
+              <EmptyState
+                icon={<AlertCircle />}
+                title="Nenhum produto em estoque"
+                description="Tente redefinir seus filtros ou cadastrar peças."
+              />
             </div>
           ) : (
             <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none overflow-hidden shadow-lg">
@@ -884,7 +880,7 @@ export default function InventoryPage() {
                           </td>
                           <td className="py-4 px-6 font-bold text-slate-200">
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-none shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-450' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-450'}`}>
+                              <div className={`p-1.5 rounded-none shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-500' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'}`}>
                                 <Boxes className="w-4 h-4" />
                               </div>
                               <Link href={`/dashboard/inventory/${p.id}`} className="truncate max-w-[280px] md:max-w-md lg:max-w-lg hover:text-blue-400 hover:underline transition-colors">
@@ -894,9 +890,7 @@ export default function InventoryPage() {
                           </td>
                           <td className="py-4 px-6 text-center font-semibold text-slate-400 text-xs font-mono">{p.sku}</td>
                           <td className="py-4 px-6">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-950 border border-slate-800 text-slate-350">
-                              {p.category || 'Outro'}
-                            </span>
+                            <Badge>{p.category || 'Outro'}</Badge>
                           </td>
                           <td className="py-4 px-6 text-center text-slate-300 font-semibold">{p.brand || '—'}</td>
                           <td className="py-4 px-6 text-center font-mono font-bold text-slate-200">
@@ -904,30 +898,29 @@ export default function InventoryPage() {
                           </td>
                           <td className="py-4 px-6 text-center">
                             {isOut ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-rose-500" />
-                                Esgotado
-                              </span>
+                              <Badge tone="danger">
+                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" /> Esgotado
+                              </Badge>
                             ) : isLowStock ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-amber-500 animate-pulse" />
-                                Reabastecer
-                              </span>
+                              <Badge tone="warning">
+                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 animate-pulse" /> Reabastecer
+                              </Badge>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-950/80 border border-slate-800/60 text-slate-350 light:bg-slate-100 light:border-slate-200 light:text-slate-700">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-emerald-500" />
-                                Saudável
-                              </span>
+                              <Badge tone="success">
+                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" /> Saudável
+                              </Badge>
                             )}
                           </td>
                           <td className="py-4 px-6 text-center">
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="px-1.5 text-danger hover:text-danger"
                               onClick={() => handleDeleteProduct(p.id)}
-                              className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-none transition-colors"
                               title="Excluir produto"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       );
@@ -947,20 +940,24 @@ export default function InventoryPage() {
             <strong className="text-white">{selectedProductIds.length}</strong> {selectedProductIds.length === 1 ? 'produto selecionado' : 'produtos selecionados'}
           </span>
           <div className="h-4 w-px bg-slate-800" />
-          <button
+          <Button
+            variant="danger"
+            size="sm"
+            loading={deletingBulk}
+            icon={<Trash2 className="w-3.5 h-3.5" />}
             onClick={handleBulkDeleteProducts}
-            disabled={deletingBulk}
-            className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-450 font-bold py-1.5 px-3 rounded-none text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" /> Excluir Selecionados
-          </button>
+            Excluir Selecionados
+          </Button>
           <div className="h-4 w-px bg-slate-800" />
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[11px] uppercase tracking-wider"
             onClick={() => setSelectedProductIds([])}
-            className="text-[11px] font-bold text-slate-450 hover:text-white transition-colors uppercase tracking-wider cursor-pointer"
           >
             Limpar
-          </button>
+          </Button>
         </div>
       )}
     </div>

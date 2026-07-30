@@ -6,6 +6,7 @@ import { ArrowLeft, Settings, ClipboardList, Trash2, Plus, CheckCircle2, AlertTr
 import React, { useState, useEffect } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, Badge } from '@/components/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/context/UserContext';
@@ -302,9 +303,7 @@ export default function ChecklistSettingsPage() {
                 <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                   <ClipboardList className="w-4 h-4 text-indigo-400" /> Itens do Checklist
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full border border-slate-750">
-                  {items.length} {items.length === 1 ? 'item' : 'itens'}
-                </span>
+                <Badge>{items.length} {items.length === 1 ? 'item' : 'itens'}</Badge>
               </div>
 
               {loading ? (
@@ -332,23 +331,23 @@ export default function ChecklistSettingsPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleRequired(item.id)}
-                          className={`text-[9px] font-bold px-2 py-1 rounded transition-colors ${
-                            item.required 
-                              ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400' 
-                              : 'bg-slate-900 border border-slate-800 text-slate-500 hover:text-slate-400'
-                          }`}
+                          className="cursor-pointer"
                         >
-                          {item.required ? 'Obrigatório' : 'Opcional'}
+                          <Badge tone={item.required ? 'danger' : 'neutral'}>
+                            {item.required ? 'Obrigatório' : 'Opcional'}
+                          </Badge>
                         </button>
 
                         {/* Botão Remover */}
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="px-1.5 hover:text-danger"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="p-1.5 bg-slate-900 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-none transition-colors border border-slate-800/80"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -364,12 +363,9 @@ export default function ChecklistSettingsPage() {
                   onChange={(e) => setNewItemLabel(e.target.value)}
                   className="flex-1 bg-slate-950 border border-slate-850 rounded-none py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
-                <button
-                  type="submit"
-                  className="px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-none text-xs flex items-center gap-1 transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Adicionar
-                </button>
+                <Button type="submit" icon={<Plus className="w-4 h-4" />}>
+                  Adicionar
+                </Button>
               </form>
 
             </div>
@@ -382,42 +378,44 @@ export default function ChecklistSettingsPage() {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ações</h4>
                 
                 {saveSuccess && (
-                  <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2 animate-fade-in">
+                  <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2 animate-fade-in">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Configuração salva com sucesso!
                   </div>
                 )}
 
                 {errorMsg && (
-                  <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450 flex items-center gap-2">
+                  <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
                   </div>
                 )}
 
-                <button
+                <Button
                   type="button"
+                  fullWidth
+                  loading={saving}
+                  icon={<Save className="w-4 h-4" />}
                   onClick={handleSave}
-                  disabled={saving}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-indigo-650/10"
                 >
-                  {saving ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Salvar Checklist
-                </button>
+                  Salvar Checklist
+                </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  fullWidth
                   onClick={() => {
                     if (window.confirm('Deseja resetar este checklist para as configurações clássicas padrão?')) {
                       setItems(DEFAULT_CHECKLIST_ITEMS);
                     }
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-450 hover:text-slate-200 py-2 px-3 rounded-none text-xs transition-colors"
                 >
                   Resetar para Padrão
-                </button>
+                </Button>
               </div>
 
               {/* Informações de Apoio */}
-              <div className="bg-slate-900/20 border border-slate-850 rounded-none p-6 text-slate-450 space-y-3">
-                <h4 className="text-xs font-bold text-slate-350 flex items-center gap-1.5">
+              <div className="bg-slate-900/20 border border-slate-850 rounded-none p-6 text-slate-400 space-y-3">
+                <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-indigo-400" /> Boas práticas
                 </h4>
                 <ul className="text-[11px] list-disc list-inside space-y-2 leading-relaxed">

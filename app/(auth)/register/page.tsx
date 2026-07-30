@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
@@ -68,7 +69,7 @@ export default function RegisterPage() {
         {/* Brand Header */}
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-8">
-            <ShieldCheck className="w-5 h-5 text-emerald-450" />
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Trust Care Platform</span>
           </div>
         </div>
@@ -142,7 +143,7 @@ export default function RegisterPage() {
 
               {/* Nome da Empresa */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Nome da Empresa (Tenant)</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nome da Empresa (Tenant)</label>
                 <div className="relative">
                   <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -158,7 +159,7 @@ export default function RegisterPage() {
 
               {/* Seu Nome */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Seu Nome</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Seu Nome</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -174,7 +175,7 @@ export default function RegisterPage() {
 
               {/* WhatsApp */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">WhatsApp da Empresa</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">WhatsApp da Empresa</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -190,7 +191,7 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Email Corporativo</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email Corporativo</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -206,7 +207,7 @@ export default function RegisterPage() {
 
               {/* Senha */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider">Senha</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Senha</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -221,19 +222,15 @@ export default function RegisterPage() {
               </div>
 
               {/* Botão Cadastrar */}
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55 cursor-pointer text-xs"
+                fullWidth
+                loading={loading}
+                icon={<ArrowRight className="w-4 h-4" />}
+                className="rounded-lg bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 mt-2 text-xs"
               >
-                {loading ? (
-                  <LoadingSpinner className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    Cadastrar Empresa <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+                Cadastrar Empresa
+              </Button>
             </form>
           )}
 

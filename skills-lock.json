@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+    },
+    "powerbi-modeling": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/powerbi-modeling/SKILL.md",
+      "computedHash": "b98ebe4d3876548b0a10c1c97216fdf4d50799243ffbb38158b367574bbf19f5"
     }
   }
 }

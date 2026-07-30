@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, Badge, EmptyState } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
 import { useCompany } from '@/lib/context/CompanyContext';
@@ -290,12 +291,12 @@ export default function UserManagementPage() {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeTone = (role: string): 'danger' | 'info' | 'warning' | 'neutral' => {
     switch (role) {
-      case 'admin': return 'bg-rose-550/20 text-rose-400 border border-rose-500/20';
-      case 'technician': return 'bg-indigo-550/20 text-indigo-400 border border-indigo-500/20';
-      case 'viewer': return 'bg-amber-550/20 text-amber-400 border border-amber-500/20';
-      default: return 'bg-slate-550/20 text-slate-400 border border-slate-500/20';
+      case 'admin': return 'danger';
+      case 'technician': return 'info';
+      case 'viewer': return 'warning';
+      default: return 'neutral';
     }
   };
 
@@ -305,7 +306,7 @@ export default function UserManagementPage() {
         return {
           title: 'Administrador',
           description: 'Acesso completo a todas as seções e relatórios do painel administrativo.',
-          icon: <Settings className="w-8 h-8 text-rose-455" />,
+          icon: <Settings className="w-8 h-8 text-rose-500" />,
           colorClass: 'border-rose-500/30 text-rose-400 bg-rose-500/10',
           permissions: ROLE_PERMISSIONS.admin
         };
@@ -359,12 +360,9 @@ export default function UserManagementPage() {
           <p className="text-slate-400 mt-1">Gerencie os membros da sua equipe e atribua permissões de acesso.</p>
         </div>
         {!isCreating && (
-          <button
-            onClick={() => setIsCreating(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200 cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" /> Convidar Membro
-          </button>
+          <Button icon={<UserPlus className="w-4 h-4" />} onClick={() => setIsCreating(true)}>
+            Convidar Membro
+          </Button>
         )}
       </div>
 
@@ -377,7 +375,7 @@ export default function UserManagementPage() {
             placeholder="Buscar por nome, perfil ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-855 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
       )}
@@ -390,10 +388,12 @@ export default function UserManagementPage() {
             <p className="text-sm text-slate-400">Carregando dados da equipe...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900 text-center px-4">
-            <AlertCircle className="w-12 h-12 text-slate-650 mb-4" />
-            <h3 className="text-lg font-bold text-slate-300">Nenhum colaborador encontrado</h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-xs">Tente ajustar seus termos de pesquisa.</p>
+          <div className="bg-slate-900/20 rounded-none border border-slate-900">
+            <EmptyState
+              icon={<AlertCircle />}
+              title="Nenhum colaborador encontrado"
+              description="Tente ajustar seus termos de pesquisa."
+            />
           </div>
         ) : (
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none overflow-hidden shadow-xl">
@@ -413,7 +413,7 @@ export default function UserManagementPage() {
                   {filteredUsers.map((colaborador, index) => (
                     <tr key={colaborador.id} className="hover:bg-slate-800/20 transition-colors">
                       {/* Column 1: Sequential ID */}
-                      <td className="py-4 px-6 text-center font-semibold text-slate-450 text-xs font-mono">
+                      <td className="py-4 px-6 text-center font-semibold text-slate-400 text-xs font-mono">
                         #{index + 1}
                       </td>
                       {/* Column 2: User Name with Square Profile Icon */}
@@ -427,12 +427,12 @@ export default function UserManagementPage() {
                       </td>
                       {/* Column 3: Custom Role Badge */}
                       <td className="py-4 px-6">
-                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold tracking-wide border uppercase ${getRoleBadgeColor(colaborador.role)}`}>
+                        <Badge tone={getRoleBadgeTone(colaborador.role)} className="tracking-wide uppercase">
                           {getRoleLabel(colaborador.role)}
-                        </span>
+                        </Badge>
                       </td>
                       {/* Column 4: Email */}
-                      <td className="py-4 px-6 text-slate-350 font-mono text-xs">
+                      <td className="py-4 px-6 text-slate-300 font-mono text-xs">
                         {colaborador.email}
                       </td>
                       {/* Column 5: Telefone with WhatsApp green link */}
@@ -447,26 +447,30 @@ export default function UserManagementPage() {
                             />
                           </div>
                         ) : (
-                          <span className="text-slate-650">—</span>
+                          <span className="text-slate-500">—</span>
                         )}
                       </td>
                       {/* Column 6: Actions */}
                       <td className="py-4 px-6 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-1.5 text-info hover:text-info"
                             onClick={() => handleEditClick(colaborador)}
-                            className="text-blue-500 hover:text-blue-450 hover:bg-blue-500/10 p-1.5 rounded-none transition-colors cursor-pointer"
                             title="Editar Colaborador"
                           >
                             <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-1.5 text-danger hover:text-danger"
                             onClick={() => handleDeleteUser(colaborador.id, colaborador.name)}
-                            className="text-rose-500 hover:text-rose-455 hover:bg-rose-500/10 p-1.5 rounded-none transition-colors cursor-pointer"
                             title="Remover Colaborador"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -483,12 +487,15 @@ export default function UserManagementPage() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#0b0f19] border border-slate-800 rounded-none w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
 
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-4 top-4 px-1 z-10"
               onClick={closeModal}
-              className="absolute right-4 top-4 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all cursor-pointer z-10"
+              aria-label="Fechar"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
 
             {/* Left side: Invite Form */}
             <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-slate-850">
@@ -535,25 +542,21 @@ export default function UserManagementPage() {
                         value={generatedInviteLink}
                         className="flex-1 bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-emerald-300 font-mono focus:outline-none"
                       />
-                      <button
+                      <Button
                         type="button"
+                        className="shrink-0"
                         onClick={() => {
                           navigator.clipboard.writeText(generatedInviteLink);
                         }}
                         title="Copiar link"
-                        className="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-colors cursor-pointer shrink-0"
                       >
                         <Copy className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded text-xs transition-colors cursor-pointer mt-2"
-                  >
+                  <Button type="button" variant="secondary" fullWidth className="mt-2" onClick={closeModal}>
                     Fechar
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <form onSubmit={handleCreateInvite} className="space-y-4">
@@ -587,20 +590,18 @@ export default function UserManagementPage() {
                   </div>
 
                   <div className="flex gap-3 pt-4 border-t border-slate-850">
-                    <button
+                    <Button
                       type="submit"
-                      disabled={submitting || isReadOnly || (selectedRole !== 'viewer' && users.filter(u => u.role === 'admin' || u.role === 'technician').length >= maxTechnicians)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-blue-500/10 cursor-pointer disabled:opacity-50"
+                      className="flex-1"
+                      loading={submitting}
+                      disabled={isReadOnly || (selectedRole !== 'viewer' && users.filter(u => u.role === 'admin' || u.role === 'technician').length >= maxTechnicians)}
+                      icon={<UserPlus className="w-3.5 h-3.5" />}
                     >
-                      {submitting ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : <><UserPlus className="w-3.5 h-3.5" /> Gerar Convite</>}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={closeModal}
-                      className="flex-1 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white font-semibold py-2.5 rounded text-xs transition-colors cursor-pointer"
-                    >
+                      Gerar Convite
+                    </Button>
+                    <Button type="button" variant="secondary" className="flex-1" onClick={closeModal}>
                       Cancelar
-                    </button>
+                    </Button>
                   </div>
                 </form>
               )}
@@ -637,7 +638,7 @@ export default function UserManagementPage() {
                 </div>
               </div>
               <div className="pt-4 border-t border-slate-850 text-center md:text-left">
-                <span className="text-[10px] font-bold text-slate-650 uppercase tracking-widest block">Trust Care Corp</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Trust Care Corp</span>
                 <span className="text-[9px] text-slate-500 font-mono">Controle de Segurança de Acesso</span>
               </div>
             </div>
@@ -650,12 +651,15 @@ export default function UserManagementPage() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#0b0f19] border border-slate-800 rounded-none w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
 
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-4 top-4 px-1 z-10"
               onClick={closeModal}
-              className="absolute right-4 top-4 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all cursor-pointer z-10"
+              aria-label="Fechar"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
 
             {/* Left side: Edit Form */}
             <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-slate-850">
@@ -737,20 +741,12 @@ export default function UserManagementPage() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-slate-850">
-                  <button
-                    type="submit"
-                    disabled={submitting || formSuccess}
-                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-blue-500/10 cursor-pointer disabled:opacity-50"
-                  >
-                    {submitting ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : 'Salvar Alterações'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="flex-1 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white font-semibold py-2.5 rounded text-xs transition-colors cursor-pointer"
-                  >
+                  <Button type="submit" className="flex-1" loading={submitting} disabled={formSuccess}>
+                    Salvar Alterações
+                  </Button>
+                  <Button type="button" variant="secondary" className="flex-1" onClick={closeModal}>
                     Cancelar
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -786,7 +782,7 @@ export default function UserManagementPage() {
                 </div>
               </div>
               <div className="pt-4 border-t border-slate-850 text-center md:text-left">
-                <span className="text-[10px] font-bold text-slate-650 uppercase tracking-widest block">Trust Care Corp</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Trust Care Corp</span>
                 <span className="text-[9px] text-slate-500 font-mono">Controle de Segurança de Acesso</span>
               </div>
             </div>

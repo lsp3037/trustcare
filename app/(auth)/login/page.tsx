@@ -90,7 +90,7 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-8">
-            <ShieldCheck className="w-5 h-5 text-emerald-450" />
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Trust Care Platform</span>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function LoginPage() {
 
             {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-650 uppercase tracking-wider">Email</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                 <input
@@ -175,7 +175,7 @@ export default function LoginPage() {
             {/* Senha Field */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-[11px] font-bold text-slate-650 uppercase tracking-wider">Senha</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Senha</label>
                 <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline transition-all">Esqueceu a senha?</Link>
               </div>
               <div className="relative">

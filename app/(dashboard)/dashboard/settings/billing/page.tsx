@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
-import { CreditCard, AlertCircle, CheckCircle2, ShieldCheck, Users, HardDrive, ExternalLink, Loader2 } from 'lucide-react';
+import { CreditCard, AlertCircle, CheckCircle2, ShieldCheck, Users, HardDrive } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, Badge } from '@/components/ui';
 
 export default function BillingSettingsPage() {
   const router = useRouter();
@@ -96,11 +97,11 @@ export default function BillingSettingsPage() {
     premium: 'R$ 149,90/mês'
   };
 
-  const statusColors: Record<string, string> = {
-    active: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-    trialing: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    past_due: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    canceled: 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+  const statusTones: Record<string, 'success' | 'info' | 'warning' | 'danger'> = {
+    active: 'success',
+    trialing: 'info',
+    past_due: 'warning',
+    canceled: 'danger'
   };
 
   const statusLabels: Record<string, string> = {
@@ -156,7 +157,7 @@ export default function BillingSettingsPage() {
           <CreditCard className="w-6 h-6 text-blue-500" />
           Assinatura e Faturamento
         </h1>
-        <p className="text-xs text-slate-450 mt-1">
+        <p className="text-xs text-slate-400 mt-1">
           Gerencie o plano da sua empresa, consulte faturas e verifique limites de uso dos recursos.
         </p>
       </div>
@@ -179,9 +180,9 @@ export default function BillingSettingsPage() {
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
                 PLANO ATUAL
               </span>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors[currentStatus] || 'text-slate-400 bg-slate-900'}`}>
+              <Badge tone={statusTones[currentStatus] || 'neutral'}>
                 {statusLabels[currentStatus] || currentStatus}
-              </span>
+              </Badge>
             </div>
             <h2 className="text-3xl font-black text-white tracking-tight">
               Trust Care {planNames[currentPlan]} <span className="text-lg font-medium text-slate-500">({planPrices[currentPlan]})</span>
@@ -229,7 +230,7 @@ export default function BillingSettingsPage() {
         {/* Technicians Usage */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-none space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-350 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <Users className="w-4.5 h-4.5 text-blue-500" />
               Técnicos Ativos
             </h3>
@@ -252,7 +253,7 @@ export default function BillingSettingsPage() {
         {/* Storage Usage */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-none space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-350 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <HardDrive className="w-4.5 h-4.5 text-blue-500" />
               Armazenamento de Mídias
             </h3>
@@ -276,7 +277,7 @@ export default function BillingSettingsPage() {
       {/* Compare Plans Section */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-sm font-bold text-slate-350 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="w-4.5 h-4.5 text-blue-500" />
             Tabela Comparativa de Planos
           </h3>
@@ -303,18 +304,15 @@ export default function BillingSettingsPage() {
               </ul>
             </div>
             
-            <button
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={() => handleSubscribe('starter')}
-              disabled={checkoutLoading !== null}
-              className={`w-full font-bold py-2.5 px-4 rounded-none text-xs transition-all flex items-center justify-center gap-2 ${
-                currentPlan === 'starter' && currentStatus !== 'trialing'
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700'
-              }`}
+              disabled={checkoutLoading !== null || (currentPlan === 'starter' && currentStatus !== 'trialing')}
+              loading={checkoutLoading === 'starter'}
             >
-              {checkoutLoading === 'starter' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
-               currentPlan === 'starter' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Starter'}
-            </button>
+              {currentPlan === 'starter' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Starter'}
+            </Button>
           </div>
 
           {/* Plan Pro */}
@@ -326,7 +324,7 @@ export default function BillingSettingsPage() {
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white flex items-center gap-1.5">
                   Pro
-                  <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">Recomendado</span>
+                  <Badge tone="info">Recomendado</Badge>
                 </h4>
                 <p className="text-2xl font-black text-white">R$ 69,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
                 <p className="text-[10px] text-slate-500">Ideal para o balcão e a bancada.</p>
@@ -340,18 +338,14 @@ export default function BillingSettingsPage() {
               </ul>
             </div>
 
-            <button
+            <Button
+              fullWidth
               onClick={() => handleSubscribe('pro')}
-              disabled={checkoutLoading !== null}
-              className={`w-full font-bold py-2.5 px-4 rounded-none text-xs transition-all shadow-lg flex items-center justify-center gap-2 ${
-                currentPlan === 'pro' && currentStatus !== 'trialing'
-                  ? 'bg-blue-900/50 text-blue-300 cursor-not-allowed border border-blue-800' 
-                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/15'
-              }`}
+              disabled={checkoutLoading !== null || (currentPlan === 'pro' && currentStatus !== 'trialing')}
+              loading={checkoutLoading === 'pro'}
             >
-              {checkoutLoading === 'pro' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
-               currentPlan === 'pro' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Pro'}
-            </button>
+              {currentPlan === 'pro' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Pro'}
+            </Button>
           </div>
 
           {/* Plan Premium */}
@@ -371,18 +365,15 @@ export default function BillingSettingsPage() {
               </ul>
             </div>
 
-            <button
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={() => handleSubscribe('premium')}
-              disabled={checkoutLoading !== null}
-              className={`w-full font-bold py-2.5 px-4 rounded-none text-xs transition-all flex items-center justify-center gap-2 ${
-                currentPlan === 'premium' && currentStatus !== 'trialing'
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
-                  : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700'
-              }`}
+              disabled={checkoutLoading !== null || (currentPlan === 'premium' && currentStatus !== 'trialing')}
+              loading={checkoutLoading === 'premium'}
             >
-              {checkoutLoading === 'premium' ? <Loader2 className="w-4 h-4 animate-spin" /> : 
-               currentPlan === 'premium' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Premium'}
-            </button>
+              {currentPlan === 'premium' && currentStatus !== 'trialing' ? 'Plano Atual' : 'Assinar Premium'}
+            </Button>
           </div>
         </div>
       </div>

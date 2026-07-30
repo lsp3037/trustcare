@@ -14,7 +14,6 @@ import {
   ArrowRight, 
   ArrowLeft,
   ShieldCheck,
-  FileText,
   CheckCircle2,
   PlusCircle,
   UserPlus,
@@ -24,7 +23,81 @@ import {
 import { useCompany } from '@/lib/context/CompanyContext';
 import { supabase } from '@/lib/supabase/client';
 import { triggerConfetti } from '@/lib/utils/confetti';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner, Button, Field, Input, Textarea } from '@/components/ui';
+import { cn } from '@/lib/utils';
+
+/** Os 3 passos do assistente. Antes cada um era markup copiado. */
+const STEPS = [
+  { title: 'Branding & Perfil', hint: 'Logotipo, Nome e Contatos' },
+  { title: 'Regras & Garantias', hint: 'CDC 90 Dias e Termos no PDF' },
+  { title: 'Próximos Passos', hint: 'Primeiras Ações no Sistema' },
+] as const;
+
+function StepIndicator({ current }: { current: number }) {
+  return (
+    <ol className="space-y-3 pt-2">
+      {STEPS.map((step, i) => {
+        const n = i + 1;
+        const isCurrent = current === n;
+        const isDone = current > n;
+        return (
+          <li key={step.title}>
+            {i > 0 && <span className="block w-0.5 h-4 bg-border ml-3.5 mb-3" aria-hidden />}
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden
+                className={cn(
+                  'w-7 h-7 shrink-0 flex items-center justify-center text-small font-mono font-semibold border',
+                  isCurrent && 'bg-brand text-brand-contrast border-brand',
+                  isDone && 'bg-brand/10 text-brand border-brand/25',
+                  !isCurrent && !isDone && 'bg-surface-sunken text-text-subtle border-border',
+                )}
+              >
+                {isDone ? <Check className="w-3.5 h-3.5" /> : n}
+              </span>
+              <div className="min-w-0">
+                <p className={cn('text-small font-semibold', isCurrent ? 'text-text' : 'text-text-muted')}>
+                  {step.title}
+                  {isCurrent && <span className="sr-only"> (passo atual)</span>}
+                </p>
+                <p className="text-caption text-text-subtle">{step.hint}</p>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/**
+ * Campo com ícone à esquerda. Eram 7 inputs com o mesmo bloco
+ * `relative` + ícone posicionado + classe longa, reescritos um a um.
+ */
+function IconInput({
+  icon: Icon,
+  label,
+  id,
+  hint,
+  ...props
+}: {
+  icon: React.ElementType;
+  label: string;
+  id: string;
+  hint?: string;
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <Field label={label} htmlFor={id} hint={hint} required={props.required}>
+      <div className="relative">
+        <Icon
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle pointer-events-none z-10"
+          aria-hidden
+        />
+        <Input id={id} wrapperClassName="gap-0" className="pl-10" {...props} />
+      </div>
+    </Field>
+  );
+}
 
 export default function OnboardingModal() {
   const router = useRouter();
@@ -277,79 +350,34 @@ export default function OnboardingModal() {
   if (!isOpen || contextLoading) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-none shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[92vh] md:max-h-[85vh]">
-        
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-surface/85 backdrop-blur-md p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        className="relative w-full max-w-2xl bg-surface-raised border border-border shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[92vh] md:max-h-[85vh]"
+      >
+
         {/* Left Side Banner with Stepper */}
-        <div className="md:w-5/12 bg-slate-950/50 p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800">
+        <div className="md:w-5/12 bg-surface-sunken p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border">
           <div className="space-y-6">
-            <div className="w-12 h-12 rounded-none bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-emerald-600/10">
+            <div className="w-12 h-12 bg-brand/10 text-brand border border-brand/25 flex items-center justify-center" aria-hidden>
               <Building className="w-6 h-6" />
             </div>
 
             <div>
-              <h2 className="text-lg font-black text-white leading-tight">Configuração Inicial</h2>
-              <p className="text-[11px] text-emerald-450 font-bold uppercase tracking-wider mt-1">
-                Passo {currentStep} de 3
+              <h2 id="onboarding-title" className="text-h2 text-text">Configuração Inicial</h2>
+              <p className="text-caption uppercase tracking-wider text-brand mt-1">
+                Passo {currentStep} de {STEPS.length}
               </p>
             </div>
 
             {/* Visual Stepper */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono border transition-all ${
-                  currentStep === 1 
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400' 
-                    : currentStep > 1 
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
-                    : 'bg-slate-900 text-slate-600 border-slate-800'
-                }`}>
-                  {currentStep > 1 ? <Check className="w-3.5 h-3.5" /> : '1'}
-                </div>
-                <div>
-                  <p className={`text-xs font-bold ${currentStep === 1 ? 'text-white' : 'text-slate-400'}`}>Branding & Perfil</p>
-                  <p className="text-[10px] text-slate-500">Logotipo, Nome e Contatos</p>
-                </div>
-              </div>
-
-              <div className="w-0.5 h-4 bg-slate-800 ml-3.5" />
-
-              <div className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono border transition-all ${
-                  currentStep === 2 
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400' 
-                    : currentStep > 2 
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
-                    : 'bg-slate-900 text-slate-600 border-slate-800'
-                }`}>
-                  {currentStep > 2 ? <Check className="w-3.5 h-3.5" /> : '2'}
-                </div>
-                <div>
-                  <p className={`text-xs font-bold ${currentStep === 2 ? 'text-white' : 'text-slate-400'}`}>Regras & Garantias</p>
-                  <p className="text-[10px] text-slate-500">CDC 90 Dias e Termos no PDF</p>
-                </div>
-              </div>
-
-              <div className="w-0.5 h-4 bg-slate-800 ml-3.5" />
-
-              <div className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono border transition-all ${
-                  currentStep === 3 
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400' 
-                    : 'bg-slate-900 text-slate-600 border-slate-800'
-                }`}>
-                  3
-                </div>
-                <div>
-                  <p className={`text-xs font-bold ${currentStep === 3 ? 'text-white' : 'text-slate-400'}`}>Próximos Passos</p>
-                  <p className="text-[10px] text-slate-500">Primeiras Ações no Sistema</p>
-                </div>
-              </div>
-            </div>
+            <StepIndicator current={currentStep} />
           </div>
 
-          <div className="hidden md:block pt-6 border-t border-slate-800/60">
-            <p className="text-[10px] text-slate-500 leading-normal">
+          <div className="hidden md:block pt-6 border-t border-border">
+            <p className="text-caption text-text-subtle">
               Esses dados serão utilizados na personalização visual dos seus PDFs de Ordem de Serviço, orçamentos e comprovantes de entrega.
             </p>
           </div>
@@ -362,157 +390,113 @@ export default function OnboardingModal() {
           {currentStep === 1 && (
             <form onSubmit={handleStep1Next} className="space-y-5 flex flex-col justify-between h-full">
               <div className="space-y-4">
-                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                  <Building className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-h3 text-text flex items-center gap-2">
+                  <Building className="w-4 h-4 text-text-subtle" aria-hidden />
                   Identidade da sua Assistência
                 </h3>
 
                 {errorMsg && (
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-none flex items-start gap-2.5">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p role="alert" className="p-3 bg-danger/10 border border-danger/25 text-danger text-small flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
                     <span>{errorMsg}</span>
-                  </div>
+                  </p>
                 )}
 
                 {/* Logo uploader */}
-                <div className="flex flex-col items-center space-y-2">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block self-start">Logotipo da Assistência</span>
-                  
-                  <div 
+                <Field label="Logotipo da Assistência">
+                  <div
                     onDragEnter={handleDrag}
                     onDragOver={handleDrag}
                     onDragLeave={handleDrag}
                     onDrop={handleDrop}
-                    className={`relative w-full h-24 rounded-none border border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-slate-950/20 ${
-                      isDragActive 
-                        ? 'border-emerald-500 bg-emerald-500/5' 
-                        : 'border-slate-800 hover:border-emerald-500/30'
-                    }`}
+                    className={cn(
+                      'relative w-full h-24 border border-dashed flex flex-col items-center justify-center transition-colors group bg-surface-sunken',
+                      isDragActive ? 'border-brand bg-brand/5' : 'border-border hover:border-border-strong',
+                    )}
                   >
                     {previewUrl ? (
                       <div className="relative w-full h-full p-2.5 flex items-center justify-center">
                         <img src={previewUrl} alt="Logotipo" className="max-w-full max-h-full object-contain" />
-                        <label className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[9px] gap-1 rounded-none font-bold">
-                          <Upload className="w-3.5 h-3.5 text-emerald-450" />
+                        <label className="absolute inset-0 bg-surface/85 opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-text text-caption gap-1">
+                          <Upload className="w-3.5 h-3.5 text-brand" aria-hidden />
                           <span>Alterar Logo</span>
-                          <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                          <input type="file" accept="image/*" onChange={handleFileChange} className="sr-only" />
                         </label>
                       </div>
                     ) : (
                       <div className="text-center p-3 flex flex-col items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-slate-700 group-hover:text-emerald-500/40 transition-colors mb-1" />
-                        <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Arraste a logo</span>
-                        <label className="text-[8px] text-emerald-450 hover:underline cursor-pointer font-bold mt-0.5">
+                        <ImageIcon className="w-6 h-6 text-text-subtle mb-1.5" aria-hidden />
+                        <span className="text-caption text-text-subtle">Arraste a logo</span>
+                        <label className="text-caption text-brand hover:underline cursor-pointer mt-0.5 focus-within:underline">
                           ou selecione no computador
-                          <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                          <input type="file" accept="image/*" onChange={handleFileChange} className="sr-only" />
                         </label>
                       </div>
                     )}
 
                     {uploading && (
-                      <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center rounded-none text-emerald-450 text-[9px] gap-1.5 font-bold">
-                        <LoadingSpinner className="w-5 h-5 animate-spin" />
+                      <div className="absolute inset-0 bg-surface/85 flex flex-col items-center justify-center text-brand text-caption gap-1.5">
+                        <LoadingSpinner className="w-5 h-5 text-brand" />
                         <span>Enviando logotipo...</span>
                       </div>
                     )}
                   </div>
-                </div>
+                </Field>
 
-                {/* Company Name */}
-                <div className="space-y-1">
-                  <label htmlFor="onboard-name" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                    Nome da Empresa / Assistência
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
-                    <input
-                      id="onboard-name"
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Ex: Trust Care Assistência"
-                      className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
-                    />
-                  </div>
-                </div>
+                <IconInput
+                  icon={Building}
+                  id="onboard-name"
+                  label="Nome da Empresa / Assistência"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: Trust Care Assistência"
+                />
 
-                {/* Phone & WhatsApp */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label htmlFor="onboard-phone" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                      Telefone
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
-                      <input
-                        id="onboard-phone"
-                        type="text"
-                        required
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="(66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label htmlFor="onboard-whatsapp" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                      WhatsApp
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
-                      <input
-                        id="onboard-whatsapp"
-                        type="text"
-                        required
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        placeholder="(66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
-                      />
-                    </div>
-                  </div>
+                  <IconInput
+                    icon={Phone}
+                    id="onboard-phone"
+                    label="Telefone"
+                    type="text"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="(66) 99999-9999"
+                  />
+                  <IconInput
+                    icon={Phone}
+                    id="onboard-whatsapp"
+                    label="WhatsApp"
+                    type="text"
+                    required
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="(66) 99999-9999"
+                  />
                 </div>
 
-                {/* Email */}
-                <div className="space-y-1">
-                  <label htmlFor="onboard-email" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                    E-mail Comercial
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
-                    <input
-                      id="onboard-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="contato@suaempresa.com"
-                      className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all placeholder:text-slate-700 font-semibold"
-                    />
-                  </div>
-                </div>
+                <IconInput
+                  icon={Mail}
+                  id="onboard-email"
+                  label="E-mail Comercial"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="contato@suaempresa.com"
+                />
               </div>
 
               {/* Actions Step 1 */}
-              <div className="border-t border-slate-800/80 pt-4 mt-6 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={handleSkip}
-                  className="text-[10px] font-bold text-slate-500 hover:text-slate-350 transition-colors"
-                >
+              <div className="border-t border-border pt-4 mt-6 flex items-center justify-between gap-3">
+                <Button variant="ghost" size="sm" onClick={handleSkip}>
                   Configurar depois
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-none text-[10px] flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
-                >
-                  <span>Próximo Passo</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                </Button>
+                <Button type="submit">
+                  Próximo Passo <ArrowRight className="w-4 h-4" aria-hidden />
+                </Button>
               </div>
             </form>
           )}
@@ -521,175 +505,135 @@ export default function OnboardingModal() {
           {currentStep === 2 && (
             <form onSubmit={handleStep2Save} className="space-y-5 flex flex-col justify-between h-full">
               <div className="space-y-4">
-                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <h3 className="text-h3 text-text flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-text-subtle" aria-hidden />
                   Regras de Garantia & Termos do PDF
                 </h3>
 
                 {errorMsg && (
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-none flex items-start gap-2.5">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p role="alert" className="p-3 bg-danger/10 border border-danger/25 text-danger text-small flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
                     <span>{errorMsg}</span>
-                  </div>
+                  </p>
                 )}
 
-                {/* Prazo Padrão de Garantia */}
-                <div className="space-y-1">
-                  <label htmlFor="onboard-warranty" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                    Prazo Padrão de Garantia (Dias)
-                  </label>
-                  <div className="relative">
-                    <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
-                    <input
-                      id="onboard-warranty"
-                      type="number"
-                      required
-                      value={warrantyDays}
-                      onChange={(e) => setWarrantyDays(e.target.value)}
-                      placeholder="90"
-                      className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-semibold font-mono"
-                    />
-                  </div>
-                  <p className="text-[9px] text-slate-500">O Código de Defesa do Consumidor estipula 90 dias de garantia legal.</p>
-                </div>
+                <IconInput
+                  icon={ShieldCheck}
+                  id="onboard-warranty"
+                  label="Prazo Padrão de Garantia (Dias)"
+                  hint="O Código de Defesa do Consumidor estipula 90 dias de garantia legal."
+                  type="number"
+                  required
+                  value={warrantyDays}
+                  onChange={(e) => setWarrantyDays(e.target.value)}
+                  placeholder="90"
+                  className="pl-10 font-mono tabular-nums"
+                />
 
-                {/* Termos de Garantia do PDF */}
-                <div className="space-y-1">
-                  <label htmlFor="onboard-terms" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                    Termos de Garantia (Impresso no PDF)
-                  </label>
-                  <textarea
-                    id="onboard-terms"
-                    rows={3}
-                    value={termsText}
-                    onChange={(e) => setTermsText(e.target.value)}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans leading-relaxed"
-                  />
-                </div>
+                <Textarea
+                  id="onboard-terms"
+                  label="Termos de Garantia (Impresso no PDF)"
+                  rows={3}
+                  value={termsText}
+                  onChange={(e) => setTermsText(e.target.value)}
+                  className="min-h-0"
+                />
 
-                {/* Observações dos Orçamentos */}
-                <div className="space-y-1">
-                  <label htmlFor="onboard-notes" className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                    Observações Padrão de Orçamentos
-                  </label>
-                  <textarea
-                    id="onboard-notes"
-                    rows={2}
-                    value={budgetNotes}
-                    onChange={(e) => setBudgetNotes(e.target.value)}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-none text-xs text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans leading-relaxed"
-                  />
-                </div>
+                <Textarea
+                  id="onboard-notes"
+                  label="Observações Padrão de Orçamentos"
+                  rows={2}
+                  value={budgetNotes}
+                  onChange={(e) => setBudgetNotes(e.target.value)}
+                  className="min-h-0"
+                />
               </div>
 
               {/* Actions Step 2 */}
-              <div className="border-t border-slate-800/80 pt-4 mt-6 flex items-center justify-between gap-3">
-                <button
-                  type="button"
+              <div className="border-t border-border pt-4 mt-6 flex items-center justify-between gap-3">
+                <Button
+                  variant="secondary"
+                  icon={<ArrowLeft className="w-4 h-4" />}
                   onClick={() => setCurrentStep(1)}
-                  className="px-3 py-2 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold rounded-none text-[10px] flex items-center gap-1.5 transition-all"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Voltar</span>
-                </button>
+                  Voltar
+                </Button>
 
-                <button
-                  type="submit"
-                  disabled={saving || uploading}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white font-bold rounded-none text-[10px] flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
-                >
-                  {saving ? (
-                    <>
-                      <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
-                      <span>Salvando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Salvar & Avançar</span>
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    </>
-                  )}
-                </button>
+                <Button type="submit" loading={saving || uploading}>
+                  {saving ? 'Salvando...' : 'Salvar & Avançar'}
+                  {!saving && <CheckCircle2 className="w-4 h-4" aria-hidden />}
+                </Button>
               </div>
             </form>
           )}
 
           {/* PASSO 3: CELEBRAÇÃO & AÇÃO IMEDIATA */}
           {currentStep === 3 && (
-            <div className="space-y-6 flex flex-col justify-between h-full animate-in fade-in duration-300">
+            <div className="space-y-6 flex flex-col justify-between h-full">
               <div className="space-y-5 text-center">
-                <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto animate-bounce">
+                <div className="w-14 h-14 bg-brand/10 text-brand border border-brand/25 flex items-center justify-center mx-auto" aria-hidden>
                   <PartyPopper className="w-7 h-7" />
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-black text-white flex items-center justify-center gap-1.5">
-                    Tudo Pronto! <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
+                  <h3 className="text-h2 text-text flex items-center justify-center gap-2">
+                    Tudo Pronto! <Sparkles className="w-5 h-5 text-brand" aria-hidden />
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                    Sua assistência técnica <strong className="text-emerald-400 font-bold">{name || 'Trust Care'}</strong> está configurada. Escolha por onde quer começar:
+                  <p className="text-small text-text-muted mt-2 max-w-sm mx-auto">
+                    Sua assistência técnica <strong className="text-text font-semibold">{name || 'Trust Care'}</strong> está configurada. Escolha por onde quer começar:
                   </p>
                 </div>
 
                 {/* Direct Action Cards */}
                 <div className="grid grid-cols-1 gap-3 pt-2 text-left">
-                  <button
-                    onClick={() => handleFinishAction('/dashboard/orders?new=true')}
-                    className="p-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-emerald-500/40 rounded-none transition-all flex items-center justify-between group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                        <PlusCircle className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">Criar 1ª Ordem de Serviço</p>
-                        <p className="text-[10px] text-slate-500">Abra um chamado de manutenção e gere o primeiro PDF</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 transition-colors" />
-                  </button>
-
-                  <button
-                    onClick={() => handleFinishAction('/dashboard/clients?new=true')}
-                    className="p-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-blue-500/40 rounded-none transition-all flex items-center justify-between group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                        <UserPlus className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Cadastrar 1º Cliente</p>
-                        <p className="text-[10px] text-slate-500">Cadastre dados da empresa (PJ) ou pessoa física (PF)</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-blue-400 transition-colors" />
-                  </button>
-
-                  <button
-                    onClick={() => handleFinishAction('/dashboard')}
-                    className="p-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 rounded-none transition-all flex items-center justify-between group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-800 text-slate-300 group-hover:bg-slate-700 transition-colors">
-                        <LayoutDashboard className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">Ir ao Painel Geral (Dashboard)</p>
-                        <p className="text-[10px] text-slate-500">Explore os gráficos, KPIs e navegação da plataforma</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
-                  </button>
+                  {[
+                    {
+                      icon: PlusCircle,
+                      title: 'Criar 1ª Ordem de Serviço',
+                      hint: 'Abra um chamado de manutenção e gere o primeiro PDF',
+                      route: '/dashboard/orders?new=true',
+                    },
+                    {
+                      icon: UserPlus,
+                      title: 'Cadastrar 1º Cliente',
+                      hint: 'Cadastre dados da empresa (PJ) ou pessoa física (PF)',
+                      route: '/dashboard/clients?new=true',
+                    },
+                    {
+                      icon: LayoutDashboard,
+                      title: 'Ir ao Painel Geral (Dashboard)',
+                      hint: 'Explore os gráficos, KPIs e navegação da plataforma',
+                      route: '/dashboard',
+                    },
+                  ].map(({ icon: Icon, title, hint, route }) => (
+                    <button
+                      key={route}
+                      type="button"
+                      onClick={() => handleFinishAction(route)}
+                      className="p-3 bg-surface-sunken border border-border hover:border-border-strong transition-colors flex items-center justify-between gap-3 group cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      <span className="flex items-center gap-3 min-w-0">
+                        <span className="p-2 shrink-0 bg-brand/10 text-brand" aria-hidden>
+                          <Icon className="w-5 h-5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-small font-semibold text-text">{title}</span>
+                          <span className="block text-caption text-text-subtle">{hint}</span>
+                        </span>
+                      </span>
+                      <ArrowRight
+                        className="w-4 h-4 shrink-0 text-text-subtle group-hover:text-text transition-colors"
+                        aria-hidden
+                      />
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="border-t border-slate-800/80 pt-4 mt-6 text-center">
-                <button
-                  onClick={() => handleFinishAction()}
-                  className="text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-colors"
-                >
+              <div className="border-t border-border pt-4 mt-6 text-center">
+                <Button variant="ghost" size="sm" onClick={() => handleFinishAction()}>
                   Fechar assistente de onboarding
-                </button>
+                </Button>
               </div>
             </div>
           )}

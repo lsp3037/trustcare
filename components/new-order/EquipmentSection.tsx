@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Wrench } from 'lucide-react';
+import { Input, Select } from '@/components/ui';
 
 interface EquipmentSectionProps {
   clientId: string;
@@ -26,43 +26,36 @@ export function EquipmentSection({
 }: EquipmentSectionProps) {
   return (
     <>
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-          <Wrench className="w-3.5 h-3.5 text-blue-500" /> Equipamento do Cliente
-        </label>
-        <select
-          value={equipmentId}
-          onChange={(e) => setEquipmentId(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={!clientId || !!queryEquipmentId}
-        >
-          {!clientId ? (
-            <option value="">Selecione o cliente primeiro...</option>
-          ) : (
-            <>
-              {equipments.map((eq) => (
-                <option key={eq.id} value={eq.id}>
-                  {eq.name} ({eq.brand} {eq.model})
-                </option>
-              ))}
-              <option value="manual">Digitar manualmente...</option>
-            </>
-          )}
-        </select>
-      </div>
+      <Select
+        label="Equipamento do Cliente"
+        value={equipmentId}
+        onChange={(e) => setEquipmentId(e.target.value)}
+        disabled={!clientId || !!queryEquipmentId}
+        hint={!clientId ? 'Escolha o cliente para listar os equipamentos dele.' : undefined}
+      >
+        {!clientId ? (
+          <option value="">Selecione o cliente primeiro...</option>
+        ) : (
+          <>
+            {equipments.map((eq) => (
+              <option key={eq.id} value={eq.id}>
+                {eq.name} ({eq.brand} {eq.model})
+              </option>
+            ))}
+            <option value="manual">Digitar manualmente...</option>
+          </>
+        )}
+      </Select>
 
       {isManualEquipment && (
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-400">Especificações do Equipamento</label>
-          <input
-            type="text"
-            placeholder="Ex: Notebook Lenovo ThinkPad L14 N/S: PE091728"
-            value={equipmentDetails}
-            onChange={(e) => setEquipmentDetails(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-            required
-          />
-        </div>
+        <Input
+          label="Especificações do Equipamento"
+          type="text"
+          placeholder="Ex: Notebook Lenovo ThinkPad L14 N/S: PE091728"
+          value={equipmentDetails}
+          onChange={(e) => setEquipmentDetails(e.target.value)}
+          required
+        />
       )}
     </>
   );

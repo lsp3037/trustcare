@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, Badge, EmptyState } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 
 export default function ProductDetailPage() {
@@ -264,14 +265,16 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="text-center py-20 space-y-4">
-        <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="text-2xl font-bold text-white">Produto não encontrado</h2>
-        <p className="text-slate-400">O item solicitado não existe no estoque.</p>
-        <Link href="/dashboard/inventory" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Voltar para a listagem
-        </Link>
-      </div>
+      <EmptyState
+        icon={<AlertTriangle className="text-danger" />}
+        title="Produto não encontrado"
+        description="O item solicitado não existe no estoque."
+        action={
+          <Link href="/dashboard/inventory" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Voltar para a listagem
+          </Link>
+        }
+      />
     );
   }
 
@@ -288,7 +291,7 @@ export default function ProductDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
           <div>
             <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span className="text-slate-550 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-none uppercase tracking-wider">
+              <span className="text-slate-500 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-none uppercase tracking-wider">
                 SKU: {product.sku}
               </span>
               {product.name}
@@ -298,20 +301,22 @@ export default function ProductDetailPage() {
           
           <div className="flex gap-2 shrink-0">
             {!isEditing && (
-              <button
+              <Button
+                variant="secondary"
+                icon={<Edit className="w-4 h-4 text-slate-400" />}
                 onClick={() => setIsEditing(true)}
-                className="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center gap-1.5 transition-colors"
               >
-                <Edit className="w-4 h-4 text-slate-400" /> Editar Produto
-              </button>
+                Editar Produto
+              </Button>
             )}
-            <button
+            <Button
+              variant="danger"
+              loading={deleting}
+              icon={<Trash2 className="w-4 h-4" />}
               onClick={handleDeleteProduct}
-              disabled={deleting}
-              className="bg-rose-600/10 border border-rose-500/20 hover:bg-rose-600/20 text-rose-400 font-semibold py-2.5 px-4 rounded-none text-sm flex items-center gap-1.5 transition-all disabled:opacity-50"
             >
-              {deleting ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir Produto
-            </button>
+              Excluir Produto
+            </Button>
           </div>
         </div>
       </div>
@@ -326,12 +331,12 @@ export default function ProductDetailPage() {
           {isEditing ? (
             <form onSubmit={handleUpdateProduct} className="space-y-4">
               {saveSuccess && (
-                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
+                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
                 </div>
               )}
               {saveError && (
-                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-455">
+                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                   {saveError}
                 </div>
               )}
@@ -393,7 +398,7 @@ export default function ProductDetailPage() {
               {category === 'Memória RAM' && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Aplicação</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aplicação</label>
                     <select
                       value={ramApp}
                       onChange={(e) => setRamApp(e.target.value)}
@@ -546,15 +551,12 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-slate-850 justify-end">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-none text-sm flex items-center justify-center gap-1.5 transition-all"
-                >
-                  {saving ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
-                </button>
-                <button
+                <Button type="submit" loading={saving}>
+                  Salvar Alterações
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => {
                     setIsEditing(false);
                     setName(product.name);
@@ -567,10 +569,9 @@ export default function ProductDetailPage() {
                     setSalePrice(product.sale_price.toString());
                     setMinStockAlert(product.min_stock_alert.toString());
                   }}
-                  className="bg-slate-950 border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white font-semibold py-2 px-6 rounded-none text-sm transition-colors"
                 >
                   Cancelar
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
@@ -653,17 +654,11 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="shrink-0">
                   {isOut ? (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400 uppercase tracking-wide">
-                      Esgotado
-                    </span>
+                    <Badge tone="danger" className="uppercase tracking-wide">Esgotado</Badge>
                   ) : isLowStock ? (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 uppercase tracking-wide animate-pulse">
-                      Crítico
-                    </span>
+                    <Badge tone="warning" className="uppercase tracking-wide animate-pulse">Crítico</Badge>
                   ) : (
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 uppercase tracking-wide">
-                      Saudável
-                    </span>
+                    <Badge tone="success" className="uppercase tracking-wide">Saudável</Badge>
                   )}
                 </div>
               </div>
@@ -689,18 +684,18 @@ export default function ProductDetailPage() {
             
             <div className="space-y-4">
               <div className="flex justify-between items-center text-sm border-b border-slate-850 pb-2">
-                <span className="text-slate-450 flex items-center gap-1"><DollarSign className="w-4 h-4" /> Custo Unitário:</span>
+                <span className="text-slate-400 flex items-center gap-1"><DollarSign className="w-4 h-4" /> Custo Unitário:</span>
                 <span className="font-semibold text-slate-300">R$ {Number(product.cost_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
               <div className="flex justify-between items-center text-sm border-b border-slate-850 pb-2">
-                <span className="text-slate-450 flex items-center gap-1"><DollarSign className="w-4 h-4 text-emerald-400" /> Venda Unitária:</span>
+                <span className="text-slate-400 flex items-center gap-1"><DollarSign className="w-4 h-4 text-emerald-400" /> Venda Unitária:</span>
                 <span className="font-bold text-white">R$ {Number(product.sale_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
               <div className="flex justify-between items-center text-sm border-b border-slate-850 pb-2">
-                <span className="text-slate-450 flex items-center gap-1">Lucro por Peça:</span>
-                <span className="font-bold text-emerald-450">R$ {profitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span className="text-slate-400 flex items-center gap-1">Lucro por Peça:</span>
+                <span className="font-bold text-emerald-400">R$ {profitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
               {/* Margem de lucro bruto */}

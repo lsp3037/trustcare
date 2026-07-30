@@ -6,8 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, buttonClasses, Badge, StatusBadge, EmptyState } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
-import { getStatusColor } from '@/lib/utils/orderStatus';
 
 export default function ClientDetailPage() {
   const router = useRouter();
@@ -455,14 +455,16 @@ export default function ClientDetailPage() {
 
   if (!client) {
     return (
-      <div className="text-center py-20 space-y-4">
-        <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="text-2xl font-bold text-white">Cliente não encontrado</h2>
-        <p className="text-slate-400">O cliente solicitado não existe ou foi excluído.</p>
-        <Link href="/dashboard/clients" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Voltar para a listagem
-        </Link>
-      </div>
+      <EmptyState
+        icon={<AlertTriangle className="text-danger" />}
+        title="Cliente não encontrado"
+        description="O cliente solicitado não existe ou foi excluído."
+        action={
+          <Link href="/dashboard/clients" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Voltar para a listagem
+          </Link>
+        }
+      />
     );
   }
 
@@ -476,7 +478,7 @@ export default function ClientDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
           <div>
             <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span className="text-slate-550 font-mono text-xl bg-slate-900 border border-slate-800 px-3 py-1 rounded-none">
+              <span className="text-slate-500 font-mono text-xl bg-slate-900 border border-slate-800 px-3 py-1 rounded-none">
                 #{client.client_number || 'Mock'}
               </span>
               {client.name}
@@ -484,12 +486,13 @@ export default function ClientDetailPage() {
             <p className="text-slate-400 mt-1">Dados de cadastro, equipamentos e histórico de chamados técnicos.</p>
           </div>
           {!isEditing && (
-            <button
+            <Button
+              variant="secondary"
+              icon={<Edit className="w-4 h-4 text-slate-400" />}
               onClick={() => setIsEditing(true)}
-              className="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-200 font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 transition-colors"
             >
-              <Edit className="w-4 h-4 text-slate-400" /> Editar Dados
-            </button>
+              Editar Dados
+            </Button>
           )}
         </div>
       </div>
@@ -504,12 +507,12 @@ export default function ClientDetailPage() {
           {isEditing ? (
             <form onSubmit={handleUpdateClient} className="space-y-4">
               {saveSuccess && (
-                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
+                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
                 </div>
               )}
               {saveError && (
-                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450">
+                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                   {saveError}
                 </div>
               )}
@@ -517,7 +520,7 @@ export default function ClientDetailPage() {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-slate-350 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                     <input
                       type="radio"
                       checked={type === 'PF'}
@@ -526,7 +529,7 @@ export default function ClientDetailPage() {
                     />
                     PF
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-350 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                     <input
                       type="radio"
                       checked={type === 'PJ'}
@@ -583,15 +586,14 @@ export default function ClientDetailPage() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-none text-xs flex items-center justify-center gap-1 transition-all"
-                >
-                  {saving ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : 'Salvar'}
-                </button>
-                <button
+                <Button type="submit" size="sm" className="flex-1" loading={saving}>
+                  Salvar
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
                   onClick={() => {
                     setIsEditing(false);
                     // Restaura estados
@@ -601,10 +603,9 @@ export default function ClientDetailPage() {
                     setPhone(client.phone || '');
                     setEmail(client.email || '');
                   }}
-                  className="flex-1 bg-slate-950 border border-slate-800 hover:bg-slate-800/80 text-slate-400 hover:text-white font-semibold py-2 rounded-none text-xs transition-colors"
                 >
                   Cancelar
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
@@ -667,9 +668,9 @@ export default function ClientDetailPage() {
 
             {/* Listagem de Equipamentos */}
             {equipments.length === 0 ? (
-              <div className="text-center py-6 text-slate-500 text-xs">
+              <p className="text-center py-6 text-slate-500 text-xs">
                 Nenhum equipamento cadastrado para este cliente.
-              </div>
+              </p>
             ) : (
               <div className="overflow-x-auto mb-6">
                 <table className="w-full text-left text-xs border-collapse">
@@ -689,38 +690,42 @@ export default function ClientDetailPage() {
                         <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
                         <td className="py-2.5 px-3 text-slate-400">
                           {eq.equipment_categories?.name ? (
-                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-none text-[10px] font-bold">
-                              {eq.equipment_categories.name}
-                            </span>
+                            <Badge tone="success">{eq.equipment_categories.name}</Badge>
                           ) : '—'}
                         </td>
                         <td className="py-2.5 px-3 text-slate-400">{eq.brand || '—'}</td>
                         <td className="py-2.5 px-3 text-slate-400">{eq.model || '—'}</td>
-                        <td className="py-2.5 px-3 font-mono text-slate-350">{eq.serial_number || '—'}</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-300">{eq.serial_number || '—'}</td>
                         <td className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="px-1.5 hover:text-success"
                               onClick={() => handleShowChecklistHistory(eq)}
                               title="Histórico Clínico (Checklists)"
-                              className="p-1.5 bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 rounded-none transition-colors"
                             >
                               <ClipboardList className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="px-1.5"
                               onClick={() => handleEditEquipment(eq)}
                               title="Editar Equipamento"
-                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-none transition-colors"
                             >
                               <Edit className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="px-1.5 hover:text-danger"
                               onClick={() => handleDeleteEquipment(eq.id)}
                               title="Excluir Equipamento"
-                              className="p-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-none transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -741,12 +746,12 @@ export default function ClientDetailPage() {
               </h4>
               
               {eqSuccess && (
-                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-450 flex items-center gap-2">
+                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado!
                 </div>
               )}
               {eqError && (
-                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450">
+                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                   {eqError}
                 </div>
               )}
@@ -777,20 +782,21 @@ export default function ClientDetailPage() {
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
                     </select>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      className="px-3 hover:text-success"
                       onClick={() => setIsCreatingCategory(!isCreatingCategory)}
-                      className="px-3 bg-slate-900 border border-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-400 rounded-none flex items-center justify-center transition-colors cursor-pointer"
                       title="Nova Categoria"
                     >
                       <FolderPlus className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 {isCreatingCategory && (
                   <div className="col-span-1 md:col-span-2 space-y-1 animate-in slide-in-from-top-1 duration-150">
-                    <label className="text-[9px] font-bold text-emerald-450 uppercase tracking-wider font-mono">Nova Categoria Inline</label>
+                    <label className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider font-mono">Nova Categoria Inline</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -800,23 +806,20 @@ export default function ClientDetailPage() {
                         className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-1.5 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
                         autoFocus
                       />
-                      <button
-                        type="button"
-                        onClick={handleSaveCategory}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-none transition-colors cursor-pointer"
-                      >
+                      <Button type="button" size="sm" onClick={handleSaveCategory}>
                         Salvar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => {
                           setIsCreatingCategory(false);
                           setNewCategoryName('');
                         }}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-350 text-xs rounded-none transition-colors cursor-pointer"
                       >
                         Cancelar
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -860,8 +863,10 @@ export default function ClientDetailPage() {
 
               <div className="flex justify-end gap-2 pt-2">
                 {editingEqId && (
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setEditingEqId(null);
                       setEqName('');
@@ -870,19 +875,19 @@ export default function ClientDetailPage() {
                       setEqSerial('');
                       setEqCategoryId('');
                     }}
-                    className="bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold py-2 px-5 rounded-none text-xs transition-colors"
                   >
                     Cancelar Edição
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   type="submit"
-                  disabled={addingEq || eqSuccess}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  size="sm"
+                  loading={addingEq}
+                  disabled={eqSuccess}
+                  icon={editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                 >
-                  {addingEq ? <LoadingSpinner className="w-3.5 h-3.5 animate-spin" /> : (editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />)} 
                   {editingEqId ? 'Atualizar Equipamento' : 'Adicionar Equipamento'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -897,25 +902,22 @@ export default function ClientDetailPage() {
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Chamados técnicos abertos para este cliente.</p>
                 </div>
-                <Link 
-                  href={`/dashboard/orders?new=true&clientId=${client.id}`}
-                  className="bg-blue-600/10 border border-blue-500/20 hover:bg-blue-600/20 text-blue-400 font-semibold py-1.5 px-3.5 rounded-none text-xs flex items-center gap-1.5 transition-all"
-                >
+                <Link href={`/dashboard/orders?new=true&clientId=${client.id}`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
                   <Plus className="w-3.5 h-3.5" /> Abrir OS
                 </Link>
               </div>
 
               {orders.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-                  <ClipboardList className="w-10 h-10 text-slate-700 mb-3" />
-                  <h4 className="text-sm font-bold text-slate-400">Nenhuma Ordem de Serviço</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-xs">Não há chamados associados a este cliente no momento.</p>
-                </div>
+                <EmptyState
+                  icon={<ClipboardList />}
+                  title="Nenhuma Ordem de Serviço"
+                  description="Não há chamados associados a este cliente no momento."
+                />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-800 text-slate-550 font-semibold text-[10px] uppercase tracking-wider bg-slate-950/20">
+                      <tr className="border-b border-slate-800 text-slate-500 font-semibold text-[10px] uppercase tracking-wider bg-slate-950/20">
                         <th className="py-3 px-4">OS ID</th>
                         <th className="py-3 px-4">Equipamento</th>
                         <th className="py-3 px-4">Status</th>
@@ -937,11 +939,9 @@ export default function ClientDetailPage() {
                             {order.equipment_details}
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
+                            <StatusBadge status={order.status} className="text-[10px]" />
                           </td>
-                          <td className="py-3 px-4 text-center text-slate-450 text-xs">
+                          <td className="py-3 px-4 text-center text-slate-400 text-xs">
                             {new Date(order.created_at).toLocaleDateString('pt-BR')}
                           </td>
                           <td className="py-3 px-4 text-right font-bold text-slate-200">
@@ -963,17 +963,18 @@ export default function ClientDetailPage() {
       {selectedEqForHistory && (
         <div className="fixed inset-0 z-[100] flex justify-end p-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-slate-900 border-l border-slate-850 h-screen w-full max-w-lg p-6 shadow-2xl overflow-y-auto flex flex-col relative">
-            <button 
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-4 top-4 px-1.5"
               onClick={() => setSelectedEqForHistory(null)}
-              className="absolute right-4 top-4 p-1.5 rounded-none hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              aria-label="Fechar"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
 
             <div className="mb-6">
-              <span className="text-[10px] font-bold text-emerald-450 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                Histórico Clínico
-              </span>
+              <Badge tone="success" className="uppercase tracking-widest">Histórico Clínico</Badge>
               <h3 className="text-xl font-bold text-white mt-2 flex items-center gap-2">
                 <Wrench className="w-5 h-5 text-emerald-500" />
                 {selectedEqForHistory.name}
@@ -987,7 +988,7 @@ export default function ClientDetailPage() {
               {loadingHistory ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-                  <p className="text-sm text-slate-450">Carregando histórico clínico...</p>
+                  <p className="text-sm text-slate-400">Carregando histórico clínico...</p>
                 </div>
               ) : eqChecklistHistory.length === 0 ? (
                 <div className="text-center py-16 text-slate-500 text-xs border border-dashed border-slate-800 rounded-none p-6">
@@ -1015,7 +1016,7 @@ export default function ClientDetailPage() {
                               <div key={key} className="text-[11px] flex flex-col">
                                 <div className="flex items-center gap-1.5">
                                   <span className={`w-1.5 h-1.5 rounded-full ${isChecked ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                                  <span className="text-slate-350 capitalize truncate max-w-[150px]">{key.replace(/_/g, ' ')}</span>
+                                  <span className="text-slate-300 capitalize truncate max-w-[150px]">{key.replace(/_/g, ' ')}</span>
                                 </div>
                                 {note && <span className="text-[9px] text-slate-500 italic pl-3 truncate" title={note}>Obs: {note}</span>}
                               </div>
@@ -1049,14 +1050,12 @@ export default function ClientDetailPage() {
 
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] text-slate-500">Status:</span>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border ${getStatusColor(historyItem.status)}`}>
-                              {historyItem.status}
-                            </span>
+                            <StatusBadge status={historyItem.status} className="text-[9px]" />
                           </div>
 
                           {entry && (
                             <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">📋 Checklist de Entrada</span>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">📋 Checklist de Entrada</span>
                               {formatChecklistItems(entry)}
                               {entry.password_pin?.has_password && (
                                 <p className="text-[10px] text-slate-500 bg-slate-950 px-2 py-1 rounded inline-block border border-slate-900 mt-1">
@@ -1073,7 +1072,7 @@ export default function ClientDetailPage() {
 
                           {exit && (
                             <div className="space-y-1 pt-2 border-t border-slate-850/50">
-                              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">🚪 Checklist de Saída</span>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">🚪 Checklist de Saída</span>
                               {formatChecklistItems(exit)}
                               {exit.general_notes && (
                                 <p className="text-[10px] text-slate-500 italic mt-1 bg-slate-950/20 p-2 rounded border border-slate-900">

@@ -2,6 +2,7 @@
 import React from 'react';
 import { CheckCircle2, ExternalLink, Banknote, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+import { Button, StatusBadge, EmptyState } from '@/components/ui';
 import { MarkAsPaidModal } from './MarkAsPaidModal';
 
 interface Order {
@@ -22,19 +23,6 @@ interface PaymentTableProps {
   onPaymentSuccess?: (orderId: string) => void;
 }
 
-function statusBadge(status: string) {
-  const map: Record<string, string> = {
-    'Finalizado': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    'Pronto para Retirada': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'Cancelado': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-  };
-  return (
-    <span className={`text-[11px] font-semibold px-2 py-0.5 border rounded-none ${map[status] ?? 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-      {status}
-    </span>
-  );
-}
-
 export function PaymentTable({ orders, mode, onPaymentSuccess }: PaymentTableProps) {
   const [modalOrder, setModalOrder] = React.useState<Order | null>(null);
 
@@ -46,12 +34,10 @@ export function PaymentTable({ orders, mode, onPaymentSuccess }: PaymentTablePro
 
   if (orders.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-slate-500 gap-2">
-        <Banknote className="w-8 h-8 opacity-30" />
-        <p className="text-sm">
-          {mode === 'pending' ? 'Nenhuma OS pendente de pagamento.' : 'Nenhum pagamento registrado no período.'}
-        </p>
-      </div>
+      <EmptyState
+        icon={<Banknote />}
+        title={mode === 'pending' ? 'Nenhuma OS pendente de pagamento.' : 'Nenhum pagamento registrado no período.'}
+      />
     );
   }
 
@@ -99,7 +85,7 @@ export function PaymentTable({ orders, mode, onPaymentSuccess }: PaymentTablePro
                   {order.clients?.name ?? '—'}
                 </td>
                 <td className="py-3 px-4 hidden md:table-cell">
-                  {statusBadge(order.status)}
+                  <StatusBadge status={order.status} className="text-[11px]" />
                 </td>
                 <td className="py-3 px-4 text-slate-400 text-xs hidden sm:table-cell">
                   {mode === 'pending'
@@ -124,24 +110,27 @@ export function PaymentTable({ orders, mode, onPaymentSuccess }: PaymentTablePro
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Link>
                     {mode === 'pending' && (
-                      <button
+                      <Button
+                        size="sm"
+                        className="h-auto py-1 px-2.5 text-xs"
+                        icon={<CheckCircle2 className="w-3 h-3" />}
                         onClick={() => setModalOrder(order)}
-                        className="text-xs font-semibold px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none transition-colors flex items-center gap-1"
                         title="Marcar como pago"
                       >
-                        <CheckCircle2 className="w-3 h-3" />
                         Pago
-                      </button>
+                      </Button>
                     )}
                     {mode === 'paid' && (
-                      <button
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-auto py-1 px-2 text-xs"
+                        icon={<CreditCard className="w-3 h-3 text-slate-400" />}
                         onClick={() => setModalOrder(order)}
-                        className="text-xs font-medium px-2 py-1 bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 rounded-none transition-colors flex items-center gap-1"
                         title="Alterar/Selecionar forma de pagamento"
                       >
-                        <CreditCard className="w-3 h-3 text-slate-400" />
                         Alterar
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </td>

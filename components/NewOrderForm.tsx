@@ -21,24 +21,24 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
 
   return (
     <>
-      <form onSubmit={orderForm.handleSubmit} className="space-y-6 text-slate-200">
+      <form onSubmit={orderForm.handleSubmit} className="space-y-6">
         {orderForm.success && (
-          <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <p className="font-semibold text-sm">Ordem de Serviço aberta com sucesso!</p>
+          <div role="status" className="p-4 bg-success/10 border border-success/25 text-success flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 shrink-0" aria-hidden />
+            <p className="text-small font-semibold">Ordem de Serviço aberta com sucesso!</p>
           </div>
         )}
 
         {orderForm.errorMsg && (
-          <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/25 text-rose-450 flex items-center gap-2.5">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <p className="text-xs font-semibold">{orderForm.errorMsg}</p>
+          <div role="alert" className="p-4 bg-danger/10 border border-danger/25 text-danger flex items-center gap-2.5">
+            <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />
+            <p className="text-small font-semibold">{orderForm.errorMsg}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">
+            <h3 className="text-h3 text-text border-b border-border pb-2">
               Informações Iniciais
             </h3>
 

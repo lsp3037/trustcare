@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { ShieldAlert, CheckCircle2, User, Key, Building } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui';
 import Link from 'next/link';
 
 function InviteContent() {
@@ -226,13 +227,14 @@ function InviteContent() {
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-black font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all cursor-pointer rounded-none mt-2"
+              fullWidth
+              loading={loading}
+              className="py-3 h-auto text-black uppercase tracking-wider mt-2"
             >
-              {loading ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : 'Criar Conta e Acessar'}
-            </button>
+              Criar Conta e Acessar
+            </Button>
           </form>
         </div>
       </div>

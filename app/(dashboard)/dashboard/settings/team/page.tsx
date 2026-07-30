@@ -7,6 +7,7 @@ import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button, Badge } from '@/components/ui';
 
 type Profile = {
   id: string;
@@ -175,21 +176,21 @@ export default function TeamSettingsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             <Users className="w-6 h-6 text-emerald-500" /> Equipe e Acessos
           </h1>
-          <p className="text-sm text-slate-450 mt-1">Gerencie os técnicos e recepcionistas com acesso ao sistema.</p>
+          <p className="text-sm text-slate-400 mt-1">Gerencie os técnicos e recepcionistas com acesso ao sistema.</p>
         </div>
         
-        <button
+        <Button
+          className="px-6 py-2.5 h-auto text-black uppercase tracking-wider border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
+          icon={<UserPlus className="w-4 h-4 shrink-0" />}
           onClick={() => {
             setIsInviteModalOpen(true);
             setInviteError('');
             setInviteSuccess('');
             setGeneratedLink('');
           }}
-          className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
         >
-          <UserPlus className="w-4 h-4 shrink-0" />
-          <span>Convidar Membro</span>
-        </button>
+          Convidar Membro
+        </Button>
       </div>
 
       <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 overflow-hidden rounded-none">
@@ -241,15 +242,12 @@ export default function TeamSettingsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider border ${
-                        profile.role === 'admin' 
-                          ? 'border-indigo-500/30 text-indigo-400 bg-indigo-500/10' 
-                          : profile.role === 'technician'
-                            ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                            : 'border-slate-500/30 text-slate-400 bg-slate-500/10'
-                      }`}>
+                      <Badge
+                        tone={profile.role === 'admin' ? 'info' : profile.role === 'technician' ? 'success' : 'neutral'}
+                        className="font-mono uppercase tracking-wider"
+                      >
                         [{profile.role}]
-                      </span>
+                      </Badge>
                     </td>
                     <td className="py-4 px-6">
                       <span className="text-xs text-slate-400 font-mono">{profile.email}</span>
@@ -283,18 +281,20 @@ export default function TeamSettingsPage() {
                       <span className="text-xs text-amber-400/80 font-mono">{invite.email}</span>
                     </td>
                     <td className="py-3 px-6">
-                      <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border border-amber-500/20 text-amber-500/70 bg-amber-500/5">
+                      <Badge tone="warning" className="font-mono uppercase tracking-wider opacity-80">
                         [{invite.role}]
-                      </span>
+                      </Badge>
                     </td>
                     <td className="py-3 px-6 text-right">
-                      <button 
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="px-1.5 text-danger hover:text-danger"
                         onClick={() => handleDeleteInvite(invite.id)}
-                        className="p-1.5 text-rose-500 hover:bg-rose-500/10 transition-colors"
                         title="Cancelar Convite"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -312,13 +312,16 @@ export default function TeamSettingsPage() {
           <div className="relative bg-slate-900 border-2 border-emerald-500/30 w-full max-w-md shadow-2xl shadow-emerald-900/20 rounded-none animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b-2 border-slate-800 bg-slate-950">
               <h3 className="text-lg font-bold text-white uppercase tracking-tight">Novo Convite</h3>
-              <button 
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-1"
                 onClick={() => setIsInviteModalOpen(false)}
                 disabled={inviting}
-                className="text-slate-500 hover:text-white transition-colors p-1"
+                aria-label="Fechar"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
             
             <form onSubmit={handleCreateInvite} className="p-6 space-y-5">
@@ -342,14 +345,14 @@ export default function TeamSettingsPage() {
                       value={generatedLink} 
                       className="flex-1 bg-slate-950 border border-slate-800 text-xs font-mono text-emerald-300 p-2 outline-none"
                     />
-                    <button 
+                    <Button
                       type="button"
+                      className="text-black"
                       onClick={copyToClipboard}
-                      className="p-2 bg-emerald-600 hover:bg-emerald-500 text-black transition-colors"
                       title="Copiar Link"
                     >
                       <Copy className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -391,22 +394,19 @@ export default function TeamSettingsPage() {
               )}
 
               <div className="pt-4 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsInviteModalOpen(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-400 hover:text-white transition-colors"
-                >
+                <Button type="button" variant="ghost" onClick={() => setIsInviteModalOpen(false)}>
                   FECHAR
-                </button>
+                </Button>
                 {!inviteSuccess && (
-                  <button
+                  <Button
                     type="submit"
-                    disabled={inviting || !inviteEmail}
-                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-black font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all cursor-pointer rounded-none"
+                    className="text-black uppercase tracking-wider"
+                    loading={inviting}
+                    disabled={!inviteEmail}
+                    icon={<UserPlus className="w-4 h-4" />}
                   >
-                    {inviting ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-                    <span>Gerar Convite</span>
-                  </button>
+                    Gerar Convite
+                  </Button>
                 )}
               </div>
             </form>

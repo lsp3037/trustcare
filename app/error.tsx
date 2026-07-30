@@ -16,8 +16,8 @@ export default function ErrorBoundary({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-neutral-950 text-white p-4 font-sans">
-      <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-slate-950 text-white p-4 font-sans">
+      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
         
@@ -27,7 +27,7 @@ export default function ErrorBoundary({
           </div>
           
           <h1 className="text-2xl font-bold mb-2">Ops! Algo deu errado.</h1>
-          <p className="text-neutral-400 mb-8 text-sm">
+          <p className="text-slate-400 mb-8 text-sm">
             Ocorreu um erro ao carregar esta página. (Erro: {error.digest || 'Interno'}).
           </p>
           
@@ -41,7 +41,7 @@ export default function ErrorBoundary({
             </button>
             <Link
               href="/"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl transition-colors font-medium"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors font-medium"
             >
               Voltar ao Início
             </Link>

@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { User, Wrench, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { User, Wrench, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Modal, Button, Field, Input } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface ClientModalProps {
   isNewClientModalOpen: boolean;
@@ -34,6 +35,15 @@ interface ClientModalProps {
   handleNextStep: (e: React.MouseEvent) => void;
 }
 
+/** Rótulo do passo atual, dentro do corpo do modal. */
+function StepHeading({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <h3 className="text-caption uppercase tracking-wider text-brand flex items-center gap-1.5">
+      <Icon className="w-3.5 h-3.5" aria-hidden /> {children}
+    </h3>
+  );
+}
+
 export function ClientModal({
   isNewClientModalOpen,
   setIsNewClientModalOpen,
@@ -63,223 +73,180 @@ export function ClientModal({
   handleSaveClient,
   handleNextStep,
 }: ClientModalProps) {
-  if (!isNewClientModalOpen) return null;
+  const close = () => {
+    setIsNewClientModalOpen(false);
+    setClientModalStep(1);
+  };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-none shadow-2xl overflow-hidden animate-in scale-in-95 duration-200">
-        <div className="flex items-center justify-between border-b border-slate-850 px-6 py-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <User className="w-5 h-5 text-emerald-500" /> Cadastrar Novo Cliente
-          </h3>
-          <button
-            type="button"
-            onClick={() => {
-              setIsNewClientModalOpen(false);
-              setClientModalStep(1);
-            }}
-            className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 rounded-none hover:bg-slate-800"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex items-center justify-center gap-2 px-6 pt-4">
-          <div className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${clientModalStep === 1 ? 'bg-emerald-500' : 'bg-slate-800'}`} />
-          <div className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${clientModalStep === 2 ? 'bg-emerald-500' : 'bg-slate-800'}`} />
-        </div>
-
-        <form onSubmit={handleSaveClient} className="overflow-hidden">
-          {clientModalError && (
-            <div className="mx-6 mt-4 p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-rose-455 text-xs flex items-center gap-2 animate-in fade-in duration-200">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{clientModalError}</span>
-            </div>
-          )}
-
-          <div 
-            className="flex w-[200%] transition-transform duration-350 ease-in-out" 
-            style={{ transform: `translateX(-${(clientModalStep - 1) * 50}%)` }}
-          >
-            <div className="w-1/2 px-6 py-4 space-y-4">
-              <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider pb-1 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" /> Passo 1: Informações Básicas
-              </h4>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Tipo de Cliente</label>
-                <div className="flex gap-4 pt-1">
-                  <label className="flex items-center gap-2 text-sm text-slate-200 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="PF"
-                      checked={newClientType === 'PF'}
-                      onChange={() => setNewClientType('PF')}
-                      className="accent-emerald-500 focus:ring-emerald-500"
-                    />
-                    Pessoa Física
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-200 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="PJ"
-                      checked={newClientType === 'PJ'}
-                      onChange={() => setNewClientType('PJ')}
-                      className="accent-emerald-500 focus:ring-emerald-500"
-                    />
-                    Pessoa Jurídica
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Nome / Razão Social *</label>
-                <input
-                  type="text"
-                  required={clientModalStep === 1}
-                  value={newClientName}
-                  onChange={(e) => setNewClientName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: João da Silva ou Tech Corp Ltda"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">CPF / CNPJ</label>
-                <input
-                  type="text"
-                  value={newClientDoc}
-                  onChange={(e) => setNewClientDoc(e.target.value)}
-                  maxLength={18}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: 000.000.000-00 ou 00.000.000/0000-00"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Telefone / WhatsApp</label>
-                <input
-                  type="text"
-                  value={newClientPhone}
-                  onChange={(e) => setNewClientPhone(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: (11) 99999-9999"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">E-mail</label>
-                <input
-                  type="email"
-                  value={newClientEmail}
-                  onChange={(e) => setNewClientEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: cliente@email.com"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsNewClientModalOpen(false);
-                    setClientModalStep(1);
-                  }}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-none text-xs transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-none text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  Salvar e Adicionar Equipamento
-                </button>
-              </div>
-            </div>
-
-            <div className="w-1/2 px-6 py-4 space-y-4">
-              <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider pb-1 flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5" /> Passo 2: Equipamento Inicial *
-              </h4>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Nome do Equipamento *</label>
-                <input
-                  type="text"
-                  required={clientModalStep === 2}
-                  value={newEqName}
-                  onChange={(e) => setNewEqName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: Notebook Dell Inspiron"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Marca</label>
-                <input
-                  type="text"
-                  value={newEqBrand}
-                  onChange={(e) => setNewEqBrand(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: Dell"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Modelo</label>
-                <input
-                  type="text"
-                  value={newEqModel}
-                  onChange={(e) => setNewEqModel(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: L14 Gen 2"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-semibold">Número de Série</label>
-                <input
-                  type="text"
-                  value={newEqSerial}
-                  onChange={(e) => setNewEqSerial(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-105 placeholder-slate-655 focus:outline-none focus:border-emerald-500 transition-colors"
-                  placeholder="Ex: SN-98765432"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setClientModalError('');
-                    setClientModalStep(1);
-                  }}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-slate-100 font-semibold rounded-none text-xs transition-colors cursor-pointer"
-                >
-                  Voltar
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingClient}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-none text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {savingClient ? (
-                    <LoadingSpinner />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Salvar e Concluir
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
+    <Modal
+      open={isNewClientModalOpen}
+      onClose={close}
+      title="Cadastrar Novo Cliente"
+      description={`Passo ${clientModalStep} de 2`}
+      size="sm"
+      footer={
+        clientModalStep === 1 ? (
+          <>
+            <Button variant="ghost" onClick={close}>Cancelar</Button>
+            <Button onClick={handleNextStep}>Salvar e Adicionar Equipamento</Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setClientModalError('');
+                setClientModalStep(1);
+              }}
+            >
+              Voltar
+            </Button>
+            <Button
+              type="submit"
+              form="new-client-form"
+              loading={savingClient}
+              icon={<CheckCircle2 className="w-4 h-4" />}
+            >
+              Salvar e Concluir
+            </Button>
+          </>
+        )
+      }
+    >
+      {/* Indicador de progresso */}
+      <div className="flex items-center gap-2 mb-5" role="presentation">
+        {[1, 2].map((step) => (
+          <span
+            key={step}
+            className={cn(
+              'h-1.5 flex-1 transition-colors',
+              clientModalStep === step ? 'bg-brand' : 'bg-border',
+            )}
+          />
+        ))}
       </div>
-    </div>
+
+      {clientModalError && (
+        <p
+          role="alert"
+          className="mb-4 p-3 bg-danger/10 border border-danger/25 text-danger text-small flex items-center gap-2"
+        >
+          <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+          <span>{clientModalError}</span>
+        </p>
+      )}
+
+      {/*
+        Só o passo ativo é renderizado. Antes os dois viviam num carrossel
+        de 200% de largura, então os campos do passo oculto continuavam
+        focáveis por Tab, fora da tela.
+      */}
+      <form id="new-client-form" onSubmit={handleSaveClient} className="space-y-4">
+        {clientModalStep === 1 ? (
+          <>
+            <StepHeading icon={User}>Passo 1: Informações Básicas</StepHeading>
+
+            <Field label="Tipo de Cliente">
+              <div className="flex gap-4 pt-1">
+                {[
+                  { value: 'PF', label: 'Pessoa Física' },
+                  { value: 'PJ', label: 'Pessoa Jurídica' },
+                ].map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-2 text-small text-text cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="clientType"
+                      value={opt.value}
+                      checked={newClientType === opt.value}
+                      onChange={() => setNewClientType(opt.value)}
+                      className="accent-brand"
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </Field>
+
+            <Input
+              label="Nome / Razão Social"
+              required
+              type="text"
+              value={newClientName}
+              onChange={(e) => setNewClientName(e.target.value)}
+              placeholder="Ex: João da Silva ou Tech Corp Ltda"
+            />
+
+            <Input
+              label="CPF / CNPJ"
+              type="text"
+              maxLength={18}
+              value={newClientDoc}
+              onChange={(e) => setNewClientDoc(e.target.value)}
+              placeholder="Ex: 000.000.000-00 ou 00.000.000/0000-00"
+              className="font-mono"
+            />
+
+            <Input
+              label="Telefone / WhatsApp"
+              type="text"
+              value={newClientPhone}
+              onChange={(e) => setNewClientPhone(e.target.value)}
+              placeholder="Ex: (11) 99999-9999"
+              className="font-mono"
+            />
+
+            <Input
+              label="E-mail"
+              type="email"
+              value={newClientEmail}
+              onChange={(e) => setNewClientEmail(e.target.value)}
+              placeholder="Ex: cliente@email.com"
+            />
+          </>
+        ) : (
+          <>
+            <StepHeading icon={Wrench}>Passo 2: Equipamento Inicial</StepHeading>
+
+            <Input
+              label="Nome do Equipamento"
+              required
+              type="text"
+              value={newEqName}
+              onChange={(e) => setNewEqName(e.target.value)}
+              placeholder="Ex: Notebook Dell Inspiron"
+            />
+
+            <Input
+              label="Marca"
+              type="text"
+              value={newEqBrand}
+              onChange={(e) => setNewEqBrand(e.target.value)}
+              placeholder="Ex: Dell"
+            />
+
+            <Input
+              label="Modelo"
+              type="text"
+              value={newEqModel}
+              onChange={(e) => setNewEqModel(e.target.value)}
+              placeholder="Ex: L14 Gen 2"
+            />
+
+            <Input
+              label="Número de Série"
+              type="text"
+              value={newEqSerial}
+              onChange={(e) => setNewEqSerial(e.target.value)}
+              placeholder="Ex: SN-98765432"
+              className="font-mono"
+            />
+          </>
+        )}
+      </form>
+    </Modal>
   );
 }

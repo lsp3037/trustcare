@@ -9,22 +9,107 @@
 
 @theme {
   --color-slate-850: #1b253b;
-  --font-inter: var(--font-inter);
-  --font-jetbrains: var(--font-jetbrains-mono);
-  
-  --color-slate-405: #94a3b8;
-  --color-slate-455: #94a3b8;
-  --color-slate-350: #cbd5e1;
-  --color-emerald-450: #34d399;
-  --color-rose-455: #f43f5e;
-  --color-rose-450: #f43f5e;
+
+  /* ─────────────────────────────────────────────────────────────
+     Tipografia — superfamília IBM Plex (decisão D1).
+     3 papéis, 1 família: display condensada, corpo grotesca, dados mono.
+     Regra: mono nunca como display — só dado tabular.
+     ───────────────────────────────────────────────────────────── */
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-display: var(--font-plex-condensed), var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Aliases legados — a landing (Fase 5) ainda usa `font-jetbrains`
+     como display. Apontam para a família nova para não quebrar nada;
+     removê-los é a última etapa da Fase 5. */
+  --font-inter: var(--font-plex-sans), system-ui, sans-serif;
+  --font-jetbrains: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Escala real — 7 degraus com salto perceptível.
+     Antes: 544 `text-xs` + 346 `text-[9/10/11px]`, tudo entre 9 e 14px.
+     Piso de 12px para qualquer texto de interface. */
+  --text-display: 2.25rem;          /* 36 / 40 */
+  --text-display--line-height: 2.5rem;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+
+  --text-h1: 1.75rem;               /* 28 / 34 */
+  --text-h1--line-height: 2.125rem;
+  --text-h1--letter-spacing: -0.015em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 1.375rem;              /* 22 / 28 */
+  --text-h2--line-height: 1.75rem;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 1.0625rem;             /* 17 / 24 */
+  --text-h3--line-height: 1.5rem;
+  --text-h3--font-weight: 600;
+
+  --text-body: 0.9375rem;           /* 15 / 22 */
+  --text-body--line-height: 1.375rem;
+
+  --text-small: 0.8125rem;          /* 13 / 18 */
+  --text-small--line-height: 1.125rem;
+
+  --text-caption: 0.75rem;          /* 12 / 16 — único degrau com uppercase */
+  --text-caption--line-height: 1rem;
+  --text-caption--font-weight: 500;
+
+  /* ─────────────────────────────────────────────────────────────
+     Tokens semânticos — fonte única de verdade da identidade.
+     Os valores abaixo espelham a aparência atual (base slate).
+     A Fase 5.1 troca só estes valores para a base grafite;
+     nenhum componente precisa ser tocado de novo.
+     ───────────────────────────────────────────────────────────── */
+
+  /* Superfícies — degraus reais, não opacidade empilhada */
+  --color-surface: #020617;         /* fundo da página */
+  --color-surface-raised: #0f172a;  /* card, sidebar, modal */
+  --color-surface-sunken: #010409;  /* input, célula de tabela, poço */
+  --color-surface-overlay: #1b253b; /* dropdown, popover, linha em hover */
+
+  /* Divisórias */
+  --color-border: #1e293b;
+  --color-border-strong: #334155;
+
+  /* Texto — 3 níveis, todos AA sobre surface */
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-text-subtle: #64748b;
+
+  /* Marca — um valor só (hoje são 4: emerald-400/450/500/600) */
+  --color-brand: #10b981;
+  --color-brand-hover: #34d399;
+  --color-brand-contrast: #04120c;  /* texto sobre a marca */
+
+  /* Semânticas de UI — validação, alerta, feedback */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-info: #3b82f6;
+
+  /* ── Rampa de status da OS ──
+     Não é decoração: os 10 status precisam ser distinguíveis entre si.
+     A lógica é temperatura — bloqueado = quente, em movimento = frio,
+     encerrado = verde, morto = vermelho/neutro.
+     Fonte única; hoje esse mapa está duplicado em 7 arquivos. */
+  --color-status-aguardando: #64748b;  /* neutro — aparelho ainda não chegou */
+  --color-status-analise: #3b82f6;     /* frio — diagnóstico em andamento */
+  --color-status-aprovacao: #f59e0b;   /* quente — travado no cliente */
+  --color-status-aprovado: #14b8a6;    /* destravado, ainda não executado */
+  --color-status-pecas: #f97316;       /* quente — travado no fornecedor */
+  --color-status-execucao: #6366f1;    /* frio — trabalho ativo na bancada */
+  --color-status-testes: #06b6d4;      /* frio — validação pós-reparo */
+  --color-status-pronto: #10b981;      /* verde — pronto para o cliente */
+  --color-status-finalizado: #059669;  /* verde escuro — encerrado */
+  --color-status-cancelado: #f43f5e;   /* morto */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -37,8 +122,17 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* h1/h2 usam a condensada por padrão — o display é estrutural, não uma
+   classe que cada tela precisa lembrar de aplicar. h3 e abaixo ficam na
+   grotesca de corpo (ver escala em @theme). */
+h1, h2 {
+  font-family: var(--font-display);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -46,6 +140,25 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Scrollbar fina para áreas internas com overflow (ex: nav do sidebar) */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-700) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-700);
+  border-radius: 9999px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-600);
 }
 
 /* Profundidade visual para elementos interativos sharp (rounded-none) */
@@ -66,6 +179,43 @@ select:focus {
 
 /* Light Theme Variables Override */
 html.light {
+  /* ── Tokens semânticos (tema claro) ──
+     Camada nova. À medida que as telas migram para os tokens,
+     a inversão de escalas abaixo vai sendo removida. */
+  --color-surface: #f9f9fb;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f4f4f7;
+  --color-surface-overlay: #ffffff;
+
+  --color-border: #e4e4e7;
+  --color-border-strong: #d4d4d8;
+
+  --color-text: #09090b;
+  --color-text-muted: #52525b;
+  --color-text-subtle: #71717a;
+
+  --color-brand: #047857;          /* mais escuro: AA sobre fundo claro */
+  --color-brand-hover: #065f46;
+  --color-brand-contrast: #ffffff;
+
+  --color-success: #047857;
+  --color-warning: #b45309;
+  --color-danger: #be123c;
+  --color-info: #1d4ed8;
+
+  /* Rampa de status — escurecida para manter AA sobre fundo claro */
+  --color-status-aguardando: #52525b;
+  --color-status-analise: #1d4ed8;
+  --color-status-aprovacao: #b45309;
+  --color-status-aprovado: #0f766e;
+  --color-status-pecas: #c2410c;
+  --color-status-execucao: #4338ca;
+  --color-status-testes: #0e7490;
+  --color-status-pronto: #047857;
+  --color-status-finalizado: #065f46;
+  --color-status-cancelado: #be123c;
+
+  /* ── Legado: inversão de escalas (remover ao fim da Fase 3) ── */
   /* Invert Slate Color Scales with Sophisticated Zinc Palette */
   --color-slate-950: #f9f9fb; /* Page Background */
   --color-slate-900: #ffffff; /* Card / Sidebar Background */
@@ -73,29 +223,12 @@ html.light {
   --color-slate-800: #e4e4e7; /* Borders */
   --color-slate-700: #d4d4d8; /* Disabled elements border */
   --color-slate-600: #a1a1aa; /* Placeholders, minor details */
-  --color-slate-550: #71717a; /* Muted text */
   --color-slate-500: #71717a; /* Secondary text */
-  --color-slate-450: #52525b; /* Intermediate text */
   --color-slate-400: #52525b; /* Intermediate text */
-  --color-slate-350: #27272a; /* Alt buttons / titles */
   --color-slate-300: #27272a; /* Section headers */
   --color-slate-200: #18181b; /* Primary text */
   --color-slate-100: #09090b; /* Main Headings */
   --color-slate-50: #09090b;  /* High contrast elements */
-
-  /* Invert Zinc Color Scales */
-  --color-zinc-950: #f9f9fb;
-  --color-zinc-900: #ffffff;
-  --color-zinc-850: #f4f4f7;
-  --color-zinc-800: #e4e4e7;
-  --color-zinc-700: #d4d4d8;
-  --color-zinc-600: #a1a1aa;
-  --color-zinc-500: #71717a;
-  --color-zinc-400: #52525b;
-  --color-zinc-300: #27272a;
-  --color-zinc-200: #18181b;
-  --color-zinc-100: #09090b;
-  --color-zinc-50: #09090b;
 
   /* Global background/foreground overrides */
   --background: #f9f9fb;
@@ -130,9 +263,7 @@ html.light {
     .bg-purple-600,
     .bg-purple-600 *,
     .bg-violet-600,
-    .bg-violet-600 *,
-    .bg-indigo-550,
-    .bg-indigo-550 *
+    .bg-violet-600 *
   ) {
     color: var(--color-slate-100) !important;
   }
@@ -200,41 +331,43 @@ html.light {
 .ql-align-right { text-align: right; }
 .ql-align-justify { text-align: justify; }
 
-/* Customização Dark/Light Theme para o Quill */
+/* Customização do Quill — segue os tokens, então acompanha claro/escuro
+   sem um bloco de override por tema. */
 .ql-container.ql-snow {
-  border: 1px solid var(--color-slate-800) !important;
-  background-color: var(--color-slate-950) !important;
-  color: var(--color-slate-100) !important;
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-surface-sunken) !important;
+  color: var(--color-text) !important;
   font-family: inherit !important;
-  font-size: 0.875rem !important; /* text-sm */
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
+  font-size: var(--text-small) !important;
 }
 .ql-editor {
   min-height: 100px;
 }
+.ql-editor.ql-blank::before {
+  color: var(--color-text-subtle) !important;
+  font-style: normal !important;
+}
 .ql-toolbar.ql-snow {
-  border: 1px solid var(--color-slate-800) !important;
-  background-color: var(--color-slate-900) !important;
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
+  border: 1px solid var(--color-border) !important;
+  border-bottom: 0 !important;
+  background-color: var(--color-surface-raised) !important;
 }
 .ql-snow .ql-stroke {
-  stroke: var(--color-slate-400) !important;
+  stroke: var(--color-text-muted) !important;
 }
 .ql-snow .ql-fill {
-  fill: var(--color-slate-400) !important;
+  fill: var(--color-text-muted) !important;
 }
 .ql-snow .ql-picker {
-  color: var(--color-slate-400) !important;
+  color: var(--color-text-muted) !important;
 }
 .ql-snow.ql-toolbar button:hover .ql-stroke,
 .ql-snow.ql-toolbar button.ql-active .ql-stroke {
-  stroke: var(--color-blue-400) !important;
+  stroke: var(--color-brand) !important;
 }
 .ql-snow.ql-toolbar button:hover .ql-fill,
 .ql-snow.ql-toolbar button.ql-active .ql-fill {
-  fill: var(--color-blue-400) !important;
+  fill: var(--color-brand) !important;
 }
 
 

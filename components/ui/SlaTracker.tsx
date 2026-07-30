@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertTriangle } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SlaTrackerProps {
@@ -63,11 +63,11 @@ export function SlaTracker({ startedAt, status, variant = 'full' }: SlaTrackerPr
   if (!startedAt) {
     if (variant === 'mini') return null;
     return (
-      <div className="flex flex-col gap-2 rounded-none border p-4 bg-slate-950/80 border-slate-800/80 shadow-xl opacity-60">
-        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5" /> SLA Tracker
+      <div className="flex flex-col gap-2 border border-border p-4 bg-surface-sunken">
+        <span className="text-caption uppercase tracking-wider text-text-subtle flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5" aria-hidden /> SLA Tracker
         </span>
-        <span className="text-xs text-slate-400 mt-2 font-mono">
+        <span className="text-small text-text-muted mt-2">
           O contador será ativado quando a análise iniciar.
         </span>
       </div>
@@ -90,63 +90,68 @@ export function SlaTracker({ startedAt, status, variant = 'full' }: SlaTrackerPr
   if (variant === 'mini') {
     return (
       <div className={cn(
-        "flex flex-col gap-1 rounded-none border px-2 py-1.5 w-full mt-2 transition-all",
-        isOverdue ? "bg-rose-500/10 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.1)]" : "bg-slate-900 border-slate-800"
+        "flex items-center justify-between gap-3 border px-2 py-1.5 w-full",
+        isOverdue ? "bg-danger/10 border-danger/40" : "bg-surface-sunken border-border"
       )}>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-mono flex items-center gap-1">
-             <Clock className="w-3 h-3"/> SLA
-          </span>
-          <span className={cn(
-            "text-xs font-bold font-mono",
-            isOverdue ? "text-rose-400" : "text-slate-300"
-          )}>{elapsedTime}</span>
-        </div>
+        <span className="text-caption uppercase tracking-wider text-text-subtle flex items-center gap-1">
+          <Clock className="w-3 h-3" aria-hidden /> SLA
+        </span>
+        <span className={cn(
+          "text-small font-mono tabular-nums font-semibold",
+          isOverdue ? "text-danger" : "text-text-muted"
+        )}>{elapsedTime}</span>
       </div>
     );
   }
 
   return (
     <div className={cn(
-      "flex flex-col gap-2 rounded-none border p-4 shadow-xl transition-all",
-      isOverdue ? "bg-rose-500/5 border-rose-500/40 shadow-[0_0_20px_rgba(244,63,94,0.05)]" : "bg-slate-950/80 border-slate-800/80"
+      "flex flex-col gap-2 border p-4",
+      isOverdue ? "bg-danger/5 border-danger/40" : "bg-surface-sunken border-border"
     )}>
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5" /> Tempo de Espera
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-caption uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5" aria-hidden /> Tempo de Espera
         </span>
         <span className={cn(
-          "text-[10px] font-bold uppercase px-2 py-0.5 rounded-none border tracking-widest",
-          isOverdue ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+          "text-caption uppercase tracking-wider px-2 py-0.5 border",
+          isOverdue
+            ? "bg-danger/10 text-danger border-danger/25"
+            : "bg-success/10 text-success border-success/25"
         )}>
           {isOverdue ? 'Prazo Vencido' : 'No Prazo'}
         </span>
       </div>
-      
-      <div className="flex items-end justify-between mt-2">
-        <span className={cn(
-          "text-4xl font-black font-mono tracking-tighter leading-none",
-          isOverdue ? "text-rose-500" : "text-white"
-        )}>
-          {elapsedTime}
-        </span>
-      </div>
 
-      <div className="w-full h-1 bg-slate-900 mt-3 rounded-none overflow-hidden">
-        <div 
-          className={cn("h-full transition-all duration-1000", isOverdue ? "bg-rose-500" : "bg-emerald-500")}
+      <span
+        className={cn(
+          "text-display font-mono tabular-nums mt-2",
+          isOverdue ? "text-danger" : "text-text"
+        )}
+        aria-label={`Tempo decorrido: ${elapsedTime}`}
+      >
+        {elapsedTime}
+      </span>
+
+      <div
+        className="w-full h-1 bg-border mt-3 overflow-hidden"
+        role="meter"
+        aria-valuenow={Math.round(progressPercent)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Consumo do prazo de SLA"
+      >
+        <div
+          className={cn("h-full transition-all duration-1000", isOverdue ? "bg-danger" : "bg-brand")}
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
-      <div className="flex justify-between items-center mt-2">
-        <span className={cn(
-          "text-[10px] font-mono",
-          isOverdue ? "text-rose-400 font-bold" : "text-slate-400"
-        )}>
+      <div className="flex justify-between items-center gap-3 mt-2">
+        <span className={cn("text-caption", isOverdue ? "text-danger font-semibold" : "text-text-muted")}>
           {remainingTime}
         </span>
-        <span className="text-[10px] text-slate-500 font-mono">
+        <span className="text-caption font-mono tabular-nums text-text-subtle">
           Início: {new Date(startedAt).toLocaleDateString('pt-BR')} {new Date(startedAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
         </span>
       </div>

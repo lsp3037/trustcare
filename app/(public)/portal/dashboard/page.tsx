@@ -114,7 +114,7 @@ export default function PortalDashboard() {
           <span className="text-sm text-slate-300 font-medium">Olá, {client?.name}</span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-450 transition-colors border border-slate-800 hover:border-rose-950 py-1.5 px-3 rounded-none cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors border border-slate-800 hover:border-rose-950 py-1.5 px-3 rounded-none cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sair
           </button>
@@ -127,11 +127,11 @@ export default function PortalDashboard() {
         <section className="lg:col-span-1 border border-slate-900 bg-[#070a13] p-5">
           <div className="flex items-center gap-2 mb-6 border-b border-slate-900 pb-3">
             <Laptop className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-350">Meus Equipamentos</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Meus Equipamentos</h2>
           </div>
 
           {equipments.length === 0 ? (
-            <p className="text-xs text-slate-650 italic">Nenhum equipamento cadastrado.</p>
+            <p className="text-xs text-slate-500 italic">Nenhum equipamento cadastrado.</p>
           ) : (
             <div className="space-y-4">
               {equipments.map((eq) => (
@@ -141,7 +141,7 @@ export default function PortalDashboard() {
                     {eq.brand} {eq.model}
                   </p>
                   {eq.serial_number && (
-                    <p className="text-[10px] text-slate-650 uppercase tracking-wider mt-1.5 font-mono">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1.5 font-mono">
                       S/N: {eq.serial_number}
                     </p>
                   )}
@@ -155,11 +155,11 @@ export default function PortalDashboard() {
         <section className="lg:col-span-2 border border-slate-900 bg-[#070a13] p-5">
           <div className="flex items-center gap-2 mb-6 border-b border-slate-900 pb-3">
             <Wrench className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-350">Minhas Ordens de Serviço</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Minhas Ordens de Serviço</h2>
           </div>
 
           {orders.length === 0 ? (
-            <p className="text-xs text-slate-650 italic">Nenhuma ordem de serviço registrada.</p>
+            <p className="text-xs text-slate-500 italic">Nenhuma ordem de serviço registrada.</p>
           ) : (
             <div className="space-y-5">
               {orders.map((os) => {
@@ -187,12 +187,12 @@ export default function PortalDashboard() {
                       {/* Status Tag */}
                       <span className={`text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 ${
                         os.status === 'Finalizado' || os.status === 'Pronto para Retirada'
-                          ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                           : os.status === 'Aguardando Aprovação'
-                          ? 'bg-amber-500/10 text-amber-450 border border-amber-500/20'
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                           : os.status === 'Cancelado'
-                          ? 'bg-rose-500/10 text-rose-450 border border-rose-500/20'
-                          : 'bg-blue-500/10 text-blue-450 border border-blue-500/20'
+                          ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       }`}>
                         {os.status}
                       </span>
@@ -209,12 +209,12 @@ export default function PortalDashboard() {
                       <div className="flex gap-5 text-slate-500">
                         <div>
                           <span>Abertura: </span>
-                          <span className="text-slate-350">{new Date(os.created_at).toLocaleDateString('pt-BR')}</span>
+                          <span className="text-slate-300">{new Date(os.created_at).toLocaleDateString('pt-BR')}</span>
                         </div>
                         {os.delivery_prediction && (
                           <div>
                             <span>Previsão: </span>
-                            <span className="text-slate-350">{new Date(os.delivery_prediction).toLocaleDateString('pt-BR')}</span>
+                            <span className="text-slate-300">{new Date(os.delivery_prediction).toLocaleDateString('pt-BR')}</span>
                           </div>
                         )}
                       </div>

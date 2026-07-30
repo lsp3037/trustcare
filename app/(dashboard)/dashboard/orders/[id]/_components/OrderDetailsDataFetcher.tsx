@@ -1,7 +1,9 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { FileQuestion } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner, EmptyState, buttonClasses } from '@/components/ui';
 import { OrderDetailsClient } from './OrderDetailsClient';
 import { DEFAULT_TEMPLATE_ITEMS } from './constants';
 
@@ -106,9 +108,17 @@ export function OrderDetailsDataFetcher({ id }: { id: string }) {
 
   if (!data) {
     return (
-      <div className="flex flex-col h-[80vh] items-center justify-center space-y-4">
-        <h1 className="text-xl font-bold font-mono text-rose-500">Ordem de Serviço não encontrada</h1>
-        <p className="text-slate-400 font-mono text-sm">O ID fornecido não existe ou você não tem permissão para visualizar.</p>
+      <div className="flex h-[80vh] items-center justify-center">
+        <EmptyState
+          icon={<FileQuestion />}
+          title="Ordem de Serviço não encontrada"
+          description="O ID fornecido não existe ou você não tem permissão para visualizar."
+          action={
+            <Link href="/dashboard/orders" className={buttonClasses({ variant: 'secondary' })}>
+              Voltar para Ordens de Serviço
+            </Link>
+          }
+        />
       </div>
     );
   }

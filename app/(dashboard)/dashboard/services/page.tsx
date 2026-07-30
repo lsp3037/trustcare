@@ -4,6 +4,7 @@ import { Wrench, Edit3, Trash2, Sparkles, X, CheckCircle2, AlertCircle, ToggleRi
 import React, { useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { EmptyState } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 
 interface Service {
@@ -217,7 +218,7 @@ export default function ServicesPage() {
             placeholder="Buscar por serviço ou descrição..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-650 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
@@ -228,7 +229,7 @@ export default function ServicesPage() {
             className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all ${
               activeTab === 'todos' 
                 ? 'bg-blue-600 text-white shadow' 
-                : 'text-slate-450 hover:text-slate-200'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Todos
@@ -238,7 +239,7 @@ export default function ServicesPage() {
             className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all ${
               activeTab === 'ativos' 
                 ? 'bg-blue-600 text-white shadow' 
-                : 'text-slate-450 hover:text-slate-200'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Ativos
@@ -248,7 +249,7 @@ export default function ServicesPage() {
             className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all ${
               activeTab === 'inativos' 
                 ? 'bg-blue-600 text-white shadow' 
-                : 'text-slate-450 hover:text-slate-200'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Inativos
@@ -264,17 +265,17 @@ export default function ServicesPage() {
         </div>
       ) : errorMsg ? (
         <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-none text-center max-w-xl mx-auto space-y-3">
-          <AlertCircle className="w-10 h-10 text-rose-550 mx-auto" />
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
           <h3 className="font-bold text-white text-lg">Erro ao carregar dados</h3>
           <p className="text-sm text-slate-400">{errorMsg}</p>
         </div>
       ) : filteredServices.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900 text-center px-4">
-          <Wrench className="w-12 h-12 text-slate-700 mb-4" />
-          <h3 className="text-lg font-bold text-slate-350">Nenhum serviço encontrado</h3>
-          <p className="text-sm text-slate-500 mt-1 max-w-xs">
-            {searchTerm ? 'Nenhum resultado corresponde à sua busca.' : 'Cadastre serviços padrão para iniciar o catálogo.'}
-          </p>
+        <div className="bg-slate-900/20 rounded-none border border-slate-900">
+          <EmptyState
+            icon={<Wrench />}
+            title="Nenhum serviço encontrado"
+            description={searchTerm ? 'Nenhum resultado corresponde à sua busca.' : 'Cadastre serviços padrão para iniciar o catálogo.'}
+          />
         </div>
       ) : (
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none overflow-hidden shadow-xl">
@@ -294,7 +295,7 @@ export default function ServicesPage() {
                   <tr key={service.id} className="hover:bg-slate-800/20 transition-colors">
                     <td className="py-4 px-6 font-bold text-slate-200">
                       <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-none shrink-0 ${service.ativo ? 'bg-blue-500/10 text-blue-450' : 'bg-slate-850 text-slate-500'}`}>
+                        <div className={`p-1.5 rounded-none shrink-0 ${service.ativo ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-850 text-slate-500'}`}>
                           <Wrench className="w-4 h-4" />
                         </div>
                         <span className={service.ativo ? '' : 'text-slate-500'}>{service.nome}</span>
@@ -311,7 +312,7 @@ export default function ServicesPage() {
                         onClick={() => handleToggleAtivo(service)}
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold border transition-colors ${
                           service.ativo 
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-450 hover:bg-emerald-500/20' 
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20' 
                             : 'bg-slate-950 border-slate-850 text-slate-500 hover:border-slate-800'
                         }`}
                         title={service.ativo ? 'Clique para inativar' : 'Clique para ativar'}
@@ -330,7 +331,7 @@ export default function ServicesPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteService(service.id)}
-                          className="text-rose-500 hover:text-rose-450 hover:bg-rose-500/10 p-1.5 rounded-none transition-colors cursor-pointer"
+                          className="text-rose-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-none transition-colors cursor-pointer"
                           title="Excluir serviço"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -383,7 +384,7 @@ export default function ServicesPage() {
               <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-y-auto">
                 <div className="p-6 space-y-5 flex-1">
                   {formSuccess && (
-                    <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-450 flex items-center gap-2.5">
+                    <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
                       <CheckCircle2 className="w-5 h-5 shrink-0" />
                       <p className="font-semibold text-sm">
                         Serviço salvo com sucesso!
@@ -392,7 +393,7 @@ export default function ServicesPage() {
                   )}
 
                   {formError && (
-                    <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/25 text-rose-450 flex items-center gap-2.5 text-xs">
+                    <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/25 text-rose-500 flex items-center gap-2.5 text-xs">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <p className="font-semibold">{formError}</p>
                     </div>
@@ -477,7 +478,7 @@ export default function ServicesPage() {
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 border border-slate-800 hover:bg-slate-800 rounded-none text-xs font-semibold text-slate-350 hover:text-white transition-colors cursor-pointer"
+                    className="px-4 py-2 border border-slate-800 hover:bg-slate-800 rounded-none text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
                   >
                     Fechar
                   </button>

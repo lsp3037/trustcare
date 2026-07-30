@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Badge, StatusBadge } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { getSubdomain } from '@/lib/utils/subdomain';
 
@@ -209,23 +210,6 @@ function TrackingContent() {
 
   const currentStepIndex = order ? getStepIndex(order.status) : -1;
 
-  // Helper to get status colors (No purple!)
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'Aguardando Equipamento': return 'text-slate-400 border-slate-500/20 bg-slate-500/5';
-      case 'Em Análise': return 'text-blue-400 border-blue-500/20 bg-blue-500/5';
-      case 'Aguardando Aprovação': return 'text-amber-450 border-amber-550/20 bg-amber-500/5';
-      case 'Aprovado': return 'text-emerald-450 border-emerald-555/20 bg-emerald-500/5';
-      case 'Aguardando Peças': return 'text-orange-450 border-orange-500/20 bg-orange-500/5';
-      case 'Em Execução': return 'text-sky-400 border-sky-500/20 bg-sky-500/5';
-      case 'Em Testes': return 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5';
-      case 'Pronto para Retirada': return 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5';
-      case 'Finalizado': return 'text-emerald-500 border-emerald-600/20 bg-emerald-600/5';
-      case 'Cancelado': return 'text-rose-400 border-rose-500/20 bg-rose-500/5';
-      default: return 'text-slate-400 border-slate-500/20 bg-slate-500/5';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Background patterns */}
@@ -255,13 +239,13 @@ function TrackingContent() {
         {stage === 'search' && !loading && (
           <div className="w-full max-w-xl space-y-8 py-12">
             <div className="text-center space-y-3">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
+              <Badge tone="info" className="uppercase tracking-widest">
                 <ShieldCheck className="w-3.5 h-3.5" /> Portal Seguro LGPD
-              </span>
+              </Badge>
               <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
                 Acompanhe o status do seu conserto
               </h1>
-              <p className="text-sm text-slate-450 max-w-md mx-auto">
+              <p className="text-sm text-slate-400 max-w-md mx-auto">
                 Consulte o andamento em tempo real do seu aparelho de forma rápida e segura.
               </p>
             </div>
@@ -307,9 +291,9 @@ function TrackingContent() {
         {stage === 'otp' && !loading && (
           <div className="w-full max-w-xl space-y-8 py-12 animate-fadeIn">
             <div className="text-center space-y-3">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+              <Badge tone="success" className="uppercase tracking-widest">
                 <Lock className="w-3.5 h-3.5" /> Verificação de Segurança
-              </span>
+              </Badge>
               <h1 className="text-2xl font-extrabold text-white tracking-tight sm:text-3xl">
                 Digite o código de acesso
               </h1>
@@ -368,7 +352,7 @@ function TrackingContent() {
                     setErrorMsg('');
                     setOtpCode('');
                   }}
-                  className="text-xs font-semibold text-slate-450 hover:text-white transition-colors flex items-center gap-1"
+                  className="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Voltar para busca
                 </button>
@@ -423,9 +407,7 @@ function TrackingContent() {
             <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-900 rounded-none p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
               <div className="space-y-4 z-2">
                 <div className="flex items-center gap-3">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusStyle(order.status)}`}>
-                    {order.status}
-                  </span>
+                  <StatusBadge status={order.status} className="uppercase tracking-wider" />
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                     OS #{order.codigo_os || order.id.slice(0, 8)}
                   </span>
@@ -436,7 +418,7 @@ function TrackingContent() {
                 </h2>
                 
                 <div className="text-xs text-slate-400 space-y-1 mt-2">
-                  <span className="font-semibold text-slate-350">Defeito relatado:</span>
+                  <span className="font-semibold text-slate-300">Defeito relatado:</span>
                   <div 
                     className="prose prose-invert max-w-none text-xs text-slate-400 italic font-medium break-words whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: order.reported_problem }}
@@ -516,7 +498,7 @@ function TrackingContent() {
 
                         {/* Step labels */}
                         <div className="space-y-1">
-                          <p className={`text-xs font-extrabold tracking-tight ${isCurrent ? 'text-blue-400' : isPending ? 'text-slate-550' : 'text-slate-200'}`}>
+                          <p className={`text-xs font-extrabold tracking-tight ${isCurrent ? 'text-blue-400' : isPending ? 'text-slate-500' : 'text-slate-200'}`}>
                             {step.label}
                           </p>
                           <p className="text-[10px] text-slate-500 leading-normal max-w-[120px] mx-auto">
@@ -561,7 +543,7 @@ function TrackingContent() {
 
                         {/* Labels */}
                         <div className="space-y-0.5">
-                          <p className={`text-xs font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-blue-400' : isPending ? 'text-slate-550' : 'text-slate-200'}`}>
+                          <p className={`text-xs font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-blue-400' : isPending ? 'text-slate-500' : 'text-slate-200'}`}>
                             {step.label}
                             {isCurrent && <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 animate-ping" />}
                           </p>
@@ -579,7 +561,7 @@ function TrackingContent() {
             {/* Technical Report / Laudo Técnico (If present) */}
             {order.technical_report && (
               <div className="bg-slate-900/20 border border-slate-900 rounded-none p-6 sm:p-8 shadow-xl space-y-4">
-                <h3 className="text-sm font-bold text-slate-350 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <FileText className="w-4 h-4 text-blue-500" />
                   Laudo Técnico / Diagnóstico do Serviço / Serviço Realizado
                 </h3>
@@ -593,7 +575,7 @@ function TrackingContent() {
             {/* Footer help notice */}
             <div className="p-6 bg-slate-900/10 border border-slate-900 rounded-none flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
-                <p className="text-xs font-bold text-slate-250">Dúvidas sobre o conserto?</p>
+                <p className="text-xs font-bold text-slate-200">Dúvidas sobre o conserto?</p>
                 <p className="text-[10px] text-slate-500">Estamos à disposição no canal de atendimento direto.</p>
               </div>
 
@@ -613,7 +595,7 @@ function TrackingContent() {
       </main>
 
       {/* Footer copyright */}
-      <footer className="h-16 border-t border-slate-900 flex items-center justify-center text-[10px] text-slate-650 font-semibold tracking-wide uppercase px-6">
+      <footer className="h-16 border-t border-slate-900 flex items-center justify-center text-[10px] text-slate-500 font-semibold tracking-wide uppercase px-6">
         <span>© {new Date().getFullYear()} Trust Care - Consultoria em T.I • Todos os direitos reservados.</span>
       </footer>
     </div>

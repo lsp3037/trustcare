@@ -28,6 +28,29 @@ import { UserProvider, useUser } from '@/lib/context/UserContext';
 import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import SubscriptionBlockedScreen from '@/components/SubscriptionBlockedScreen';
+import { cn } from '@/lib/utils';
+
+/**
+ * Aparência de um item de navegação. Os três tipos de item (grupo
+ * colapsável, link normal, sub-link) tinham a classe reescrita inline
+ * com divergências de cor e de estado ativo em cada cópia.
+ */
+function navItemClasses({
+  active,
+  nested = false,
+}: {
+  active: boolean;
+  nested?: boolean;
+}) {
+  return cn(
+    'flex items-center gap-3 px-3 transition-colors duration-150',
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+    nested ? 'py-2 text-small font-medium' : 'py-2.5 text-body font-medium',
+    active
+      ? 'bg-brand text-brand-contrast'
+      : 'text-text-muted hover:text-text hover:bg-surface-overlay',
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -113,31 +136,31 @@ function DashboardLayoutContent({
 
   if (userLoading || isLoggingOut) {
     return (
-      <div className="min-h-screen bg-slate-950 flex">
+      <div className="min-h-screen bg-surface flex" aria-busy="true" aria-label="Carregando painel">
         {/* Sidebar skeleton */}
-        <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
-          <div className="h-16 border-b border-slate-800 flex items-center px-4 gap-3">
-            <div className="w-8 h-8 bg-slate-800 animate-pulse" />
-            <div className="h-4 w-28 bg-slate-800 animate-pulse" />
+        <div className="w-64 bg-surface-raised border-r border-border flex flex-col shrink-0">
+          <div className="h-16 border-b border-border flex items-center px-4 gap-3">
+            <div className="w-8 h-8 bg-surface-overlay animate-pulse" />
+            <div className="h-4 w-28 bg-surface-overlay animate-pulse" />
           </div>
           <div className="p-4 space-y-2">
-            <div className="h-10 bg-slate-800/60 animate-pulse" />
+            <div className="h-10 bg-surface-overlay animate-pulse" />
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-9 bg-slate-800/40 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+              <div key={i} className="h-9 bg-surface-overlay animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
             ))}
           </div>
         </div>
         {/* Main content skeleton */}
         <div className="flex-1 flex flex-col">
-          <div className="h-16 border-b border-slate-900 bg-slate-950/40" />
+          <div className="h-16 border-b border-border bg-surface" />
           <div className="p-8 space-y-6">
-            <div className="h-7 w-48 bg-slate-800 animate-pulse" />
+            <div className="h-7 w-48 bg-surface-overlay animate-pulse" />
             <div className="grid grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-28 bg-slate-900 border border-slate-800 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                <div key={i} className="h-28 bg-surface-raised border border-border animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
               ))}
             </div>
-            <div className="h-64 bg-slate-900 border border-slate-800 animate-pulse" />
+            <div className="h-64 bg-surface-raised border border-border animate-pulse" />
           </div>
         </div>
       </div>
@@ -178,19 +201,20 @@ function DashboardLayoutContent({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="min-h-screen bg-surface text-text flex">
       <OnboardingModal />
       {/* Sidebar - Drawer Responsivo / Collapsible (Oculto na Impressão) */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 print:hidden 
-        ${sidebarOpen 
-          ? 'translate-x-0 w-64' 
-          : '-translate-x-full md:translate-x-0 md:w-20'
-        }
-      `}>
+      <aside className={cn(
+        'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-raised border-r border-border transition-all duration-300 print:hidden',
+        sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-20',
+      )}>
         {/* Brand Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
-          <Link href="/dashboard" className="flex items-center gap-2.5 font-bold text-lg text-white">
-            <div className="flex items-center justify-center w-8 h-8 rounded-none overflow-hidden bg-white/10 p-1">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2.5 min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            <div className="flex items-center justify-center w-8 h-8 shrink-0 overflow-hidden bg-surface-sunken p-1">
               {company.logo_url ? (
                 <Image src={company.logo_url} alt={company.name} width={32} height={32} className="w-full h-full object-contain" />
               ) : (
@@ -198,22 +222,23 @@ function DashboardLayoutContent({
               )}
             </div>
             {sidebarOpen && (
-              <span className="tracking-tight text-white font-bold truncate max-w-[150px]">
+              <span className="text-h3 text-text truncate">
                 {company.name}
               </span>
             )}
           </Link>
           <button
+            type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label={sidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'}
-            className="p-1 text-slate-400 hover:text-white rounded-none hidden lg:block"
+            aria-label={sidebarOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
+            className="p-1 shrink-0 text-text-muted hover:text-text transition-colors cursor-pointer hidden lg:block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5" aria-hidden />
           </button>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 px-3 space-y-1 py-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain thin-scrollbar px-3 space-y-1 py-4">
           {navItems.map((item, index) => {
             const Icon = item.icon;
 
@@ -222,28 +247,34 @@ function DashboardLayoutContent({
               return (
                 <div key={`sub-group-${index}`} className="space-y-1">
                   <button
+                    type="button"
+                    aria-expanded={settingsOpen}
                     onClick={() => {
                       if (!sidebarOpen) {
                         setSidebarOpen(true);
                       }
                       setSettingsOpen(!settingsOpen);
                     }}
-                    className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-none text-sm font-medium transition-all duration-200 ease-out cursor-pointer ${
-                      isSubActive 
-                        ? 'text-emerald-400 bg-slate-800/20' 
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
-                    }`}
+                    className={cn(
+                      navItemClasses({ active: false }),
+                      'w-full justify-between cursor-pointer',
+                      // O grupo não fica "ativo" como um link — quem marca a
+                      // posição é o sub-item. Aqui só a cor de texto sinaliza.
+                      isSubActive && 'text-brand',
+                    )}
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5 shrink-0" />
-                      {sidebarOpen && <span>{item.name}</span>}
-                    </div>
+                    <span className="flex items-center gap-3 min-w-0">
+                      <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                      {sidebarOpen && <span className="truncate">{item.name}</span>}
+                    </span>
                     {sidebarOpen && (
-                      settingsOpen ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />
+                      settingsOpen
+                        ? <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
+                        : <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
                     )}
                   </button>
                   {settingsOpen && sidebarOpen && (
-                    <div className="pl-6 space-y-1 mt-1 animate-in slide-in-from-top-1 duration-150">
+                    <div className="pl-6 space-y-1 mt-1">
                       {item.subItems.map((sub) => {
                         const isActive = pathname === sub.href;
                         const SubIcon = sub.icon;
@@ -251,19 +282,16 @@ function DashboardLayoutContent({
                           <Link
                             key={sub.href}
                             href={sub.href}
+                            aria-current={isActive ? 'page' : undefined}
                             onClick={() => {
                               if (window.innerWidth < 768) {
                                 setSidebarOpen(false);
                               }
                             }}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-none text-xs font-semibold transition-all duration-200 ${
-                              isActive 
-                                ? 'bg-emerald-600 text-white shadow shadow-emerald-600/10' 
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/25'
-                            }`}
+                            className={navItemClasses({ active: isActive, nested: true })}
                           >
-                            <SubIcon className="w-4 h-4 shrink-0" />
-                            <span>{sub.name}</span>
+                            <SubIcon className="w-4 h-4 shrink-0" aria-hidden />
+                            <span className="truncate">{sub.name}</span>
                           </Link>
                         );
                       })}
@@ -279,6 +307,8 @@ function DashboardLayoutContent({
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                title={!sidebarOpen ? item.name : undefined}
                 onClick={() => {
                   if (item.href === '/dashboard/inventory') {
                     window.dispatchEvent(new Event('nav-estoque-click'));
@@ -287,82 +317,90 @@ function DashboardLayoutContent({
                     setSidebarOpen(false);
                   }
                 }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-none text-sm font-medium transition-all duration-200 ease-out ${
-                  isActive 
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/15' 
-                    : 'text-slate-400 hover:text-slate-250 hover:bg-slate-800/30'
-                }`}
+                className={navItemClasses({ active: isActive })}
               >
-                <Icon className="w-5 h-5 shrink-0" />
-                {sidebarOpen && <span>{item.name}</span>}
+                <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                {sidebarOpen ? (
+                  <span className="truncate">{item.name}</span>
+                ) : (
+                  <span className="sr-only">{item.name}</span>
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* User Card & Logout */}
-        <div className="p-3 border-t border-slate-800 bg-slate-900/40">
+        <div className="p-3 border-t border-border">
           {sidebarOpen && (
-            <div className="flex items-center gap-3 p-2 rounded-none bg-slate-950/30 border border-slate-800/50 mb-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold uppercase text-sm">
+            <div className="flex items-center gap-3 p-2 bg-surface-sunken border border-border mb-3">
+              <div
+                className="w-8 h-8 shrink-0 bg-brand/10 border border-brand/25 flex items-center justify-center text-brand font-semibold uppercase text-small"
+                aria-hidden
+              >
                 {userName.charAt(0)}
               </div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-slate-200 truncate">{userName}</p>
-                <p className="text-[10px] text-slate-500 uppercase font-bold">{userRole}</p>
+              <div className="min-w-0">
+                <p className="text-small font-semibold text-text truncate">{userName}</p>
+                <p className="text-caption uppercase tracking-wider text-text-subtle">{userRole}</p>
               </div>
             </div>
           )}
           <button
+            type="button"
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 rounded-none text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+            title={!sidebarOpen ? 'Sair' : undefined}
+            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 text-small font-medium text-danger hover:bg-danger/10 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            <LogOut className="w-5 h-5 shrink-0" />
-            {sidebarOpen && <span>Sair</span>}
+            <LogOut className="w-5 h-5 shrink-0" aria-hidden />
+            {sidebarOpen ? <span>Sair</span> : <span className="sr-only">Sair</span>}
           </button>
         </div>
       </aside>
 
       {/* Overlay Backdrop - Apenas Mobile (Oculto na Impressão) */}
       {sidebarOpen && (
-        <div 
+        <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200 print:hidden"
+          aria-hidden
+          className="fixed inset-0 bg-surface/70 backdrop-blur-sm z-40 md:hidden print:hidden"
         />
       )}
 
       {/* Main Content Wrap */}
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'} print:pl-0`}>
         {/* Header/Top Bar (Oculto na Impressão) */}
-        <header className="h-16 border-b border-slate-900 bg-slate-950/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 print:hidden">
-          <div className="flex items-center gap-2">
+        <header className="h-16 border-b border-border bg-surface sticky top-0 z-10 flex items-center justify-between gap-4 px-6 print:hidden">
+          <div className="flex items-center gap-2 min-w-0">
             <button
+              type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label={sidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-none md:hidden"
+              className="p-1.5 shrink-0 text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5" aria-hidden />
             </button>
-            <h2 className="font-semibold text-slate-200">{getHeaderTitle()}</h2>
+            <h2 className="text-h3 text-text truncate">{getHeaderTitle()}</h2>
           </div>
-          
-          <div className="flex items-center gap-4">
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 rounded-none border border-slate-800 bg-slate-900/40 transition-all cursor-pointer flex items-center justify-center"
-              title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-            >
-              {theme === 'light' ? <Moon className="w-4 h-4 text-emerald-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
-            </button>
 
-          </div>
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+            title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+            className="p-2 shrink-0 flex items-center justify-center text-text-muted hover:text-text border border-border bg-surface-raised hover:border-border-strong transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            {theme === 'light' ? <Moon className="w-4 h-4" aria-hidden /> : <Sun className="w-4 h-4" aria-hidden />}
+          </button>
         </header>
 
         {isReadOnly && (
-          <div className="bg-rose-950/40 border-b border-rose-900/60 text-rose-200 px-6 py-2.5 text-center text-sm font-medium flex items-center justify-center gap-2 print:hidden">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+          <div
+            role="alert"
+            className="bg-danger/10 border-b border-danger/25 text-danger px-6 py-2.5 text-center text-small font-medium flex items-center justify-center gap-2 print:hidden"
+          >
+            <span className="w-2 h-2 bg-danger shrink-0" aria-hidden />
             <span>Assinatura atrasada: A conta entrou em modo de apenas-leitura. Regularize o faturamento para reabilitar novas OS e cadastros.</span>
           </div>
         )}

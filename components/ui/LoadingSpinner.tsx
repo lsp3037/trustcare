@@ -6,7 +6,7 @@ interface LoadingSpinnerProps extends Omit<React.ComponentProps<typeof Loader2>,
   size?: number | string;
 }
 
-export function LoadingSpinner({ className = "text-blue-500", size, ...props }: LoadingSpinnerProps) {
+export function LoadingSpinner({ className = "text-brand", size, ...props }: LoadingSpinnerProps) {
   return (
     <Loader2 
       size={size}

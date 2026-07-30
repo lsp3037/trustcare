@@ -45,7 +45,7 @@ export default function UpdatePasswordPage() {
 
   return (
     <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full"></div>
@@ -58,13 +58,13 @@ export default function UpdatePasswordPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-center text-white mb-2">Criar Nova Senha</h2>
-          <p className="text-neutral-400 text-center mb-8 text-sm">
+          <p className="text-slate-400 text-center mb-8 text-sm">
             Digite sua nova senha abaixo para recuperar o acesso à sua conta.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="pass" className="block text-sm font-medium text-neutral-300 mb-1">
+              <label htmlFor="pass" className="block text-sm font-medium text-slate-300 mb-1">
                 Nova Senha
               </label>
               <input
@@ -73,13 +73,13 @@ export default function UpdatePasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder:text-neutral-600"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder:text-slate-600"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-neutral-300 mb-1">
+              <label htmlFor="confirm" className="block text-sm font-medium text-slate-300 mb-1">
                 Confirmar Nova Senha
               </label>
               <input
@@ -88,7 +88,7 @@ export default function UpdatePasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder:text-neutral-600"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder:text-slate-600"
                 required
               />
             </div>

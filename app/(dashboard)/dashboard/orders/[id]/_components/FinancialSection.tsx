@@ -1,5 +1,8 @@
 'use client';
-import { DollarSign, Tag, Boxes, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import React from 'react';
+import { Boxes, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Card, CardTitle, Button, Input, Select } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface FinancialSectionProps {
   serviceValue: string;
@@ -29,6 +32,80 @@ interface FinancialSectionProps {
   setProductAddError: (v: string) => void;
 }
 
+const brl = (value: number) => `R$ ${value.toFixed(2)}`;
+
+/** Rótulo de subseção dentro do card. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-caption uppercase tracking-wider text-text-subtle">{children}</p>
+  );
+}
+
+interface LineItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+}
+
+/**
+ * Lista de itens alocados (peças ou serviços). Os dois blocos eram
+ * markup idêntico duplicado.
+ */
+function LineItemList({
+  label,
+  items,
+  emptyLabel,
+  onRemove,
+  removeLabel,
+}: {
+  label: string;
+  items: LineItem[];
+  emptyLabel: string;
+  onRemove: (item: any) => void;
+  removeLabel: string;
+}) {
+  return (
+    <div className="pt-3 border-t border-border">
+      <SectionLabel>{label}</SectionLabel>
+      {items.length === 0 ? (
+        <p className="text-center py-4 mt-2 text-small text-text-subtle bg-surface-sunken border border-border">
+          {emptyLabel}
+        </p>
+      ) : (
+        <ul className="space-y-2 mt-2 max-h-[180px] overflow-y-auto pr-1">
+          {items.map((item) => (
+            <li
+              key={item.id}
+              className="bg-surface-sunken border border-border p-3 flex justify-between items-center gap-3"
+            >
+              <div className="min-w-0">
+                <p className="text-small font-semibold text-text truncate">{item.name}</p>
+                <p className="text-caption font-mono tabular-nums text-text-subtle mt-0.5">
+                  {item.quantity} un • {brl(Number(item.unit_price))}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-small font-mono tabular-nums font-semibold text-text">
+                  {brl(item.quantity * item.unit_price)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemove(item)}
+                  aria-label={`${removeLabel}: ${item.name}`}
+                  className="p-1 text-text-subtle hover:text-danger transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function FinancialSection({
   serviceValue, setServiceValue,
   discount, setDiscount,
@@ -46,248 +123,216 @@ export function FinancialSection({
   totalValue,
   productAddError, setProductAddError
 }: FinancialSectionProps) {
+  // Disponibilidade da peça selecionada. Antes esse cálculo estava repetido
+  // três vezes inline (na dica, no disabled e na classe do botão).
+  const selectedProduct = inventory.find((p) => p.id === currentProductId);
+  const requestedQty = parseInt(currentProductQty) || 0;
+  const alreadyAllocated =
+    selectedProducts.find((p) => p.product_id === currentProductId)?.quantity ?? 0;
+  const stockAvailable = selectedProduct ? selectedProduct.quantity + alreadyAllocated : 0;
+  const overStock = Boolean(selectedProduct) && requestedQty > stockAvailable;
+  const isLowStock =
+    Boolean(selectedProduct) && selectedProduct.quantity <= selectedProduct.min_stock_alert;
+  const canAddProduct =
+    Boolean(selectedProduct) && requestedQty > 0 && !overStock;
+
+  const servicesTotal = selectedServices.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+  const partsTotal = selectedProducts.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+
   return (
-    <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-6 h-fit">
-      <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3 font-mono">
-        <Boxes className="w-5 h-5 text-emerald-500" /> Peças e Mão de Obra
-      </h3>
+    <Card className="space-y-6 h-fit">
+      <CardTitle className="flex items-center gap-2 border-b border-border pb-3">
+        <Boxes className="w-5 h-5 text-text-subtle" aria-hidden /> Peças e Mão de Obra
+      </CardTitle>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <DollarSign className="w-4 h-4 text-emerald-500" /> Mão de Obra (R$)
-          </label>
-          <input
-            type="number" step="0.01" min="0" value={serviceValue}
-            onChange={(e) => setServiceValue(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors font-mono font-semibold"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Tag className="w-4 h-4 text-rose-500" /> Desconto (R$)
-          </label>
-          <input
-            type="number" step="0.01" min="0" value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors font-mono font-semibold"
-          />
-        </div>
+        <Input
+          label="Mão de Obra (R$)"
+          type="number"
+          step="0.01"
+          min="0"
+          value={serviceValue}
+          onChange={(e) => setServiceValue(e.target.value)}
+          className="font-mono tabular-nums"
+        />
+        <Input
+          label="Desconto (R$)"
+          type="number"
+          step="0.01"
+          min="0"
+          value={discount}
+          onChange={(e) => setDiscount(e.target.value)}
+          className="font-mono tabular-nums"
+        />
       </div>
 
-      <div className="space-y-3 pt-3 border-t border-slate-850">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Adicionar Peças do Estoque</p>
-        <div className="space-y-2">
-          <select
-            value={currentProductId}
-            onChange={(e) => {
-              setCurrentProductId(e.target.value);
-              setProductAddError('');
-            }}
-            className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-150 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
-          >
-            <option value="">Buscar peça no estoque...</option>
-            {inventory.map((prod) => (
-              <option key={prod.id} value={prod.id} disabled={prod.quantity === 0}>
-                {prod.name} (SKU: {prod.sku} • Saldo: {prod.quantity} un • R$ {prod.sale_price})
-              </option>
-            ))}
-          </select>
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <div className="w-24 shrink-0">
-                <input
-                  type="number" min="1" placeholder="Qtd"
-                  value={currentProductQty}
-                  onChange={(e) => {
-                    setCurrentProductQty(e.target.value);
-                    setProductAddError('');
-                  }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors text-center font-mono"
-                />
-                {(() => {
-                  const prod = inventory.find(p => p.id === currentProductId);
-                  if (prod) {
-                    const qty = parseInt(currentProductQty) || 0;
-                    const existingItem = selectedProducts.find((p) => p.product_id === currentProductId);
-                    const existingQty = existingItem ? existingItem.quantity : 0;
-                    const stockAvailable = prod.quantity + existingQty;
-                    const over = qty > stockAvailable;
-                    const isLow = prod.quantity <= prod.min_stock_alert;
-                    return (
-                      <div className="space-y-0.5 mt-1 text-[10px] leading-tight">
-                        <span className={`block font-semibold ${over ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>
-                          Saldo + Alocado: {stockAvailable} un
-                        </span>
-                        {!over && isLow && (
-                          <span className="text-[9px] text-amber-500 font-semibold flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3 text-amber-500" /> Estoque Baixo (Mín: {prod.min_stock_alert})
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-              <button
-                type="button" onClick={handleAddProduct}
-                disabled={(() => {
-                  if (!currentProductId) return true;
-                  const prod = inventory.find(p => p.id === currentProductId);
-                  if (!prod) return true;
-                  const qty = parseInt(currentProductQty) || 0;
-                  const existingItem = selectedProducts.find((p) => p.product_id === currentProductId);
-                  const existingQty = existingItem ? existingItem.quantity : 0;
-                  const stockAvailable = prod.quantity + existingQty;
-                  return qty > stockAvailable || qty <= 0 || isNaN(qty);
-                })()}
-                className={`flex-1 font-semibold font-mono uppercase tracking-wider py-2 px-4 rounded-none text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-md text-white cursor-pointer ${
-                  (() => {
-                    if (!currentProductId) return 'bg-slate-800 text-slate-500 cursor-not-allowed';
-                    const prod = inventory.find(p => p.id === currentProductId);
-                    const qty = parseInt(currentProductQty) || 0;
-                    const existingItem = selectedProducts.find((p) => p.product_id === currentProductId);
-                    const existingQty = existingItem ? existingItem.quantity : 0;
-                    const stockAvailable = prod.quantity + existingQty;
-                    if (!prod || qty > stockAvailable) {
-                      return 'bg-rose-950/20 text-rose-550 border border-rose-900/50 cursor-not-allowed';
-                    }
-                    return 'bg-emerald-600 hover:bg-emerald-500';
-                  })()
-                }`}
-              >
-                <Plus className="w-3.5 h-3.5" /> Adicionar Peça
-              </button>
-            </div>
+      <div className="space-y-3 pt-3 border-t border-border">
+        <SectionLabel>Adicionar Peças do Estoque</SectionLabel>
+        <Select
+          aria-label="Buscar peça no estoque"
+          value={currentProductId}
+          onChange={(e) => {
+            setCurrentProductId(e.target.value);
+            setProductAddError('');
+          }}
+        >
+          <option value="">Buscar peça no estoque...</option>
+          {inventory.map((prod) => (
+            <option key={prod.id} value={prod.id} disabled={prod.quantity === 0}>
+              {prod.name} (SKU: {prod.sku} • Saldo: {prod.quantity} un • R$ {prod.sale_price})
+            </option>
+          ))}
+        </Select>
 
-            {productAddError && (
-              <div className="p-2.5 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-450 font-bold flex items-center gap-1.5 animate-in fade-in duration-200">
-                <AlertTriangle className="w-4 h-4 text-rose-500" />
-                {productAddError}
+        <div className="flex gap-2 items-start">
+          <div className="w-24 shrink-0">
+            <Input
+              type="number"
+              min="1"
+              aria-label="Quantidade de peças"
+              placeholder="Qtd"
+              value={currentProductQty}
+              onChange={(e) => {
+                setCurrentProductQty(e.target.value);
+                setProductAddError('');
+              }}
+              className="text-center font-mono tabular-nums"
+            />
+            {selectedProduct && (
+              <div className="mt-1.5 space-y-1">
+                <span
+                  className={cn(
+                    'block text-caption',
+                    overStock ? 'text-danger font-semibold' : 'text-text-subtle',
+                  )}
+                >
+                  Saldo + Alocado: {stockAvailable} un
+                </span>
+                {!overStock && isLowStock && (
+                  <span className="text-caption text-warning flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" aria-hidden />
+                    Estoque Baixo (Mín: {selectedProduct.min_stock_alert})
+                  </span>
+                )}
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      <div className="pt-3 border-t border-slate-850">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Peças Alocadas</p>
-        {selectedProducts.length === 0 ? (
-          <div className="text-center py-4 text-slate-550 text-[10px] uppercase tracking-wider font-medium bg-slate-950/30 rounded-none border border-slate-950">
-            Nenhuma peça vinculada
-          </div>
-        ) : (
-          <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
-            {selectedProducts.map((prod) => (
-              <div key={prod.id} className="bg-slate-950/60 border border-slate-900 rounded-none p-3 flex justify-between items-center text-xs group">
-                <div className="space-y-0.5 overflow-hidden">
-                  <p className="font-semibold font-mono text-slate-200 truncate">{prod.name}</p>
-                  <p className="text-slate-500 font-mono text-[10px]">
-                    {prod.quantity} un • R$ {Number(prod.unit_price).toFixed(2)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-bold text-slate-300 font-mono text-[10px]">
-                    R$ {(prod.quantity * prod.unit_price).toFixed(2)}
-                  </span>
-                  <button type="button" onClick={() => handleRemoveProduct(prod.product_id)} className="text-slate-600 hover:text-rose-500 transition-colors p-1">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3 pt-3 border-t border-slate-850">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Adicionar Serviços</p>
-        <div className="space-y-2">
-          <select
-            value={currentServiceId}
-            onChange={(e) => handleServiceSelect(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-150 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+          <Button
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            disabled={!canAddProduct}
+            onClick={handleAddProduct}
+            className="flex-1"
           >
-            <option value="">Buscar serviço do catálogo...</option>
-            {availableServices.map((serv) => (
-              <option key={serv.id} value={serv.id}>
-                {serv.nome} (Preço Padrão: R$ {Number(serv.preco_padrao).toFixed(2)})
-              </option>
-            ))}
-          </select>
-          <div className="flex gap-2">
-            <div className="w-16 shrink-0">
-              <input type="number" min="1" placeholder="Qtd" value={currentServiceQty} onChange={(e) => setCurrentServiceQty(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors text-center font-mono" />
-            </div>
-            <div className="flex-1">
-              <input type="number" step="0.01" min="0" placeholder="Valor Unitário (R$)" value={currentServicePrice} onChange={(e) => setCurrentServicePrice(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors font-mono font-semibold" />
-            </div>
-            <button type="button" onClick={handleAddService} disabled={!currentServiceId} className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-semibold font-mono tracking-wider py-2 px-4 rounded-none text-[10px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0">
-              <Plus className="w-3.5 h-3.5" /> Adicionar
-            </button>
-          </div>
+            Adicionar Peça
+          </Button>
         </div>
-      </div>
 
-      <div className="pt-3 border-t border-slate-850">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Serviços Vinculados</p>
-        {selectedServices.length === 0 ? (
-          <div className="text-center py-4 text-slate-550 text-[10px] uppercase tracking-wider font-medium bg-slate-950/30 rounded-none border border-slate-950">
-            Nenhum serviço vinculado.
-          </div>
-        ) : (
-          <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
-            {selectedServices.map((serv) => (
-              <div key={serv.id} className="bg-slate-950/60 border border-slate-900 rounded-none p-3 flex justify-between items-center text-xs group">
-                <div className="space-y-0.5 overflow-hidden">
-                  <p className="font-semibold font-mono text-slate-200 truncate">{serv.name}</p>
-                  <p className="text-slate-500 font-mono text-[10px]">
-                    {serv.quantity} un • R$ {Number(serv.unit_price).toFixed(2)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-bold text-slate-300 font-mono text-[10px]">
-                    R$ {(serv.quantity * serv.unit_price).toFixed(2)}
-                  </span>
-                  <button type="button" onClick={() => handleRemoveService(serv.service_id)} className="text-slate-600 hover:text-rose-500 transition-colors p-1">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+        {productAddError && (
+          <p
+            role="alert"
+            className="p-2.5 bg-danger/10 border border-danger/25 text-small font-semibold text-danger flex items-center gap-1.5"
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+            {productAddError}
+          </p>
         )}
       </div>
 
-      <div className="pt-4 border-t border-slate-850 space-y-2.5 bg-slate-950/40 p-4 rounded-none border border-slate-900 font-mono">
-        <div className="flex justify-between items-center text-xs text-slate-400">
-          <span>Mão de Obra Geral:</span>
-          <span className="font-semibold text-slate-200">R$ {parseFloat(serviceValue || '0').toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between items-center text-xs text-slate-400">
-          <span>Serviços do Catálogo:</span>
-          <span className="font-semibold text-slate-200">R$ {selectedServices.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between items-center text-xs text-slate-400">
-          <span>Peças Utilizadas:</span>
-          <span className="font-semibold text-slate-200">R$ {selectedProducts.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toFixed(2)}</span>
-        </div>
-        <div className="h-px bg-slate-850 my-1" />
-        {parseFloat(discount) > 0 && (
-          <div className="flex justify-between items-center text-xs text-rose-455 font-bold">
-            <span>Desconto Aplicado:</span>
-            <span>- R$ {parseFloat(discount).toFixed(2)}</span>
-          </div>
-        )}
-        <div className="h-px bg-slate-850 my-1" />
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-bold text-slate-200 uppercase">VALOR TOTAL DO SERVIÇO:</span>
-          <span className="text-base font-extrabold text-emerald-450 flex items-center">
-            R$ {parseFloat(totalValue).toFixed(2)}
-          </span>
+      <LineItemList
+        label="Peças Alocadas"
+        items={selectedProducts}
+        emptyLabel="Nenhuma peça vinculada"
+        onRemove={(prod) => handleRemoveProduct(prod.product_id)}
+        removeLabel="Remover peça"
+      />
+
+      <div className="space-y-3 pt-3 border-t border-border">
+        <SectionLabel>Adicionar Serviços</SectionLabel>
+        <Select
+          aria-label="Buscar serviço do catálogo"
+          value={currentServiceId}
+          onChange={(e) => handleServiceSelect(e.target.value)}
+        >
+          <option value="">Buscar serviço do catálogo...</option>
+          {availableServices.map((serv) => (
+            <option key={serv.id} value={serv.id}>
+              {serv.nome} (Preço Padrão: {brl(Number(serv.preco_padrao))})
+            </option>
+          ))}
+        </Select>
+        <div className="flex gap-2 items-start">
+          <Input
+            type="number"
+            min="1"
+            aria-label="Quantidade de serviços"
+            placeholder="Qtd"
+            value={currentServiceQty}
+            onChange={(e) => setCurrentServiceQty(e.target.value)}
+            wrapperClassName="w-16 shrink-0"
+            className="text-center font-mono tabular-nums"
+          />
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            aria-label="Valor unitário do serviço"
+            placeholder="Valor Unitário (R$)"
+            value={currentServicePrice}
+            onChange={(e) => setCurrentServicePrice(e.target.value)}
+            wrapperClassName="flex-1"
+            className="font-mono tabular-nums"
+          />
+          <Button
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            disabled={!currentServiceId}
+            onClick={handleAddService}
+            className="shrink-0"
+          >
+            Adicionar
+          </Button>
         </div>
       </div>
-    </div>
+
+      <LineItemList
+        label="Serviços Vinculados"
+        items={selectedServices}
+        emptyLabel="Nenhum serviço vinculado"
+        onRemove={(serv) => handleRemoveService(serv.service_id)}
+        removeLabel="Remover serviço"
+      />
+
+      <div className="pt-4 border-t border-border">
+        <dl className="bg-surface-sunken border border-border p-4 space-y-2.5">
+          {[
+            { label: 'Mão de Obra Geral', value: parseFloat(serviceValue || '0') },
+            { label: 'Serviços do Catálogo', value: servicesTotal },
+            { label: 'Peças Utilizadas', value: partsTotal },
+          ].map((row) => (
+            <div key={row.label} className="flex justify-between items-baseline gap-3 text-small">
+              <dt className="text-text-muted">{row.label}</dt>
+              <dd className="font-mono tabular-nums font-semibold text-text">{brl(row.value)}</dd>
+            </div>
+          ))}
+
+          {parseFloat(discount) > 0 && (
+            <div className="flex justify-between items-baseline gap-3 text-small pt-2.5 border-t border-border">
+              <dt className="text-danger font-semibold">Desconto Aplicado</dt>
+              <dd className="font-mono tabular-nums font-semibold text-danger">
+                − {brl(parseFloat(discount))}
+              </dd>
+            </div>
+          )}
+
+          <div className="flex justify-between items-baseline gap-3 pt-2.5 border-t border-border-strong">
+            <dt className="text-caption uppercase tracking-wider text-text">Valor Total do Serviço</dt>
+            <dd className="text-h3 font-mono tabular-nums text-brand">
+              {brl(parseFloat(totalValue))}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </Card>
   );
 }

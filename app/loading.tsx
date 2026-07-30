@@ -6,7 +6,7 @@ export default function Loading() {
       <div className="relative flex flex-col items-center">
         <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full w-32 h-32 animate-pulse"></div>
         <div className="relative z-10 p-4 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-800 shadow-2xl mb-4">
-          <ShieldCheck className="w-10 h-10 text-emerald-450 animate-pulse" />
+          <ShieldCheck className="w-10 h-10 text-emerald-400 animate-pulse" />
         </div>
         <h2 className="text-xl font-bold tracking-tight text-white mb-2">Carregando Trust Care...</h2>
         <div className="w-48 h-1 bg-slate-800 rounded-full overflow-hidden">

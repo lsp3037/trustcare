@@ -4,7 +4,7 @@ import { AlertTriangle, Building, Printer, FileText } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner, Button, EmptyState } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -291,22 +291,26 @@ export default function TempPrintPreviewPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 min-h-screen bg-slate-950 text-slate-400">
-        <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-sm">Carregando visualização de impressão temporária...</p>
+      <div className="flex flex-col items-center justify-center gap-4 py-20 min-h-screen bg-surface">
+        <LoadingSpinner className="w-8 h-8 text-brand" />
+        <p className="text-small text-text-muted">Carregando visualização de impressão...</p>
       </div>
     );
   }
 
   if (errorMsg || !order) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 min-h-screen bg-slate-950 text-slate-400 space-y-4">
-        <AlertTriangle className="w-12 h-12 text-rose-500" />
-        <h2 className="text-xl font-bold text-white">Erro ao carregar dados</h2>
-        <p className="text-sm text-slate-500">{errorMsg || 'OS não encontrada.'}</p>
-        <button onClick={() => router.back()} className="text-blue-500 hover:underline text-sm">
-          Voltar
-        </button>
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <EmptyState
+          icon={<AlertTriangle />}
+          title="Erro ao carregar dados"
+          description={errorMsg || 'OS não encontrada.'}
+          action={
+            <Button variant="secondary" onClick={() => router.back()}>
+              Voltar
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -319,49 +323,48 @@ export default function TempPrintPreviewPage() {
   const subtotalValue = laborValue + partsSubtotal + servicesSubtotal;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 antialiased font-inter">
-      
+    <div className="min-h-screen bg-surface text-text antialiased">
+
       {/* HUD DE AVISO TEMPORÁRIO (Oculto na Impressão) */}
-      <div className="print:hidden max-w-4xl mx-auto p-4 bg-slate-900 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 rounded-t-xl">
+      <div className="print:hidden max-w-4xl mx-auto p-4 bg-surface-raised border border-border flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-500/10 text-amber-500 rounded-none">
+          <div className="p-2 bg-warning/10 text-warning" aria-hidden>
             <Building className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-white">Visualização de Impressão Temporária</h4>
-            <p className="text-xs text-slate-450">Use esta página para testar. O botão dispara o `window.print()` do seu navegador.</p>
+            <h2 className="text-h3 text-text">Visualização de Impressão</h2>
+            <p className="text-small text-text-muted">
+              Confira a folha antes de enviar para a impressora.
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.back()}
-            className="px-4 py-2 border border-slate-850 hover:bg-slate-800 text-slate-400 hover:text-white rounded-none text-xs font-semibold transition-all cursor-pointer"
-          >
+        <div className="flex items-center gap-2 flex-wrap justify-center">
+          <Button variant="secondary" size="sm" onClick={() => router.back()}>
             Voltar para OS
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<FileText className="w-4 h-4" />}
+            loading={downloadingPDF}
             onClick={handleDownloadPDF}
-            disabled={downloadingPDF}
-            className="px-4 py-2 bg-indigo-650 hover:bg-indigo-500 disabled:bg-indigo-950/40 disabled:text-slate-500 text-white rounded-none text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-650/10 cursor-pointer transition-all active:scale-95"
           >
-            {downloadingPDF ? <LoadingSpinner className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             Baixar PDF
-          </button>
-          <button
-            onClick={handlePrint}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-600/10 cursor-pointer transition-all active:scale-95"
-          >
-            <Printer className="w-4 h-4" /> Simular Impressão (Ctrl + P)
-          </button>
+          </Button>
+          <Button size="sm" icon={<Printer className="w-4 h-4" />} onClick={handlePrint}>
+            Imprimir
+          </Button>
         </div>
       </div>
 
       {/* CONTAINER VISÍVEL NA TELA PARA TESTE (Oculto na Impressão, exibe como folha centralizada) */}
-      <div className="print:hidden max-w-4xl mx-auto p-8 bg-slate-900 border border-t-0 border-slate-800 rounded-b-xl shadow-2xl mb-12">
-        <p className="text-xs text-slate-500 mb-6 text-center italic">Abaixo está a folha no formato exato que será enviado para a impressora:</p>
-        
+      <div className="print:hidden max-w-4xl mx-auto p-8 bg-surface-raised border border-t-0 border-border mb-12">
+        <p className="text-small text-text-subtle mb-6 text-center">
+          Abaixo está a folha no formato exato que será enviado para a impressora:
+        </p>
+
         {/* Folha A4 simulada em tela */}
-        <div id="print-sheet" className="bg-white text-black p-8 rounded-none shadow-lg border border-slate-205 max-w-[21cm] mx-auto min-h-[29.7cm] flex flex-col justify-between">
+        <div id="print-sheet" className="bg-white text-black p-8 shadow-lg max-w-[21cm] mx-auto min-h-[29.7cm] flex flex-col justify-between">
           <PrintDocumentContent
             order={order}
             client={client}
@@ -377,7 +380,7 @@ export default function TempPrintPreviewPage() {
       </div>
 
       {/* CONTAINER EXCLUSIVO DE IMPRESSÃO (Oculto na tela normal, visível na impressora) */}
-      <div className="hidden print:block bg-white text-black min-h-screen p-10 font-inter text-sm">
+      <div className="hidden print:block bg-white text-black min-h-screen p-10 font-sans text-sm">
         <PrintDocumentContent
           order={order}
           client={client}
@@ -410,7 +413,7 @@ function PrintDocumentContent({
   const currentDate = new Date().toLocaleDateString('pt-BR');
 
   return (
-    <div className="space-y-6 flex flex-col justify-between h-full bg-white text-black p-1 font-inter">
+    <div className="space-y-6 flex flex-col justify-between h-full bg-white text-black p-1 font-sans">
       <div className="space-y-6">
         
         {/* CABEÇALHO */}
@@ -435,7 +438,7 @@ function PrintDocumentContent({
           </div>
           <div className="text-right">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Ordem de Serviço</span>
-            <span className="text-xl font-black font-jetbrains text-black block mt-0.5">
+            <span className="text-xl font-black font-mono text-black block mt-0.5">
               #{order.codigo_os || `OS-${order.id.slice(0, 8).toUpperCase()}`}
             </span>
             <span className="text-[10px] font-medium text-slate-600 block mt-1">
@@ -456,11 +459,11 @@ function PrintDocumentContent({
             </div>
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase block">Telefone</span>
-              <span className="font-semibold text-black font-jetbrains">{client?.phone || '—'}</span>
+              <span className="font-semibold text-black font-mono">{client?.phone || '—'}</span>
             </div>
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase block">E-mail</span>
-              <span className="font-semibold text-black font-jetbrains">{client?.email || '—'}</span>
+              <span className="font-semibold text-black font-mono">{client?.email || '—'}</span>
             </div>
           </div>
         </div>
@@ -475,12 +478,12 @@ function PrintDocumentContent({
               <span className="text-[9px] font-bold text-slate-500 uppercase block">Especificação do Equipamento</span>
               <span className="font-bold text-black text-xs">{order.equipment_details || '—'}</span>
             </div>
-            <div className="border-t border-slate-205 pt-2">
+            <div className="border-t border-slate-200 pt-2">
               <span className="text-[9px] font-bold text-slate-500 uppercase block">Defeito Relatado pelo Cliente</span>
               <p className="text-xs text-black italic mt-0.5">&quot;{order.reported_problem}&quot;</p>
             </div>
             {order.technical_report && (
-              <div className="border-t border-slate-205 pt-2">
+              <div className="border-t border-slate-200 pt-2">
                 <span className="text-[9px] font-bold text-slate-500 uppercase block">Parecer / Laudo Técnico do Serviço</span>
                 <p className="text-xs text-black font-medium mt-0.5 whitespace-pre-wrap">{order.technical_report}</p>
               </div>
@@ -511,14 +514,14 @@ function PrintDocumentContent({
               })}
               
               {order.entry_checklist.password_pin?.has_password && (
-                <div className="flex gap-2 text-xs col-span-2 mt-2 pt-2 border-t border-slate-205">
+                <div className="flex gap-2 text-xs col-span-2 mt-2 pt-2 border-t border-slate-200">
                   <span className="font-bold text-black flex-shrink-0">☑ Senha / PIN:</span>
-                  <span className="text-black font-jetbrains">{order.entry_checklist.password_pin.password_value || 'Registrado'}</span>
+                  <span className="text-black font-mono">{order.entry_checklist.password_pin.password_value || 'Registrado'}</span>
                 </div>
               )}
               
               {order.entry_checklist.general_notes?.trim() && (
-                <div className="col-span-2 mt-2 pt-2 border-t border-slate-205 text-xs">
+                <div className="col-span-2 mt-2 pt-2 border-t border-slate-200 text-xs">
                   <span className="font-bold text-black block mb-1">Observações Gerais (Entrada):</span>
                   <p className="text-black italic whitespace-pre-wrap">{order.entry_checklist.general_notes}</p>
                 </div>
@@ -538,41 +541,41 @@ function PrintDocumentContent({
           ) : (
             <table className="w-full text-left text-xs border-collapse mt-2">
               <thead>
-                <tr className="border-b border-black text-black font-black text-[10px] uppercase tracking-wider bg-slate-105">
+                <tr className="border-b border-black text-black font-black text-[10px] uppercase tracking-wider bg-slate-100">
                   <th className="py-2 px-2">Descrição do Serviço / Peça</th>
                   <th className="py-2 px-2 text-center w-24">Valor Unitário</th>
                   <th className="py-2 px-2 text-center w-16">Qtd.</th>
                   <th className="py-2 px-2 text-right w-24">Subtotal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-205">
+              <tbody className="divide-y divide-slate-200">
                 {/* Linha da Mão de Obra Geral */}
                 {laborValue > 0 && (
                   <tr className="font-semibold text-black">
                     <td className="py-2.5 px-2">Mão de Obra Técnica (Serviço Geral)</td>
-                    <td className="py-2.5 px-2 text-center font-jetbrains">R$ {laborValue.toFixed(2)}</td>
+                    <td className="py-2.5 px-2 text-center font-mono">R$ {laborValue.toFixed(2)}</td>
                     <td className="py-2.5 px-2 text-center">1</td>
-                    <td className="py-2.5 px-2 text-right font-jetbrains">R$ {laborValue.toFixed(2)}</td>
+                    <td className="py-2.5 px-2 text-right font-mono">R$ {laborValue.toFixed(2)}</td>
                   </tr>
                 )}
                 
                 {/* Serviços do Catálogo */}
                 {selectedServices.map((item: any, idx: number) => (
                   <tr key={`serv-${idx}`} className="text-slate-800">
-                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-550 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Serviço</span></td>
-                    <td className="py-2 px-2 text-center font-jetbrains">R$ {Number(item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-500 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Serviço</span></td>
+                    <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
-                    <td className="py-2 px-2 text-right font-jetbrains font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
                   </tr>
                 ))}
 
                 {/* Peças do Estoque */}
                 {selectedProducts.map((item: any, idx: number) => (
                   <tr key={`prod-${idx}`} className="text-slate-800">
-                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-550 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Peça</span></td>
-                    <td className="py-2 px-2 text-center font-jetbrains">R$ {Number(item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-500 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Peça</span></td>
+                    <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
-                    <td className="py-2 px-2 text-right font-jetbrains font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -583,7 +586,7 @@ function PrintDocumentContent({
         {/* BLOCO 4: RESUMO FINANCEIRO (COM IMPEDIMENTO DE ORFANATO CSS) */}
         <div className="flex justify-between items-end gap-6 break-inside-avoid print:break-inside-avoid">
           <div className="flex-1 border border-black p-4 min-h-[100px] flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-slate-550 uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
             <p className="text-[10px] text-slate-700 leading-relaxed mt-1">
               Garantia de 90 dias referente aos serviços executados e peças trocadas. O equipamento retirado deve ser conferido no ato da entrega.
             </p>
@@ -592,12 +595,12 @@ function PrintDocumentContent({
           <div className="w-80 border border-black p-4 space-y-2.5 bg-slate-50">
             <div className="flex justify-between text-xs text-slate-700 font-semibold">
               <span>Subtotal dos Itens:</span>
-              <span className="font-jetbrains">R$ {subtotalValue.toFixed(2)}</span>
+              <span className="font-mono">R$ {subtotalValue.toFixed(2)}</span>
             </div>
             {discountValue > 0 && (
-              <div className="flex justify-between text-xs text-rose-650 font-bold">
+              <div className="flex justify-between text-xs text-rose-600 font-bold">
                 <span>Desconto Aplicado:</span>
-                <span className="font-jetbrains">- R$ {discountValue.toFixed(2)}</span>
+                <span className="font-mono">- R$ {discountValue.toFixed(2)}</span>
               </div>
             )}
             <div className="h-px bg-black" />
@@ -609,7 +612,7 @@ function PrintDocumentContent({
                     RECEBIDO
                   </span>
                 )}
-                <span className="text-lg font-black font-jetbrains text-black">
+                <span className="text-lg font-black font-mono text-black">
                   R$ {Math.max(0, subtotalValue - discountValue).toFixed(2)}
                 </span>
               </div>
@@ -623,7 +626,7 @@ function PrintDocumentContent({
       <div className="mt-12 pt-6 border-t border-black grid grid-cols-2 gap-8 break-inside-avoid print:break-inside-avoid">
         <div>
           <p className="text-[10px] font-bold text-slate-500 uppercase">Local e Data</p>
-          <p className="text-xs font-bold text-black mt-2 font-jetbrains">{company.name}, {currentDate}</p>
+          <p className="text-xs font-bold text-black mt-2 font-mono">{company.name}, {currentDate}</p>
         </div>
         <div className="text-center">
           <div className="border-b border-black w-full h-8" />

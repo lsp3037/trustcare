@@ -8,6 +8,7 @@ import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui';
 
 export default function CompanySettingsPage() {
   const router = useRouter();
@@ -218,7 +219,7 @@ export default function CompanySettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
           <Building className="w-6 h-6 text-emerald-500" /> Dados da Empresa
         </h1>
-        <p className="text-sm text-slate-450 mt-1">Configure os dados de identidade e contato da sua assistência técnica.</p>
+        <p className="text-sm text-slate-400 mt-1">Configure os dados de identidade e contato da sua assistência técnica.</p>
       </div>
 
       <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 overflow-hidden rounded-none">
@@ -305,13 +306,16 @@ export default function CompanySettingsPage() {
               </div>
               
               {file && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto py-0 text-[10px] text-danger hover:text-danger"
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
                   onClick={handleRemovePreview}
-                  className="text-[10px] font-bold text-rose-400 hover:text-rose-350 transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Descartar alteração
-                </button>
+                  Descartar alteração
+                </Button>
               )}
               
               <p className="text-[9px] text-slate-500 text-center leading-normal max-w-[150px]">Imagens JPG, PNG ou WEBP. Tamanho máximo de 2MB.</p>
@@ -325,7 +329,7 @@ export default function CompanySettingsPage() {
                   Nome da Empresa / Razão Social
                 </label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     id="company-name"
                     type="text"
@@ -346,7 +350,7 @@ export default function CompanySettingsPage() {
                       Telefone de Contato
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-555" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input
                         id="company-phone"
                         type="text"
@@ -363,7 +367,7 @@ export default function CompanySettingsPage() {
                       WhatsApp de Contato
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-555" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input
                         id="company-whatsapp"
                         type="text"
@@ -381,7 +385,7 @@ export default function CompanySettingsPage() {
                     E-mail de Contato
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-555" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       id="company-email"
                       type="email"
@@ -397,23 +401,15 @@ export default function CompanySettingsPage() {
           </div>
 
           <div className="border-t border-slate-800/80 pt-6 flex justify-end">
-            <button
+            <Button
               type="submit"
+              loading={saving || uploading}
               disabled={saving || uploading}
-              className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-black font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
+              icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+              className="px-8 py-3 h-auto text-black uppercase tracking-wider border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
             >
-              {(saving || uploading) ? (
-                <>
-                  <LoadingSpinner className="w-3.5 h-3.5 animate-spin" />
-                  <span>Salvando Configurações...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Salvar Dados</span>
-                </>
-              )}
-            </button>
+              {(saving || uploading) ? 'Salvando Configurações...' : 'Salvar Dados'}
+            </Button>
           </div>
         </form>
       </div>

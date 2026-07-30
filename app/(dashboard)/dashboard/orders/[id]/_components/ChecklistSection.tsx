@@ -1,8 +1,67 @@
 'use client';
 import React, { useState } from 'react';
-import { CheckCircle2, ChevronDown, Check, } from 'lucide-react';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
+import { Button, Card, Textarea } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import { ChecklistTemplateItem, OrderChecklist, ChecklistItem } from './types';
+
+/**
+ * Entrada e Saída são fases distintas, então precisam ser distinguíveis
+ * quando aparecem lado a lado — mas por token semântico, não por uma
+ * família de cor nova (antes: emerald vs sky).
+ */
+type Phase = 'entry' | 'exit';
+
+const PHASE = {
+  entry: {
+    accent: 'text-brand',
+    dot: 'bg-brand',
+    toggleOn: 'bg-brand/20 border-brand',
+    knobOn: 'bg-brand',
+  },
+  exit: {
+    accent: 'text-info',
+    dot: 'bg-info',
+    toggleOn: 'bg-info/20 border-info',
+    knobOn: 'bg-info',
+  },
+} as const satisfies Record<Phase, Record<string, string>>;
+
+interface ToggleProps {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  phase: Phase;
+  label: string;
+}
+
+/** Interruptor. Era markup duplicado em três lugares deste arquivo. */
+function Toggle({ checked, onChange, disabled = false, phase, label }: ToggleProps) {
+  const tone = PHASE[phase];
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onChange}
+      className={cn(
+        'relative inline-flex h-5 w-10 shrink-0 cursor-pointer border p-0.5 transition-colors duration-150',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        checked ? tone.toggleOn : 'bg-surface-sunken border-border hover:border-border-strong',
+      )}
+    >
+      <span
+        className={cn(
+          'pointer-events-none inline-block h-full w-4 transform transition-transform duration-150',
+          checked ? `translate-x-5 ${tone.knobOn}` : 'translate-x-0 bg-border-strong',
+        )}
+      />
+    </button>
+  );
+}
 
 interface ChecklistItemRowProps {
   label: string;
@@ -10,50 +69,129 @@ interface ChecklistItemRowProps {
   checklist: OrderChecklist;
   setChecklist: React.Dispatch<React.SetStateAction<OrderChecklist>>;
   disabled?: boolean;
-  color?: 'emerald' | 'sky';
+  phase?: Phase;
 }
 
-const ChecklistItemRow = ({ label, field, checklist, setChecklist, disabled = false, color = 'emerald' }: ChecklistItemRowProps) => {
-  const item = (checklist[field] || { checked: false, observation: '' }) as ChecklistItem;
-  const activeBg = color === 'emerald' ? 'bg-emerald-950/40 border-emerald-500' : 'bg-sky-950/40 border-sky-500';
-  const knobColor = color === 'emerald' ? 'bg-emerald-500' : 'bg-sky-500';
+const EMPTY_ITEM: ChecklistItem = { checked: false, observation: '' };
+
+function ChecklistItemRow({
+  label,
+  field,
+  checklist,
+  setChecklist,
+  disabled = false,
+  phase = 'entry',
+}: ChecklistItemRowProps) {
+  const item = (checklist[field] || EMPTY_ITEM) as ChecklistItem;
 
   return (
-    <div className="group border-b border-zinc-800/80 pb-3 last:border-0">
+    <div className="border-b border-border pb-3 last:border-0">
       <div className="grid grid-cols-[1fr_auto] gap-4 items-center">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200 transition-colors pr-2 leading-relaxed break-words">
-          {label}
-        </span>
-        <button
-          type="button"
+        <span className="text-small text-text-muted pr-2 break-words">{label}</span>
+        <Toggle
+          checked={item.checked}
           disabled={disabled}
-          onClick={() => setChecklist(prev => ({
+          phase={phase}
+          label={label}
+          onChange={() => setChecklist(prev => ({
             ...prev,
-            [field]: { ...(prev[field] || { checked: false, observation: '' }), checked: !(prev[field] || { checked: false, observation: '' }).checked }
+            [field]: { ...(prev[field] || EMPTY_ITEM), checked: !(prev[field] || EMPTY_ITEM).checked }
           }))}
-          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-none border transition-colors duration-150 p-0.5 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${item.checked ? activeBg : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'}`}
-        >
-          <span className={`pointer-events-none inline-block h-full w-4 transform rounded-none transition-transform duration-150 ${item.checked ? `translate-x-5 ${knobColor}` : 'translate-x-0 bg-zinc-800'}`} />
-        </button>
+        />
       </div>
       {(item.checked || item.observation.trim() !== '') && (
-        <div className="mt-2 pl-1">
-          <input
-            type="text"
-            disabled={disabled}
-            placeholder={`[Nota: ${label.toLowerCase()}]`}
-            value={item.observation}
-            onChange={(e) => setChecklist(prev => ({
-              ...prev,
-              [field]: { ...(prev[field] || { checked: false, observation: '' }), observation: e.target.value }
-            }))}
-            className="w-full bg-transparent border-b border-zinc-800 focus:border-zinc-700 px-1 py-0.5 text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none transition-colors font-mono"
-          />
-        </div>
+        <input
+          type="text"
+          disabled={disabled}
+          aria-label={`Nota sobre ${label}`}
+          placeholder={`Nota: ${label.toLowerCase()}`}
+          value={item.observation}
+          onChange={(e) => setChecklist(prev => ({
+            ...prev,
+            [field]: { ...(prev[field] || EMPTY_ITEM), observation: e.target.value }
+          }))}
+          className="w-full mt-2 bg-transparent border-b border-border focus:border-brand px-1 py-1 text-small text-text placeholder:text-text-subtle focus:outline-none transition-colors"
+        />
       )}
     </div>
   );
-};
+}
+
+/** Casca comum dos dois painéis — cabeçalho colapsável + rodapé de ação. */
+function ChecklistPanel({
+  phase,
+  eyebrow,
+  title,
+  badge,
+  headerActions,
+  open,
+  onToggleOpen,
+  saving,
+  onSave,
+  saveLabel,
+  children,
+}: {
+  phase: Phase;
+  eyebrow: string;
+  title: string;
+  badge: string;
+  headerActions?: React.ReactNode;
+  open: boolean;
+  onToggleOpen: () => void;
+  saving: boolean;
+  onSave: () => void;
+  saveLabel: string;
+  children: React.ReactNode;
+}) {
+  const tone = PHASE[phase];
+
+  return (
+    <Card className="flex flex-col h-fit">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+        <button
+          type="button"
+          onClick={onToggleOpen}
+          aria-expanded={open}
+          className="flex-1 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          <span className="text-caption uppercase tracking-wider text-text-subtle block mb-0.5">
+            {eyebrow}
+          </span>
+          <span className={cn('text-h3 flex items-center gap-2', tone.accent)}>
+            <span className={cn('w-1.5 h-1.5', tone.dot)} aria-hidden />
+            {title}
+          </span>
+        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {headerActions}
+          <span className="text-caption uppercase tracking-wider bg-surface-sunken border border-border text-text-muted px-2 py-1">
+            {badge}
+          </span>
+          <ChevronDown
+            className={cn('w-4 h-4 text-text-subtle transition-transform duration-150', open && 'rotate-180')}
+            aria-hidden
+          />
+        </div>
+      </div>
+
+      {open && (
+        <>
+          <div className="flex-1 space-y-4">{children}</div>
+          <div className="mt-6 pt-6 border-t border-border">
+            <Button
+              fullWidth
+              loading={saving}
+              icon={<Check className="w-4 h-4" />}
+              onClick={onSave}
+            >
+              {saveLabel}
+            </Button>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
 
 interface ChecklistSectionProps {
   status: string;
@@ -78,154 +216,121 @@ export function ChecklistSection({
 }: ChecklistSectionProps) {
   const [isEntryOpen, setIsEntryOpen] = useState(true);
   const [isExitOpen, setIsExitOpen] = useState(true);
+  const showExit = status === 'Finalizado';
 
   return (
     <div className="mt-8 space-y-4 lg:col-span-3">
-      <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
-        <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Checklist e Condições
+      <h2 className="text-h2 text-text flex items-center gap-2 mb-6">
+        <CheckCircle2 className="w-6 h-6 text-text-subtle" aria-hidden /> Checklist e Condições
       </h2>
-      <div className={`grid grid-cols-1 ${status === 'Finalizado' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-8`}>
+      <div className={cn('grid grid-cols-1 gap-8', showExit && 'lg:grid-cols-2')}>
         {/* Bloco de Entrada */}
-        <div className="bg-zinc-950 border-2 border-zinc-900 rounded-none p-6 shadow-2xl flex flex-col h-fit">
-          <div 
-            onClick={() => setIsEntryOpen(!isEntryOpen)}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6 cursor-pointer select-none group/header"
-          >
-            <div>
-              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block mb-0.5">Fase de Recebimento</span>
-              <h3 className="text-sm font-bold font-mono text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-emerald-500 animate-pulse" /> Entrada
-              </h3>
-            </div>
-            <div className="flex items-center gap-3 self-start sm:self-auto">
-              <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-1 uppercase tracking-wider rounded-none">
-                Preenchimento Inicial
-              </span>
-              <ChevronDown className={`w-4 h-4 text-zinc-500 group-hover/header:text-zinc-300 transition-transform duration-150 ${isEntryOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </div>
-          
-          {isEntryOpen && (
-            <>
-              <div className="flex-1 space-y-4">
-                {checklistTemplateItems.map((item) => (
-                  <ChecklistItemRow key={item.id} label={item.label} field={item.id} checklist={entryChecklist} setChecklist={setEntryChecklist} />
-                ))}
-                
-                <div className="pt-4 border-t border-zinc-900">
-                  <div className="grid grid-cols-[1fr_auto] gap-4 items-center mb-2">
-                    <span className="text-xs font-mono uppercase tracking-wider text-zinc-400">Possui Senha / PIN?</span>
-                    <button
-                      type="button"
-                      onClick={() => setEntryChecklist(prev => ({ ...prev, password_pin: { ...prev.password_pin, has_password: !prev.password_pin.has_password } }))}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-none border transition-colors duration-150 p-0.5 focus:outline-none ${entryChecklist.password_pin.has_password ? 'bg-emerald-950 border-emerald-500' : 'bg-zinc-950 border-zinc-800'}`}
-                    >
-                      <span className={`pointer-events-none inline-block h-full w-4 transform rounded-none transition-transform duration-150 ${entryChecklist.password_pin.has_password ? 'translate-x-5 bg-emerald-500' : 'translate-x-0 bg-zinc-800'}`} />
-                    </button>
-                  </div>
-                  {entryChecklist.password_pin.has_password && (
-                    <input
-                      type="text"
-                      placeholder="[Senha do Equipamento]"
-                      value={entryChecklist.password_pin.password_value}
-                      onChange={(e) => setEntryChecklist(prev => ({ ...prev, password_pin: { ...prev.password_pin, password_value: e.target.value } }))}
-                      className="w-full bg-transparent border-b border-zinc-800 focus:border-zinc-650 px-2 py-1.5 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none transition-colors font-mono"
-                    />
-                  )}
-                </div>
+        <ChecklistPanel
+          phase="entry"
+          eyebrow="Fase de Recebimento"
+          title="Entrada"
+          badge="Preenchimento Inicial"
+          open={isEntryOpen}
+          onToggleOpen={() => setIsEntryOpen(!isEntryOpen)}
+          saving={savingChecklist}
+          onSave={() => handleSaveChecklists('entry')}
+          saveLabel="Salvar Checklist de Entrada"
+        >
+          {checklistTemplateItems.map((item) => (
+            <ChecklistItemRow
+              key={item.id}
+              label={item.label}
+              field={item.id}
+              checklist={entryChecklist}
+              setChecklist={setEntryChecklist}
+            />
+          ))}
 
-                <div className="pt-4 border-t border-zinc-900">
-                  <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Entrada)</span>
-                  <textarea
-                    rows={2}
-                    placeholder="[Observações adicionais de recebimento]"
-                    value={entryChecklist.general_notes}
-                    onChange={(e) => setEntryChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
-                    className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => handleSaveChecklists('entry')}
-                  disabled={savingChecklist}
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-500 active:border-b-0 active:translate-y-[2px]"
-                >
-                  {savingChecklist ? <LoadingSpinner className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
-                  <span>Salvar Checklist de Entrada</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Bloco de Saída (Entrega) */}
-        {status === 'Finalizado' && (
-          <div className="border-2 p-6 shadow-2xl flex flex-col h-fit rounded-none bg-zinc-950 border-zinc-900">
-            <div 
-              onClick={() => setIsExitOpen(!isExitOpen)}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6 cursor-pointer select-none group/header"
-            >
-              <div>
-                <span className="text-[9px] font-mono text-zinc-650 uppercase tracking-widest block mb-0.5">Fase de Entrega</span>
-                <h3 className="text-sm font-bold font-mono text-sky-500 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-sky-500 animate-pulse" /> Saída
-                </h3>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                <button 
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExitChecklist(JSON.parse(JSON.stringify(entryChecklist)));
-                  }}
-                  className="text-[10px] font-mono bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 px-2.5 py-1 uppercase tracking-wider cursor-pointer transition-colors rounded-none"
-                  title="Copiar as condições registradas na Entrada"
-                >
-                  Copiar da Entrada
-                </button>
-                <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-450 px-2 py-1 uppercase tracking-wider rounded-none">
-                  Revisão Final
-                </span>
-                <ChevronDown className={`w-4 h-4 text-zinc-500 group-hover/header:text-zinc-300 transition-transform duration-150 ${isExitOpen ? 'rotate-180' : ''}`} />
-              </div>
+          <div className="pt-4 border-t border-border">
+            <div className="grid grid-cols-[1fr_auto] gap-4 items-center mb-2">
+              <span className="text-small text-text-muted">Possui Senha / PIN?</span>
+              <Toggle
+                phase="entry"
+                label="Possui senha ou PIN"
+                checked={entryChecklist.password_pin.has_password}
+                onChange={() => setEntryChecklist(prev => ({
+                  ...prev,
+                  password_pin: { ...prev.password_pin, has_password: !prev.password_pin.has_password }
+                }))}
+              />
             </div>
-            
-            {isExitOpen && (
-              <>
-                <div className="flex-1 space-y-4">
-                  {checklistTemplateItems.map((item) => (
-                    <ChecklistItemRow key={item.id} label={item.label} field={item.id} checklist={exitChecklist} setChecklist={setExitChecklist} disabled={false} color="sky" />
-                  ))}
-                  
-                  <div className="pt-4 border-t border-zinc-900">
-                    <span className="text-xs font-mono uppercase tracking-wider text-zinc-400 block mb-2">Observações Gerais (Saída)</span>
-                    <textarea
-                      rows={2}
-                      placeholder="[Observações adicionais de entrega]"
-                      value={exitChecklist.general_notes}
-                      onChange={(e) => setExitChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
-                      className="w-full bg-zinc-950 border border-zinc-900 rounded-none px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors resize-none font-mono"
-                    />
-                  </div>
-                </div>
-   
-                <div className="mt-6 pt-6 border-t border-zinc-900">
-                  <button
-                    type="button"
-                    onClick={() => handleSaveChecklists('exit')}
-                    disabled={savingChecklist}
-                    className="w-full bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-900 text-black font-bold uppercase tracking-wider text-xs py-3 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-sky-800 hover:border-sky-500 active:border-b-0 active:translate-y-[2px]"
-                  >
-                    {savingChecklist ? <LoadingSpinner className="w-4.5 h-4.5 animate-spin" /> : <Check className="w-4.5 h-4.5" />}
-                    <span>Salvar Checklist de Saída</span>
-                  </button>
-                </div>
-              </>
+            {entryChecklist.password_pin.has_password && (
+              <input
+                type="text"
+                aria-label="Senha do equipamento"
+                placeholder="Senha do equipamento"
+                value={entryChecklist.password_pin.password_value}
+                onChange={(e) => setEntryChecklist(prev => ({
+                  ...prev,
+                  password_pin: { ...prev.password_pin, password_value: e.target.value }
+                }))}
+                className="w-full bg-transparent border-b border-border focus:border-brand px-1 py-1.5 text-small font-mono text-text placeholder:text-text-subtle focus:outline-none transition-colors"
+              />
             )}
           </div>
+
+          <div className="pt-4 border-t border-border">
+            <Textarea
+              label="Observações Gerais (Entrada)"
+              rows={2}
+              placeholder="Observações adicionais de recebimento"
+              value={entryChecklist.general_notes}
+              onChange={(e) => setEntryChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
+              className="resize-none min-h-0"
+            />
+          </div>
+        </ChecklistPanel>
+
+        {/* Bloco de Saída (Entrega) */}
+        {showExit && (
+          <ChecklistPanel
+            phase="exit"
+            eyebrow="Fase de Entrega"
+            title="Saída"
+            badge="Revisão Final"
+            open={isExitOpen}
+            onToggleOpen={() => setIsExitOpen(!isExitOpen)}
+            saving={savingChecklist}
+            onSave={() => handleSaveChecklists('exit')}
+            saveLabel="Salvar Checklist de Saída"
+            headerActions={
+              <Button
+                variant="secondary"
+                size="sm"
+                title="Copiar as condições registradas na Entrada"
+                onClick={() => setExitChecklist(JSON.parse(JSON.stringify(entryChecklist)))}
+              >
+                Copiar da Entrada
+              </Button>
+            }
+          >
+            {checklistTemplateItems.map((item) => (
+              <ChecklistItemRow
+                key={item.id}
+                label={item.label}
+                field={item.id}
+                checklist={exitChecklist}
+                setChecklist={setExitChecklist}
+                phase="exit"
+              />
+            ))}
+
+            <div className="pt-4 border-t border-border">
+              <Textarea
+                label="Observações Gerais (Saída)"
+                rows={2}
+                placeholder="Observações adicionais de entrega"
+                value={exitChecklist.general_notes}
+                onChange={(e) => setExitChecklist(prev => ({ ...prev, general_notes: e.target.value }))}
+                className="resize-none min-h-0"
+              />
+            </div>
+          </ChecklistPanel>
         )}
       </div>
     </div>
