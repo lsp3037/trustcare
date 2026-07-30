@@ -31,6 +31,7 @@ import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import SubscriptionBlockedScreen from '@/components/SubscriptionBlockedScreen';
 import { cn } from '@/lib/utils';
+import { Tooltip } from '@/components/ui';
 
 /**
  * Aparência de um item de navegação. Os três tipos de item (grupo
@@ -251,37 +252,42 @@ function DashboardLayoutContent({
 
             if ('subItems' in item && item.subItems) {
               const isSubActive = item.subItems.some(sub => pathname === sub.href);
+              const groupButton = (
+                <button
+                  type="button"
+                  aria-expanded={settingsOpen}
+                  onClick={() => {
+                    if (!sidebarOpen) {
+                      setSidebarOpen(true);
+                    }
+                    setSettingsOpen(!settingsOpen);
+                  }}
+                  className={cn(
+                    navItemClasses({ active: false, collapsed: !sidebarOpen }),
+                    'w-full justify-between cursor-pointer',
+                    isSubActive && 'text-brand',
+                  )}
+                >
+                  <span className={cn("flex items-center min-w-0", sidebarOpen ? "gap-3" : "justify-center w-full")}>
+                    <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                    {sidebarOpen && <span className="truncate">{item.name}</span>}
+                  </span>
+                  {sidebarOpen && (
+                    settingsOpen
+                      ? <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
+                      : <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
+                  )}
+                </button>
+              );
+
               return (
                 <div key={`sub-group-${index}`} className="space-y-1 relative group">
-                  <button
-                    type="button"
-                    aria-expanded={settingsOpen}
-                    onClick={() => {
-                      if (!sidebarOpen) {
-                        setSidebarOpen(true);
-                      }
-                      setSettingsOpen(!settingsOpen);
-                    }}
-                    className={cn(
-                      navItemClasses({ active: false, collapsed: !sidebarOpen }),
-                      'w-full justify-between cursor-pointer',
-                      isSubActive && 'text-brand',
-                    )}
-                  >
-                    <span className={cn("flex items-center min-w-0", sidebarOpen ? "gap-3" : "justify-center w-full")}>
-                      <Icon className="w-5 h-5 shrink-0" aria-hidden />
-                      {sidebarOpen && <span className="truncate">{item.name}</span>}
-                    </span>
-                    {sidebarOpen && (
-                      settingsOpen
-                        ? <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
-                        : <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
-                    )}
-                  </button>
-                  {!sidebarOpen && (
-                    <div className="absolute left-full ml-2 top-2 px-3 py-1.5 bg-surface-raised border border-border text-text text-sm font-medium rounded-xl shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                      {item.name}
-                    </div>
+                  {!sidebarOpen ? (
+                    <Tooltip content={item.name}>
+                      {groupButton}
+                    </Tooltip>
+                  ) : (
+                    groupButton
                   )}
                   {settingsOpen && sidebarOpen && (
                     <div className="pl-6 space-y-1 mt-1">
@@ -313,32 +319,37 @@ function DashboardLayoutContent({
 
             // Normal Link
             const isActive = pathname === item.href;
+            const linkElement = (
+              <Link
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={() => {
+                  if (item.href === '/dashboard/inventory') {
+                    window.dispatchEvent(new Event('nav-estoque-click'));
+                  }
+                  if (window.innerWidth < 768) {
+                    setSidebarOpen(false);
+                  }
+                }}
+                className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
+              >
+                <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                {sidebarOpen ? (
+                  <span className="truncate">{item.name}</span>
+                ) : (
+                  <span className="sr-only">{item.name}</span>
+                )}
+              </Link>
+            );
+
             return (
               <div key={item.href} className="relative group">
-                <Link
-                  href={item.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => {
-                    if (item.href === '/dashboard/inventory') {
-                      window.dispatchEvent(new Event('nav-estoque-click'));
-                    }
-                    if (window.innerWidth < 768) {
-                      setSidebarOpen(false);
-                    }
-                  }}
-                  className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
-                >
-                  <Icon className="w-5 h-5 shrink-0" aria-hidden />
-                  {sidebarOpen ? (
-                    <span className="truncate">{item.name}</span>
-                  ) : (
-                    <span className="sr-only">{item.name}</span>
-                  )}
-                </Link>
-                {!sidebarOpen && (
-                  <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-surface-raised border border-border text-text text-sm font-medium rounded-xl shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                    {item.name}
-                  </div>
+                {!sidebarOpen ? (
+                  <Tooltip content={item.name}>
+                    {linkElement}
+                  </Tooltip>
+                ) : (
+                  linkElement
                 )}
               </div>
             );

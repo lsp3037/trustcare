@@ -1,4 +1,6 @@
 export { Button, buttonClasses, type ButtonProps } from './Button';
+export * from './WhatsAppButton';
+export * from './Tooltip';
 export { Card, CardHeader, CardTitle, type CardProps } from './Card';
 export { Badge, StatusBadge, type BadgeProps, type StatusBadgeProps } from './Badge';
 export { Field, Input, Textarea, Select } from './Field';
