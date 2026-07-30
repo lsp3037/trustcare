@@ -451,7 +451,7 @@ export default function FinanceiroPage() {
             Controle de fluxo de caixa, custos de peças e lucratividade
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => {
               const transactions = [
@@ -490,7 +490,7 @@ export default function FinanceiroPage() {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           title="Faturamento (Caixa)"
           value={loading ? '...' : fmtCurrency(receitaRecebida)}
