@@ -118,13 +118,13 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
                         e.stopPropagation();
                         setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
                       }}
-                      className="p-1.5 text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                      className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
 
                     {activeDropdownId === order.id && (
-                      <div className="absolute right-0 mt-1 w-44 bg-surface-overlay border border-border shadow-2xl z-50 p-1 text-left">
+                      <div className="absolute right-0 mt-1 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
                         {[
                           { label: 'Ver Detalhes', run: () => router.push(`/dashboard/orders/${order.id}`) },
                           { label: 'Alterar Status', run: () => setStatusModalOrder(order) },
@@ -138,7 +138,7 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
                               setActiveDropdownId(null);
                               item.run();
                             }}
-                            className="w-full text-left px-3 py-2 text-small text-text hover:bg-surface-sunken transition-colors cursor-pointer"
+                            className="w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
                           >
                             {item.label}
                           </button>
@@ -179,7 +179,7 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
                   setStatusModalOrder(null);
                 }}
                 className={cn(
-                  'w-full flex items-center gap-2.5 text-left px-3 py-2 text-small border transition-colors cursor-pointer',
+                  'w-full flex items-center gap-2.5 text-left px-3 py-2 text-small border transition-colors cursor-pointer rounded-xl',
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
                   current
                     ? 'bg-brand/10 border-brand text-brand font-semibold'
