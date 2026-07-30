@@ -94,6 +94,7 @@ function DashboardLayoutContent({
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/dashboard/settings'));
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (pathname.startsWith('/dashboard/settings')) {
@@ -191,6 +192,7 @@ function DashboardLayoutContent({
         name: 'Configurações', 
         icon: Settings,
         subItems: [
+          { name: 'Meu Perfil', href: '/dashboard/settings/profile', icon: Users },
           { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building },
           { name: 'Equipe e Acessos', href: '/dashboard/settings/team', icon: Users },
           { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList },
@@ -330,32 +332,7 @@ function DashboardLayoutContent({
           })}
         </nav>
 
-        {/* User Card & Logout */}
-        <div className="p-3 border-t border-border">
-          {sidebarOpen && (
-            <div className="flex items-center gap-3 p-2 bg-surface-sunken border border-border mb-3">
-              <div
-                className="w-8 h-8 shrink-0 bg-brand/10 border border-brand/25 flex items-center justify-center text-brand font-semibold uppercase text-small"
-                aria-hidden
-              >
-                {userName.charAt(0)}
-              </div>
-              <div className="min-w-0">
-                <p className="text-small font-semibold text-text truncate">{userName}</p>
-                <p className="text-caption uppercase tracking-wider text-text-subtle">{userRole}</p>
-              </div>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleLogout}
-            title={!sidebarOpen ? 'Sair' : undefined}
-            className="w-full flex items-center justify-center gap-2.5 px-3 py-2 text-small font-medium text-danger hover:bg-danger/10 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
-            <LogOut className="w-5 h-5 shrink-0" aria-hidden />
-            {sidebarOpen ? <span>Sair</span> : <span className="sr-only">Sair</span>}
-          </button>
-        </div>
+        {/* User profile moved to top header */}
       </aside>
 
       {/* Overlay Backdrop - Apenas Mobile (Oculto na Impressão) */}
@@ -383,16 +360,69 @@ function DashboardLayoutContent({
             <h2 className="text-h3 text-text truncate">{getHeaderTitle()}</h2>
           </div>
 
-          {/* Theme Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-            title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-            className="p-2 shrink-0 flex items-center justify-center text-text-muted hover:text-text border border-border bg-surface-raised hover:border-border-strong transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
-            {theme === 'light' ? <Moon className="w-4 h-4" aria-hidden /> : <Sun className="w-4 h-4" aria-hidden />}
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+              title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+              className="p-2 shrink-0 flex items-center justify-center text-text-muted hover:text-text border border-border bg-surface-raised hover:border-border-strong transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-lg"
+            >
+              {theme === 'light' ? <Moon className="w-4 h-4" aria-hidden /> : <Sun className="w-4 h-4" aria-hidden />}
+            </button>
+
+            {/* User Profile Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center gap-3 p-1 pr-3 bg-surface hover:bg-surface-overlay border border-border rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <div className="w-8 h-8 shrink-0 rounded-full bg-brand/10 border border-brand/25 flex items-center justify-center text-brand font-semibold uppercase text-small">
+                  {userName.charAt(0)}
+                </div>
+                <div className="hidden sm:block text-left min-w-0 max-w-[140px]">
+                  <p className="text-small font-semibold text-text truncate">{userName}</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-text-subtle" />
+              </button>
+
+              {profileDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setProfileDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 bg-surface-sunken border border-border shadow-2xl rounded-2xl overflow-hidden z-50">
+                    <div className="p-4 border-b border-border bg-surface">
+                      <p className="text-sm font-bold text-text truncate">{userName}</p>
+                      <p className="text-xs text-text-subtle truncate mt-0.5">{user?.email}</p>
+                    </div>
+                    <div className="p-2">
+                      <Link 
+                        href="/dashboard/settings" 
+                        onClick={() => setProfileDropdownOpen(false)}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-text hover:bg-surface-overlay rounded-lg transition-colors font-medium"
+                      >
+                        <Settings className="w-4 h-4 text-text-muted" />
+                        Meu perfil
+                      </Link>
+                    </div>
+                    <div className="p-2 border-t border-border bg-surface-raised">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg transition-colors font-medium"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sair
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </header>
 
         {isReadOnly && (

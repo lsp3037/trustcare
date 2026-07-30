@@ -11,6 +11,7 @@ interface UserProfile {
   role: UserRole;
   full_name: string;
   email: string;
+  whatsapp?: string;
 }
 
 interface UserContextType {
@@ -69,7 +70,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (authUser) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, user_id, role, full_name, email')
+          .select('id, user_id, role, full_name, email, whatsapp')
           .eq('user_id', authUser.id)
           .single();
 
@@ -79,7 +80,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             user_id: profile.user_id,
             role: (profile.role || 'admin') as UserRole,
             full_name: profile.full_name || authUser.user_metadata?.full_name || 'Usuário',
-            email: profile.email || authUser.email || ''
+            email: profile.email || authUser.email || '',
+            whatsapp: profile.whatsapp || ''
           });
         } else {
           // Fallback se não houver profile mas houver usuário
