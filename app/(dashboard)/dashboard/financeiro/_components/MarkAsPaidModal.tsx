@@ -65,11 +65,11 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-none w-full max-w-md shadow-2xl">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-none">
+            <div className="p-1.5 rounded-full backdrop-blur-md border border-white/5 bg--500/10 text--400">
               <CreditCard className="w-4 h-4" />
             </div>
             <h2 className="text-sm font-semibold text-white">Registrar Pagamento</h2>
@@ -81,8 +81,8 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
 
         {/* Body */}
         <div className="p-5 space-y-4">
-          <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-none">
-            <p className="text-xs text-slate-400">OS {order.codigo_os ?? order.id.slice(0, 8)}</p>
+          <div className="p-3 bg-surface-sunken/60 border border-border rounded-xl">
+            <p className="text-xs text-text-muted">OS {order.codigo_os ?? order.id.slice(0, 8)}</p>
             <p className="text-sm font-medium text-white mt-0.5">{order.clients?.name ?? 'Cliente'}</p>
             <p className="text-lg font-bold text-emerald-400 tabular-nums mt-1">
               R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -90,13 +90,13 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-text uppercase tracking-wider">
               Forma de Pagamento
             </label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
             >
               {PAYMENT_METHODS.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -105,26 +105,26 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-text uppercase tracking-wider">
               Data do Recebimento
             </label>
             <input
               type="date"
               value={paymentDate}
               onChange={(e) => setPaymentDate(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 
           {error && (
-            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-none">
+            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl">
               {error}
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-5 border-t border-slate-800">
+        <div className="flex gap-3 p-5 border-t border-border">
           <Button variant="secondary" className="flex-1" onClick={onClose}>
             Cancelar
           </Button>

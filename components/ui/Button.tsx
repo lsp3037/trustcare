@@ -23,10 +23,10 @@ const SIZES: Record<Size, string> = {
 };
 
 const BASE =
-  'inline-flex items-center justify-center font-semibold whitespace-nowrap ' +
-  'transition-colors duration-150 cursor-pointer ' +
+  'inline-flex items-center justify-center font-semibold whitespace-nowrap rounded-xl ' +
+  'transition-all duration-200 cursor-pointer ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ' +
-  'disabled:opacity-50 disabled:pointer-events-none';
+  'disabled:opacity-50 disabled:pointer-events-none hover:shadow-md hover:-translate-y-0.5';
 
 /**
  * Mesmas classes do <Button>, para elementos que precisam ser `<a>`/`<Link>`

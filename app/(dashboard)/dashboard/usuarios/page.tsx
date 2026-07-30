@@ -342,9 +342,9 @@ export default function UserManagementPage() {
 
   if (checkingAccess) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
         <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verificando permissões de acesso...</p>
+        <p className="text-sm text-text-muted">Verificando permissões de acesso...</p>
       </div>
     );
   }
@@ -354,10 +354,10 @@ export default function UserManagementPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-h1 text-text flex items-center gap-2.5">
             <Users className="w-8 h-8 text-blue-500" /> Usuários
           </h1>
-          <p className="text-slate-400 mt-1">Gerencie os membros da sua equipe e atribua permissões de acesso.</p>
+          <p className="text-small text-text-muted mt-1">Gerencie os membros da sua equipe e atribua permissões de acesso.</p>
         </div>
         {!isCreating && (
           <Button icon={<UserPlus className="w-4 h-4" />} onClick={() => setIsCreating(true)}>
@@ -368,14 +368,14 @@ export default function UserManagementPage() {
 
       {/* Campo de Busca (Identical to Clients search) */}
       {!isCreating && (
-        <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-none">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
           <input
             type="text"
             placeholder="Buscar por nome, perfil ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
       )}
@@ -383,12 +383,12 @@ export default function UserManagementPage() {
       {/* Listagem da Equipe (Identical to Clients Table format) */}
       {!isCreating && (
         loading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+          <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
             <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-            <p className="text-sm text-slate-400">Carregando dados da equipe...</p>
+            <p className="text-sm text-text-muted">Carregando dados da equipe...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="bg-slate-900/20 rounded-none border border-slate-900">
+          <div className="bg-surface-raised border border-border rounded-2xl">
             <EmptyState
               icon={<AlertCircle />}
               title="Nenhum colaborador encontrado"
@@ -396,11 +396,11 @@ export default function UserManagementPage() {
             />
           </div>
         ) : (
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none overflow-hidden shadow-xl">
+          <div className="bg-surface-raised border border-border rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 font-semibold text-xs uppercase tracking-wider bg-slate-950/45">
+                  <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
                     <th className="py-4 px-6 text-center">ID</th>
                     <th className="py-4 px-6">Nome</th>
                     <th className="py-4 px-6">Perfil</th>
@@ -413,13 +413,13 @@ export default function UserManagementPage() {
                   {filteredUsers.map((colaborador, index) => (
                     <tr key={colaborador.id} className="hover:bg-slate-800/20 transition-colors">
                       {/* Column 1: Sequential ID */}
-                      <td className="py-4 px-6 text-center font-semibold text-slate-400 text-xs font-mono">
+                      <td className="py-4 px-6 text-center font-semibold text-text-muted text-xs font-mono">
                         #{index + 1}
                       </td>
                       {/* Column 2: User Name with Square Profile Icon */}
                       <td className="py-4 px-6 font-bold text-slate-200">
                         <div className="flex items-center gap-3">
-                          <div className="p-1.5 rounded-none shrink-0 bg-blue-500/10 text-blue-400">
+                          <div className="p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-blue-500/10 text-blue-400">
                             <User className="w-4 h-4" />
                           </div>
                           <span className="truncate max-w-[200px] md:max-w-xs">{colaborador.name}</span>
@@ -432,22 +432,22 @@ export default function UserManagementPage() {
                         </Badge>
                       </td>
                       {/* Column 4: Email */}
-                      <td className="py-4 px-6 text-slate-300 font-mono text-xs">
+                      <td className="py-4 px-6 text-text font-mono text-xs">
                         {colaborador.email}
                       </td>
                       {/* Column 5: Telefone with WhatsApp green link */}
-                      <td className="py-4 px-6 text-slate-400 text-xs font-mono">
+                      <td className="py-4 px-6 text-text-muted text-xs font-mono">
                         {colaborador.phone ? (
                           <div className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <Phone className="w-3.5 h-3.5 text-text-subtle shrink-0" />
                             <span>{colaborador.phone}</span>
                             <WhatsAppButton 
                               phone={colaborador.phone} 
-                              className="p-1.5 rounded-none shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+                              className="p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
                             />
                           </div>
                         ) : (
-                          <span className="text-slate-500">—</span>
+                          <span className="text-text-subtle">—</span>
                         )}
                       </td>
                       {/* Column 6: Actions */}
@@ -484,8 +484,8 @@ export default function UserManagementPage() {
 
       {/* Modal — Convidar Novo Membro (fluxo de convite seguro via `invites` table) */}
       {isCreating && !editingUser && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0b0f19] border border-slate-800 rounded-none w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
+        <div className="fixed inset-0 bg-surface-sunken/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0b0f19] border border-border rounded-xl w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
 
             <Button
               variant="ghost"
@@ -498,12 +498,12 @@ export default function UserManagementPage() {
             </Button>
 
             {/* Left side: Invite Form */}
-            <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-slate-850">
+            <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-border">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
+                <h3 className="text-h2 text-text flex items-center gap-2.5">
                   <UserPlus className="w-5 h-5 text-blue-500" /> Convidar Novo Membro
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Um link de convite será gerado. O membro convidado define sua própria senha ao aceitar.
                 </p>
               </div>
@@ -535,12 +535,12 @@ export default function UserManagementPage() {
                     <p className="font-semibold text-sm">Convite gerado com sucesso! Copie o link e envie ao membro.</p>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Link de Convite (válido por 7 dias)</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Link de Convite (válido por 7 dias)</label>
                     <div className="flex items-center gap-2">
                       <input
                         readOnly
                         value={generatedInviteLink}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-emerald-300 font-mono focus:outline-none"
+                        className="flex-1 bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-emerald-300 font-mono focus:outline-none"
                       />
                       <Button
                         type="button"
@@ -561,7 +561,7 @@ export default function UserManagementPage() {
               ) : (
                 <form onSubmit={handleCreateInvite} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-blue-500" /> E-mail do Membro
                     </label>
                     <input
@@ -569,19 +569,19 @@ export default function UserManagementPage() {
                       placeholder="Ex: carlos.tecnico@empresa.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                       required
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
                       <Shield className="w-3.5 h-3.5 text-blue-500" /> Perfil de Acesso
                     </label>
                     <select
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                     >
                       <option value="technician">Técnico</option>
                       <option value="viewer">Recepcionista</option>
@@ -589,7 +589,7 @@ export default function UserManagementPage() {
                     </select>
                   </div>
 
-                  <div className="flex gap-3 pt-4 border-t border-slate-850">
+                  <div className="flex gap-3 pt-4 border-t border-border">
                     <Button
                       type="submit"
                       className="flex-1"
@@ -610,26 +610,26 @@ export default function UserManagementPage() {
             {/* Right side: Permission preview (role driven) */}
             <div className="p-6 md:p-8 md:col-span-4 bg-[#0a0d16] flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                <div className="text-[10px] font-bold text-text-subtle uppercase tracking-widest flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5" /> Preview de Permissões
                 </div>
-                <div className={`p-4 border rounded-none transition-all duration-300 ${roleDetails.colorClass}`}>
+                <div className={`p-4 border rounded-xl transition-all duration-300 ${roleDetails.colorClass}`}>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-950/80 rounded border border-slate-850">
+                    <div className="p-2 bg-surface-sunken/80 rounded border border-border">
                       {roleDetails.icon}
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-white">{roleDetails.title}</h4>
-                      <p className="text-[10px] text-slate-400 uppercase font-mono">Nível de Acesso</p>
+                      <p className="text-[10px] text-text-muted uppercase font-mono">Nível de Acesso</p>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300 mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
+                  <p className="text-xs text-text mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ações Autorizadas:</p>
+                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Ações Autorizadas:</p>
                   <ul className="space-y-1.5">
                     {roleDetails.permissions.map((perm, idx) => (
-                      <li key={idx} className="text-xs text-slate-400 flex items-center gap-2">
+                      <li key={idx} className="text-xs text-text-muted flex items-center gap-2">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                         <span>{perm}</span>
                       </li>
@@ -637,9 +637,9 @@ export default function UserManagementPage() {
                   </ul>
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-850 text-center md:text-left">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Trust Care Corp</span>
-                <span className="text-[9px] text-slate-500 font-mono">Controle de Segurança de Acesso</span>
+              <div className="pt-4 border-t border-border text-center md:text-left">
+                <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest block">Trust Care Corp</span>
+                <span className="text-[9px] text-text-subtle font-mono">Controle de Segurança de Acesso</span>
               </div>
             </div>
           </div>
@@ -648,8 +648,8 @@ export default function UserManagementPage() {
 
       {/* Modal — Editar Usuário Existente */}
       {isCreating && editingUser && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0b0f19] border border-slate-800 rounded-none w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
+        <div className="fixed inset-0 bg-surface-sunken/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0b0f19] border border-border rounded-xl w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
 
             <Button
               variant="ghost"
@@ -662,12 +662,12 @@ export default function UserManagementPage() {
             </Button>
 
             {/* Left side: Edit Form */}
-            <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-slate-850">
+            <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-border">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
+                <h3 className="text-h2 text-text flex items-center gap-2.5">
                   <Shield className="w-5 h-5 text-blue-500" /> Editar Usuário
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">Atualize as informações do membro da sua equipe.</p>
+                <p className="text-xs text-text-muted mt-1">Atualize as informações do membro da sua equipe.</p>
               </div>
 
               <form onSubmit={handleUpdateUser} className="space-y-4">
@@ -684,7 +684,7 @@ export default function UserManagementPage() {
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-blue-500" /> Nome Completo
                   </label>
                   <input
@@ -692,14 +692,14 @@ export default function UserManagementPage() {
                     placeholder="Ex: Carlos Henrique de Souza"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-blue-500" /> E-mail
                     </label>
                     <input
@@ -707,12 +707,12 @@ export default function UserManagementPage() {
                       placeholder="Ex: carlos.tecnico@empresa.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-blue-500" /> Celular (WhatsApp)
                     </label>
                     <input
@@ -720,19 +720,19 @@ export default function UserManagementPage() {
                       placeholder="Ex: (66) 99233-8238"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-blue-500" /> Perfil de Acesso
                   </label>
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded py-2.5 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   >
                     <option value="technician">Técnico</option>
                     <option value="viewer">Recepcionista</option>
@@ -740,7 +740,7 @@ export default function UserManagementPage() {
                   </select>
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t border-slate-850">
+                <div className="flex gap-3 pt-4 border-t border-border">
                   <Button type="submit" className="flex-1" loading={submitting} disabled={formSuccess}>
                     Salvar Alterações
                   </Button>
@@ -754,26 +754,26 @@ export default function UserManagementPage() {
             {/* Right side: Permission preview */}
             <div className="p-6 md:p-8 md:col-span-4 bg-[#0a0d16] flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                <div className="text-[10px] font-bold text-text-subtle uppercase tracking-widest flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5" /> Preview de Permissões
                 </div>
-                <div className={`p-4 border rounded-none transition-all duration-300 ${roleDetails.colorClass}`}>
+                <div className={`p-4 border rounded-xl transition-all duration-300 ${roleDetails.colorClass}`}>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-950/80 rounded border border-slate-850">
+                    <div className="p-2 bg-surface-sunken/80 rounded border border-border">
                       {roleDetails.icon}
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-white">{roleDetails.title}</h4>
-                      <p className="text-[10px] text-slate-400 uppercase font-mono">Nível de Acesso</p>
+                      <p className="text-[10px] text-text-muted uppercase font-mono">Nível de Acesso</p>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300 mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
+                  <p className="text-xs text-text mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ações Autorizadas:</p>
+                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Ações Autorizadas:</p>
                   <ul className="space-y-1.5">
                     {roleDetails.permissions.map((perm, idx) => (
-                      <li key={idx} className="text-xs text-slate-400 flex items-center gap-2">
+                      <li key={idx} className="text-xs text-text-muted flex items-center gap-2">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                         <span>{perm}</span>
                       </li>
@@ -781,9 +781,9 @@ export default function UserManagementPage() {
                   </ul>
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-850 text-center md:text-left">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Trust Care Corp</span>
-                <span className="text-[9px] text-slate-500 font-mono">Controle de Segurança de Acesso</span>
+              <div className="pt-4 border-t border-border text-center md:text-left">
+                <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest block">Trust Care Corp</span>
+                <span className="text-[9px] text-text-subtle font-mono">Controle de Segurança de Acesso</span>
               </div>
             </div>
           </div>

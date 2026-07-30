@@ -114,7 +114,7 @@ export default function PortalDashboard() {
           <span className="text-sm text-slate-300 font-medium">Olá, {client?.name}</span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors border border-slate-800 hover:border-rose-950 py-1.5 px-3 rounded-none cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors border border-slate-800 hover:border-rose-950 py-1.5 px-3 rounded-xl cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sair
           </button>

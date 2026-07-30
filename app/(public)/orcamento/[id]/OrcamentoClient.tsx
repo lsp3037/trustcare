@@ -85,7 +85,7 @@ const SignaturePad = ({ onSave, onClear }: { onSave: (base64: string) => void; o
 
   return (
     <div className="space-y-2">
-      <div className="border-2 border-slate-850 bg-slate-950 p-1 rounded-none relative">
+      <div className="border-2 border-slate-850 bg-slate-950 p-1 rounded-xl relative">
         <canvas
           ref={canvasRef}
           width={600}
@@ -107,7 +107,7 @@ const SignaturePad = ({ onSave, onClear }: { onSave: (base64: string) => void; o
         <button
           type="button"
           onClick={clearCanvas}
-          className="text-[10px] font-mono border border-slate-850 bg-slate-950 hover:bg-slate-900 text-slate-400 px-3 py-1.5 uppercase tracking-wider rounded-none transition-colors cursor-pointer"
+          className="text-[10px] font-mono border border-slate-850 bg-slate-950 hover:bg-slate-900 text-slate-400 px-3 py-1.5 uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
         >
           Limpar Painel
         </button>
@@ -482,7 +482,7 @@ O prazo estimado para início da execução dos serviços é de 2 a 5 dias útei
               type="button"
               disabled={submitting}
               onClick={handleApproveBudget}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-900 text-black font-bold uppercase tracking-wider text-xs py-4 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-none border-b-4 border-emerald-800 hover:border-emerald-500 active:border-b-0 active:translate-y-[2px]"
+              className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-900 text-black font-bold uppercase tracking-wider text-xs py-4 flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-xl border-b-4 border-emerald-800 hover:border-emerald-500 active:border-b-0 active:translate-y-[2px]"
             >
               {submitting ? (
                 <>

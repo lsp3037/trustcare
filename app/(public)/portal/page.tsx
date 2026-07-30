@@ -129,7 +129,7 @@ export default function PortalLoginPage() {
                 value={clientDocument}
                 onChange={(e) => setClientDocument(formatDocument(e.target.value))}
                 disabled={loading}
-                className="w-full bg-[#030712] border border-slate-800 rounded-none py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                className="w-full bg-[#030712] border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
                 required
               />
             </div>
@@ -150,7 +150,7 @@ export default function PortalLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="w-full bg-[#030712] border border-slate-800 rounded-none py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
+                className="w-full bg-[#030712] border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50"
                 required
               />
             </div>

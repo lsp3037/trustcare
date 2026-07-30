@@ -22,7 +22,7 @@ export default function DashboardError({
         </div>
         
         <h2 className="text-xl font-bold mb-2">Erro ao carregar o painel</h2>
-        <p className="text-slate-500 mb-6 text-sm">
+        <p className="text-text-subtle mb-6 text-sm">
           Ocorreu um problema ao tentar renderizar este módulo. Nossos engenheiros foram notificados.
         </p>
         

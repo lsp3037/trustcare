@@ -42,14 +42,20 @@ interface KpiCardProps {
 }
 
 const ICON_TONE: Record<Tone, string> = {
-  brand: 'bg-brand/10 text-brand',
-  danger: 'bg-danger/10 text-danger',
+  brand: 'bg-brand/15 text-brand',
+  danger: 'bg-danger/15 text-danger',
 };
 
-/**
- * Card de KPI. Antes essa estrutura estava reescrita 7× no arquivo, com
- * divergências de espaçamento e de cor a cada cópia.
- */
+interface KpiCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint: string;
+  meta?: string;
+  tone?: Tone;
+  href?: string;
+}
+
 function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCardProps) {
   const router = useRouter();
   const clickable = Boolean(href);
@@ -73,7 +79,7 @@ function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCa
       }
     >
       <div className="flex justify-between items-start gap-3 mb-4">
-        <div className={cn('p-2', ICON_TONE[tone])} aria-hidden>
+        <div className={cn('p-2.5 rounded-full backdrop-blur-md border border-white/5', ICON_TONE[tone])} aria-hidden>
           {icon}
         </div>
         {meta && (
@@ -98,12 +104,12 @@ export function KpiOverviewCards({ stats, loading, isAdmin, role }: KpiOverviewC
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
             <div className="flex justify-between items-start mb-4">
-              <div className="w-9 h-9 bg-surface-overlay" />
-              <div className="w-12 h-4 bg-surface-overlay" />
+              <div className="w-9 h-9 rounded-full bg-surface-overlay" />
+              <div className="w-12 h-4 rounded-full bg-surface-overlay" />
             </div>
-            <div className="h-3 w-28 bg-surface-overlay mb-2" />
-            <div className="h-7 w-20 bg-surface-overlay mb-2" />
-            <div className="h-2 w-32 bg-surface-overlay" />
+            <div className="h-3 w-28 rounded-md bg-surface-overlay mb-2" />
+            <div className="h-7 w-20 rounded-md bg-surface-overlay mb-2" />
+            <div className="h-2 w-32 rounded-md bg-surface-overlay" />
           </Card>
         ))}
       </div>

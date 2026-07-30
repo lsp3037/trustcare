@@ -153,42 +153,42 @@ export default function BillingSettingsPage() {
     <div className="space-y-8 max-w-5xl">
       {/* Title Header */}
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+        <h1 className="text-h1 text-text flex items-center gap-2.5">
           <CreditCard className="w-6 h-6 text-blue-500" />
           Assinatura e Faturamento
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-small text-text-muted mt-1">
           Gerencie o plano da sua empresa, consulte faturas e verifique limites de uso dos recursos.
         </p>
       </div>
 
       {successMessage && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium rounded-none flex items-center gap-3">
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium rounded-xl flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5" />
           {successMessage}
         </div>
       )}
 
       {/* Main Billing Card */}
-      <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-none relative overflow-hidden">
+      <div className="bg-slate-900 border border-border p-6 md:p-8 rounded-xl relative overflow-hidden">
         {/* Glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
+              <span className="text-xs font-bold text-text-muted uppercase tracking-wider font-mono">
                 PLANO ATUAL
               </span>
               <Badge tone={statusTones[currentStatus] || 'neutral'}>
                 {statusLabels[currentStatus] || currentStatus}
               </Badge>
             </div>
-            <h2 className="text-3xl font-black text-white tracking-tight">
-              Trust Care {planNames[currentPlan]} <span className="text-lg font-medium text-slate-500">({planPrices[currentPlan]})</span>
+            <h2 className="text-h1 text-text">
+              Trust Care {planNames[currentPlan]} <span className="text-lg font-medium text-text-subtle">({planPrices[currentPlan]})</span>
             </h2>
             {company.subscription_expires_at && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-text-muted">
                 {currentStatus === 'trialing' ? 'O período de testes de 7 dias expira em: ' : 'Próxima renovação em: '}
                 <strong className="text-slate-200">
                   {new Date(company.subscription_expires_at).toLocaleDateString('pt-BR')}
@@ -200,11 +200,11 @@ export default function BillingSettingsPage() {
 
         {/* Trial Banner */}
         {currentStatus === 'trialing' && (
-          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-none text-xs text-blue-400 flex items-start gap-2.5">
+          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400 flex items-start gap-2.5">
             <CheckCircle2 className="w-4.5 h-4.5 shrink-0 mt-0.5 text-blue-500" />
             <div className="space-y-1">
               <p className="font-bold">Aproveite seus 7 dias de Teste Grátis!</p>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-text leading-relaxed">
                 Você tem acesso total à plataforma. Para não perder seus dados após esse período, escolha o plano ideal abaixo.
               </p>
             </div>
@@ -213,11 +213,11 @@ export default function BillingSettingsPage() {
 
         {/* Warning Banner if past_due */}
         {currentStatus === 'past_due' && (
-          <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-none text-xs text-rose-400 flex items-start gap-2.5">
+          <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2.5">
             <AlertCircle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold">Aviso de Pendência Financeira</p>
-              <p className="text-slate-400 leading-relaxed">
+              <p className="text-text-muted leading-relaxed">
                 Identificamos um atraso no pagamento da sua assinatura. Seu acesso entrará em modo apenas-leitura caso a pendência não seja regularizada. Evite a interrupção dos seus serviços.
               </p>
             </div>
@@ -228,47 +228,47 @@ export default function BillingSettingsPage() {
       {/* Usage Analytics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Technicians Usage */}
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-none space-y-4">
+        <div className="bg-slate-900 border border-border p-6 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-2">
               <Users className="w-4.5 h-4.5 text-blue-500" />
               Técnicos Ativos
             </h3>
-            <span className="text-xs font-mono font-bold text-slate-400">
+            <span className="text-xs font-mono font-bold text-text-muted">
               {loadingStats ? '...' : `${techCount} / ${maxTechnicians > 1000 ? 'Ilimitado' : maxTechnicians}`}
             </span>
           </div>
 
-          <div className="w-full bg-slate-950 h-2 rounded-none overflow-hidden">
+          <div className="w-full bg-surface-sunken h-2 rounded-xl overflow-hidden">
             <div 
               className="bg-blue-500 h-full transition-all duration-500" 
               style={{ width: `${loadingStats || maxTechnicians > 1000 ? 0 : techPercent}%` }} 
             />
           </div>
-          <p className="text-[10px] text-slate-500 leading-relaxed">
+          <p className="text-[10px] text-text-subtle leading-relaxed">
             Seu plano permite {maxTechnicians > 1000 ? 'usuários ilimitados' : `até ${maxTechnicians} contas de técnicos ativos simultaneamente`} no painel.
           </p>
         </div>
 
         {/* Storage Usage */}
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-none space-y-4">
+        <div className="bg-slate-900 border border-border p-6 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-2">
               <HardDrive className="w-4.5 h-4.5 text-blue-500" />
               Armazenamento de Mídias
             </h3>
-            <span className="text-xs font-mono font-bold text-slate-400">
+            <span className="text-xs font-mono font-bold text-text-muted">
               {loadingStats ? '...' : `${formatBytes(storageUsed)} / ${formatBytes(maxStorageBytes)}`}
             </span>
           </div>
 
-          <div className="w-full bg-slate-950 h-2 rounded-none overflow-hidden">
+          <div className="w-full bg-surface-sunken h-2 rounded-xl overflow-hidden">
             <div 
               className="bg-blue-500 h-full transition-all duration-500" 
               style={{ width: `${loadingStats ? 0 : storagePercent}%` }} 
             />
           </div>
-          <p className="text-[10px] text-slate-500 leading-relaxed">
+          <p className="text-[10px] text-text-subtle leading-relaxed">
             Mídias anexadas às ordens de serviço (fotos, vídeos, arquivos de diagnóstico).
           </p>
         </div>
@@ -277,25 +277,25 @@ export default function BillingSettingsPage() {
       {/* Compare Plans Section */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="w-4.5 h-4.5 text-blue-500" />
             Tabela Comparativa de Planos
           </h3>
-          <p className="text-[10px] text-slate-500 mt-1">
+          <p className="text-[10px] text-text-subtle mt-1">
             Profissionalize sua assistência técnica hoje mesmo. Atualize ou assine o plano ideal.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 border border-slate-800 bg-slate-950 divide-y md:divide-y-0 md:divide-x divide-slate-800">
+        <div className="grid grid-cols-1 md:grid-cols-3 border border-border bg-surface-sunken divide-y md:divide-y-0 md:divide-x divide-slate-800">
           {/* Plan Starter */}
-          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'starter' && currentStatus !== 'trialing' ? 'bg-slate-900/40' : ''}`}>
+          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'starter' && currentStatus !== 'trialing' ? 'bg-surface-raised' : ''}`}>
             <div className="space-y-4">
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white">Starter</h4>
-                <p className="text-2xl font-black text-white">R$ 29,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
-                <p className="text-[10px] text-slate-500">Menos de 1 real por dia para aposentar sua planilha.</p>
+                <p className="text-h2 font-mono tabular-nums text-text">R$ 29,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
+                <p className="text-[10px] text-text-subtle">Menos de 1 real por dia para aposentar sua planilha.</p>
               </div>
-              <ul className="text-xs text-slate-400 space-y-2.5">
+              <ul className="text-xs text-text-muted space-y-2.5">
                 <li className="flex items-center gap-2">✓ 1 Usuário</li>
                 <li className="flex items-center gap-2">✓ OS Ilimitadas</li>
                 <li className="flex items-center gap-2">✓ Gestão de Clientes</li>
@@ -316,7 +316,7 @@ export default function BillingSettingsPage() {
           </div>
 
           {/* Plan Pro */}
-          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 relative ${currentPlan === 'pro' && currentStatus !== 'trialing' ? 'bg-slate-900/40' : ''}`}>
+          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 relative ${currentPlan === 'pro' && currentStatus !== 'trialing' ? 'bg-surface-raised' : ''}`}>
             {/* Sweet Spot Highlight */}
             <div className="absolute top-0 inset-x-0 h-1 bg-blue-500" />
             
@@ -326,8 +326,8 @@ export default function BillingSettingsPage() {
                   Pro
                   <Badge tone="info">Recomendado</Badge>
                 </h4>
-                <p className="text-2xl font-black text-white">R$ 69,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
-                <p className="text-[10px] text-slate-500">Ideal para o balcão e a bancada.</p>
+                <p className="text-h2 font-mono tabular-nums text-text">R$ 69,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
+                <p className="text-[10px] text-text-subtle">Ideal para o balcão e a bancada.</p>
               </div>
               <ul className="text-xs text-slate-200 space-y-2.5">
                 <li className="flex items-center gap-2">✓ Até 3 Usuários</li>
@@ -349,14 +349,14 @@ export default function BillingSettingsPage() {
           </div>
 
           {/* Plan Premium */}
-          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'premium' && currentStatus !== 'trialing' ? 'bg-slate-900/40' : ''}`}>
+          <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'premium' && currentStatus !== 'trialing' ? 'bg-surface-raised' : ''}`}>
             <div className="space-y-4">
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white">Premium</h4>
-                <p className="text-2xl font-black text-white">R$ 149,90<span className="text-xs font-normal text-slate-500"> /mês</span></p>
-                <p className="text-[10px] text-slate-500">Para operações em grande escala.</p>
+                <p className="text-h2 font-mono tabular-nums text-text">R$ 149,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
+                <p className="text-[10px] text-text-subtle">Para operações em grande escala.</p>
               </div>
-              <ul className="text-xs text-slate-400 space-y-2.5">
+              <ul className="text-xs text-text-muted space-y-2.5">
                 <li className="flex items-center gap-2">✓ Usuários Ilimitados</li>
                 <li className="flex items-center gap-2">✓ Gestão de Múltiplas Filiais</li>
                 <li className="flex items-center gap-2">✓ Relatórios Avançados (BI)</li>

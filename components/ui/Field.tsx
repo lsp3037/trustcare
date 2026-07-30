@@ -11,10 +11,10 @@ function useSanitizedId() {
 }
 
 const CONTROL =
-  'w-full bg-surface-sunken border border-border text-text placeholder:text-text-subtle ' +
-  'px-3 py-2 text-sm transition-colors duration-150 ' +
-  'hover:border-border-strong ' +
-  'focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand/40 ' +
+  'w-full bg-surface-sunken border border-border text-text placeholder:text-text-subtle rounded-xl ' +
+  'px-3 py-2 text-sm transition-all duration-200 ' +
+  'hover:border-border-strong hover:shadow-sm ' +
+  'focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand/40 focus:shadow-md ' +
   'disabled:opacity-50 disabled:cursor-not-allowed';
 
 const INVALID = 'border-danger focus:border-danger focus:outline-danger/40';

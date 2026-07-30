@@ -117,7 +117,7 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          'relative w-full bg-surface-raised border border-border shadow-2xl',
+          'relative w-full bg-surface-raised border border-border rounded-2xl shadow-2xl',
           'max-h-[calc(100vh-2rem)] flex flex-col',
           SIZES[size],
           className,

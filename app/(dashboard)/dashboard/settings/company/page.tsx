@@ -197,18 +197,18 @@ export default function CompanySettingsPage() {
 
   if (userLoading || role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-xl">
         <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verificando permissões...</p>
+        <p className="text-sm text-text-muted">Verificando permissões...</p>
       </div>
     );
   }
 
   if (contextLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-none">
+      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-xl">
         <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Carregando configurações da empresa...</p>
+        <p className="text-sm text-text-muted">Carregando configurações da empresa...</p>
       </div>
     );
   }
@@ -216,33 +216,33 @@ export default function CompanySettingsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+        <h1 className="text-h2 text-text flex items-center gap-2">
           <Building className="w-6 h-6 text-emerald-500" /> Dados da Empresa
         </h1>
-        <p className="text-sm text-slate-400 mt-1">Configure os dados de identidade e contato da sua assistência técnica.</p>
+        <p className="text-small text-text-muted mt-1">Configure os dados de identidade e contato da sua assistência técnica.</p>
       </div>
 
-      <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 overflow-hidden rounded-none">
+      <div className="bg-slate-900 border-2 border-border shadow-2xl shadow-black/50 overflow-hidden rounded-xl">
         {/* Tab Header */}
-        <div className="border-b-2 border-slate-800 bg-slate-950/80 px-6 py-4 flex items-center justify-between">
+        <div className="border-b-2 border-border bg-surface-sunken/80 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Building className="w-5 h-5 text-emerald-500" />
             <h2 className="text-base font-bold text-white">Configurações Gerais</h2>
           </div>
-          <span className="text-[10px] text-slate-500 font-mono">ID Tenant: {company.id || 'offline-mock'}</span>
+          <span className="text-[10px] text-text-subtle font-mono">ID Tenant: {company.id || 'offline-mock'}</span>
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSave} className="p-6 space-y-6">
           {errorMsg && (
-            <div className="p-4 bg-rose-500/10 border-l-4 border-rose-500 text-rose-400 text-sm flex items-start gap-3 rounded-none">
+            <div className="p-4 bg-rose-500/10 border-l-4 border-rose-500 text-rose-400 text-sm flex items-start gap-3 rounded-xl">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-4 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 text-sm flex items-start gap-3 animate-in fade-in duration-200 rounded-none">
+            <div className="p-4 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 text-sm flex items-start gap-3 animate-in fade-in duration-200 rounded-xl">
               <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
               <span>{successMsg}</span>
             </div>
@@ -251,17 +251,17 @@ export default function CompanySettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Logo Drag & Drop Upload Block */}
             <div className="md:col-span-1 flex flex-col items-center space-y-3">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Logotipo do Sistema</span>
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Logotipo do Sistema</span>
               
               <div 
                 onDragEnter={handleDrag}
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
-                className={`relative w-full aspect-square max-w-[160px] rounded-none border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-slate-950/30 ${
+                className={`relative w-full aspect-square max-w-[160px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-surface-sunken/30 ${
                   isDragActive 
                     ? 'border-emerald-500 bg-emerald-500/5 shadow-inner' 
-                    : 'border-slate-800 hover:border-emerald-500'
+                    : 'border-border hover:border-emerald-500'
                 }`}
               >
                 {previewUrl ? (
@@ -269,7 +269,7 @@ export default function CompanySettingsPage() {
                     <img src={previewUrl} alt="Logotipo" className="max-w-full max-h-full object-contain" />
                     
                     {/* Hover replacement info */}
-                    <label className="absolute inset-0 bg-slate-950/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] gap-1.5 rounded-none font-bold">
+                    <label className="absolute inset-0 bg-surface-sunken/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] gap-1.5 rounded-xl font-bold">
                       <Upload className="w-4 h-4 text-emerald-400" />
                       <span>Substituir</span>
                       <input 
@@ -283,7 +283,7 @@ export default function CompanySettingsPage() {
                 ) : (
                   <div className="text-center p-4 flex flex-col items-center justify-center">
                     <ImageIcon className="w-8 h-8 text-slate-700 group-hover:text-emerald-500/40 transition-colors mb-2" />
-                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Arraste a logo</span>
+                    <span className="text-[9px] text-text-subtle font-bold uppercase tracking-wider block">Arraste a logo</span>
                     <label className="text-[9px] text-emerald-400 hover:underline cursor-pointer font-bold block mt-1">
                       ou selecione
                       <input 
@@ -298,7 +298,7 @@ export default function CompanySettingsPage() {
 
                 {/* Loading overlay during upload */}
                 {uploading && (
-                  <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center rounded-none text-emerald-400 text-[10px] gap-2 font-bold">
+                  <div className="absolute inset-0 bg-surface-sunken/90 flex flex-col items-center justify-center rounded-xl text-emerald-400 text-[10px] gap-2 font-bold">
                     <LoadingSpinner className="w-6 h-6 animate-spin" />
                     <span>Enviando...</span>
                   </div>
@@ -318,18 +318,18 @@ export default function CompanySettingsPage() {
                 </Button>
               )}
               
-              <p className="text-[9px] text-slate-500 text-center leading-normal max-w-[150px]">Imagens JPG, PNG ou WEBP. Tamanho máximo de 2MB.</p>
+              <p className="text-[9px] text-text-subtle text-center leading-normal max-w-[150px]">Imagens JPG, PNG ou WEBP. Tamanho máximo de 2MB.</p>
             </div>
 
             {/* Inputs Block */}
             <div className="md:col-span-2 space-y-4">
               {/* Name */}
               <div className="space-y-1">
-                <label htmlFor="company-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <label htmlFor="company-name" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
                   Nome da Empresa / Razão Social
                 </label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     id="company-name"
                     type="text"
@@ -337,7 +337,7 @@ export default function CompanySettingsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Trust Care T.I."
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                   />
                 </div>
               </div>
@@ -346,53 +346,53 @@ export default function CompanySettingsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label htmlFor="company-phone" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <label htmlFor="company-phone" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
                       Telefone de Contato
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                       <input
                         id="company-phone"
                         type="text"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="Ex: (66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                        className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label htmlFor="company-whatsapp" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <label htmlFor="company-whatsapp" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
                       WhatsApp de Contato
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                       <input
                         id="company-whatsapp"
                         type="text"
                         value={whatsapp}
                         onChange={(e) => setWhatsapp(e.target.value)}
                         placeholder="Ex: (66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                        className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="company-email" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <label htmlFor="company-email" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
                     E-mail de Contato
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                     <input
                       id="company-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Ex: contato@trustcare.com.br"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-b-2 border-slate-800 border-t-0 border-l-0 border-r-0 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                      className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
                     />
                   </div>
                 </div>
@@ -400,7 +400,7 @@ export default function CompanySettingsPage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-800/80 pt-6 flex justify-end">
+          <div className="border-t border-border/80 pt-6 flex justify-end">
             <Button
               type="submit"
               loading={saving || uploading}

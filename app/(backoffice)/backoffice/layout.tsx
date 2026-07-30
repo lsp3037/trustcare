@@ -17,7 +17,7 @@ export default function BackofficeLayout({ children }: { children: ReactNode }) 
         <div>
           <div className="p-6 flex items-center space-x-3">
             <ShieldAlert className="w-8 h-8 text-red-500" />
-            <h1 className="text-xl font-bold tracking-tight text-white uppercase">God Mode</h1>
+            <h1 className="text-h2 text-white uppercase">God Mode</h1>
           </div>
           <nav className="mt-6 px-4 space-y-2">
             <Link
@@ -46,7 +46,7 @@ export default function BackofficeLayout({ children }: { children: ReactNode }) 
         <header className="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
           <div className="flex items-center space-x-2">
             <ShieldAlert className="w-6 h-6 text-red-500" />
-            <h1 className="text-lg font-bold">God Mode</h1>
+            <h1 className="text-h3">God Mode</h1>
           </div>
           <Link href="/dashboard" className="text-slate-400">
             <LogOut className="w-5 h-5" />

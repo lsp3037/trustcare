@@ -24,7 +24,7 @@ export default async function BackofficePage() {
     console.error('Error fetching companies in backoffice:', error);
     return (
       <div className="p-8 text-center bg-red-900/20 border border-red-500/50 rounded-xl text-red-500">
-        <h2 className="text-xl font-bold mb-2">Erro Crítico</h2>
+        <h2 className="text-h2 mb-2">Erro Crítico</h2>
         <p>Não foi possível carregar os dados dos tenants. Verifique os logs do servidor.</p>
       </div>
     );
@@ -37,8 +37,8 @@ export default async function BackofficePage() {
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Tenants (Empresas)</h2>
-          <p className="text-slate-400 mt-1">Gestão global de todas as empresas cadastradas no SaaS.</p>
+          <h2 className="text-h1 text-white">Tenants (Empresas)</h2>
+          <p className="text-small text-slate-400 mt-1">Gestão global de todas as empresas cadastradas no SaaS.</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export default async function BackofficePage() {
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-800">
-          <h3 className="text-lg font-semibold text-white">Listagem de Tenants</h3>
+          <h3 className="text-h3 text-white">Listagem de Tenants</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">

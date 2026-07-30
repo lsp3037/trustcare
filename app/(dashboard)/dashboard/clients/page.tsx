@@ -299,10 +299,10 @@ export default function ClientsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-h1 text-text flex items-center gap-2.5">
             <Users className="w-8 h-8 text-blue-500" /> Clientes
           </h1>
-          <p className="text-slate-400 mt-1">Gerencie a base de contatos e clientes da sua empresa.</p>
+          <p className="text-small text-text-muted mt-1">Gerencie a base de contatos e clientes da sua empresa.</p>
         </div>
         {!isCreating && (
           <Button icon={<Plus className="w-4 h-4" />} onClick={() => setIsCreating(true)}>
@@ -312,11 +312,11 @@ export default function ClientsPage() {
       </div>
 
       {isCreating ? (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+        <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
             <div>
-              <h2 className="text-xl font-bold text-white">Adicionar Novo Cliente</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Cadastre uma pessoa física ou jurídica.</p>
+              <h2 className="text-h2 text-text">Adicionar Novo Cliente</h2>
+              <p className="text-xs text-text-muted mt-0.5">Cadastre uma pessoa física ou jurídica.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={handleCloseModal}>
               Cancelar
@@ -325,14 +325,14 @@ export default function ClientsPage() {
 
           <form onSubmit={handleCreateClient} className="space-y-5">
             {formSuccess && (
-              <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
                 <CheckCircle2 className="w-5 h-5" />
                 <p className="font-semibold text-sm">Cliente cadastrado com sucesso!</p>
               </div>
             )}
 
             {formError && (
-              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                 {formError}
               </div>
             )}
@@ -340,27 +340,27 @@ export default function ClientsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tipo de Cliente */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tipo</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Tipo</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
                     <input
                       type="radio"
                       name="client-type"
                       checked={type === 'PF'}
                       onChange={() => setType('PF')}
                       disabled={submitting || createdClient !== null}
-                      className="accent-blue-500 h-4 w-4 bg-slate-950 border border-slate-800 disabled:opacity-50"
+                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border disabled:opacity-50"
                     />
                     Pessoa Física (PF)
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
                     <input
                       type="radio"
                       name="client-type"
                       checked={type === 'PJ'}
                       onChange={() => setType('PJ')}
                       disabled={submitting || createdClient !== null}
-                      className="accent-blue-500 h-4 w-4 bg-slate-950 border border-slate-800 disabled:opacity-50"
+                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border disabled:opacity-50"
                     />
                     Pessoa Jurídica (PJ)
                   </label>
@@ -369,11 +369,11 @@ export default function ClientsPage() {
 
               {/* Documento (CPF/CNPJ) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
                   {type === 'PF' ? 'CPF' : 'CNPJ'}
                 </label>
                 <div className="relative">
-                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     type="text"
                     placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
@@ -381,7 +381,7 @@ export default function ClientsPage() {
                     onChange={(e) => setDocument(formatDocument(e.target.value))}
                     maxLength={18}
                     disabled={submitting || createdClient !== null}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -389,14 +389,14 @@ export default function ClientsPage() {
 
             {/* Nome / Razão Social */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
                 {type === 'PF' ? 'Nome Completo' : 'Razão Social'}
               </label>
               <div className="relative">
                 {type === 'PF' ? (
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                 ) : (
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                 )}
                 <input
                   type="text"
@@ -404,7 +404,7 @@ export default function ClientsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={submitting || createdClient !== null}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   required
                 />
               </div>
@@ -413,32 +413,32 @@ export default function ClientsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Telefone */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Telefone</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     type="text"
                     placeholder="Ex: (11) 98765-4321"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={submitting || createdClient !== null}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
               </div>
 
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     type="email"
                     placeholder="Ex: cliente@empresa.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={submitting || createdClient !== null}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -446,7 +446,7 @@ export default function ClientsPage() {
 
             {/* Ações */}
             {!createdClient && (
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <Button type="submit" loading={submitting} disabled={formSuccess}>
                   Salvar Cliente
                 </Button>
@@ -456,9 +456,9 @@ export default function ClientsPage() {
 
           {/* Seção de Equipamentos (exibida após o cliente ser salvo com sucesso) */}
           {createdClient && (
-            <div className="mt-8 pt-8 border-t border-slate-800 space-y-6">
+            <div className="mt-8 pt-8 border-t border-border space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-h3 text-text flex items-center gap-2">
                   <Laptop className="w-5 h-5 text-indigo-400" /> Equipamentos do Cliente
                 </h3>
                 <Badge tone="info">
@@ -468,10 +468,10 @@ export default function ClientsPage() {
 
               {/* Lista de equipamentos adicionados na sessão */}
               {addedEquipments.length > 0 && (
-                <div className="bg-slate-950/45 rounded-none border border-slate-800/80 overflow-hidden shadow-md">
+                <div className="bg-surface-overlay rounded-xl border border-border/80 overflow-hidden shadow-md">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider bg-slate-950/30">
+                      <tr className="border-b border-border text-text-muted font-semibold uppercase tracking-wider bg-surface-sunken/30">
                         <th className="py-2.5 px-3">Equipamento</th>
                         <th className="py-2.5 px-3">Marca</th>
                         <th className="py-2.5 px-3">Modelo</th>
@@ -483,9 +483,9 @@ export default function ClientsPage() {
                       {addedEquipments.map((eq, idx) => (
                         <tr key={eq.id || idx} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
-                          <td className="py-2.5 px-3 text-slate-400">{eq.brand || '—'}</td>
-                          <td className="py-2.5 px-3 text-slate-400">{eq.model || '—'}</td>
-                          <td className="py-2.5 px-3 text-right font-mono text-slate-300">{eq.serial_number || '—'}</td>
+                          <td className="py-2.5 px-3 text-text-muted">{eq.brand || '—'}</td>
+                          <td className="py-2.5 px-3 text-text-muted">{eq.model || '—'}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-text">{eq.serial_number || '—'}</td>
                           <td className="py-2.5 px-3 text-center">
                             <Button
                               type="button"
@@ -509,65 +509,65 @@ export default function ClientsPage() {
               )}
 
               {/* Formulário de novo equipamento */}
-              <form onSubmit={handleCreateEquipment} className="space-y-4 bg-slate-950/45 p-5 rounded-none border border-slate-800/80">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Novo Equipamento</h4>
+              <form onSubmit={handleCreateEquipment} className="space-y-4 bg-surface-overlay p-5 rounded-xl border border-border/80">
+                <h4 className="text-xs font-bold text-text uppercase tracking-wider">Novo Equipamento</h4>
 
                 {eqSuccess && (
-                  <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado com sucesso!
                   </div>
                 )}
                 {eqError && (
-                  <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                     {eqError}
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Identificação / Nome</label>
+                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Identificação / Nome</label>
                     <input
                       type="text"
                       placeholder="Ex: Notebook do Cliente"
                       value={eqName}
                       onChange={(e) => setEqName(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
                       required
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Marca</label>
+                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Marca</label>
                     <input
                       type="text"
                       placeholder="Ex: Lenovo"
                       value={eqBrand}
                       onChange={(e) => setEqBrand(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Modelo</label>
+                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Modelo</label>
                     <input
                       type="text"
                       placeholder="Ex: ThinkPad E14"
                       value={eqModel}
                       onChange={(e) => setEqModel(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nº de Série / Tag</label>
+                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Nº de Série / Tag</label>
                     <div className="relative">
-                      <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                      <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle" />
                       <input
                         type="text"
                         placeholder="Ex: PF1A2B3C"
                         value={eqSerial}
                         onChange={(e) => setEqSerial(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                        className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-3 pr-10 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -585,7 +585,7 @@ export default function ClientsPage() {
                 </div>
               </form>
 
-              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-850">
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-border">
                 <Button type="button" variant="secondary" size="sm" onClick={handleCloseModal}>
                   Concluir Cadastro
                 </Button>
@@ -609,25 +609,25 @@ export default function ClientsPage() {
       ) : (
         <>
           {/* Campo de Busca */}
-          <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-none">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
             <input
               type="text"
               placeholder="Buscar por nome, documento ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
           {/* Listagem de Clientes */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+            <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
               <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-sm text-slate-400">Carregando clientes...</p>
+              <p className="text-sm text-text-muted">Carregando clientes...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="bg-slate-900/20 rounded-none border border-slate-900">
+            <div className="bg-surface-raised border border-border rounded-2xl">
               <EmptyState
                 icon={<AlertCircle />}
                 title="Nenhum cliente encontrado"
@@ -635,11 +635,11 @@ export default function ClientsPage() {
               />
             </div>
           ) : (
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none overflow-hidden shadow-xl">
+            <div className="bg-surface-raised border border-border rounded-2xl shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-semibold text-xs uppercase tracking-wider bg-slate-950/45">
+                    <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
                       <th className="py-4 px-6 text-center">ID</th>
                       <th className="py-4 px-6">Nome</th>
                       <th className="py-4 px-6">Tipo</th>
@@ -651,12 +651,12 @@ export default function ClientsPage() {
                   <tbody className="divide-y divide-slate-800/40">
                     {filteredClients.map((client) => (
                       <tr key={client.id} className="hover:bg-slate-800/20 transition-colors">
-                        <td className="py-4 px-6 text-center font-semibold text-slate-400 text-xs font-mono">
+                        <td className="py-4 px-6 text-center font-semibold text-text-muted text-xs font-mono">
                           #{client.client_number || client.id.toString().slice(0, 4)}
                         </td>
                         <td className="py-4 px-6 font-bold text-slate-200">
                           <div className="flex items-center gap-3">
-                            <div className={`p-1.5 rounded-none shrink-0 ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                            <div className={`p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
                               {client.type === 'PJ' ? <Building className="w-4 h-4" /> : <User className="w-4 h-4" />}
                             </div>
                             <Link href={`/dashboard/clients/${client.id}`} className="truncate max-w-[200px] md:max-w-xs hover:text-blue-400 hover:underline transition-colors">
@@ -669,21 +669,21 @@ export default function ClientsPage() {
                             {client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
                           </Badge>
                         </td>
-                        <td className="py-4 px-6 text-slate-300 font-mono text-xs">{client.document || '—'}</td>
-                        <td className="py-4 px-6 space-y-1 text-slate-400 text-xs">
+                        <td className="py-4 px-6 text-text font-mono text-xs">{client.document || '—'}</td>
+                        <td className="py-4 px-6 space-y-1 text-text-muted text-xs">
                           {client.phone && (
                             <div className="flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-slate-500" />
+                              <Phone className="w-3.5 h-3.5 text-text-subtle" />
                               <span>{client.phone}</span>
                               <WhatsAppButton 
                                 phone={client.phone} 
-                                className="p-1.5 rounded-none shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+                                className="p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
                               />
                             </div>
                           )}
                           {client.email && (
                             <div className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-slate-500" />
+                              <Mail className="w-3.5 h-3.5 text-text-subtle" />
                               <span className="hover:text-blue-400 cursor-pointer">{client.email}</span>
                             </div>
                           )}

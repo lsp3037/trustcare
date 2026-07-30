@@ -256,9 +256,9 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
         <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Carregando detalhes do produto...</p>
+        <p className="text-sm text-text-muted">Carregando detalhes do produto...</p>
       </div>
     );
   }
@@ -285,25 +285,25 @@ export default function ProductDetailPage() {
     <div className="space-y-8">
       {/* Header com Navegação */}
       <div className="flex flex-col gap-2">
-        <Link href="/dashboard/inventory" className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors w-fit">
+        <Link href="/dashboard/inventory" className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-white transition-colors w-fit">
           <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Estoque
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span className="text-slate-500 font-mono text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-none uppercase tracking-wider">
+            <h1 className="text-h1 text-text flex items-center gap-3">
+              <span className="text-text-subtle font-mono text-xs bg-slate-900 border border-border px-3 py-1.5 rounded-xl uppercase tracking-wider">
                 SKU: {product.sku}
               </span>
               {product.name}
             </h1>
-            <p className="text-slate-400 mt-1">Ficha de especificação técnica e controle de inventário.</p>
+            <p className="text-text-muted mt-1">Ficha de especificação técnica e controle de inventário.</p>
           </div>
           
           <div className="flex gap-2 shrink-0">
             {!isEditing && (
               <Button
                 variant="secondary"
-                icon={<Edit className="w-4 h-4 text-slate-400" />}
+                icon={<Edit className="w-4 h-4 text-text-muted" />}
                 onClick={() => setIsEditing(true)}
               >
                 Editar Produto
@@ -323,32 +323,32 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Painel de Cadastro / Edição */}
-        <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 md:p-8 shadow-2xl h-fit">
-          <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3">
+        <div className="lg:col-span-2 bg-surface-raised border border-border shadow-sm rounded-xl p-6 md:p-8 shadow-2xl h-fit">
+          <h3 className="text-h3 text-text mb-6 border-b border-border pb-3">
             {isEditing ? 'Editar Especificações' : 'Especificações Técnicas'}
           </h3>
 
           {isEditing ? (
             <form onSubmit={handleUpdateProduct} className="space-y-4">
               {saveSuccess && (
-                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
                 </div>
               )}
               {saveError && (
-                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                   {saveError}
                 </div>
               )}
 
               {/* Nome */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Descrição / Nome do Produto</label>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Descrição / Nome do Produto</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -356,11 +356,11 @@ export default function ProductDetailPage() {
               <div className={`grid grid-cols-1 ${category === 'Memória RAM' || category === 'SSD' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
                 {/* Categoria */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Categoria</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Categoria</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -370,12 +370,12 @@ export default function ProductDetailPage() {
 
                 {/* Marca */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marca</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Marca</label>
                   <input
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -383,12 +383,12 @@ export default function ProductDetailPage() {
                 {/* Capacidade (Apenas se não for RAM nem SSD) */}
                 {category !== 'Memória RAM' && category !== 'SSD' && (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Capacidade</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Capacidade</label>
                     <input
                       type="text"
                       value={capacity}
                       onChange={(e) => setCapacity(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
                 )}
@@ -396,24 +396,24 @@ export default function ProductDetailPage() {
 
               {/* Campos Condicionais para Memória RAM */}
               {category === 'Memória RAM' && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-sunken/40 p-4 border border-slate-900 rounded-xl">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aplicação</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Aplicação</label>
                     <select
                       value={ramApp}
                       onChange={(e) => setRamApp(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="PC">PC (Desktop)</option>
                       <option value="Notebook">Notebook</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tecnologia</label>
                     <select
                       value={ramTech}
                       onChange={(e) => setRamTech(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="DDR">DDR</option>
                       <option value="DDR2">DDR2</option>
@@ -423,21 +423,21 @@ export default function ProductDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Velocidade</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Velocidade</label>
                     <input
                       type="text"
                       placeholder="Ex: 3200MHz"
                       value={ramSpeed}
                       onChange={(e) => setRamSpeed(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB)</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tamanho (GB)</label>
                     <select
                       value={ramGb}
                       onChange={(e) => setRamGb(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="2GB">2GB</option>
                       <option value="4GB">4GB</option>
@@ -452,13 +452,13 @@ export default function ProductDetailPage() {
 
               {/* Campos Condicionais para SSD */}
               {category === 'SSD' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-sunken/40 p-4 border border-slate-900 rounded-xl">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia SSD</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tecnologia SSD</label>
                     <select
                       value={ssdTech}
                       onChange={(e) => setSsdTech(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="SATA III">SATA III</option>
                       <option value="NVMe">NVMe</option>
@@ -466,11 +466,11 @@ export default function ProductDetailPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB/TB)</label>
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tamanho (GB/TB)</label>
                     <select
                       value={ssdGb}
                       onChange={(e) => setSsdGb(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="120GB">120GB</option>
                       <option value="240GB">240GB</option>
@@ -487,24 +487,24 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* SKU */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SKU / Código</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">SKU / Código</label>
                   <input
                     type="text"
                     value={sku}
                     disabled
-                    className="w-full bg-slate-950/55 border border-slate-850 rounded-none py-2 px-3 text-sm text-slate-400 focus:outline-none cursor-not-allowed opacity-60 transition-colors"
+                    className="w-full bg-surface-sunken/55 border border-border rounded-xl py-2 px-3 text-sm text-text-muted focus:outline-none cursor-not-allowed opacity-60 transition-colors"
                     required
                   />
                 </div>
 
                 {/* Alerta */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estoque Mínimo (Alerta)</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Estoque Mínimo (Alerta)</label>
                   <input
                     type="number"
                     value={minStockAlert}
                     onChange={(e) => setMinStockAlert(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -513,44 +513,44 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Qtd */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Qtd. em Estoque</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Qtd. em Estoque</label>
                   <input
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
 
                 {/* Custo */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Preço de Custo (R$)</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Preço de Custo (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
 
                 {/* Venda */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Preço de Venda (R$)</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Preço de Venda (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={salePrice}
                     onChange={(e) => setSalePrice(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-850 justify-end">
+              <div className="flex gap-3 pt-4 border-t border-border justify-end">
                 <Button type="submit" loading={saving}>
                   Salvar Alterações
                 </Button>
@@ -579,31 +579,31 @@ export default function ProductDetailPage() {
               {/* Detalhes Técnicos */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                     <Layers className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Categoria</p>
+                    <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Categoria</p>
                     <p className="text-sm font-semibold text-slate-200">{product.category || 'Outro'}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Marca</p>
+                    <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Marca</p>
                     <p className="text-sm font-semibold text-slate-200">{product.brand || '—'}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                     <Cpu className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Capacidade / Medida</p>
+                    <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Capacidade / Medida</p>
                     <p className="text-sm font-semibold text-slate-200">{product.capacity || '—'}</p>
                   </div>
                 </div>
@@ -612,21 +612,21 @@ export default function ProductDetailPage() {
               {/* Detalhes de Registro */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                     <Database className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">SKU Interno</p>
+                    <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">SKU Interno</p>
                     <p className="text-sm font-semibold text-slate-200 font-mono">{product.sku}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                  <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Data de Cadastro</p>
+                    <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Data de Cadastro</p>
                     <p className="text-sm font-semibold text-slate-200">
                       {new Date(product.created_at).toLocaleDateString('pt-BR')}
                     </p>
@@ -641,15 +641,15 @@ export default function ProductDetailPage() {
         <div className="lg:col-span-1 space-y-6">
           
           {/* Card de Quantidades / Status */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Estado do Estoque</h4>
+          <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl">
+            <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">Estado do Estoque</h4>
             
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-xs font-semibold text-slate-500">Saldo Atual</p>
-                  <p className="text-2xl font-extrabold text-white mt-0.5">
-                    {product.quantity} <span className="text-xs text-slate-500 font-normal">unidades</span>
+                  <p className="text-xs font-semibold text-text-subtle">Saldo Atual</p>
+                  <p className="text-h1 font-mono tabular-nums text-text mt-0.5">
+                    {product.quantity} <span className="text-xs text-text-subtle font-normal">unidades</span>
                   </p>
                 </div>
                 <div className="shrink-0">
@@ -664,7 +664,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Indicador visual de alerta */}
-              <div className="p-3 bg-slate-950/40 rounded-none border border-slate-800/80 text-xs text-slate-400 space-y-1.5">
+              <div className="p-3 bg-surface-sunken/40 rounded-xl border border-border/80 text-xs text-text-muted space-y-1.5">
                 <div className="flex justify-between font-semibold">
                   <span>Ponto de Alerta:</span>
                   <span className="text-slate-200">{product.min_stock_alert} un</span>
@@ -679,28 +679,28 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Card Financeiro / Margens */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Análise Comercial</h4>
+          <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl">
+            <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">Análise Comercial</h4>
             
             <div className="space-y-4">
-              <div className="flex justify-between items-center text-sm border-b border-slate-850 pb-2">
-                <span className="text-slate-400 flex items-center gap-1"><DollarSign className="w-4 h-4" /> Custo Unitário:</span>
-                <span className="font-semibold text-slate-300">R$ {Number(product.cost_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                <span className="text-text-muted flex items-center gap-1"><DollarSign className="w-4 h-4" /> Custo Unitário:</span>
+                <span className="font-semibold text-text">R$ {Number(product.cost_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
-              <div className="flex justify-between items-center text-sm border-b border-slate-850 pb-2">
-                <span className="text-slate-400 flex items-center gap-1"><DollarSign className="w-4 h-4 text-emerald-400" /> Venda Unitária:</span>
+              <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                <span className="text-text-muted flex items-center gap-1"><DollarSign className="w-4 h-4 text-emerald-400" /> Venda Unitária:</span>
                 <span className="font-bold text-white">R$ {Number(product.sale_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
-              <div className="flex justify-between items-center text-sm border-b border-slate-850 pb-2">
-                <span className="text-slate-400 flex items-center gap-1">Lucro por Peça:</span>
+              <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                <span className="text-text-muted flex items-center gap-1">Lucro por Peça:</span>
                 <span className="font-bold text-emerald-400">R$ {profitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
               {/* Margem de lucro bruto */}
-              <div className="p-3 bg-emerald-500/5 rounded-none border border-emerald-500/10 flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold flex items-center gap-1">
+              <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex justify-between items-center text-xs">
+                <span className="text-text-muted font-semibold flex items-center gap-1">
                   <Percent className="w-3.5 h-3.5 text-emerald-500" /> Margem de Lucro:
                 </span>
                 <span className="font-extrabold text-emerald-400">{profitMargin.toFixed(1)}%</span>

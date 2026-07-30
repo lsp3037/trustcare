@@ -112,11 +112,11 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-none w-full max-w-md shadow-2xl">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-rose-500/10 text-rose-400 rounded-none">
+            <div className="p-1.5 rounded-full backdrop-blur-md border border-white/5 bg--500/10 text--400">
               <DollarSign className="w-4 h-4" />
             </div>
             <h2 className="text-sm font-semibold text-white">
@@ -125,7 +125,7 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1 rounded-none"
+            className="text-text-muted hover:text-white transition-colors p-1 rounded-xl"
           >
             <X className="w-4 h-4" />
           </button>
@@ -135,7 +135,7 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
         <form onSubmit={handleConfirm}>
           <div className="p-5 space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-text uppercase tracking-wider">
                 Descrição
               </label>
               <input
@@ -143,14 +143,14 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Ex: Anúncios do Meta Ads - Julho"
-                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-rose-500 transition-colors"
+                className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-rose-500 transition-colors"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-text uppercase tracking-wider">
                   Valor (R$)
                 </label>
                 <input
@@ -159,19 +159,19 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0,00"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-rose-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-rose-500 transition-colors"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-text uppercase tracking-wider">
                   Categoria
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -182,27 +182,27 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <label className="text-xs font-semibold text-text uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-text-muted" />
                   Data Inicial
                 </label>
                 <input
                   type="date"
                   value={expenseDate}
                   onChange={(e) => setExpenseDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-text uppercase tracking-wider">
                   Recorrência
                 </label>
                 <select
                   value={recurrence}
                   onChange={(e) => setRecurrence(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
                 >
                   <option value="Única">Única</option>
                   <option value="Diária">Diária</option>
@@ -215,8 +215,8 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
 
             {recurrence !== 'Única' && (
               <div className="space-y-1 animate-fadeIn">
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <label className="text-xs font-semibold text-text uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-text-muted" />
                   Recorrente até (Opcional)
                 </label>
                 <input
@@ -224,32 +224,32 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   placeholder="Sem data de término"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
                 />
-                <span className="text-[10px] text-slate-500 block">Deixe em branco para correr por tempo indeterminado.</span>
+                <span className="text-[10px] text-text-subtle block">Deixe em branco para correr por tempo indeterminado.</span>
               </div>
             )}
 
             {error && (
-              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-none animate-fadeIn">
+              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl animate-fadeIn">
                 {error}
               </p>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 p-5 border-t border-slate-800">
+          <div className="flex gap-3 p-5 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 text-sm text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-white transition-colors rounded-none"
+              className="flex-1 py-2.5 text-sm text-text-muted border border-slate-700 hover:border-slate-600 hover:text-white transition-colors rounded-xl"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors rounded-none disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

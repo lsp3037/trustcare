@@ -195,14 +195,14 @@ export default function ServicesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-h1 text-text flex items-center gap-2.5">
             <Wrench className="w-8 h-8 text-blue-500" /> Catálogo de Serviços
           </h1>
-          <p className="text-slate-400 mt-1">Gerencie a lista de serviços oferecidos na sua assistência técnica.</p>
+          <p className="text-small text-text-muted mt-1">Gerencie a lista de serviços oferecidos na sua assistência técnica.</p>
         </div>
         <button
           onClick={handleOpenCreate}
-          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-5 rounded-none text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200"
+          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 transition-all duration-200"
         >
           <Plus className="w-4 h-4" /> Cadastrar Serviço
         </button>
@@ -211,45 +211,45 @@ export default function ServicesPage() {
       {/* Busca e Abas de Filtros */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Input de Busca */}
-        <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-none">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
           <input
             type="text"
             placeholder="Buscar por serviço ou descrição..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
         {/* Abas */}
-        <div className="flex bg-slate-900/60 p-1 rounded-none border border-slate-800 self-start">
+        <div className="flex bg-slate-900/60 p-1 rounded-xl border border-border self-start">
           <button
             onClick={() => setActiveTab('todos')}
-            className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'todos' 
                 ? 'bg-blue-600 text-white shadow' 
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-text-muted hover:text-slate-200'
             }`}
           >
             Todos
           </button>
           <button
             onClick={() => setActiveTab('ativos')}
-            className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'ativos' 
                 ? 'bg-blue-600 text-white shadow' 
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-text-muted hover:text-slate-200'
             }`}
           >
             Ativos
           </button>
           <button
             onClick={() => setActiveTab('inativos')}
-            className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'inativos' 
                 ? 'bg-blue-600 text-white shadow' 
-                : 'text-slate-400 hover:text-slate-200'
+                : 'text-text-muted hover:text-slate-200'
             }`}
           >
             Inativos
@@ -259,18 +259,18 @@ export default function ServicesPage() {
 
       {/* Listagem */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+        <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
           <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-          <p className="text-sm text-slate-400">Carregando catálogo de serviços...</p>
+          <p className="text-sm text-text-muted">Carregando catálogo de serviços...</p>
         </div>
       ) : errorMsg ? (
-        <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-none text-center max-w-xl mx-auto space-y-3">
+        <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-xl text-center max-w-xl mx-auto space-y-3">
           <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
-          <h3 className="font-bold text-white text-lg">Erro ao carregar dados</h3>
-          <p className="text-sm text-slate-400">{errorMsg}</p>
+          <h3 className="text-h3 text-text">Erro ao carregar dados</h3>
+          <p className="text-sm text-text-muted">{errorMsg}</p>
         </div>
       ) : filteredServices.length === 0 ? (
-        <div className="bg-slate-900/20 rounded-none border border-slate-900">
+        <div className="bg-surface-raised border border-border rounded-2xl">
           <EmptyState
             icon={<Wrench />}
             title="Nenhum serviço encontrado"
@@ -278,11 +278,11 @@ export default function ServicesPage() {
           />
         </div>
       ) : (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none overflow-hidden shadow-xl">
+        <div className="bg-surface-raised border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-semibold text-xs uppercase tracking-wider bg-slate-950/45">
+                <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
                   <th className="py-4 px-6">Serviço</th>
                   <th className="py-4 px-6">Descrição</th>
                   <th className="py-4 px-6 text-right">Preço Padrão</th>
@@ -295,13 +295,13 @@ export default function ServicesPage() {
                   <tr key={service.id} className="hover:bg-slate-800/20 transition-colors">
                     <td className="py-4 px-6 font-bold text-slate-200">
                       <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-none shrink-0 ${service.ativo ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-850 text-slate-500'}`}>
+                        <div className={`p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 ${service.ativo ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-850 text-text-subtle'}`}>
                           <Wrench className="w-4 h-4" />
                         </div>
-                        <span className={service.ativo ? '' : 'text-slate-500'}>{service.nome}</span>
+                        <span className={service.ativo ? '' : 'text-text-subtle'}>{service.nome}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-slate-400 max-w-xs truncate">
+                    <td className="py-4 px-6 text-text-muted max-w-xs truncate">
                       {service.descricao || '—'}
                     </td>
                     <td className="py-4 px-6 text-right font-extrabold text-slate-200">
@@ -313,7 +313,7 @@ export default function ServicesPage() {
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold border transition-colors ${
                           service.ativo 
                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20' 
-                            : 'bg-slate-950 border-slate-850 text-slate-500 hover:border-slate-800'
+                            : 'bg-surface-sunken border-border text-text-subtle hover:border-border'
                         }`}
                         title={service.ativo ? 'Clique para inativar' : 'Clique para ativar'}
                       >
@@ -324,14 +324,14 @@ export default function ServicesPage() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenEdit(service)}
-                          className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 p-1.5 rounded-none transition-colors cursor-pointer"
+                          className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 p-1.5 rounded-xl transition-colors cursor-pointer"
                           title="Editar serviço"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteService(service.id)}
-                          className="text-rose-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-none transition-colors cursor-pointer"
+                          className="text-rose-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-xl transition-colors cursor-pointer"
                           title="Excluir serviço"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -351,30 +351,30 @@ export default function ServicesPage() {
         <div className="fixed inset-0 z-50 overflow-hidden">
           {/* Overlay escuro */}
           <div 
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity animate-fadeIn"
+            className="absolute inset-0 bg-surface-sunken/80 backdrop-blur-sm transition-opacity animate-fadeIn"
             onClick={() => setIsOpen(false)}
           />
 
           <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl relative flex flex-col transition-all duration-300 transform translate-x-0 animate-slideOver">
+            <div className="w-screen max-w-md bg-slate-900 border-l border-border shadow-2xl relative flex flex-col transition-all duration-300 transform translate-x-0 animate-slideOver">
               {/* Header do Drawer */}
-              <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
+              <div className="px-6 py-5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-600 rounded-none text-white">
+                  <div className="p-1.5 bg-blue-600 rounded-xl text-white">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className="text-h3 text-text">
                       {editingService ? 'Editar Serviço' : 'Cadastrar Serviço'}
                     </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-text-muted mt-0.5">
                       {editingService ? 'Modifique os detalhes do serviço.' : 'Defina os detalhes do serviço padrão.'}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-none transition-colors"
+                  className="p-1.5 hover:bg-slate-800 text-text-muted hover:text-white rounded-xl transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -384,7 +384,7 @@ export default function ServicesPage() {
               <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-y-auto">
                 <div className="p-6 space-y-5 flex-1">
                   {formSuccess && (
-                    <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
                       <CheckCircle2 className="w-5 h-5 shrink-0" />
                       <p className="font-semibold text-sm">
                         Serviço salvo com sucesso!
@@ -393,7 +393,7 @@ export default function ServicesPage() {
                   )}
 
                   {formError && (
-                    <div className="p-4 rounded-none bg-rose-500/10 border border-rose-500/25 text-rose-500 flex items-center gap-2.5 text-xs">
+                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-500 flex items-center gap-2.5 text-xs">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <p className="font-semibold">{formError}</p>
                     </div>
@@ -401,7 +401,7 @@ export default function ServicesPage() {
 
                   {/* Nome do Serviço */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
                       Nome do Serviço
                     </label>
                     <input
@@ -409,7 +409,7 @@ export default function ServicesPage() {
                       placeholder="Ex: Formatação de PC e Backup"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                       required
                       disabled={submitting || formSuccess}
                     />
@@ -417,7 +417,7 @@ export default function ServicesPage() {
 
                   {/* Preço Padrão */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
                       Preço Padrão (R$)
                     </label>
                     <input
@@ -427,7 +427,7 @@ export default function ServicesPage() {
                       placeholder="Ex: 150.00"
                       value={precoPadrao}
                       onChange={(e) => setPrecoPadrao(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors font-semibold"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors font-semibold"
                       required
                       disabled={submitting || formSuccess}
                     />
@@ -435,7 +435,7 @@ export default function ServicesPage() {
 
                   {/* Descrição */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
                       Descrição do Serviço
                     </label>
                     <textarea
@@ -443,18 +443,18 @@ export default function ServicesPage() {
                       placeholder="Descreva as etapas inclusas neste serviço padrão..."
                       value={descricao}
                       onChange={(e) => setDescricao(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors resize-none"
                       disabled={submitting || formSuccess}
                     />
                   </div>
 
                   {/* Status Ativo/Inativo */}
-                  <div className="flex items-center justify-between p-4 bg-slate-950/40 border border-slate-850 rounded-none">
+                  <div className="flex items-center justify-between p-4 bg-surface-sunken/40 border border-border rounded-xl">
                     <div className="space-y-0.5">
                       <p className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                         Status do Cadastro
                       </p>
-                      <p className="text-[10px] text-slate-500">
+                      <p className="text-[10px] text-text-subtle">
                         Inativo impede a seleção em novas Ordens de Serviço.
                       </p>
                     </div>
@@ -462,7 +462,7 @@ export default function ServicesPage() {
                       type="button"
                       onClick={() => setAtivo(!ativo)}
                       disabled={submitting || formSuccess}
-                      className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      className="text-text-muted hover:text-white transition-colors cursor-pointer"
                     >
                       {ativo ? (
                         <ToggleRight className="w-10 h-10 text-emerald-500" />
@@ -474,18 +474,18 @@ export default function ServicesPage() {
                 </div>
 
                 {/* Footer do Drawer */}
-                <div className="px-6 py-4 border-t border-slate-800 bg-slate-950/20 flex justify-end gap-3 shrink-0">
+                <div className="px-6 py-4 border-t border-border bg-surface-sunken/20 flex justify-end gap-3 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 border border-slate-800 hover:bg-slate-800 rounded-none text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="px-4 py-2 border border-border hover:bg-slate-800 rounded-xl text-xs font-semibold text-text hover:text-white transition-colors cursor-pointer"
                   >
                     Fechar
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || formSuccess}
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-none text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-500/10 cursor-pointer disabled:opacity-55"
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-500/10 cursor-pointer disabled:opacity-55"
                   >
                     {submitting ? (
                       <LoadingSpinner className="w-4 h-4 animate-spin" />

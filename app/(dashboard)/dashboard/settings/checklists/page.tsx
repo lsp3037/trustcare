@@ -238,15 +238,15 @@ export default function ChecklistSettingsPage() {
 
   if (userLoading || role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
         <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Verificando permissões...</p>
+        <p className="text-sm text-text-muted">Verificando permissões...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">
+    <div className="min-h-screen bg-surface-sunken text-text p-6 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header de Configurações */}
@@ -254,23 +254,23 @@ export default function ChecklistSettingsPage() {
           <div className="flex items-center gap-3">
             <Link 
               href="/dashboard"
-              className="p-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white rounded-none transition-all"
+              className="p-2 bg-slate-900 border border-border hover:bg-slate-800 text-text-muted hover:text-white rounded-xl transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <h1 className="text-xl font-bold flex items-center gap-2">
+              <h1 className="text-h2 text-text flex items-center gap-2">
                 <Settings className="w-5 h-5 text-indigo-500" /> Configurações de Checklist
               </h1>
-              <p className="text-xs text-slate-500 mt-0.5">Defina itens obrigatórios e opcionais de entrada e saída por categoria.</p>
+              <p className="text-caption text-text-subtle mt-0.5">Defina itens obrigatórios e opcionais de entrada e saída por categoria.</p>
             </div>
           </div>
         </div>
 
         {/* Seleção de Categoria */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
+        <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Categoria de Equipamento</label>
+            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Selecione a Categoria de Equipamento</label>
             <select
               value={selectedCategoryId}
               onChange={(e) => {
@@ -283,7 +283,7 @@ export default function ChecklistSettingsPage() {
                   setLoading(true);
                 }
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-none py-3 px-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-surface-sunken border border-border rounded-xl py-3 px-4 text-sm text-text focus:outline-none focus:border-indigo-500 transition-colors"
             >
               <option value="">Selecione uma categoria...</option>
               {categories.map(cat => (
@@ -297,9 +297,9 @@ export default function ChecklistSettingsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Editor de Checklist */}
-            <div className="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-6">
+            <div className="lg:col-span-2 bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl space-y-6">
               
-              <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                   <ClipboardList className="w-4 h-4 text-indigo-400" /> Itens do Checklist
                 </h3>
@@ -307,11 +307,11 @@ export default function ChecklistSettingsPage() {
               </div>
 
               {loading ? (
-                <div className="flex items-center justify-center py-12 text-slate-500 text-xs gap-2">
+                <div className="flex items-center justify-center py-12 text-text-subtle text-xs gap-2">
                   <LoadingSpinner className="w-4 h-4 animate-spin text-indigo-500" /> Carregando template...
                 </div>
               ) : items.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-xs">
+                <div className="text-center py-12 text-text-subtle text-xs">
                   Nenhum item configurado para este checklist. Adicione itens abaixo.
                 </div>
               ) : (
@@ -319,11 +319,11 @@ export default function ChecklistSettingsPage() {
                   {items.map((item) => (
                     <div 
                       key={item.id} 
-                      className="flex items-center justify-between p-3 bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-none transition-all"
+                      className="flex items-center justify-between p-3 bg-surface-sunken border border-border hover:border-border rounded-xl transition-all"
                     >
                       <div className="space-y-0.5">
                         <p className="text-xs font-semibold text-slate-200">{item.label}</p>
-                        <p className="text-[10px] font-mono text-slate-500">ID: {item.id}</p>
+                        <p className="text-[10px] font-mono text-text-subtle">ID: {item.id}</p>
                       </div>
                       
                       <div className="flex items-center gap-3">
@@ -355,13 +355,13 @@ export default function ChecklistSettingsPage() {
               )}
 
               {/* Formulário Inline para Novo Item */}
-              <form onSubmit={handleAddItem} className="flex gap-2 pt-2 border-t border-slate-850">
+              <form onSubmit={handleAddItem} className="flex gap-2 pt-2 border-t border-border">
                 <input
                   type="text"
                   placeholder="Ex: Estado do teclado, Dobradiças..."
                   value={newItemLabel}
                   onChange={(e) => setNewItemLabel(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-850 rounded-none py-2.5 px-3.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="flex-1 bg-surface-sunken border border-border rounded-xl py-2.5 px-3.5 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
                 />
                 <Button type="submit" icon={<Plus className="w-4 h-4" />}>
                   Adicionar
@@ -374,17 +374,17 @@ export default function ChecklistSettingsPage() {
             <div className="space-y-6">
               
               {/* Box de Ação */}
-              <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl space-y-4">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ações</h4>
+              <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl space-y-4">
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">Ações</h4>
                 
                 {saveSuccess && (
-                  <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2 animate-fade-in">
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2 animate-fade-in">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Configuração salva com sucesso!
                   </div>
                 )}
 
                 {errorMsg && (
-                  <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500 flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
                   </div>
                 )}
@@ -414,8 +414,8 @@ export default function ChecklistSettingsPage() {
               </div>
 
               {/* Informações de Apoio */}
-              <div className="bg-slate-900/20 border border-slate-850 rounded-none p-6 text-slate-400 space-y-3">
-                <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <div className="bg-slate-900/20 border border-border rounded-xl p-6 text-text-muted space-y-3">
+                <h4 className="text-xs font-bold text-text flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-indigo-400" /> Boas práticas
                 </h4>
                 <ul className="text-[11px] list-disc list-inside space-y-2 leading-relaxed">
@@ -429,7 +429,7 @@ export default function ChecklistSettingsPage() {
 
           </div>
         ) : (
-          <div className="border-2 border-dashed border-slate-800 rounded-none p-12 text-center text-slate-500 text-xs">
+          <div className="border-2 border-dashed border-border rounded-xl p-12 text-center text-text-subtle text-xs">
             Selecione uma categoria acima para carregar ou personalizar seu checklist.
           </div>
         )}

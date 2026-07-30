@@ -446,9 +446,9 @@ export default function ClientDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
         <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Carregando detalhes do cliente...</p>
+        <p className="text-sm text-text-muted">Carregando detalhes do cliente...</p>
       </div>
     );
   }
@@ -472,23 +472,23 @@ export default function ClientDetailPage() {
     <div className="space-y-8">
       {/* Breadcrumb e Back Link */}
       <div className="flex flex-col gap-2">
-        <Link href="/dashboard/clients" className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors w-fit">
+        <Link href="/dashboard/clients" className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-white transition-colors w-fit">
           <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Clientes
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              <span className="text-slate-500 font-mono text-xl bg-slate-900 border border-slate-800 px-3 py-1 rounded-none">
+            <h1 className="text-h1 text-text flex items-center gap-3">
+              <span className="text-text-subtle font-mono text-xl bg-slate-900 border border-border px-3 py-1 rounded-xl">
                 #{client.client_number || 'Mock'}
               </span>
               {client.name}
             </h1>
-            <p className="text-slate-400 mt-1">Dados de cadastro, equipamentos e histórico de chamados técnicos.</p>
+            <p className="text-small text-text-muted mt-1">Dados de cadastro, equipamentos e histórico de chamados técnicos.</p>
           </div>
           {!isEditing && (
             <Button
               variant="secondary"
-              icon={<Edit className="w-4 h-4 text-slate-400" />}
+              icon={<Edit className="w-4 h-4 text-text-muted" />}
               onClick={() => setIsEditing(true)}
             >
               Editar Dados
@@ -499,42 +499,42 @@ export default function ClientDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Detalhes do Cliente / Formulário de Edição */}
-        <div className="lg:col-span-1 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl h-fit">
-          <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3">
+        <div className="lg:col-span-1 bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl h-fit">
+          <h3 className="text-h3 text-text mb-6 border-b border-border pb-3">
             {isEditing ? 'Editar Cadastro' : 'Ficha de Cadastro'}
           </h3>
 
           {isEditing ? (
             <form onSubmit={handleUpdateClient} className="space-y-4">
               {saveSuccess && (
-                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
                 </div>
               )}
               {saveError && (
-                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                   {saveError}
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</label>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tipo</label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
                     <input
                       type="radio"
                       checked={type === 'PF'}
                       onChange={() => setType('PF')}
-                      className="accent-blue-500 h-4 w-4 bg-slate-950 border border-slate-800"
+                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border"
                     />
                     PF
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
                     <input
                       type="radio"
                       checked={type === 'PJ'}
                       onChange={() => setType('PJ')}
-                      className="accent-blue-500 h-4 w-4 bg-slate-950 border border-slate-800"
+                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border"
                     />
                     PJ
                   </label>
@@ -542,46 +542,46 @@ export default function ClientDetailPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nome / Razão Social</label>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Nome / Razão Social</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Documento (CPF/CNPJ)</label>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Documento (CPF/CNPJ)</label>
                 <input
                   type="text"
                   value={document}
                   onChange={(e) => setDocument(e.target.value)}
                   placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Telefone</label>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Telefone</label>
                 <input
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Ex: (11) 98765-4321"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</label>
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Ex: cliente@empresa.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -612,44 +612,44 @@ export default function ClientDetailPage() {
             <div className="space-y-5">
               {/* Tipo de Cadastro */}
               <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-none ${client.type === 'PJ' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-200'}`}>
+                <div className={`p-2.5 rounded-xl ${client.type === 'PJ' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-200'}`}>
                   {client.type === 'PJ' ? <Building className="w-5 h-5" /> : <User className="w-5 h-5" />}
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipo de Cadastro</p>
+                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Tipo de Cadastro</p>
                   <p className="text-sm font-semibold text-slate-200">{client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}</p>
                 </div>
               </div>
 
               {/* Documento */}
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{client.type === 'PF' ? 'CPF' : 'CNPJ'}</p>
+                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">{client.type === 'PF' ? 'CPF' : 'CNPJ'}</p>
                   <p className="text-sm font-semibold text-slate-200 font-mono">{client.document || '—'}</p>
                 </div>
               </div>
 
               {/* Telefone */}
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Telefone</p>
+                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Telefone</p>
                   <p className="text-sm font-semibold text-slate-200">{client.phone || '—'}</p>
                 </div>
               </div>
 
               {/* Email */}
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-none bg-slate-950 text-slate-400 border border-slate-800/50">
+                <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">E-mail Corporativo</p>
+                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">E-mail Corporativo</p>
                   <p className="text-sm font-semibold text-slate-200 truncate hover:text-blue-400 cursor-pointer">{client.email || '—'}</p>
                 </div>
               </div>
@@ -661,21 +661,21 @@ export default function ClientDetailPage() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* Equipamentos Cadastrados */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-6 border-b border-slate-800 pb-3 flex items-center gap-2">
+          <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl">
+            <h3 className="text-h3 text-text mb-6 border-b border-border pb-3 flex items-center gap-2">
               <Laptop className="w-5 h-5 text-emerald-400" /> Equipamentos do Cliente
             </h3>
 
             {/* Listagem de Equipamentos */}
             {equipments.length === 0 ? (
-              <p className="text-center py-6 text-slate-500 text-xs">
+              <p className="text-center py-6 text-text-subtle text-xs">
                 Nenhum equipamento cadastrado para este cliente.
               </p>
             ) : (
               <div className="overflow-x-auto mb-6">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-850 text-slate-500 font-semibold uppercase tracking-wider bg-slate-950/20">
+                    <tr className="border-b border-border text-text-subtle font-semibold uppercase tracking-wider bg-surface-sunken/20">
                       <th className="py-2.5 px-3">Equipamento</th>
                       <th className="py-2.5 px-3">Categoria</th>
                       <th className="py-2.5 px-3">Marca</th>
@@ -688,14 +688,14 @@ export default function ClientDetailPage() {
                     {equipments.map((eq) => (
                       <tr key={eq.id} className="hover:bg-slate-800/10 transition-colors">
                         <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
-                        <td className="py-2.5 px-3 text-slate-400">
+                        <td className="py-2.5 px-3 text-text-muted">
                           {eq.equipment_categories?.name ? (
                             <Badge tone="success">{eq.equipment_categories.name}</Badge>
                           ) : '—'}
                         </td>
-                        <td className="py-2.5 px-3 text-slate-400">{eq.brand || '—'}</td>
-                        <td className="py-2.5 px-3 text-slate-400">{eq.model || '—'}</td>
-                        <td className="py-2.5 px-3 font-mono text-slate-300">{eq.serial_number || '—'}</td>
+                        <td className="py-2.5 px-3 text-text-muted">{eq.brand || '—'}</td>
+                        <td className="py-2.5 px-3 text-text-muted">{eq.model || '—'}</td>
+                        <td className="py-2.5 px-3 font-mono text-text">{eq.serial_number || '—'}</td>
                         <td className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Button
@@ -736,7 +736,7 @@ export default function ClientDetailPage() {
             )}
 
             {/* Formulário para adicionar/editar Equipamento */}
-            <form id="equipment-form" onSubmit={handleSaveEquipment} className="border-t border-slate-850 pt-5 space-y-4">
+            <form id="equipment-form" onSubmit={handleSaveEquipment} className="border-t border-border pt-5 space-y-4">
               <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
                 {editingEqId ? (
                   <><Edit className="w-4 h-4 text-emerald-400" /> Atualizar Equipamento</>
@@ -746,36 +746,36 @@ export default function ClientDetailPage() {
               </h4>
               
               {eqSuccess && (
-                <div className="p-3 rounded-none bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado!
                 </div>
               )}
               {eqError && (
-                <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                   {eqError}
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Identificação / Nome</label>
+                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Identificação / Nome</label>
                   <input
                     type="text"
                     placeholder="Ex: Notebook Luan"
                     value={eqName}
                     onChange={(e) => setEqName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Categoria</label>
+                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Categoria</label>
                   <div className="flex gap-2">
                     <select
                       value={eqCategoryId}
                       onChange={(e) => setEqCategoryId(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="flex-1 bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
                     >
                       <option value="">Selecione...</option>
                       {categories.map(cat => (
@@ -803,7 +803,7 @@ export default function ClientDetailPage() {
                         placeholder="Nome da categoria"
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-none py-1.5 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+                        className="flex-1 bg-surface-sunken border border-border rounded-xl py-1.5 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors font-mono"
                         autoFocus
                       />
                       <Button type="button" size="sm" onClick={handleSaveCategory}>
@@ -825,37 +825,37 @@ export default function ClientDetailPage() {
                 )}
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Marca</label>
+                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Marca</label>
                   <input
                     type="text"
                     placeholder="Ex: Dell"
                     value={eqBrand}
                     onChange={(e) => setEqBrand(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Modelo</label>
+                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Modelo</label>
                   <input
                     type="text"
                     placeholder="Ex: Latitude 3420"
                     value={eqModel}
                     onChange={(e) => setEqModel(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nº de Série / Tag</label>
+                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Nº de Série / Tag</label>
                   <div className="relative">
-                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle" />
                     <input
                       type="text"
                       placeholder="Ex: PE091728"
                       value={eqSerial}
                       onChange={(e) => setEqSerial(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-3 pr-10 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -893,14 +893,14 @@ export default function ClientDetailPage() {
           </div>
 
           {/* Histórico de Ordens de Serviço */}
-          <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 shadow-2xl flex flex-col justify-between">
+          <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-3">
+              <div className="flex justify-between items-center mb-6 border-b border-border pb-3">
                 <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h3 className="text-h3 text-text flex items-center gap-2">
                     <ClipboardList className="w-5 h-5 text-blue-500" /> Ordens de Serviço
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Chamados técnicos abertos para este cliente.</p>
+                  <p className="text-xs text-text-subtle mt-0.5">Chamados técnicos abertos para este cliente.</p>
                 </div>
                 <Link href={`/dashboard/orders?new=true&clientId=${client.id}`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
                   <Plus className="w-3.5 h-3.5" /> Abrir OS
@@ -917,7 +917,7 @@ export default function ClientDetailPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-800 text-slate-500 font-semibold text-[10px] uppercase tracking-wider bg-slate-950/20">
+                      <tr className="border-b border-border text-text-subtle font-semibold text-[10px] uppercase tracking-wider bg-surface-sunken/20">
                         <th className="py-3 px-4">OS ID</th>
                         <th className="py-3 px-4">Equipamento</th>
                         <th className="py-3 px-4">Status</th>
@@ -932,7 +932,7 @@ export default function ClientDetailPage() {
                           onClick={() => router.push(`/dashboard/orders/${order.id}`)}
                           className="hover:bg-slate-800/20 transition-colors cursor-pointer"
                         >
-                          <td className="py-3 px-4 font-semibold text-slate-400 font-mono text-xs">
+                          <td className="py-3 px-4 font-semibold text-text-muted font-mono text-xs">
                             #{order.codigo_os || order.id.slice(0, 8)}
                           </td>
                           <td className="py-3 px-4 text-slate-200 font-medium truncate max-w-[180px]">
@@ -941,7 +941,7 @@ export default function ClientDetailPage() {
                           <td className="py-3 px-4">
                             <StatusBadge status={order.status} className="text-[10px]" />
                           </td>
-                          <td className="py-3 px-4 text-center text-slate-400 text-xs">
+                          <td className="py-3 px-4 text-center text-text-muted text-xs">
                             {new Date(order.created_at).toLocaleDateString('pt-BR')}
                           </td>
                           <td className="py-3 px-4 text-right font-bold text-slate-200">
@@ -961,8 +961,8 @@ export default function ClientDetailPage() {
 
       {/* SLIDE-OVER: Histórico de Checklists (Histórico Clínico) */}
       {selectedEqForHistory && (
-        <div className="fixed inset-0 z-[100] flex justify-end p-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border-l border-slate-850 h-screen w-full max-w-lg p-6 shadow-2xl overflow-y-auto flex flex-col relative">
+        <div className="fixed inset-0 z-[100] flex justify-end p-0 bg-surface-sunken/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-l border-border h-screen w-full max-w-lg p-6 shadow-2xl overflow-y-auto flex flex-col relative">
             <Button
               variant="ghost"
               size="sm"
@@ -975,11 +975,11 @@ export default function ClientDetailPage() {
 
             <div className="mb-6">
               <Badge tone="success" className="uppercase tracking-widest">Histórico Clínico</Badge>
-              <h3 className="text-xl font-bold text-white mt-2 flex items-center gap-2">
+              <h3 className="text-h2 text-text mt-2 flex items-center gap-2">
                 <Wrench className="w-5 h-5 text-emerald-500" />
                 {selectedEqForHistory.name}
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-text-subtle mt-1">
                 Ref: {selectedEqForHistory.brand} {selectedEqForHistory.model} {selectedEqForHistory.serial_number ? `• S/N: ${selectedEqForHistory.serial_number}` : ''}
               </p>
             </div>
@@ -988,14 +988,14 @@ export default function ClientDetailPage() {
               {loadingHistory ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-                  <p className="text-sm text-slate-400">Carregando histórico clínico...</p>
+                  <p className="text-sm text-text-muted">Carregando histórico clínico...</p>
                 </div>
               ) : eqChecklistHistory.length === 0 ? (
-                <div className="text-center py-16 text-slate-500 text-xs border border-dashed border-slate-800 rounded-none p-6">
+                <div className="text-center py-16 text-text-subtle text-xs border border-dashed border-border rounded-xl p-6">
                   Nenhum checklist registrado para este equipamento em ordens de serviço anteriores.
                 </div>
               ) : (
-                <div className="relative border-l border-slate-800 ml-3 space-y-8 pb-4">
+                <div className="relative border-l border-border ml-3 space-y-8 pb-4">
                   {eqChecklistHistory.map((historyItem) => {
                     const entry = historyItem.entry_checklist;
                     const exit = historyItem.exit_checklist;
@@ -1008,7 +1008,7 @@ export default function ClientDetailPage() {
                       if (itemsList.length === 0) return <span className="text-[10px] text-slate-600 italic block mt-1">Nenhum item preenchido</span>;
                       
                       return (
-                        <div className="grid grid-cols-2 gap-2 mt-2 bg-slate-950/40 p-3 rounded-none border border-slate-900">
+                        <div className="grid grid-cols-2 gap-2 mt-2 bg-surface-sunken/40 p-3 rounded-xl border border-slate-900">
                           {itemsList.map(([key, val]: [string, any]) => {
                             const isChecked = typeof val === 'object' ? val.checked : !!val;
                             const note = typeof val === 'object' ? val.observation : '';
@@ -1016,9 +1016,9 @@ export default function ClientDetailPage() {
                               <div key={key} className="text-[11px] flex flex-col">
                                 <div className="flex items-center gap-1.5">
                                   <span className={`w-1.5 h-1.5 rounded-full ${isChecked ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                                  <span className="text-slate-300 capitalize truncate max-w-[150px]">{key.replace(/_/g, ' ')}</span>
+                                  <span className="text-text capitalize truncate max-w-[150px]">{key.replace(/_/g, ' ')}</span>
                                 </div>
-                                {note && <span className="text-[9px] text-slate-500 italic pl-3 truncate" title={note}>Obs: {note}</span>}
+                                {note && <span className="text-[9px] text-text-subtle italic pl-3 truncate" title={note}>Obs: {note}</span>}
                               </div>
                             );
                           })}
@@ -1032,7 +1032,7 @@ export default function ClientDetailPage() {
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         </span>
                         
-                        <div className="bg-slate-900/50 border border-slate-850 p-4 rounded-none space-y-3">
+                        <div className="bg-slate-900/50 border border-border p-4 rounded-xl space-y-3">
                           <div className="flex justify-between items-center">
                             <span 
                               onClick={() => {
@@ -1043,27 +1043,27 @@ export default function ClientDetailPage() {
                             >
                               O.S. #{historyItem.service_number || historyItem.id.slice(0, 8)}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-semibold font-mono">
+                            <span className="text-[10px] text-text-subtle font-semibold font-mono">
                               {new Date(historyItem.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-500">Status:</span>
+                            <span className="text-[10px] text-text-subtle">Status:</span>
                             <StatusBadge status={historyItem.status} className="text-[9px]" />
                           </div>
 
                           {entry && (
                             <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">📋 Checklist de Entrada</span>
+                              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">📋 Checklist de Entrada</span>
                               {formatChecklistItems(entry)}
                               {entry.password_pin?.has_password && (
-                                <p className="text-[10px] text-slate-500 bg-slate-950 px-2 py-1 rounded inline-block border border-slate-900 mt-1">
+                                <p className="text-[10px] text-text-subtle bg-surface-sunken px-2 py-1 rounded inline-block border border-slate-900 mt-1">
                                   Senha/PIN: <span className="text-white font-mono">{entry.password_pin.password_value || 'Sim'}</span>
                                 </p>
                               )}
                               {entry.general_notes && (
-                                <p className="text-[10px] text-slate-500 italic mt-1 bg-slate-950/20 p-2 rounded border border-slate-900">
+                                <p className="text-[10px] text-text-subtle italic mt-1 bg-surface-sunken/20 p-2 rounded border border-slate-900">
                                   Nota: &quot;{entry.general_notes}&quot;
                                 </p>
                               )}
@@ -1071,11 +1071,11 @@ export default function ClientDetailPage() {
                           )}
 
                           {exit && (
-                            <div className="space-y-1 pt-2 border-t border-slate-850/50">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">🚪 Checklist de Saída</span>
+                            <div className="space-y-1 pt-2 border-t border-border/50">
+                              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">🚪 Checklist de Saída</span>
                               {formatChecklistItems(exit)}
                               {exit.general_notes && (
-                                <p className="text-[10px] text-slate-500 italic mt-1 bg-slate-950/20 p-2 rounded border border-slate-900">
+                                <p className="text-[10px] text-text-subtle italic mt-1 bg-surface-sunken/20 p-2 rounded border border-slate-900">
                                   Nota: &quot;{exit.general_notes}&quot;
                                 </p>
                               )}

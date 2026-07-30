@@ -426,7 +426,7 @@ function PrintDocumentContent({
                 className="w-14 h-14 object-contain" 
               />
             ) : (
-              <div className="w-14 h-14 bg-black text-white font-extrabold flex items-center justify-center text-xl rounded-none">
+              <div className="w-14 h-14 bg-black text-white font-extrabold flex items-center justify-center text-xl rounded-xl">
                 TC
               </div>
             )}
@@ -437,7 +437,7 @@ function PrintDocumentContent({
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Ordem de Serviço</span>
+            <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest block">Ordem de Serviço</span>
             <span className="text-xl font-black font-mono text-black block mt-0.5">
               #{order.codigo_os || `OS-${order.id.slice(0, 8).toUpperCase()}`}
             </span>
@@ -454,15 +454,15 @@ function PrintDocumentContent({
           </h3>
           <div className="grid grid-cols-3 gap-4 text-xs">
             <div>
-              <span className="text-[9px] font-bold text-slate-500 uppercase block">Nome</span>
+              <span className="text-[9px] font-bold text-text-subtle uppercase block">Nome</span>
               <span className="font-bold text-black text-sm">{client?.name || 'Membro da Equipe'}</span>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-slate-500 uppercase block">Telefone</span>
+              <span className="text-[9px] font-bold text-text-subtle uppercase block">Telefone</span>
               <span className="font-semibold text-black font-mono">{client?.phone || '—'}</span>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-slate-500 uppercase block">E-mail</span>
+              <span className="text-[9px] font-bold text-text-subtle uppercase block">E-mail</span>
               <span className="font-semibold text-black font-mono">{client?.email || '—'}</span>
             </div>
           </div>
@@ -475,16 +475,16 @@ function PrintDocumentContent({
           </h3>
           <div className="space-y-3">
             <div>
-              <span className="text-[9px] font-bold text-slate-500 uppercase block">Especificação do Equipamento</span>
+              <span className="text-[9px] font-bold text-text-subtle uppercase block">Especificação do Equipamento</span>
               <span className="font-bold text-black text-xs">{order.equipment_details || '—'}</span>
             </div>
             <div className="border-t border-slate-200 pt-2">
-              <span className="text-[9px] font-bold text-slate-500 uppercase block">Defeito Relatado pelo Cliente</span>
+              <span className="text-[9px] font-bold text-text-subtle uppercase block">Defeito Relatado pelo Cliente</span>
               <p className="text-xs text-black italic mt-0.5">&quot;{order.reported_problem}&quot;</p>
             </div>
             {order.technical_report && (
               <div className="border-t border-slate-200 pt-2">
-                <span className="text-[9px] font-bold text-slate-500 uppercase block">Parecer / Laudo Técnico do Serviço</span>
+                <span className="text-[9px] font-bold text-text-subtle uppercase block">Parecer / Laudo Técnico do Serviço</span>
                 <p className="text-xs text-black font-medium mt-0.5 whitespace-pre-wrap">{order.technical_report}</p>
               </div>
             )}
@@ -537,7 +537,7 @@ function PrintDocumentContent({
           </h3>
           
           {selectedProducts.length === 0 && selectedServices.length === 0 && laborValue === 0 ? (
-            <p className="text-xs text-slate-500 italic py-2">Nenhum serviço ou peça vinculados.</p>
+            <p className="text-xs text-text-subtle italic py-2">Nenhum serviço ou peça vinculados.</p>
           ) : (
             <table className="w-full text-left text-xs border-collapse mt-2">
               <thead>
@@ -562,7 +562,7 @@ function PrintDocumentContent({
                 {/* Serviços do Catálogo */}
                 {selectedServices.map((item: any, idx: number) => (
                   <tr key={`serv-${idx}`} className="text-slate-800">
-                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-500 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Serviço</span></td>
+                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-text-subtle border border-slate-300 px-1 py-0.2 ml-1 rounded-xl uppercase">Serviço</span></td>
                     <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
                     <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
@@ -572,7 +572,7 @@ function PrintDocumentContent({
                 {/* Peças do Estoque */}
                 {selectedProducts.map((item: any, idx: number) => (
                   <tr key={`prod-${idx}`} className="text-slate-800">
-                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-slate-500 border border-slate-300 px-1 py-0.2 ml-1 rounded-none uppercase">Peça</span></td>
+                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-text-subtle border border-slate-300 px-1 py-0.2 ml-1 rounded-xl uppercase">Peça</span></td>
                     <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
                     <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
@@ -586,7 +586,7 @@ function PrintDocumentContent({
         {/* BLOCO 4: RESUMO FINANCEIRO (COM IMPEDIMENTO DE ORFANATO CSS) */}
         <div className="flex justify-between items-end gap-6 break-inside-avoid print:break-inside-avoid">
           <div className="flex-1 border border-black p-4 min-h-[100px] flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
+            <span className="text-[9px] font-bold text-text-subtle uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
             <p className="text-[10px] text-slate-700 leading-relaxed mt-1">
               Garantia de 90 dias referente aos serviços executados e peças trocadas. O equipamento retirado deve ser conferido no ato da entrega.
             </p>
@@ -625,13 +625,13 @@ function PrintDocumentContent({
       {/* RODAPÉ E ASSINATURA (COM IMPEDIMENTO DE ORFANATO CSS) */}
       <div className="mt-12 pt-6 border-t border-black grid grid-cols-2 gap-8 break-inside-avoid print:break-inside-avoid">
         <div>
-          <p className="text-[10px] font-bold text-slate-500 uppercase">Local e Data</p>
+          <p className="text-[10px] font-bold text-text-subtle uppercase">Local e Data</p>
           <p className="text-xs font-bold text-black mt-2 font-mono">{company.name}, {currentDate}</p>
         </div>
         <div className="text-center">
           <div className="border-b border-black w-full h-8" />
-          <p className="text-[9px] font-bold text-slate-500 uppercase mt-1.5">Assinatura do Cliente (Retirada)</p>
-          <p className="text-[9px] text-slate-500 font-medium">Declaro ter recebido o equipamento testado e em perfeito estado.</p>
+          <p className="text-[9px] font-bold text-text-subtle uppercase mt-1.5">Assinatura do Cliente (Retirada)</p>
+          <p className="text-[9px] text-text-subtle font-medium">Declaro ter recebido o equipamento testado e em perfeito estado.</p>
         </div>
       </div>
 

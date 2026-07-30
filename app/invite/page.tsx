@@ -153,7 +153,7 @@ function InviteContent() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 bg-[url('/noise.png')] bg-repeat">
       <div className="max-w-md w-full animate-in slide-in-from-bottom-4 duration-500">
-        <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 p-8 rounded-none">
+        <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 p-8 rounded-xl">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center rotate-3">
               <Building className="w-6 h-6 text-emerald-400 -rotate-3" />
@@ -192,7 +192,7 @@ function InviteContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!!inviteData?.email}
-                className="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono disabled:opacity-50"
+                className="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono disabled:opacity-50"
               />
             </div>
 
@@ -206,7 +206,7 @@ function InviteContent() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
             </div>
@@ -222,7 +222,7 @@ function InviteContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-none text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
             </div>

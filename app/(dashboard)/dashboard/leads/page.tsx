@@ -481,7 +481,7 @@ export default function LeadsFunnelPage() {
       case 'Instagram Ads': return 'bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20';
       case 'Indicação': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
       case 'Telefone': return 'bg-sky-500/10 text-sky-400 border border-sky-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+      default: return 'bg-slate-500/10 text-text-muted border border-slate-500/20';
     }
   };
 
@@ -500,10 +500,10 @@ export default function LeadsFunnelPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-h1 text-text flex items-center gap-2.5">
             <TrendingUp className="w-8 h-8 text-emerald-500" /> Funil de CRM & Leads
           </h1>
-          <p className="text-slate-400 mt-1">Gerencie e qualifique seus prospects antes de abrirem uma O.S.</p>
+          <p className="text-small text-text-muted mt-1">Gerencie e qualifique seus prospects antes de abrirem uma O.S.</p>
         </div>
         <Button
           onClick={() => {
@@ -517,7 +517,7 @@ export default function LeadsFunnelPage() {
       </div>
 
       {/* Warning/Instructions Info Bar */}
-      <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-none flex items-center gap-3.5 text-slate-300 text-xs">
+      <div className="p-4 bg-slate-900/50 border border-border rounded-xl flex items-center gap-3.5 text-text text-xs">
         <Info className="w-5 h-5 text-emerald-400 shrink-0" />
         <div>
           <span className="font-bold text-white block">CRM Conectado ao Supabase (com sincronização offline local)</span>
@@ -527,9 +527,9 @@ export default function LeadsFunnelPage() {
 
       {/* Kanban Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+        <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm text-slate-400">Carregando funil de vendas...</p>
+          <p className="text-sm text-text-muted">Carregando funil de vendas...</p>
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin select-none">
@@ -545,22 +545,22 @@ export default function LeadsFunnelPage() {
                 onDragEnter={(e) => handleDragEnter(e, col.id)}
                 onDragLeave={() => setDragOverColumn(null)}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className={`flex-1 min-w-[280px] lg:max-w-[320px] bg-slate-900/30 border border-slate-800/80 rounded-none p-4 flex flex-col min-h-[600px] transition-all duration-200 ${
+                className={`flex-1 min-w-[280px] lg:max-w-[320px] bg-slate-900/30 border border-border/80 rounded-xl p-4 flex flex-col min-h-[600px] transition-all duration-200 ${
                   isOver ? 'border-dashed border-emerald-500/50 bg-emerald-500/5 shadow-md shadow-emerald-500/5' : ''
                 }`}
               >
                 {/* Column Header */}
-                <div className="mb-4 pb-3 border-b border-slate-800/60">
+                <div className="mb-4 pb-3 border-b border-border/60">
                   <div className="flex justify-between items-center mb-1">
-                    <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-text flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${col.id === 'Novo Contato' ? 'bg-sky-400 animate-pulse' : col.id === 'Em Negociação' ? 'bg-amber-500' : col.id === 'Aguardando Equipamento' ? 'bg-indigo-400' : col.id === 'Ganho/Convertido' ? 'bg-emerald-400' : 'bg-rose-500'}`} />
                       {col.title}
                     </h3>
-                    <span className="text-[10px] font-bold bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800 text-slate-400">
+                    <span className="text-[10px] font-bold bg-slate-900 px-2 py-0.5 rounded-full border border-border text-text-muted">
                       {count}
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-text-subtle font-mono">
                     Total: R$ {sum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -568,7 +568,7 @@ export default function LeadsFunnelPage() {
                 {/* Cards Container */}
                 <div className="flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1">
                   {filteredLeads.length === 0 ? (
-                    <div className="h-28 border border-dashed border-slate-800/50 rounded-none flex items-center justify-center text-center p-4">
+                    <div className="h-28 border border-dashed border-border/50 rounded-xl flex items-center justify-center text-center p-4">
                       <p className="text-[11px] text-slate-600">Arraste um lead para esta etapa</p>
                     </div>
                   ) : (
@@ -582,7 +582,7 @@ export default function LeadsFunnelPage() {
                           setSelectedLead(lead);
                           setIsEditing(false);
                         }}
-                        className={`bg-slate-900 border border-slate-800/80 rounded-none p-4 shadow-sm hover:border-emerald-500/30 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.01] flex flex-col justify-between ${
+                        className={`bg-slate-900 border border-border/80 rounded-xl p-4 shadow-sm hover:border-emerald-500/30 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.01] flex flex-col justify-between ${
                           draggedLeadId === lead.id ? 'opacity-40 border-dashed border-emerald-500/20' : ''
                         }`}
                       >
@@ -592,7 +592,7 @@ export default function LeadsFunnelPage() {
                             <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${getOriginBadgeStyle(lead.origem)}`}>
                               {lead.origem}
                             </span>
-                            <span className="text-[9px] text-slate-500 font-semibold font-mono">
+                            <span className="text-[9px] text-text-subtle font-semibold font-mono">
                               {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
@@ -601,21 +601,21 @@ export default function LeadsFunnelPage() {
                             {lead.name}
                           </h4>
                           
-                          <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1.5 truncate">
-                            <Wrench className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <p className="text-xs text-text-muted font-semibold mt-1 flex items-center gap-1.5 truncate">
+                            <Wrench className="w-3.5 h-3.5 text-text-subtle shrink-0" />
                             {lead.equipment_info}
                           </p>
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-slate-800/55 flex justify-between items-center">
+                        <div className="mt-4 pt-3 border-t border-border/55 flex justify-between items-center">
                           <span className="text-xs text-emerald-400 font-extrabold font-mono flex items-center">
                             <DollarSign className="w-3 h-3 text-emerald-500" />
                             {lead.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                           
                           {lead.phone && (
-                            <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-slate-500" />
+                            <span className="text-[10px] text-text-subtle flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-text-subtle" />
                               {lead.phone}
                             </span>
                           )}
@@ -632,8 +632,8 @@ export default function LeadsFunnelPage() {
 
       {/* MODAL: Criar Novo Lead */}
       {isCreating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-850 rounded-none w-full max-w-md p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-sunken/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-md p-6 shadow-2xl relative">
             <Button
               onClick={() => setIsCreating(false)}
               variant="ghost"
@@ -644,77 +644,77 @@ export default function LeadsFunnelPage() {
               <X className="w-4.5 h-4.5" />
             </Button>
 
-            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <h3 className="text-h3 text-text mb-2 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-emerald-500" /> Novo Lead de CRM
             </h3>
-            <p className="text-xs text-slate-400 mb-6">Qualifique as necessidades do cliente antes de gerar o chamado técnico.</p>
+            <p className="text-xs text-text-muted mb-6">Qualifique as necessidades do cliente antes de gerar o chamado técnico.</p>
 
             <form onSubmit={handleCreateLead} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nome do Cliente</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Nome do Cliente</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     type="text"
                     required
                     placeholder="Ex: Ana Paula Souza"
                     value={nomeCliente}
                     onChange={(e) => setNomeCliente(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Telefone de Contato</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Telefone de Contato</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     type="text"
                     placeholder="Ex: (11) 98888-7777"
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Equipamento & Serviço Desejado</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Equipamento & Serviço Desejado</label>
                 <div className="relative">
-                  <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                   <input
                     type="text"
                     required
                     placeholder="Ex: MacBook Pro - Troca de Bateria"
                     value={equipamentoInteresse}
                     onChange={(e) => setEquipamentoInteresse(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Descrição do Problema (Opcional)</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Descrição do Problema (Opcional)</label>
                 <div className="relative">
-                  <FileText className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                  <FileText className="absolute left-3 top-3 w-4 h-4 text-text-subtle" />
                   <textarea
                     placeholder="Ex: O aparelho está esquentando e desligando sozinho..."
                     value={problemDescription}
                     onChange={(e) => setProblemDescription(e.target.value)}
                     rows={2}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Origem do Lead</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Origem do Lead</label>
                   <select
                     value={origem}
                     onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Instagram Ads">Instagram Ads</option>
@@ -725,7 +725,7 @@ export default function LeadsFunnelPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Valor Estimado (R$)</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Valor Estimado (R$)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
                     <input
@@ -734,18 +734,18 @@ export default function LeadsFunnelPage() {
                       min="0"
                       value={valorEstimado}
                       onChange={(e) => setValorEstimado(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 pl-9 pr-4 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-9 pr-4 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Etapa Inicial no Funil</label>
+                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Etapa Inicial no Funil</label>
                 <select
                   value={statusFunil}
                   onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                 >
                   <option value="Novo Contato">Novo Contato</option>
                   <option value="Em Negociação">Em Negociação</option>
@@ -754,7 +754,7 @@ export default function LeadsFunnelPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <Button type="button" variant="secondary" size="sm" onClick={() => setIsCreating(false)}>
                   Cancelar
                 </Button>
@@ -769,8 +769,8 @@ export default function LeadsFunnelPage() {
 
       {/* MODAL: Visualizar & Editar Detalhes do Lead */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-850 rounded-none w-full max-w-lg p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-sunken/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-lg p-6 shadow-2xl relative">
             <Button
               onClick={() => setSelectedLead(null)}
               variant="ghost"
@@ -789,29 +789,29 @@ export default function LeadsFunnelPage() {
                     <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${getOriginBadgeStyle(selectedLead.origem)}`}>
                       {selectedLead.origem}
                     </span>
-                    <span className="text-[10px] font-bold bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-slate-850">
+                    <span className="text-[10px] font-bold bg-surface-sunken text-text-muted px-2 py-0.5 rounded border border-border">
                       Fase: {selectedLead.status}
                     </span>
                   </div>
                   
-                  <h3 className="text-xl font-bold text-white">{selectedLead.name}</h3>
-                  <p className="text-xs text-slate-500 mt-1">Cadastrado em {new Date(selectedLead.created_at).toLocaleString('pt-BR')}</p>
+                  <h3 className="text-h3 text-text">{selectedLead.name}</h3>
+                  <p className="text-xs text-text-subtle mt-1">Cadastrado em {new Date(selectedLead.created_at).toLocaleString('pt-BR')}</p>
                 </div>
 
-                <div className="bg-slate-950/60 p-4 border border-slate-850 rounded-none space-y-3">
+                <div className="bg-surface-sunken/60 p-4 border border-border rounded-xl space-y-3">
                   <div className="flex items-start gap-3">
-                    <Wrench className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <Wrench className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Equipamento / Interesse</p>
+                      <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Equipamento / Interesse</p>
                       <p className="text-sm font-semibold text-slate-200">{selectedLead.equipment_info}</p>
                     </div>
                   </div>
 
                   {selectedLead.problem_description && (
                     <div className="flex items-start gap-3 pt-2 border-t border-slate-900/60">
-                      <FileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                      <FileText className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Descrição do Problema</p>
+                        <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Descrição do Problema</p>
                         <p className="text-sm text-slate-200 leading-relaxed">{selectedLead.problem_description}</p>
                       </div>
                     </div>
@@ -819,9 +819,9 @@ export default function LeadsFunnelPage() {
 
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-900/60">
                     <div className="flex items-start gap-3">
-                      <Phone className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                      <Phone className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Telefone</p>
+                        <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Telefone</p>
                         <p className="text-sm font-semibold text-slate-200">{selectedLead.phone || '—'}</p>
                       </div>
                     </div>
@@ -829,7 +829,7 @@ export default function LeadsFunnelPage() {
                     <div className="flex items-start gap-3">
                       <DollarSign className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Valor Estimado</p>
+                        <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Valor Estimado</p>
                         <p className="text-sm font-extrabold text-emerald-400 font-mono">
                           R$ {selectedLead.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
@@ -838,14 +838,14 @@ export default function LeadsFunnelPage() {
                   </div>
 
                   {selectedLead.status === 'Perdido' && selectedLead.motivo_perda && (
-                    <div className="pt-3 mt-3 border-t border-rose-500/10 bg-rose-500/5 p-3 rounded-none border border-rose-500/10">
+                    <div className="pt-3 mt-3 border-t border-rose-500/10 bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">
                       <p className="text-[10px] text-rose-400 uppercase font-bold tracking-wider mb-1">Motivo do Descarte (Perdido)</p>
                       <p className="text-xs text-rose-300 italic">&ldquo;{selectedLead.motivo_perda}&rdquo;</p>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-slate-850">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border">
                   <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       variant="secondary"
@@ -902,58 +902,58 @@ export default function LeadsFunnelPage() {
             ) : (
               // Modo Edição
               <form onSubmit={handleUpdateLead} className="space-y-4">
-                <h3 className="text-lg font-bold text-white mb-4">Editar Lead</h3>
+                <h3 className="text-h3 text-text mb-4">Editar Lead</h3>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nome do Cliente</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Nome do Cliente</label>
                   <input
                     type="text"
                     required
                     value={nomeCliente}
                     onChange={(e) => setNomeCliente(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Telefone</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Telefone</label>
                   <input
                     type="text"
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Equipamento / Interesse</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Equipamento / Interesse</label>
                   <input
                     type="text"
                     required
                     value={equipamentoInteresse}
                     onChange={(e) => setEquipamentoInteresse(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Descrição do Problema (Opcional)</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Descrição do Problema (Opcional)</label>
                   <textarea
                     placeholder="Descrição detalhada..."
                     value={problemDescription}
                     onChange={(e) => setProblemDescription(e.target.value)}
                     rows={2}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Origem</label>
+                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Origem</label>
                     <select
                       value={origem}
                       onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                     >
                       <option value="WhatsApp">WhatsApp</option>
                       <option value="Instagram Ads">Instagram Ads</option>
@@ -964,24 +964,24 @@ export default function LeadsFunnelPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Valor Estimado (R$)</label>
+                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Valor Estimado (R$)</label>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={valorEstimado}
                       onChange={(e) => setValorEstimado(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status do Funil</label>
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Status do Funil</label>
                   <select
                     value={statusFunil}
                     onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
                     <option value="Novo Contato">Novo Contato</option>
                     <option value="Em Negociação">Em Negociação</option>
@@ -991,7 +991,7 @@ export default function LeadsFunnelPage() {
                   </select>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
                   <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
                     Voltar
                   </Button>
@@ -1007,19 +1007,19 @@ export default function LeadsFunnelPage() {
 
       {/* MINI-MODAL: Confirmação de Justificativa de Perda (Motivo de Perda) */}
       {showLossReasonModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-800 rounded-none w-full max-w-sm p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-surface-sunken/85 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-sm p-5 shadow-2xl">
             <h4 className="font-bold text-white text-base mb-2 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-rose-500" /> Justificar Perda de Lead
             </h4>
-            <p className="text-xs text-slate-400 mb-4">Selecione ou digite o motivo pelo qual este lead foi cancelado/descartado:</p>
+            <p className="text-xs text-text-muted mb-4">Selecione ou digite o motivo pelo qual este lead foi cancelado/descartado:</p>
 
             <form onSubmit={handleLossReasonSubmit} className="space-y-4">
               <div className="space-y-2">
                 <select
                   value={lossReason}
                   onChange={(e) => setLossReason(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   required
                 >
                   <option value="">Selecione um motivo...</option>
@@ -1037,12 +1037,12 @@ export default function LeadsFunnelPage() {
                     placeholder="Digite o motivo customizado..."
                     required
                     onChange={(e) => setLossReason(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
                   />
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-850">
+              <div className="flex justify-end gap-3 pt-3 border-t border-border">
                 <Button
                   type="button"
                   variant="secondary"
@@ -1067,23 +1067,23 @@ export default function LeadsFunnelPage() {
 
       {/* MINI-MODAL: Confirmação de Duplicado (Opção B) */}
       {showDuplicateModal && duplicateClient && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-800 rounded-none w-full max-w-md p-6 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-surface-sunken/85 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-md p-6 shadow-2xl">
             <h4 className="font-bold text-white text-base mb-2 flex items-center gap-2">
               <Building className="w-5 h-5 text-amber-500" /> Vínculo de Cliente Encontrado
             </h4>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-text-muted mb-4">
               Encontramos um cadastro de cliente que coincide com os dados de contato do Lead:
             </p>
 
-            <div className="bg-slate-950 p-4 border border-slate-850 rounded-none space-y-1 mb-6 text-xs text-slate-300">
+            <div className="bg-surface-sunken p-4 border border-border rounded-xl space-y-1 mb-6 text-xs text-text">
               <p><strong>Nome:</strong> {duplicateClient.name}</p>
               {duplicateClient.phone && <p><strong>Telefone:</strong> {duplicateClient.phone}</p>}
               {duplicateClient.email && <p><strong>Email:</strong> {duplicateClient.email}</p>}
               <p><strong>Código Interno:</strong> #{duplicateClient.client_number}</p>
             </div>
 
-            <p className="text-xs text-slate-400 mb-6">
+            <p className="text-xs text-text-muted mb-6">
               Como você deseja vincular este novo chamado?
             </p>
 

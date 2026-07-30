@@ -8,7 +8,19 @@
 }
 
 @theme {
-  --color-slate-850: #1b253b;
+  /* ─────────────────────────────────────────────────────────────
+     Base grafite (decisão D2, Fase 5.1) — sai do preto puro
+     (slate-950 = #020617) para grafite com temperatura. Sobrescreve
+     as sombras padrão do Tailwind que o app ainda usa literalmente
+     (bg-slate-900, border-slate-800 etc.) para que o efeito apareça
+     em toda tela sem precisar migrar cada uma para os tokens
+     semânticos primeiro.
+     ───────────────────────────────────────────────────────────── */
+  --color-slate-950: #16181c;
+  --color-slate-900: #1d2024;
+  --color-slate-850: #202327;
+  --color-slate-800: #2a2e34;
+  --color-slate-700: #3a3f47;
 
   /* ─────────────────────────────────────────────────────────────
      Tipografia — superfamília IBM Plex (decisão D1).
@@ -65,19 +77,19 @@
      ───────────────────────────────────────────────────────────── */
 
   /* Superfícies — degraus reais, não opacidade empilhada */
-  --color-surface: #020617;         /* fundo da página */
-  --color-surface-raised: #0f172a;  /* card, sidebar, modal */
-  --color-surface-sunken: #010409;  /* input, célula de tabela, poço */
-  --color-surface-overlay: #1b253b; /* dropdown, popover, linha em hover */
+  --color-surface: #16181c;         /* fundo da página */
+  --color-surface-raised: #1d2024;  /* card, sidebar, modal */
+  --color-surface-sunken: #101215;  /* input, célula de tabela, poço */
+  --color-surface-overlay: #23262b; /* dropdown, popover, linha em hover */
 
   /* Divisórias */
-  --color-border: #1e293b;
-  --color-border-strong: #334155;
+  --color-border: #2a2e34;
+  --color-border-strong: #3a3f47;
 
   /* Texto — 3 níveis, todos AA sobre surface */
-  --color-text: #f1f5f9;
-  --color-text-muted: #94a3b8;
-  --color-text-subtle: #64748b;
+  --color-text: #e8e9eb;
+  --color-text-muted: #9ba1a9;
+  --color-text-subtle: #6b7280;
 
   /* Marca — um valor só (hoje são 4: emerald-400/450/500/600) */
   --color-brand: #10b981;
@@ -161,7 +173,7 @@ h1, h2 {
   background-color: var(--color-slate-600);
 }
 
-/* Profundidade visual para elementos interativos sharp (rounded-none) */
+/* Profundidade visual para elementos interativos sharp (rounded-xl) */
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {

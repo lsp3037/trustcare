@@ -18,6 +18,8 @@ import {
   Search,
   Wrench,
   PackageCheck,
+  DollarSign,
+  TrendingUp,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/WhatsAppButton';
 
@@ -73,10 +75,38 @@ const steps = [
 ];
 
 const provas = [
-  { label: 'Faturamento no mês', value: 'R$ 18.700,00' },
-  { label: 'Lucro líquido', value: 'R$ 8.200,00' },
-  { label: 'Ticket médio por OS', value: 'R$ 340,00' },
-  { label: 'OS em andamento', value: '27' },
+  {
+    label: 'Faturamento Realizado',
+    value: 'R$ 18.700,00',
+    icon: DollarSign,
+    tag: 'No período',
+    subtitle: 'Soma de OS concluídas / entregues',
+    iconClass: 'bg-emerald-500/15 text-emerald-400',
+  },
+  {
+    label: 'Lucro Líquido',
+    value: 'R$ 8.200,00',
+    icon: CheckCircle2,
+    tag: 'Livre',
+    subtitle: 'Já descontando custo de peças e fixos',
+    iconClass: 'bg-blue-500/15 text-blue-400',
+  },
+  {
+    label: 'Ticket Médio',
+    value: 'R$ 340,00',
+    icon: TrendingUp,
+    tag: 'Caixa',
+    subtitle: 'Valor médio por OS paga',
+    iconClass: 'bg-indigo-500/15 text-indigo-400',
+  },
+  {
+    label: 'OS em Andamento',
+    value: '27',
+    icon: ClipboardList,
+    tag: 'Em progresso',
+    subtitle: 'Aguardando aprovação ou peças',
+    iconClass: 'bg-amber-500/15 text-amber-400',
+  },
 ];
 
 const manifest = [
@@ -131,10 +161,10 @@ const manifest = [
 ];
 
 const ctaButton =
-  'inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-wider text-xs font-jetbrains px-6 py-3.5 rounded-none border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-[2px] transition-all cursor-pointer';
+  'inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-wider text-xs font-jetbrains px-6 py-2.5 rounded-full border-b-4 border-emerald-800 active:border-b-0 active:translate-y-[2px] hover:-translate-y-0.5 hover:shadow-md transition-all cursor-pointer';
 
 const ghostButton =
-  'inline-flex items-center justify-center gap-2 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-bold uppercase tracking-wider text-xs font-jetbrains px-6 py-3.5 rounded-none transition-colors cursor-pointer';
+  'inline-flex items-center justify-center gap-2 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-bold uppercase tracking-wider text-xs font-jetbrains px-6 py-2.5 rounded-full hover:-translate-y-0.5 hover:shadow-md transition-all cursor-pointer';
 
 const whatsappTextLink =
   'inline-flex items-center gap-2 text-slate-500 hover:text-emerald-400 text-xs font-jetbrains uppercase tracking-wider transition-colors cursor-pointer';
@@ -142,10 +172,10 @@ const whatsappTextLink =
 export default function LandingPage() {
   return (
     <ReactLenis root options={{ lerp: 0.1, anchors: true }}>
-    <div className="min-h-screen bg-black text-slate-100 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30">
 
       {/* ── Navigation ── */}
-      <nav className="fixed top-0 w-full z-50 border-b border-slate-900 bg-black/90 backdrop-blur-md">
+      <nav className="fixed top-0 w-full z-50 border-b border-slate-900 bg-slate-950/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2.5">
@@ -176,7 +206,7 @@ export default function LandingPage() {
 
           {/* Pitch */}
           <div>
-            <div className="inline-flex items-center gap-2 border border-slate-800 text-slate-400 text-[10px] font-jetbrains uppercase tracking-widest px-3 py-1.5 mb-8">
+            <div className="inline-flex items-center gap-3 bg-slate-800/40 backdrop-blur-md border border-white/10 text-slate-300 text-[10px] font-jetbrains uppercase tracking-widest px-8 py-3 rounded-full mb-8">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
               Feito em Cuiabá-MT, dentro de uma assistência técnica de verdade
             </div>
@@ -221,7 +251,7 @@ export default function LandingPage() {
                     <p className="text-[9px] text-slate-600 uppercase tracking-widest">Ordem de Serviço</p>
                     <p className="text-sm font-bold text-white mt-0.5">#TC-2026-0842</p>
                   </div>
-                  <span className="border-2 border-dashed border-emerald-500 text-emerald-400 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rotate-[-6deg]">
+                  <span className="border-2 border-dashed border-emerald-500 rounded-full text-emerald-400 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rotate-[-6deg]">
                     Aprovado
                   </span>
                 </div>
@@ -264,25 +294,24 @@ export default function LandingPage() {
       <section id="dores" className="py-24 px-4 sm:px-6 lg:px-8 border-b border-slate-900 bg-slate-950/40">
         <div className="max-w-6xl mx-auto">
           <div className="mb-14">
-            <p className="text-[10px] font-jetbrains text-emerald-500 uppercase tracking-widest mb-3">O Problema</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white max-w-xl">O caos não é falta de organização sua. É rodar uma assistência técnica sem sistema feito pra ela.</h2>
+            <h2 className="text-h1 text-text max-w-xl">O caos não é falta de organização sua. É rodar uma assistência técnica sem sistema feito pra ela.</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {dores.map((item, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {dores.map((item) => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.code}
-                  className={`flex items-start gap-5 py-7 border-t border-slate-900 ${idx % 2 === 0 ? 'md:pr-10' : 'md:pl-10 md:border-l'}`}
+                  className="bg-slate-950 border border-slate-900 rounded-2xl p-6 flex flex-col hover:-translate-y-0.5 hover:shadow-md transition-all group"
                 >
-                  <span className="border border-slate-800 text-rose-500 w-8 h-8 shrink-0 flex items-center justify-center mt-0.5">
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-bold text-white mb-1.5">{item.title}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                  <div className="mb-5">
+                    <div className="inline-flex p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-rose-500/15 text-rose-500">
+                      <Icon className="w-5 h-5" />
+                    </div>
                   </div>
+                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
                 </div>
               );
             })}
@@ -295,33 +324,84 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-16">
             <p className="text-[10px] font-jetbrains text-emerald-500 uppercase tracking-widest mb-3">Ciclo da Ordem de Serviço</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white max-w-xl">O mesmo fluxo que já acontece na sua bancada, só que rastreável do início ao fim.</h2>
+            <h2 className="text-h1 text-text max-w-xl">O mesmo fluxo que já acontece na sua bancada, só que rastreável do início ao fim.</h2>
           </div>
 
-          <div className="relative mb-24">
-            <div className="hidden md:block absolute top-5 left-0 right-0 h-px bg-slate-800" />
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-10 md:gap-4">
-              {steps.map((step) => {
-                const StepIcon = step.icon;
-                return (
-                  <div key={step.n} className="relative flex md:flex-col items-start md:items-center gap-4 md:gap-3 md:text-center">
-                    <div className="relative z-10 shrink-0 w-10 h-10 flex items-center justify-center bg-black border border-slate-700 text-emerald-400">
-                      <StepIcon className="w-4 h-4" />
+          <div className="relative mb-32 lg:mt-16 lg:mb-40">
+            {/* SVG Flow Line */}
+            <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
+              <svg className="w-full h-full opacity-30" preserveAspectRatio="none" viewBox="0 0 1000 400">
+                <path 
+                  d="M 166,80 C 50,150 50,250 166,320 C 333,320 333,200 500,200 C 666,200 666,80 833,80 C 950,150 950,250 833,320" 
+                  fill="none" 
+                  stroke="#10b981" 
+                  strokeWidth="3" 
+                  strokeDasharray="10 10" 
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+              {/* Coluna 1: Passos 1 e 2 */}
+              <div className="flex flex-col gap-6 lg:gap-24 lg:pt-8">
+                {[steps[0], steps[1]].map(step => {
+                  const StepIcon = step.icon;
+                  return (
+                    <div key={step.n} className="relative flex items-center gap-4 bg-slate-800/40 backdrop-blur-md border border-white/10 rounded-full p-3 pr-8 shadow-2xl hover:scale-105 hover:bg-slate-800/60 hover:border-white/20 transition-all duration-300 w-full lg:max-w-[340px]">
+                      <div className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                        <StepIcon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 py-1">
+                        <h3 className="text-[11px] font-jetbrains font-bold text-white uppercase tracking-widest mb-1 leading-tight">{step.title}</h3>
+                        <p className="text-[11px] text-slate-400 leading-snug">{step.desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xs font-jetbrains font-bold text-white uppercase tracking-wide">{step.title}</h3>
-                      <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-[180px] md:mx-auto">{step.desc}</p>
+                  );
+                })}
+              </div>
+
+              {/* Coluna 2: Passo 3 */}
+              <div className="flex flex-col justify-center gap-6 lg:gap-24">
+                {[steps[2]].map(step => {
+                  const StepIcon = step.icon;
+                  return (
+                    <div key={step.n} className="relative flex items-center gap-4 bg-slate-800/40 backdrop-blur-md border border-white/10 rounded-full p-3 pr-8 shadow-2xl hover:scale-105 hover:bg-slate-800/60 hover:border-white/20 transition-all duration-300 w-full lg:max-w-[340px] lg:mx-auto">
+                      <div className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                        <StepIcon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 py-1">
+                        <h3 className="text-[11px] font-jetbrains font-bold text-white uppercase tracking-widest mb-1 leading-tight">{step.title}</h3>
+                        <p className="text-[11px] text-slate-400 leading-snug">{step.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {/* Coluna 3: Passos 4 e 5 */}
+              <div className="flex flex-col gap-6 lg:gap-24 lg:pt-8">
+                {[steps[3], steps[4]].map(step => {
+                  const StepIcon = step.icon;
+                  return (
+                    <div key={step.n} className="relative flex items-center gap-4 bg-slate-800/40 backdrop-blur-md border border-white/10 rounded-full p-3 pr-8 shadow-2xl hover:scale-105 hover:bg-slate-800/60 hover:border-white/20 transition-all duration-300 w-full lg:max-w-[340px] lg:ml-auto">
+                      <div className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+                        <StepIcon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 py-1">
+                        <h3 className="text-[11px] font-jetbrains font-bold text-white uppercase tracking-widest mb-1 leading-tight">{step.title}</h3>
+                        <p className="text-[11px] text-slate-400 leading-snug">{step.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Prints reais da operação */}
           <div className="mb-14">
-            <p className="text-[10px] font-jetbrains text-emerald-500 uppercase tracking-widest mb-3">Sem Mockup, Sem Ilustração</p>
-            <h3 className="text-xl md:text-2xl font-bold text-white max-w-xl">Isto é o painel que a Trust Care usa na própria operação, agora — não uma tela de demonstração.</h3>
+            <h3 className="text-h2 text-text max-w-xl">Isto é o painel que a Trust Care usa na própria operação, agora — não uma tela de demonstração.</h3>
           </div>
 
           <div className="space-y-20">
@@ -331,15 +411,14 @@ export default function LandingPage() {
                 <Image src="/marketing/dashboard.png" alt="Painel de dashboard da Trust Care mostrando faturamento, OS em andamento e ticket médio reais" width={1260} height={623} className="w-full h-auto" />
               </div>
               <div className="order-2">
-                <span className="font-jetbrains text-[10px] text-slate-600 border border-slate-800 px-2 py-1">01</span>
-                <h4 className="text-lg font-bold text-white mt-4 mb-3">Controle da bancada num painel só</h4>
+                <h4 className="text-h3 text-text mb-3">Controle da bancada num painel só</h4>
                 <p className="text-sm text-slate-500 leading-relaxed mb-5">
                   Quantas OS estão em análise, qual o ticket médio, quanto já faturou no mês — tudo num só lugar, sem abrir três planilhas pra descobrir. Resolve o &ldquo;onde tá cada aparelho&rdquo;.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-900 bg-emerald-500/5 px-2.5 py-1 uppercase tracking-wider">R$ 4.106,00 faturados</span>
-                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-900 bg-emerald-500/5 px-2.5 py-1 uppercase tracking-wider">5 OS em andamento</span>
-                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-900 bg-emerald-500/5 px-2.5 py-1 uppercase tracking-wider">Ticket médio R$ 456,22</span>
+                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">R$ 4.106,00 faturados</span>
+                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">5 OS em andamento</span>
+                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Ticket médio R$ 456,22</span>
                 </div>
               </div>
             </div>
@@ -347,14 +426,13 @@ export default function LandingPage() {
             {/* Bloco 2 — Financeiro */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               <div className="order-2 lg:order-1">
-                <span className="font-jetbrains text-[10px] text-slate-600 border border-slate-800 px-2 py-1">02</span>
-                <h4 className="text-lg font-bold text-white mt-4 mb-3">Saiba se deu lucro, não só se girou dinheiro</h4>
+                <h4 className="text-h3 text-text mb-3">Saiba se deu lucro, não só se girou dinheiro</h4>
                 <p className="text-sm text-slate-500 leading-relaxed mb-5">
                   Custo de peça e despesa fixa entram automaticamente quando a OS fecha. O resultado é lucro líquido real — não uma estimativa de cabeça no fim do mês.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-900 bg-emerald-500/5 px-2.5 py-1 uppercase tracking-wider">Custos R$ 1.982,00</span>
-                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-900 bg-emerald-500/5 px-2.5 py-1 uppercase tracking-wider">Lucro líquido R$ 2.124,00</span>
+                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Custos R$ 1.982,00</span>
+                  <span className="text-[10px] font-jetbrains text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Lucro líquido R$ 2.124,00</span>
                 </div>
               </div>
               <div className="relative border border-slate-800 bg-slate-950 order-1 lg:order-2">
@@ -368,8 +446,7 @@ export default function LandingPage() {
                 <Image src="/marketing/estoque.png" alt="Painel de controle de estoque da Trust Care com produtos, SKU e status de disponibilidade" width={1266} height={680} className="w-full h-auto" />
               </div>
               <div className="order-2">
-                <span className="font-jetbrains text-[10px] text-slate-600 border border-slate-800 px-2 py-1">03</span>
-                <h4 className="text-lg font-bold text-white mt-4 mb-3">Peça sob controle, sem depender de memória</h4>
+                <h4 className="text-h3 text-text mb-3">Peça sob controle, sem depender de memória</h4>
                 <p className="text-sm text-slate-500 leading-relaxed">
                   Peça usada numa OS desconta do estoque sozinha. Você sabe o que tem na prateleira antes de prometer prazo pro cliente — e antes de perder venda por falta de peça.
                 </p>
@@ -383,20 +460,35 @@ export default function LandingPage() {
       <section className="py-24 px-4 sm:px-6 lg:px-8 border-b border-slate-900 bg-slate-950/40">
         <div className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-14">
-            <p className="text-[10px] font-jetbrains text-emerald-500 uppercase tracking-widest mb-3">Por Que Confiar</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-5">Isso não nasceu numa reunião de startup. Nasceu numa bancada em Cuiabá-MT.</h2>
+            <h2 className="text-h1 text-text mb-5">Isso não nasceu numa reunião de startup. Nasceu numa bancada em Cuiabá-MT.</h2>
             <p className="text-sm md:text-base text-slate-400 leading-relaxed">
               A Trust Care começou como uma assistência técnica de verdade — manutenção de PC, upgrade de hardware, suporte técnico pro cliente que só quer o computador funcionando. O sistema que você viu acima foi construído pra resolver o caos da nossa própria operação. Só depois de rodar isso na prática, todos os dias, com cliente de verdade, é que abrimos pra outras assistências técnicas usarem.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-900 border border-slate-900">
-            {provas.map((p) => (
-              <div key={p.label} className="bg-black p-6">
-                <p className="font-jetbrains text-xl md:text-2xl font-bold text-emerald-400 mb-1">{p.value}</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider">{p.label}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {provas.map((p) => {
+              const Icon = p.icon;
+              return (
+                <div key={p.label} className="bg-slate-950 border border-slate-900 rounded-2xl p-5 flex flex-col hover:-translate-y-0.5 hover:shadow-md transition-all group">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2.5 rounded-full backdrop-blur-md border border-white/5 ${p.iconClass}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    {p.tag && (
+                      <span className="border border-slate-800 text-slate-500 text-[10px] uppercase font-jetbrains tracking-wider px-2.5 py-1 rounded-full group-hover:border-slate-700 transition-colors">
+                        {p.tag}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-400 text-sm font-medium">{p.label}</p>
+                  <h3 className="text-2xl font-bold text-white mt-1 mb-2 font-mono">{p.value}</h3>
+                  {p.subtitle && (
+                    <p className="text-xs text-slate-500">{p.subtitle}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <p className="text-[11px] text-slate-600 mt-3 font-jetbrains uppercase tracking-wider">Faturamento, lucro líquido e ticket médio calculados automaticamente pelo sistema — sem planilha, sem calculadora.</p>
         </div>
@@ -406,25 +498,24 @@ export default function LandingPage() {
       <section id="bancada" className="py-24 px-4 sm:px-6 lg:px-8 border-b border-slate-900">
         <div className="max-w-6xl mx-auto">
           <div className="mb-14">
-            <p className="text-[10px] font-jetbrains text-emerald-500 uppercase tracking-widest mb-3">O Que Vai Na Bancada</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white max-w-xl">Só o que resolve o caos que você já conhece. Nada de lista solta de feature.</h2>
+            <h2 className="text-h1 text-text max-w-xl">Só o que resolve o caos que você já conhece. Nada de lista solta de feature.</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {manifest.map((item, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {manifest.map((item) => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.code}
-                  className={`flex items-start gap-5 py-6 border-t border-slate-900 ${idx % 2 === 0 ? 'md:pr-10' : 'md:pl-10 md:border-l'}`}
+                  className="bg-slate-950 border border-slate-900 rounded-2xl p-6 flex flex-col hover:-translate-y-0.5 hover:shadow-md transition-all group"
                 >
-                  <span className="border border-slate-800 text-emerald-500 w-8 h-8 shrink-0 flex items-center justify-center mt-0.5">
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-bold text-white mb-1.5">{item.title}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                  <div className="mb-5">
+                    <div className="inline-flex p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-emerald-500/15 text-emerald-400">
+                      <Icon className="w-5 h-5" />
+                    </div>
                   </div>
+                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
                 </div>
               );
             })}
@@ -437,12 +528,12 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <p className="text-[10px] font-jetbrains text-emerald-500 uppercase tracking-widest mb-3">Planos</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">O preço de um lanche para profissionalizar sua oficina inteira.</h2>
+            <h2 className="text-h1 text-text mb-3">O preço de um lanche para profissionalizar sua oficina inteira.</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-900 max-w-5xl mx-auto border border-slate-900">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-900 max-w-5xl mx-auto border border-slate-900 rounded-2xl shadow-sm overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all">
             {/* Starter */}
-            <div className="bg-black p-8 flex flex-col relative">
+            <div className="bg-slate-950 p-8 flex flex-col relative">
               <div className="mb-6">
                 <h3 className="font-jetbrains text-sm font-bold uppercase tracking-wide text-white mb-1.5">Starter</h3>
                 <p className="text-slate-500 text-xs">Para assistências de um homem só.</p>
@@ -462,8 +553,8 @@ export default function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="bg-black p-8 flex flex-col relative">
-              <span className="absolute top-6 right-6 border-2 border-dashed border-emerald-500 text-emerald-400 text-[9px] font-jetbrains font-bold uppercase tracking-widest px-2 py-1 rotate-[-4deg]">
+            <div className="bg-slate-950 p-8 flex flex-col relative group">
+              <span className="absolute top-6 right-6 border-2 border-dashed border-emerald-500 rounded-full text-emerald-400 text-[9px] font-jetbrains font-bold uppercase tracking-widest px-3 py-1.5 rotate-[-4deg]">
                 Mais Usado
               </span>
               <div className="mb-6">
@@ -485,7 +576,7 @@ export default function LandingPage() {
             </div>
 
             {/* Premium */}
-            <div className="bg-black p-8 flex flex-col relative">
+            <div className="bg-slate-950 p-8 flex flex-col relative">
               <div className="mb-6">
                 <h3 className="font-jetbrains text-sm font-bold uppercase tracking-wide text-white mb-1.5">Premium</h3>
                 <p className="text-slate-500 text-xs">Para assistências de alto volume.</p>
@@ -509,7 +600,7 @@ export default function LandingPage() {
 
       {/* ── Final CTA ── */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="font-jetbrains text-2xl md:text-3xl font-bold text-white uppercase tracking-tight max-w-xl mx-auto mb-4">
+        <h2 className="text-h1 text-text uppercase tracking-tight max-w-xl mx-auto mb-4">
           Sua bancada sob controle. Seu cliente parou de ligar.
         </h2>
         <p className="text-slate-500 text-sm mb-8">Sem cartão de crédito · Cancele quando quiser</p>

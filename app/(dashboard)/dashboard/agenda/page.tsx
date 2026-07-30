@@ -129,28 +129,28 @@ export default function AgendaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-sunken flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6 bg-slate-950 min-h-screen text-slate-200 font-sans">
+    <div className="p-8 space-y-6 bg-surface-sunken min-h-screen text-slate-200 font-sans">
       {/* Header com Design Premium */}
-      <div className="flex flex-wrap items-center justify-between gap-6 border-b border-slate-800 pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-6 border-b border-border pb-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
+          <h1 className="text-h1 text-text flex items-center gap-3">
             <CalendarIcon className="w-6 h-6 text-emerald-500" />
             Agenda de Entregas & Prazos
           </h1>
-          <p className="text-slate-400 text-xs">
+          <p className="text-small text-text-muted">
             Acompanhe o cronograma de entrega das Ordens de Serviço organizadas por prazo planejado.
           </p>
         </div>
 
         {/* Controles de Navegação Flutuantes */}
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-none shadow-md">
+        <div className="flex items-center gap-1 bg-slate-900 border border-border p-1.5 rounded-full backdrop-blur-md border border-white/5 shadow-md">
           <Button variant="ghost" size="sm" className="px-1.5" onClick={handlePrevMonth}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -164,7 +164,7 @@ export default function AgendaPage() {
       </div>
 
       {errorMsg && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/25 text-rose-400 flex items-center gap-2.5 rounded-none">
+        <div className="p-4 bg-rose-500/10 border border-rose-500/25 text-rose-400 flex items-center gap-2.5 rounded-xl">
           <AlertCircle className="w-5 h-5" />
           <p className="text-sm font-semibold">{errorMsg}</p>
         </div>
@@ -175,11 +175,11 @@ export default function AgendaPage() {
         
         {/* Lado Esquerdo: Calendário */}
         <div className="xl:col-span-3 space-y-6">
-          <div className="border border-slate-800 bg-slate-900 shadow-sm overflow-hidden rounded-none">
+          <div className="border border-border bg-slate-900 shadow-sm overflow-hidden rounded-xl">
             {/* Dias da Semana */}
-            <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-950/40 text-center">
+            <div className="grid grid-cols-7 border-b border-border bg-surface-sunken/40 text-center">
               {WEEKDAYS.map((day) => (
-                <div key={day} className="py-3 text-xs font-bold uppercase tracking-wider text-slate-400 border-r border-slate-800/30 last:border-0">
+                <div key={day} className="py-3 text-xs font-bold uppercase tracking-wider text-text-muted border-r border-border/30 last:border-0">
                   {day}
                 </div>
               ))}
@@ -196,21 +196,21 @@ export default function AgendaPage() {
                 return (
                   <div
                     key={idx}
-                    className={`border-r border-b border-slate-800 p-2.5 flex flex-col justify-between transition-colors overflow-hidden group ${
-                      isCurrentMonth ? 'bg-transparent' : 'bg-slate-950/30 text-slate-600'
+                    className={`border-r border-b border-border p-2.5 flex flex-col justify-between transition-colors overflow-hidden group ${
+                      isCurrentMonth ? 'bg-transparent' : 'bg-surface-sunken/30 text-slate-600'
                     } ${isToday ? 'bg-emerald-500/[0.03]' : ''}`}
                   >
                     {/* Cabeçalho do Dia */}
                     <div className="flex items-center justify-between">
                       <span className={`text-xs font-bold font-mono ${
                         isToday 
-                          ? 'bg-emerald-600 text-white w-6 h-6 flex items-center justify-center font-black rounded-none shadow-sm'
-                          : isCurrentMonth ? 'text-slate-300' : 'text-slate-600'
+                          ? 'bg-emerald-600 text-white w-6 h-6 flex items-center justify-center font-black rounded-xl shadow-sm'
+                          : isCurrentMonth ? 'text-text' : 'text-slate-600'
                       }`}>
                         {date.getDate()}
                       </span>
                       {dayOrders.length > 0 && (
-                        <span className="text-[9px] font-extrabold bg-slate-850 border border-slate-800 text-slate-300 px-1.5 py-0.5 rounded-none font-mono">
+                        <span className="text-[9px] font-extrabold bg-slate-850 border border-border text-text px-1.5 py-0.5 rounded-xl font-mono">
                           {dayOrders.length} OS
                         </span>
                       )}
@@ -225,7 +225,7 @@ export default function AgendaPage() {
                           <div
                             key={os.id}
                             onClick={() => router.push(`/dashboard/orders/${os.id}`)}
-                            className={`text-[10px] p-1.5 border rounded-none cursor-pointer flex flex-col gap-0.5 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150 ${
+                            className={`text-[10px] p-1.5 border rounded-xl cursor-pointer flex flex-col gap-0.5 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150 ${
                               isCompleted
                                 ? 'bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                                 : isHighPriority
@@ -237,7 +237,7 @@ export default function AgendaPage() {
                             <span className="font-extrabold font-mono tracking-wider">
                               {os.codigo_os || 'OS'}
                             </span>
-                            <span className="truncate text-slate-400 font-semibold leading-tight">
+                            <span className="truncate text-text-muted font-semibold leading-tight">
                               {os.equipment_details}
                             </span>
                           </div>
@@ -251,33 +251,33 @@ export default function AgendaPage() {
           </div>
 
           {/* Legenda de Status / Prioridades */}
-          <div className="flex flex-wrap items-center gap-6 text-xs border border-slate-800 bg-slate-900 p-4 shadow-sm">
-            <span className="font-bold text-slate-400 uppercase tracking-wider">Legendas de Prazo:</span>
+          <div className="flex flex-wrap items-center gap-6 text-xs border border-border bg-slate-900 p-4 shadow-sm">
+            <span className="font-bold text-text-muted uppercase tracking-wider">Legendas de Prazo:</span>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-emerald-500/10 border border-emerald-500/25" />
-              <span className="text-slate-300">Pronto / Finalizado</span>
+              <span className="text-text">Pronto / Finalizado</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-rose-500/10 border border-rose-500/25" />
-              <span className="text-slate-300">Urgente (Prioridade Alta)</span>
+              <span className="text-text">Urgente (Prioridade Alta)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-500/10 border border-blue-500/25" />
-              <span className="text-slate-300">Prazos de Bancada (Normal)</span>
+              <span className="text-text">Prazos de Bancada (Normal)</span>
             </div>
           </div>
         </div>
 
         {/* Lado Direito: Sidebar "Próximas OS" */}
         <div className="space-y-6">
-          <div className="border border-slate-800 bg-slate-900 p-5 shadow-sm rounded-none">
-            <div className="flex items-center gap-2 mb-4 border-b border-slate-800 pb-3">
+          <div className="border border-border bg-slate-900 p-5 shadow-sm rounded-xl">
+            <div className="flex items-center gap-2 mb-4 border-b border-border pb-3">
               <Clock className="w-4 h-4 text-emerald-500" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">Próximos 7 Dias</h2>
             </div>
 
             {upcomingOrders.length === 0 ? (
-              <div className="text-center py-6 text-slate-500 text-xs italic space-y-2">
+              <div className="text-center py-6 text-text-subtle text-xs italic space-y-2">
                 <CheckCircle2 className="w-8 h-8 mx-auto text-slate-700 stroke-1" />
                 <p>Nenhum prazo pendente para a próxima semana.</p>
               </div>
@@ -294,15 +294,15 @@ export default function AgendaPage() {
                     <div 
                       key={os.id}
                       onClick={() => router.push(`/dashboard/orders/${os.id}`)}
-                      className={`p-3.5 border cursor-pointer hover:border-slate-700 transition-all duration-150 rounded-none flex flex-col gap-2 ${
-                        isHigh ? 'bg-rose-500/[0.01] border-rose-950/30' : 'bg-slate-950/20 border-slate-850'
+                      className={`p-3.5 border cursor-pointer hover:border-slate-700 transition-all duration-150 rounded-xl flex flex-col gap-2 ${
+                        isHigh ? 'bg-rose-500/[0.01] border-rose-950/30' : 'bg-surface-sunken/20 border-border'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-extrabold font-mono text-emerald-500">
                           {os.codigo_os}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1 font-mono">
+                        <span className="text-[10px] text-text-subtle font-bold flex items-center gap-1 font-mono">
                           <Clock className="w-3 h-3" /> {dateLabel}
                         </span>
                       </div>
@@ -311,11 +311,11 @@ export default function AgendaPage() {
                         <h4 className="text-xs font-bold text-slate-200 truncate">{os.equipment_details}</h4>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 uppercase ${
-                            isHigh ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800/60 text-slate-400'
+                            isHigh ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800/60 text-text-muted'
                           }`}>
                             {os.priority}
                           </span>
-                          <span className="text-[9px] text-slate-400 truncate font-semibold">
+                          <span className="text-[9px] text-text-muted truncate font-semibold">
                             {os.status}
                           </span>
                         </div>

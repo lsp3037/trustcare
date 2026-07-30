@@ -18,7 +18,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const BASE =
-  'inline-flex items-center gap-1.5 border px-2 py-0.5 text-xs font-semibold whitespace-nowrap';
+  'inline-flex items-center gap-1.5 border px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200';
 
 export function Badge({ tone = 'neutral', className, children, ...props }: BadgeProps) {
   return (

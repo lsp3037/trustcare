@@ -24,10 +24,10 @@ export function Card({
   return (
     <div
       className={cn(
-        'bg-surface-raised border border-border',
+        'bg-surface-raised border border-border rounded-2xl shadow-sm',
         PADDING[padding],
         interactive &&
-          'cursor-pointer transition-colors duration-150 hover:border-border-strong',
+          'cursor-pointer transition-all duration-200 hover:border-border-strong hover:shadow-md hover:-translate-y-0.5',
         className,
       )}
       {...props}

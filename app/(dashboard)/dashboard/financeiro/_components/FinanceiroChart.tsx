@@ -30,11 +30,11 @@ interface FinanceiroBarChartProps {
 const CustomTooltipBar = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-none p-3 text-xs shadow-xl space-y-1">
-      <p className="text-slate-300 font-semibold mb-1">{label}</p>
+    <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs shadow-xl space-y-1">
+      <p className="text-text font-semibold mb-1">{label}</p>
       {payload.map((item: any, index: number) => (
         <div key={index} className="flex justify-between gap-4">
-          <span className="text-slate-400">{item.name === 'faturamento' ? 'Recebido' : 'Custos/Despesas'}:</span>
+          <span className="text-text-muted">{item.name === 'faturamento' ? 'Recebido' : 'Custos/Despesas'}:</span>
           <span className={`font-semibold tabular-nums ${item.name === 'faturamento' ? 'text-emerald-400' : 'text-rose-400'}`}>
             R$ {Number(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </span>
@@ -90,8 +90,8 @@ interface FinanceiroPieChartProps {
 const CustomTooltipPie = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-none p-3 text-xs shadow-xl">
-      <p className="text-slate-300 font-medium">{payload[0].name}</p>
+    <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs shadow-xl">
+      <p className="text-text font-medium">{payload[0].name}</p>
       <p className="text-emerald-400 tabular-nums font-semibold">
         R$ {Number(payload[0].value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
       </p>

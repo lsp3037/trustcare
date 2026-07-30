@@ -423,7 +423,7 @@ export default function FinanceiroPage() {
 
   if (userLoading || (!isAdmin && !userLoading)) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-sunken flex items-center justify-center">
         <span className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -447,7 +447,7 @@ export default function FinanceiroPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold text-white tracking-tight">Financeiro</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-text-muted mt-0.5">
             Controle de fluxo de caixa, custos de peças e lucratividade
           </p>
         </div>
@@ -472,7 +472,7 @@ export default function FinanceiroPage() {
               ];
               exportFinancialToCsv(transactions);
             }}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 bg-slate-950 flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-xs font-semibold text-text hover:text-white border border-border hover:border-slate-700 bg-surface-sunken flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Exportar Relatório CSV"
           >
             <Download className="w-3.5 h-3.5 text-emerald-500" />
@@ -480,7 +480,7 @@ export default function FinanceiroPage() {
           </button>
           <button
             onClick={fetchData}
-            className="p-2 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 rounded-none transition-colors"
+            className="p-2 text-text-muted hover:text-white border border-white/5 hover:border-white/10 rounded-full backdrop-blur-md transition-colors"
             title="Atualizar"
           >
             <RefreshCw className="w-4 h-4" />
@@ -523,8 +523,8 @@ export default function FinanceiroPage() {
 
       {/* ── Charts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-none p-5">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+        <div className="lg:col-span-2 bg-slate-900 border border-border rounded-xl p-5">
+          <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">
             Comparativo Faturamento vs Custos
           </h2>
           {loading ? (
@@ -535,8 +535,8 @@ export default function FinanceiroPage() {
             <FinanceiroBarChart data={barData} />
           )}
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-none p-5">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+        <div className="bg-slate-900 border border-border rounded-xl p-5">
+          <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">
             Faturamento por Forma de Pagamento
           </h2>
           {loading ? (
@@ -550,9 +550,9 @@ export default function FinanceiroPage() {
       </div>
 
       {/* ── Tabs: Pendentes / Recebidos / Despesas Gerais ── */}
-      <div className="bg-slate-900 border border-slate-800 rounded-none">
+      <div className="bg-slate-900 border border-border rounded-xl">
         {/* Tab bar */}
-        <div className="flex border-b border-slate-800 overflow-x-auto">
+        <div className="flex border-b border-border overflow-x-auto">
           {(['pendentes', 'recebidos', 'despesas'] as const).map((tab) => (
             <button
               key={tab}
@@ -560,7 +560,7 @@ export default function FinanceiroPage() {
               className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === tab
                   ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-300'
+                  : 'border-transparent text-text-subtle hover:text-text'
               }`}
             >
               {tab === 'pendentes'
@@ -574,7 +574,7 @@ export default function FinanceiroPage() {
             {activeTab === 'despesas' && (
               <button
                 onClick={() => setIsAddExpenseOpen(true)}
-                className="flex items-center gap-1 text-xs bg-rose-600 hover:bg-rose-500 text-white font-medium px-3 py-1.5 rounded-none transition-colors"
+                className="flex items-center gap-1 text-xs bg-rose-600 hover:bg-rose-500 text-white font-medium px-3 py-1.5 rounded-xl transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Nova Despesa
@@ -588,7 +588,7 @@ export default function FinanceiroPage() {
                     ? handleExportPaid
                     : handleExportExpenses
               }
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-slate-600 px-3 py-1.5 rounded-none transition-colors whitespace-nowrap"
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-white border border-slate-700 hover:border-slate-600 px-3 py-1.5 rounded-xl transition-colors whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5" />
               Exportar CSV
@@ -618,28 +618,28 @@ export default function FinanceiroPage() {
             /* Despesas Gerais Table */
             <div className="overflow-x-auto">
               {periodExpenses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-500 gap-2">
+                <div className="flex flex-col items-center justify-center py-12 text-text-subtle gap-2">
                   <AlertTriangle className="w-8 h-8 opacity-30 text-rose-500" />
                   <p className="text-sm">Nenhuma despesa geral registrada neste período.</p>
                 </div>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-800">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Data</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Descrição</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Categoria</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Valor</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Ações</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Data</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Descrição</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Categoria</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Valor</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {periodExpenses.map((exp) => (
                       <tr
                         key={exp.id}
-                        className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
+                        className="border-b border-border/60 hover:bg-slate-800/40 transition-colors"
                       >
-                        <td className="py-3 px-4 text-slate-400 text-xs font-medium">
+                        <td className="py-3 px-4 text-text-muted text-xs font-medium">
                           {exp.expense_date ? new Date(exp.expense_date).toLocaleDateString('pt-BR') : '—'}
                         </td>
                         <td className="py-3 px-4 text-slate-200 font-semibold truncate max-w-[200px]">
@@ -654,7 +654,7 @@ export default function FinanceiroPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-[11px] font-semibold px-2 py-0.5 border border-slate-700 bg-slate-800/80 text-slate-300 rounded-none">
+                          <span className="text-[11px] font-semibold px-2 py-0.5 border border-slate-700 bg-slate-800/80 text-text rounded-xl">
                             {exp.category}
                           </span>
                         </td>
@@ -665,7 +665,7 @@ export default function FinanceiroPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => handleEditExpense(exp)}
-                              className="text-slate-500 hover:text-blue-400 transition-colors p-1 rounded-none"
+                              className="text-text-subtle hover:text-blue-400 transition-colors p-1 rounded-xl"
                               title="Editar Despesa"
                             >
                               <Pencil className="w-4 h-4" />
@@ -674,7 +674,7 @@ export default function FinanceiroPage() {
                             {exp.recurrence && exp.recurrence !== 'Única' && !exp.end_date && (
                               <button
                                 onClick={() => handleEndRecurrence(exp.id)}
-                                className="text-slate-500 hover:text-amber-500 transition-colors p-1 rounded-none"
+                                className="text-text-subtle hover:text-amber-500 transition-colors p-1 rounded-xl"
                                 title="Encerrar Recorrência"
                               >
                                 <CalendarOff className="w-4 h-4" />
@@ -683,7 +683,7 @@ export default function FinanceiroPage() {
 
                             <button
                               onClick={() => handleDeleteExpense(exp.id)}
-                              className="text-slate-500 hover:text-rose-500 transition-colors p-1 rounded-none"
+                              className="text-text-subtle hover:text-rose-500 transition-colors p-1 rounded-xl"
                               title="Excluir Despesa"
                             >
                               <Trash2 className="w-4 h-4" />

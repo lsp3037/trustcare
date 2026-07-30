@@ -406,10 +406,10 @@ export default function InventoryPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-h1 text-text flex items-center gap-2.5">
             <Package className="w-8 h-8 text-emerald-500" /> Estoque de Produtos
           </h1>
-          <p className="text-slate-400 mt-1">Gerencie peças de reposição e componentes da assistência.</p>
+          <p className="text-small text-text-muted mt-1">Gerencie peças de reposição e componentes da assistência.</p>
         </div>
         {!isCreating && (
           <div className="flex items-center gap-3">
@@ -434,11 +434,11 @@ export default function InventoryPage() {
       </div>
 
       {isCreating ? (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-none p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+        <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
             <div>
-              <h2 className="text-xl font-bold text-white">Cadastrar Produto / Peça</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Cadastre um item no inventário.</p>
+              <h2 className="text-h2 text-text">Cadastrar Produto / Peça</h2>
+              <p className="text-xs text-text-muted mt-0.5">Cadastre um item no inventário.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
               Cancelar
@@ -447,27 +447,27 @@ export default function InventoryPage() {
 
           <form onSubmit={handleCreateProduct} className="space-y-4">
             {formSuccess && (
-              <div className="p-4 rounded-none bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
                 <CheckCircle2 className="w-5 h-5" />
                 <p className="font-semibold text-sm">Produto cadastrado com sucesso!</p>
               </div>
             )}
 
             {formError && (
-              <div className="p-3 rounded-none bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
                 {formError}
               </div>
             )}
 
             {/* Descrição / Nome do Produto */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Descrição / Nome do Produto</label>
+              <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Descrição / Nome do Produto</label>
               <input
                 type="text"
                 placeholder="Ex: SSD 1TB Kingston NV2 NVMe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />
             </div>
@@ -475,11 +475,11 @@ export default function InventoryPage() {
             <div className={`grid grid-cols-1 ${category === 'Memória RAM' || category === 'SSD' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
               {/* Categoria */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Categoria</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Categoria</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2.5 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   required
                 >
                   <option value="">Selecione uma categoria...</option>
@@ -491,13 +491,13 @@ export default function InventoryPage() {
 
               {/* Marca */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Marca</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Marca</label>
                 <input
                   type="text"
                   placeholder="Ex: Kingston"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -505,13 +505,13 @@ export default function InventoryPage() {
               {/* Capacidade (Apenas se não for RAM nem SSD) */}
               {category !== 'Memória RAM' && category !== 'SSD' && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Capacidade</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Capacidade</label>
                   <input
                     type="text"
                     placeholder="Ex: 1TB / 8GB / 10m"
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               )}
@@ -519,13 +519,13 @@ export default function InventoryPage() {
 
             {/* Campos Condicionais para Memória RAM */}
             {category === 'Memória RAM' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-sunken/40 p-4 border border-slate-900 rounded-xl">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aplicação</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Aplicação</label>
                   <select
                     value={ramApp}
                     onChange={(e) => setRamApp(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -534,11 +534,11 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tecnologia</label>
                   <select
                     value={ramTech}
                     onChange={(e) => setRamTech(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -550,21 +550,21 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Velocidade</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Velocidade</label>
                   <input
                     type="text"
                     placeholder="Ex: 3200MHz"
                     value={ramSpeed}
                     onChange={(e) => setRamSpeed(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB)</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tamanho (GB)</label>
                   <select
                     value={ramGb}
                     onChange={(e) => setRamGb(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -581,13 +581,13 @@ export default function InventoryPage() {
 
             {/* Campos Condicionais para SSD */}
             {category === 'SSD' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/40 p-4 border border-slate-900 rounded-none">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-sunken/40 p-4 border border-slate-900 rounded-xl">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tecnologia SSD</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tecnologia SSD</label>
                   <select
                     value={ssdTech}
                     onChange={(e) => setSsdTech(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -597,11 +597,11 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tamanho (GB/TB)</label>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tamanho (GB/TB)</label>
                   <select
                     value={ssdGb}
                     onChange={(e) => setSsdGb(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 px-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                     required
                   >
                     <option value="">Selecione...</option>
@@ -621,26 +621,26 @@ export default function InventoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* SKU */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">SKU / Código</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">SKU / Código</label>
                 <input
                   type="text"
                   placeholder="Gerado automaticamente..."
                   value={sku}
                   disabled
-                  className="w-full bg-slate-950/55 border border-slate-850 rounded-none py-2 px-3 text-sm text-slate-400 focus:outline-none cursor-not-allowed opacity-60 transition-colors"
+                  className="w-full bg-surface-sunken/55 border border-border rounded-xl py-2 px-3 text-sm text-text-muted focus:outline-none cursor-not-allowed opacity-60 transition-colors"
                   required
                 />
               </div>
 
               {/* Alerta de Estoque Mínimo */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estoque Mínimo (Alerta)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Estoque Mínimo (Alerta)</label>
                 <input
                   type="number"
                   min="0"
                   value={minStockAlert}
                   onChange={(e) => setMinStockAlert(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -649,48 +649,48 @@ export default function InventoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Quantidade Inicial */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Qtd. Inicial</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Qtd. Inicial</label>
                 <input
                   type="number"
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
 
               {/* Preço de Custo */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Preço de Custo (R$)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Preço de Custo (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   value={costPrice}
                   onChange={(e) => setCostPrice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
 
               {/* Preço de Venda */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Preço de Venda (R$)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Preço de Venda (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   value={salePrice}
                   onChange={(e) => setSalePrice(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-none py-2 px-3 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
             </div>
 
             {/* Ações */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <Button type="submit" loading={submitting} disabled={formSuccess}>
                 Salvar Produto
               </Button>
@@ -701,18 +701,18 @@ export default function InventoryPage() {
         <>
           {/* Barra de Busca e Filtro Ativo */}
           <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative w-full md:max-w-md bg-slate-900/40 p-1 rounded-none border border-slate-800/60 shadow-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl border border-border/60 shadow-sm">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
               <input
                 type="text"
                 placeholder="Buscar por produto, marca, categoria ou SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-none py-2 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
             {showLowStockOnly && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-none text-xs font-semibold text-rose-400">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400">
                 <span>Filtro: Apenas Estoque Baixo</span>
                 <Button
                   variant="ghost"
@@ -752,12 +752,12 @@ export default function InventoryPage() {
 
           {/* Listagem de Estoque */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-none border border-slate-900">
+            <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
               <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-sm text-slate-400">Carregando inventário...</p>
+              <p className="text-sm text-text-muted">Carregando inventário...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="bg-slate-900/20 rounded-none border border-slate-900">
+            <div className="bg-surface-raised border border-border rounded-2xl">
               <EmptyState
                 icon={<AlertCircle />}
                 title="Nenhum produto em estoque"
@@ -765,11 +765,11 @@ export default function InventoryPage() {
               />
             </div>
           ) : (
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/60 rounded-none overflow-hidden shadow-lg">
+            <div className="bg-surface-raised border border-border shadow-sm/60 rounded-xl overflow-hidden shadow-lg">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-semibold text-xs uppercase tracking-wider bg-slate-950/45">
+                    <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
                       <th className="py-4 px-6 text-center w-12">
                         <input
                           type="checkbox"
@@ -781,7 +781,7 @@ export default function InventoryPage() {
                               setSelectedProductIds([]);
                             }
                           }}
-                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-blue-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-border bg-surface-sunken text-blue-500 focus:ring-blue-500 cursor-pointer"
                         />
                       </th>
                       <th className="py-4 px-6">Produto</th>
@@ -792,7 +792,7 @@ export default function InventoryPage() {
                       <th className="py-4 px-6 text-center">Status</th>
                       <th className="py-4 px-6 text-center">Ações</th>
                     </tr>
-                    <tr className="bg-slate-950/30 border-b border-slate-800/80">
+                    <tr className="bg-surface-sunken/30 border-b border-border/80">
                       <td className="py-2 px-6"></td>
                       <td className="py-2 px-6">
                         <input
@@ -800,7 +800,7 @@ export default function InventoryPage() {
                           placeholder="Filtrar produto..."
                           value={filterName}
                           onChange={(e) => setFilterName(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-blue-500"
+                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500"
                         />
                       </td>
                       <td className="py-2 px-6">
@@ -809,14 +809,14 @@ export default function InventoryPage() {
                           placeholder="SKU..."
                           value={filterSku}
                           onChange={(e) => setFilterSku(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
+                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
                         />
                       </td>
                       <td className="py-2 px-6">
                         <select
                           value={filterCategory}
                           onChange={(e) => setFilterCategory(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
                           <option value="">Todos</option>
                           {categories.map(cat => (
@@ -830,7 +830,7 @@ export default function InventoryPage() {
                           placeholder="Marca..."
                           value={filterBrand}
                           onChange={(e) => setFilterBrand(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
+                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
                         />
                       </td>
                       <td className="py-2 px-6">
@@ -839,14 +839,14 @@ export default function InventoryPage() {
                           placeholder="Qtd..."
                           value={filterQuantity}
                           onChange={(e) => setFilterQuantity(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
+                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
                         />
                       </td>
                       <td className="py-2 px-6">
                         <select
                           value={filterStatus}
                           onChange={(e) => setFilterStatus(e.target.value)}
-                          className="w-full bg-slate-950/80 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 focus:outline-none focus:border-blue-500 cursor-pointer"
+                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
                           <option value="">Todos</option>
                           <option value="SAUDÁVEL">Saudável</option>
@@ -875,12 +875,12 @@ export default function InventoryPage() {
                                   setSelectedProductIds(selectedProductIds.filter(id => id !== p.id));
                                 }
                               }}
-                              className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-blue-500 cursor-pointer"
+                              className="w-4 h-4 rounded border-border bg-surface-sunken text-blue-500 focus:ring-blue-500 cursor-pointer"
                             />
                           </td>
                           <td className="py-4 px-6 font-bold text-slate-200">
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-none shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-500' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                              <div className={`p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-500' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'}`}>
                                 <Boxes className="w-4 h-4" />
                               </div>
                               <Link href={`/dashboard/inventory/${p.id}`} className="truncate max-w-[280px] md:max-w-md lg:max-w-lg hover:text-blue-400 hover:underline transition-colors">
@@ -888,13 +888,13 @@ export default function InventoryPage() {
                               </Link>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-center font-semibold text-slate-400 text-xs font-mono">{p.sku}</td>
+                          <td className="py-4 px-6 text-center font-semibold text-text-muted text-xs font-mono">{p.sku}</td>
                           <td className="py-4 px-6">
                             <Badge>{p.category || 'Outro'}</Badge>
                           </td>
-                          <td className="py-4 px-6 text-center text-slate-300 font-semibold">{p.brand || '—'}</td>
+                          <td className="py-4 px-6 text-center text-text font-semibold">{p.brand || '—'}</td>
                           <td className="py-4 px-6 text-center font-mono font-bold text-slate-200">
-                            {p.quantity} <span className="text-[10px] text-slate-500 font-normal">/ {p.min_stock_alert}</span>
+                            {p.quantity} <span className="text-[10px] text-text-subtle font-normal">/ {p.min_stock_alert}</span>
                           </td>
                           <td className="py-4 px-6 text-center">
                             {isOut ? (
@@ -935,8 +935,8 @@ export default function InventoryPage() {
 
       {/* Barra de Ações em Massa - Estoque */}
       {selectedProductIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-none py-3.5 px-6 shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <span className="text-xs font-semibold text-slate-300">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md border border-border rounded-xl py-3.5 px-6 shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <span className="text-xs font-semibold text-text">
             <strong className="text-white">{selectedProductIds.length}</strong> {selectedProductIds.length === 1 ? 'produto selecionado' : 'produtos selecionados'}
           </span>
           <div className="h-4 w-px bg-slate-800" />
