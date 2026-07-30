@@ -38,13 +38,16 @@ import { cn } from '@/lib/utils';
 function navItemClasses({
   active,
   nested = false,
+  collapsed = false,
 }: {
   active: boolean;
   nested?: boolean;
+  collapsed?: boolean;
 }) {
   return cn(
-    'flex items-center gap-3 px-3 transition-colors duration-150 rounded-xl',
+    'flex items-center transition-colors duration-150 rounded-xl',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+    collapsed ? 'justify-center px-0' : 'gap-3 px-3',
     nested ? 'py-2 text-small font-medium' : 'py-2.5 text-body font-medium',
     active
       ? 'bg-brand text-brand-contrast'
@@ -258,14 +261,14 @@ function DashboardLayoutContent({
                       setSettingsOpen(!settingsOpen);
                     }}
                     className={cn(
-                      navItemClasses({ active: false }),
+                      navItemClasses({ active: false, collapsed: !sidebarOpen }),
                       'w-full justify-between cursor-pointer',
                       // O grupo não fica "ativo" como um link — quem marca a
                       // posição é o sub-item. Aqui só a cor de texto sinaliza.
                       isSubActive && 'text-brand',
                     )}
                   >
-                    <span className="flex items-center gap-3 min-w-0">
+                    <span className={cn("flex items-center min-w-0", sidebarOpen ? "gap-3" : "justify-center w-full")}>
                       <Icon className="w-5 h-5 shrink-0" aria-hidden />
                       {sidebarOpen && <span className="truncate">{item.name}</span>}
                     </span>
@@ -319,7 +322,7 @@ function DashboardLayoutContent({
                     setSidebarOpen(false);
                   }
                 }}
-                className={navItemClasses({ active: isActive })}
+                className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
               >
                 <Icon className="w-5 h-5 shrink-0" aria-hidden />
                 {sidebarOpen ? (
