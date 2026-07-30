@@ -379,8 +379,12 @@ function DashboardLayoutContent({
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-3 p-1 pr-3 bg-surface hover:bg-surface-overlay border border-border rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
-                <div className="w-8 h-8 shrink-0 rounded-full bg-brand/10 border border-brand/25 flex items-center justify-center text-brand font-semibold uppercase text-small">
-                  {userName.charAt(0)}
+                <div className="w-8 h-8 shrink-0 rounded-full bg-brand/10 border border-brand/25 flex items-center justify-center text-brand font-semibold uppercase text-small overflow-hidden">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      user?.full_name?.charAt(0) || 'U'
+                    )}
                 </div>
                 <div className="hidden sm:block text-left min-w-0 max-w-[140px]">
                   <p className="text-small font-semibold text-text truncate">{userName}</p>

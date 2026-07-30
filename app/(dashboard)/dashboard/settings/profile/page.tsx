@@ -1,9 +1,7 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
-import { Shield, User, Lock, Mail, Smartphone, Save, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Shield, User, Lock, Mail, Smartphone, Save, AlertTriangle, CheckCircle2, AlertCircle, Upload, ImageIcon, Trash2 } from 'lucide-react';
 
 export default function ProfileSettingsPage() {
   const { user, refreshUser } = useUser();
@@ -17,6 +15,13 @@ export default function ProfileSettingsPage() {
   // Form states
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
+
+  // File upload states
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState(user?.avatar_url || '');
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,8 +31,86 @@ export default function ProfileSettingsPage() {
     if (user) {
       setFullName(user.full_name || '');
       setWhatsapp(user.whatsapp || '');
+      setAvatarUrl(user.avatar_url || '');
+      setPreviewUrl(user.avatar_url || '');
     }
   }, [user]);
+
+  // Drag & Drop handlers
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  }, []);
+
+  function validateAndSetFile(selectedFile: File) {
+    if (!selectedFile.type.startsWith('image/')) {
+      setErrorMsg('O arquivo selecionado deve ser uma imagem (JPG, PNG, WEBP).');
+      return;
+    }
+    if (selectedFile.size > 2 * 1024 * 1024) {
+      setErrorMsg('A foto de perfil deve ter no máximo 2MB.');
+      return;
+    }
+    setFile(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
+    setErrorMsg('');
+  }
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const selectedFile = e.dataTransfer.files?.[0];
+    if (!selectedFile) return;
+
+    validateAndSetFile(selectedFile);
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    validateAndSetFile(selectedFile);
+  };
+
+  const handleRemovePreview = () => {
+    setFile(null);
+    setPreviewUrl(avatarUrl);
+  };
+
+  const handleUploadAvatar = async (userId: string): Promise<string> => {
+    if (!file) return avatarUrl;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const uniqueName = `avatar_${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${uniqueName}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from('user-avatars')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-avatars')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (err: any) {
+      console.warn('Erro de upload para o Storage:', err.message);
+      return previewUrl;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,11 +120,18 @@ export default function ProfileSettingsPage() {
     setErrorMsg('');
     setSuccessMsg('');
     try {
+      let finalAvatarUrl = avatarUrl;
+      if (file) {
+        finalAvatarUrl = await handleUploadAvatar(user.user_id);
+        setAvatarUrl(finalAvatarUrl);
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: fullName,
-          whatsapp: whatsapp
+          whatsapp: whatsapp,
+          avatar_url: finalAvatarUrl
         })
         .eq('user_id', user.user_id);
 
@@ -228,14 +318,57 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
 
-        {/* Coluna 2: Dados Não Editáveis */}
+        {/* Coluna 2: Dados Não Editáveis e Foto */}
         <div className="space-y-6">
-          <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm p-6 text-center flex flex-col items-center">
-            <div className="w-20 h-20 bg-brand/10 border border-brand/20 rounded-full flex items-center justify-center text-3xl font-bold text-brand uppercase mb-4 shadow-inner">
-              {user?.full_name?.charAt(0) || 'U'}
+          <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm p-6 flex flex-col items-center">
+            
+            <div className="w-full flex justify-center mb-6">
+              <div 
+                className={`relative group w-32 h-32 rounded-full border-2 border-dashed ${isDragActive ? 'border-brand bg-brand/5' : 'border-border bg-surface-raised'} transition-colors overflow-hidden flex flex-col items-center justify-center cursor-pointer`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById('avatar-upload')?.click()}
+              >
+                <input 
+                  id="avatar-upload"
+                  type="file" 
+                  accept="image/png, image/jpeg, image/webp" 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                />
+                
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center p-4">
+                    <ImageIcon className="w-6 h-6 text-text-muted mx-auto mb-2" />
+                    <span className="text-xs text-text-subtle">Foto</span>
+                  </div>
+                )}
+                
+                {/* Overlay de hover para troca */}
+                <div className="absolute inset-0 bg-surface-overlay/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+                  <Upload className="w-5 h-5 text-text mb-1" />
+                  <span className="text-[10px] font-medium text-text">Trocar foto</span>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-text truncate w-full">{user?.full_name || 'Usuário'}</h3>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-raised border border-border rounded-full text-xs font-semibold text-text-muted uppercase tracking-widest mt-3">
+
+            {file && (
+              <button 
+                type="button" 
+                onClick={handleRemovePreview}
+                className="text-xs text-danger hover:text-danger/80 flex items-center gap-1 mb-4"
+              >
+                <Trash2 className="w-3 h-3" />
+                Remover nova foto
+              </button>
+            )}
+
+            <h3 className="text-xl font-bold text-text text-center truncate w-full">{user?.full_name || 'Usuário'}</h3>
+            <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-surface-raised border border-border rounded-full text-xs font-semibold text-text-muted uppercase tracking-widest mt-3">
               <Shield className="w-3.5 h-3.5 text-brand" />
               {user?.role === 'admin' ? 'Administrador' : user?.role === 'technician' ? 'Técnico' : 'Visualizador'}
             </span>
