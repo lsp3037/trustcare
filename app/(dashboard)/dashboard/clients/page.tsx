@@ -15,7 +15,6 @@ import { formatDocument, validateDocument } from '@/lib/utils/documentValidation
 export default function ClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<any[]>([]);
-  const [filteredClients, setFilteredClients] = useState<any[]>([]);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
