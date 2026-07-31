@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-// Validador simples de UUID para segurança
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function maskEmail(email: string): string {
   if (!email) return 'E-mail não cadastrado';
   const [local, domain] = email.split('@');
@@ -28,37 +25,47 @@ export async function POST(req: Request) {
     }
 
     const { searchId, subdomain } = await req.json();
-    const cleanId = searchId.trim().replace(/^#/, '');
+    const cleanId = String(searchId ?? '').trim().replace(/^#/, '');
 
-    if (!cleanId || cleanId.length < 8) {
+    if (!cleanId || cleanId.length < 8 || cleanId.length > 40) {
       return NextResponse.json({ error: 'Código de OS inválido.' }, { status: 400 });
     }
 
-    // 1. Buscar a ordem de serviço e os dados do cliente
-    let query = supabaseAdmin
-      .from('service_orders')
-      .select('id, codigo_os, company_id, clients(name, email)')
-      .or(`codigo_os.eq.${cleanId},id.eq.${cleanId}`);
+    // A busca roda numa RPC (find_orders_for_tracking) em vez de montar o
+    // filtro do PostgREST concatenando o texto digitado pelo usuário.
+    const { data: orders, error: dbError } = await supabaseAdmin.rpc(
+      'find_orders_for_tracking',
+      { p_query: cleanId, p_subdomain: subdomain || null }
+    );
 
-    // Se o UUID for de 8 caracteres, tentamos buscar por correspondência parcial
-    if (cleanId.length >= 8 && cleanId.length < 36 && !UUID_REGEX.test(cleanId)) {
-      query = supabaseAdmin
-        .from('service_orders')
-        .select('id, codigo_os, company_id, clients(name, email)')
-        .or(`codigo_os.ilike.%${cleanId}%,id.cast.ilike.%${cleanId}%`);
+    if (dbError) {
+      console.error('[Request Token] Erro na busca:', dbError.message);
+      return NextResponse.json({ error: 'Erro ao localizar a ordem de serviço.' }, { status: 500 });
     }
 
-    const { data: orders, error: dbError } = await query;
-
-    if (dbError || !orders || orders.length === 0) {
+    if (!orders || orders.length === 0) {
       return NextResponse.json({ error: 'Ordem de serviço não encontrada.' }, { status: 404 });
     }
 
-    // Usar o primeiro resultado encontrado
-    const order = orders[0];
-    const client = order.clients as any;
+    // Cada empresa tem sua própria numeração, então 'TC-2026-0001' pode existir
+    // em mais de um tenant. Mandar o código para orders[0] entregaria o OTP ao
+    // cliente errado — melhor pedir o link da assistência.
+    if (orders.length > 1) {
+      return NextResponse.json(
+        {
+          error:
+            'Esse código existe em mais de uma assistência. Acesse pelo link ' +
+            'enviado pela empresa (ex: suaempresa.trustcare.com.br) ou informe ' +
+            'o número completo da OS.',
+        },
+        { status: 409 }
+      );
+    }
 
-    if (!client || !client.email) {
+    const order = orders[0];
+    const client = { name: order.client_name, email: order.client_email };
+
+    if (!client.email) {
       return NextResponse.json({ 
         error: 'Esta Ordem de Serviço não possui um e-mail de cliente associado. Entre em contato com o suporte.' 
       }, { status: 400 });
