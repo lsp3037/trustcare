@@ -81,14 +81,7 @@ export default function TempPrintPreviewPage() {
                 if (templateData && templateData.schema && Array.isArray(templateData.schema.items)) {
                   setChecklistTemplateItems(templateData.schema.items);
                 } else {
-                  // Tenta mock local
-                  const mockTemplatesStr = localStorage.getItem('mock-checklist-templates');
-                  const mockTemplates = mockTemplatesStr ? JSON.parse(mockTemplatesStr) : {};
-                  if (mockTemplates[eqData.category_id] && Array.isArray(mockTemplates[eqData.category_id].items)) {
-                    setChecklistTemplateItems(mockTemplates[eqData.category_id].items);
-                  } else {
-                    setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
-                  }
+                  setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
                 }
               } else {
                 setChecklistTemplateItems(DEFAULT_TEMPLATE_ITEMS);
@@ -148,75 +141,10 @@ export default function TempPrintPreviewPage() {
           }
         }
       } catch (err) {
-        console.warn('Erro Supabase, carregando mock local:', err);
-        loadLocalMockData();
+        console.error('Erro ao carregar dados da OS:', err);
+        setErrorMsg('Não foi possível carregar a Ordem de Serviço.');
       } finally {
         setLoading(false);
-      }
-    };
-
-    const loadLocalMockData = () => {
-      let localOrders = localStorage.getItem('mock-orders');
-      let localClients = localStorage.getItem('mock-clients');
-      let localItems = localStorage.getItem('mock-order-items');
-      const localCompany = localStorage.getItem('mock-company-settings');
-
-      if (!localOrders) {
-        const initialOrders = [
-          { id: '1', client_id: 'c1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', reported_problem: 'Tela azul intermitente e desligamento automático', technical_report: 'Realizado limpeza interna e troca de pasta térmica. Testado sistema por 12 horas.', status: 'Em Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString(), codigo_os: 'TC-2026-0001', pago: false },
-          { id: '2', client_id: 'c2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', reported_problem: 'Placa de vídeo liga mas não dá vídeo', technical_report: null, status: 'Aguardando Peças', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString(), codigo_os: 'TC-2026-0002', pago: false },
-          { id: '3', client_id: 'c3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', reported_problem: 'Backup automático falhando e HD 3 piscando vermelho', technical_report: 'Substituição de HD em RAID por sobressalente. Reconfiguração do script bash de backup.', status: 'Pronto para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString(), codigo_os: 'TC-2026-0003', pago: false },
-          { id: '4', client_id: 'c4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', reported_problem: 'Teclado com teclas travadas (A, S, D)', technical_report: null, status: 'Em Análise', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString(), codigo_os: 'TC-2026-0004', pago: false },
-        ];
-        localStorage.setItem('mock-orders', JSON.stringify(initialOrders));
-        localOrders = JSON.stringify(initialOrders);
-      }
-
-      if (!localClients) {
-        const initialClients = [
-          { id: 'c1', name: 'Tech Solutions Ltda', email: 'contato@techsolutions.com.br', phone: '(11) 98765-4321' },
-          { id: 'c2', name: 'Carlos Henrique Souza', email: 'carlos.souza@gmail.com', phone: '(21) 99887-7665' },
-          { id: 'c3', name: 'Clínica Sorriso Perfeito', email: 'clinica@sorrisoperfeito.com.br', phone: '(19) 3254-7654' },
-          { id: 'c4', name: 'Juliana Mendes', email: 'ju.mendes@outlook.com', phone: '(31) 98888-2233' },
-        ];
-        localStorage.setItem('mock-clients', JSON.stringify(initialClients));
-        localClients = JSON.stringify(initialClients);
-      }
-
-      if (!localItems) {
-        const initialItems = [
-          { id: 'mi-1', service_order_id: '1', product_id: 'p1', name: 'Pasta Térmica Grizzly', quantity: 1, unit_price: 90.00 },
-          { id: 'mi-2', service_order_id: '2', product_id: 'p2', name: 'SSD NVMe 1TB Kingston', quantity: 1, unit_price: 450.00 },
-        ];
-        localStorage.setItem('mock-order-items', JSON.stringify(initialItems));
-        localItems = JSON.stringify(initialItems);
-      }
-
-      const parsedOrders = JSON.parse(localOrders);
-      const found = parsedOrders.find((o: any) => o.id === id);
-
-      if (found) {
-        setOrder(found);
-        if (localClients) {
-          const parsedClients = JSON.parse(localClients);
-          const foundClient = parsedClients.find((c: any) => c.id === found.client_id);
-          setClient(foundClient || { name: found.clients?.name || 'Cliente Mock' });
-        }
-        if (localItems) {
-          const parsedItems = JSON.parse(localItems);
-          const filteredItems = parsedItems.filter((item: any) => item.service_order_id === id);
-          setSelectedProducts(filteredItems.map((item: any) => ({
-            name: item.name || 'Item do Estoque',
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-          })));
-        }
-      } else {
-        setErrorMsg('Ordem de Serviço não encontrada nos registros locais.');
-      }
-
-      if (localCompany) {
-        setCompany(JSON.parse(localCompany));
       }
     };
 

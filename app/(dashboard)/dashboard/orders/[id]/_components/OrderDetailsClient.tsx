@@ -215,23 +215,17 @@ export function OrderDetailsClient({
       const fileName = file.name;
       const fileType = file.type;
       try {
-        if (order && order.company_id && !order.id.startsWith('mock-os') && order.id.length === 36) {
-          const fileExt = fileName.split('.').pop();
-          const uniqueName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-          const filePath = `${order.company_id}/${id}/${uniqueName}`;
-          const { data, error } = await supabase.storage.from('os-media').upload(filePath, file, { cacheControl: '3600', upsert: true });
-          if (error) throw error;
-          const { data: { publicUrl } } = supabase.storage.from('os-media').getPublicUrl(filePath);
-          setMediaFiles((prev) => [...prev, { name: fileName, url: publicUrl, type: fileType }]);
-        } else {
-          const localUrl = URL.createObjectURL(file);
-          const persistentUrl = fileType.startsWith('image/')
-            ? 'https://images.unsplash.com/photo-1597733336794-12d05021d510?w=600&auto=format&fit=crop&q=60'
-            : fileType.startsWith('video/')
-              ? 'https://www.w3schools.com/html/mov_bbb.mp4'
-              : 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
-          setMediaFiles((prev) => [...prev, { name: fileName, url: localUrl, persistentUrl, type: fileType }]);
+        if (!order?.company_id) {
+          throw new Error('Ordem de serviço sem empresa vinculada.');
         }
+
+        const fileExt = fileName.split('.').pop();
+        const uniqueName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const filePath = `${order.company_id}/${id}/${uniqueName}`;
+        const { error } = await supabase.storage.from('os-media').upload(filePath, file, { cacheControl: '3600', upsert: true });
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from('os-media').getPublicUrl(filePath);
+        setMediaFiles((prev) => [...prev, { name: fileName, url: publicUrl, type: fileType }]);
       } catch (uploadErr: any) {
         console.error('Erro de upload:', uploadErr);
         setErrorMsg(`Falha ao anexar ${fileName}: ${uploadErr.message}`);
@@ -243,7 +237,7 @@ export function OrderDetailsClient({
 
   const handleRemoveFile = async (index: number) => {
     const fileToRemove = mediaFiles[index];
-    if (order && !order.id.startsWith('mock-os') && fileToRemove.url.includes('os-media')) {
+    if (order && fileToRemove.url.includes('os-media')) {
       try {
         const urlObj = new URL(fileToRemove.url);
         const pathParts = urlObj.pathname.split('/storage/v1/object/public/os-media/');

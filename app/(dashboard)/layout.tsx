@@ -178,8 +178,6 @@ function DashboardLayoutContent({
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
-    localStorage.removeItem('os-session');
-    document.cookie = "os-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     router.push('/login');
   };
 

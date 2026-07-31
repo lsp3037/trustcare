@@ -47,16 +47,7 @@ export default function AgendaPage() {
           console.warn('Erro ao consultar Supabase, tentando local:', error.message);
         }
 
-        let finalOrders = data || [];
-
-        // Fallback local / offline
-        if (finalOrders.length === 0) {
-          const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
-          const localOrders = JSON.parse(localOrdersStr);
-          finalOrders = localOrders.filter((o: any) => o.delivery_prediction);
-        }
-
-        setOrders(finalOrders);
+        setOrders(data || []);
       } catch (err: any) {
         setErrorMsg('Erro ao carregar agenda.');
       } finally {

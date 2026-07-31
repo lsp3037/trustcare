@@ -83,24 +83,6 @@ function TrackingContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Fallback for local storage/mocking if database record is missing (useful for offline/dev)
-        const localOrders = localStorage.getItem('mock-orders');
-        if (localOrders) {
-          const parsedOrders = JSON.parse(localOrders);
-          const cleanTarget = id.toLowerCase();
-          const foundLocal = parsedOrders.find((o: any) => 
-            o.id.toLowerCase().startsWith(cleanTarget)
-          );
-
-          if (foundLocal) {
-            // Simulated development token send
-            setTempTokenId('mock-token-id');
-            setMaskedEmail('admin@trustcare.com.br (Mock Local)');
-            setDevToken('123456');
-            setStage('otp');
-            return;
-          }
-        }
         throw new Error(data.error || 'Ordem de serviço não encontrada.');
       }
 
@@ -127,36 +109,6 @@ function TrackingContent() {
 
     setLoading(true);
     setErrorMsg('');
-
-    // Handle mock token for offline development
-    if (tempTokenId === 'mock-token-id' && otpCode === '123456') {
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsedOrders = JSON.parse(localOrders);
-        const cleanTarget = searchId.trim().replace(/^#/, '').toLowerCase();
-        const foundLocal = parsedOrders.find((o: any) => 
-          o.id.toLowerCase().startsWith(cleanTarget)
-        );
-
-        if (foundLocal) {
-          setOrder({
-            id: foundLocal.id,
-            status: foundLocal.status,
-            equipment_name: foundLocal.equipment_details?.split(' ')[0] || 'Equipamento',
-            equipment_brand: foundLocal.equipment_details?.split(' ')[1] || '',
-            equipment_model: foundLocal.equipment_details?.split(' ').slice(2).join(' ') || '',
-            reported_problem: foundLocal.reported_problem || 'Não informado',
-            technical_report: foundLocal.technical_report,
-            created_at: foundLocal.created_at,
-            delivery_prediction: foundLocal.delivery_prediction,
-            codigo_os: foundLocal.codigo_os
-          });
-          setStage('result');
-          setLoading(false);
-          return;
-        }
-      }
-    }
 
     try {
       const res = await fetch('/api/rastreio/verify-token', {

@@ -48,33 +48,14 @@ export default function LoginPage() {
         password,
       });
 
-      if (error) {
-        // Se falhar (por exemplo, banco não configurado ou credenciais incorretas),
-        // fornecemos um fallback amigável para testes locais caso o Supabase não esteja pronto.
-        console.warn('Erro de autenticação no Supabase:', error.message);
-
-        if (email === 'admin@admin.com' && password === 'admin123') {
-          // Salva uma flag mock de sessão no localStorage para a navegação funcionar offline
-          localStorage.setItem('os-session', JSON.stringify({ email, companyId: '1', role: 'admin' }));
-          
-          // Adiciona o cookie de sessão mock para que o middleware (proxy.ts) permita o acesso
-          document.cookie = "os-session-mock=true; path=/; max-age=86400"; // expira em 24h
-          
-          router.push('/dashboard');
-          return;
-        }
-
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       if (data?.session) {
-        // Limpa o cookie de mock caso utilize o login oficial do Supabase
-        document.cookie = "os-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         router.push('/dashboard');
       }
     } catch (err) {
       const error = err as Error;
-      setErrorMsg(error.message || 'Falha ao autenticar. Tente admin@admin.com / admin123 para testar offline.');
+      setErrorMsg(error.message || 'Falha ao autenticar. Verifique seu e-mail e senha.');
     } finally {
       setLoading(false);
     }

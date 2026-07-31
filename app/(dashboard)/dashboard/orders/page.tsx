@@ -106,15 +106,7 @@ function OrdersContent() {
         .select('*')
         .order('name');
       
-      if (clientsData && clientsData.length > 0) {
-        setClients(clientsData);
-      } else {
-        // Fallback local para lista de clientes no formulário
-        const localClients = localStorage.getItem('mock-clients');
-        if (localClients) {
-          setClients(JSON.parse(localClients));
-        }
-      }
+      setClients(clientsData || []);
 
       // Busca ordens de serviço
       const { data: ordersData, error } = await supabase
@@ -128,33 +120,10 @@ function OrdersContent() {
 
       setOrders(ordersData || []);
     } catch (err) {
-      console.warn('Erro ao carregar Ordens de Serviço do Supabase, usando fallback local:', err);
-      
-      // Fallback local de clientes no formulário em caso de falha de conexão
-      const localClients = localStorage.getItem('mock-clients');
-      if (localClients) {
-        setClients(JSON.parse(localClients));
-      }
-
-      loadLocalOrders();
+      console.error('Erro ao carregar Ordens de Serviço:', err);
+      setOrders([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadLocalOrders = () => {
-    const localOrders = localStorage.getItem('mock-orders');
-    if (localOrders) {
-      setOrders(JSON.parse(localOrders));
-    } else {
-      const initialMock = [
-        { id: '1', client_id: 'c1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', reported_problem: 'Tela azul intermitente e desligamento automático', technical_report: 'Realizado limpeza interna e troca de pasta térmica. Testado sistema por 12 horas.', status: 'Em Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString(), codigo_os: 'TC-2026-0001', pago: false },
-        { id: '2', client_id: 'c2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', reported_problem: 'Placa de vídeo liga mas não dá vídeo', technical_report: null, status: 'Aguardando Peças', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString(), codigo_os: 'TC-2026-0002', pago: false },
-        { id: '3', client_id: 'c3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', reported_problem: 'Backup automático falhando e HD 3 piscando vermelho', technical_report: 'Substituição de HD em RAID por sobressalente. Reconfiguração do script bash de backup.', status: 'Pronto para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString(), codigo_os: 'TC-2026-0003', pago: false },
-        { id: '4', client_id: 'c4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', reported_problem: 'Teclado com teclas travadas (A, S, D)', technical_report: null, status: 'Em Análise', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString(), codigo_os: 'TC-2026-0004', pago: false },
-      ];
-      localStorage.setItem('mock-orders', JSON.stringify(initialMock));
-      setOrders(initialMock);
     }
   };
 
@@ -179,20 +148,8 @@ function OrdersContent() {
       setOrders(prev => prev.map(o => selectedOrderIds.includes(o.id) ? { ...o, status: newStatus } : o));
       alert(`Status das ordens selecionadas atualizado para "${newStatus}"!`);
     } catch (err) {
-      console.warn('Erro ao atualizar online, aplicando localmente:', err);
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsed = JSON.parse(localOrders);
-        const updated = parsed.map((o: any) => {
-          if (selectedOrderIds.includes(o.id)) {
-            return { ...o, status: newStatus };
-          }
-          return o;
-        });
-        localStorage.setItem('mock-orders', JSON.stringify(updated));
-        setOrders(updated);
-        alert(`[Offline] Status das ordens selecionadas atualizado para "${newStatus}"!`);
-      }
+      console.error('Erro ao atualizar status em lote:', err);
+      alert(`Não foi possível atualizar as ordens: ${(err as Error).message}`);
     } finally {
       setSelectedOrderIds([]);
       setUpdatingBulk(false);
@@ -246,42 +203,8 @@ function OrdersContent() {
       setOrders(prev => prev.filter(o => !selectedOrderIds.includes(o.id)));
       alert('Ordens de Serviço excluídas com sucesso!');
     } catch (err) {
-      console.warn('Erro ao excluir online, aplicando localmente:', err);
-      
-      // Fallback local
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsedOrders = JSON.parse(localOrders);
-
-        // A. Carrega itens e estoque locais atuais
-        const localItems = localStorage.getItem('mock-order-items') || '[]';
-        const localInv = localStorage.getItem('mock-inventory') || '[]';
-        
-        let parsedItems = JSON.parse(localItems);
-        let parsedInv = JSON.parse(localInv);
-
-        // B. Filtra itens pertencentes às OSs sendo excluídas para restaurar estoque
-        const itemsToRestore = parsedItems.filter((item: any) => selectedOrderIds.includes(item.service_order_id));
-        itemsToRestore.forEach((oldItem: any) => {
-          parsedInv = parsedInv.map((p: any) => {
-            if (p.id === oldItem.product_id) {
-              return { ...p, quantity: p.quantity + oldItem.quantity };
-            }
-            return p;
-          });
-        });
-
-        // C. Limpa itens e OSs
-        parsedItems = parsedItems.filter((item: any) => !selectedOrderIds.includes(item.service_order_id));
-        const updatedOrders = parsedOrders.filter((o: any) => !selectedOrderIds.includes(o.id));
-
-        localStorage.setItem('mock-orders', JSON.stringify(updatedOrders));
-        localStorage.setItem('mock-order-items', JSON.stringify(parsedItems));
-        localStorage.setItem('mock-inventory', JSON.stringify(parsedInv));
-
-        setOrders(updatedOrders);
-        alert('[Offline] Ordens de Serviço excluídas localmente com sucesso!');
-      }
+      console.error('Erro ao excluir ordens de serviço:', err);
+      alert(`Não foi possível excluir as ordens: ${(err as Error).message}`);
     } finally {
       setSelectedOrderIds([]);
       setUpdatingBulk(false);

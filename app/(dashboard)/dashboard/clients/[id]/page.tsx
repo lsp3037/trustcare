@@ -63,11 +63,8 @@ export default function ClientDetailPage() {
       if (error) throw error;
       setEqChecklistHistory(data || []);
     } catch (err) {
-      console.warn('Erro ao carregar histórico no Supabase, buscando local:', err);
-      const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
-      const localOrders = JSON.parse(localOrdersStr);
-      const filtered = localOrders.filter((o: any) => o.equipment_id === eq.id || (o.equipment_details && o.equipment_details.includes(eq.name)));
-      setEqChecklistHistory(filtered);
+      console.error('Erro ao carregar histórico do equipamento:', err);
+      setEqChecklistHistory([]);
     } finally {
       setLoadingHistory(false);
     }
@@ -136,69 +133,8 @@ export default function ClientDetailPage() {
         }
       }
     } catch (err) {
-      console.warn('Erro ao carregar do Supabase, buscando mock local:', err);
-      
-      // Fallback para localStorage
-      const localClients = localStorage.getItem('mock-clients');
-      if (localClients) {
-        const parsedClients = JSON.parse(localClients);
-        const index = parsedClients.findIndex((c: any) => c.id === id);
-        const foundClient = parsedClients[index];
-        
-        if (foundClient) {
-          const processedClient = {
-            ...foundClient,
-            client_number: foundClient.client_number || (1001 + (index >= 0 ? index : 0))
-          };
-
-          setClient(processedClient);
-          setName(processedClient.name);
-          setType(processedClient.type);
-          setDocument(processedClient.document || '');
-          setPhone(processedClient.phone || '');
-          setEmail(processedClient.email || '');
-          
-          // Busca ordens mockadas
-          const mockOrders = localStorage.getItem('mock-orders');
-          const allOrders = mockOrders ? JSON.parse(mockOrders) : [
-            { id: '1', client_id: 'c1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', reported_problem: 'Tela azul intermitente e desligamento automático', technical_report: 'Realizado limpeza interna e troca de pasta térmica.', status: 'Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-            { id: '2', client_id: 'c2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', reported_problem: 'Placa de vídeo liga mas não dá vídeo', technical_report: null, status: 'Aguardando Peça', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
-            { id: '3', client_id: 'c3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', reported_problem: 'Backup automático falhando', technical_report: 'Reconfiguração do script de backup.', status: 'Concluído', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
-            { id: '4', client_id: 'c4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', reported_problem: 'Teclado com teclas travadas', technical_report: null, status: 'Novo', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString() },
-          ];
-          
-          const filteredOrders = allOrders.filter((o: any) => o.client_id === id);
-          setOrders(filteredOrders);
-
-          // Busca categorias mockadas
-          const mockCats = localStorage.getItem('mock-equipment-categories');
-          const allCats = mockCats ? JSON.parse(mockCats) : [
-            { id: 'cat1', name: 'Notebook' },
-            { id: 'cat2', name: 'Desktop' },
-          ];
-          setCategories(allCats);
-
-          // Busca equipamentos mockados
-          const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728', equipment_categories: { name: 'Notebook' } },
-            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A', equipment_categories: { name: 'Desktop' } },
-            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B', equipment_categories: { name: 'Desktop' } },
-            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5', equipment_categories: { name: 'Notebook' } },
-          ];
-          const filteredEqs = allEqs.filter((e: any) => e.client_id === id);
-          const enrichedEqs = filteredEqs.map((e: any) => {
-            const cat = allCats.find((c: any) => c.id === e.category_id);
-            return {
-              ...e,
-              equipment_categories: cat ? { name: cat.name } : null
-            };
-          });
-          setEquipments(enrichedEqs);
-        } else {
-          setClient(null);
-        }
-      }
+      console.error('Erro ao carregar cliente:', err);
+      setClient(null);
     } finally {
       setLoading(false);
     }
@@ -228,22 +164,7 @@ export default function ClientDetailPage() {
         .update(updatedData)
         .eq('id', id);
 
-      if (error) {
-        console.warn('Falha no Supabase, atualizando mock local:', error.message);
-        
-        // Atualiza mock
-        const localClients = localStorage.getItem('mock-clients');
-        if (localClients) {
-          const parsed = JSON.parse(localClients);
-          const updatedList = parsed.map((c: any) => {
-            if (c.id === id) {
-              return { ...c, ...updatedData };
-            }
-            return c;
-          });
-          localStorage.setItem('mock-clients', JSON.stringify(updatedList));
-        }
-      }
+      if (error) throw error;
 
       setSaveSuccess(true);
       setTimeout(() => {
@@ -267,14 +188,13 @@ export default function ClientDetailPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-        if (profile?.company_id) companyId = profile.company_id;
-      }
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
-      const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-      const localEqData = {
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const companyId = profile.company_id;
+
+      const supabaseEqData = {
         company_id: companyId,
         client_id: id,
         category_id: eqCategoryId || null,
@@ -284,68 +204,12 @@ export default function ClientDetailPage() {
         serial_number: eqSerial,
       };
 
-      const supabaseEqData = {
-        ...localEqData,
-        category_id: isUuid(eqCategoryId) ? eqCategoryId : null,
-      };
-
       if (editingEqId) {
-        // Modo Edição
-        const isMockId = editingEqId.startsWith('mock-eq-') || ['eq1', 'eq2', 'eq3', 'eq4'].includes(editingEqId);
-        
-        if (isMockId) {
-          const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-          ];
-          const updatedEqs = allEqs.map((e: any) => {
-            if (e.id === editingEqId) {
-              return { ...e, ...localEqData, id: editingEqId };
-            }
-            return e;
-          });
-          localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
-        } else {
-          const { error } = await supabase.from('client_equipments').update(supabaseEqData).eq('id', editingEqId);
-          if (error) {
-            console.warn('Falha Supabase ao atualizar, tentando mock local:', error.message);
-            const mockEqs = localStorage.getItem('mock-equipments');
-            if (mockEqs) {
-              const allEqs = JSON.parse(mockEqs);
-              const updatedEqs = allEqs.map((e: any) => {
-                if (e.id === editingEqId) {
-                  return { ...e, ...localEqData, id: editingEqId };
-                }
-                return e;
-              });
-              localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
-            } else {
-              throw error;
-            }
-          }
-        }
+        const { error } = await supabase.from('client_equipments').update(supabaseEqData).eq('id', editingEqId);
+        if (error) throw error;
       } else {
-        // Modo Criação
         const { error } = await supabase.from('client_equipments').insert(supabaseEqData);
-        if (error) {
-          console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
-          
-          const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-          ];
-          allEqs.push({
-            id: `mock-eq-${Date.now()}`,
-            ...localEqData
-          });
-          localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
-        }
+        if (error) throw error;
       }
 
       setEqSuccess(true);
@@ -403,11 +267,11 @@ export default function ClientDetailPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-        if (profile?.company_id) companyId = profile.company_id;
-      }
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const companyId = profile.company_id;
 
       const { data, error } = await supabase
         .from('equipment_categories')
@@ -415,19 +279,7 @@ export default function ClientDetailPage() {
         .select()
         .single();
       
-      if (error) {
-        console.warn('Fallback mock categories:', error);
-        const mockCats = localStorage.getItem('mock-equipment-categories');
-        const allCats = mockCats ? JSON.parse(mockCats) : [];
-        const newCat = { id: `mock-cat-${Date.now()}`, name: catName };
-        allCats.push(newCat);
-        localStorage.setItem('mock-equipment-categories', JSON.stringify(allCats));
-        setCategories(allCats);
-        setEqCategoryId(newCat.id);
-        setIsCreatingCategory(false);
-        setNewCategoryName('');
-        return;
-      }
+      if (error) throw error;
 
       if (data) {
         setCategories([...categories, data]);

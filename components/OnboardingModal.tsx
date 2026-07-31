@@ -133,11 +133,8 @@ export default function OnboardingModal() {
 
     const onboardingCompleted = localStorage.getItem('company-onboarded') === 'true';
     
-    // Mostra o onboarding se não foi marcado como concluído OU a empresa está com valores padrão do mock
-    const isDefaultCompany = 
-      !company.logo_url && 
-      (company.name === 'Trust Care T.I.' || !company.name) && 
-      (company.phone === '(66) 99999-9999' || !company.phone);
+    // Empresa recém-criada pelo trigger nasce sem dados de contato preenchidos
+    const isDefaultCompany = !company.logo_url && !company.name && !company.phone;
 
     if (!onboardingCompleted || isDefaultCompany) {
       const loadInitialFormData = async () => {
@@ -146,21 +143,7 @@ export default function OnboardingModal() {
         let initialPhone = '';
         let initialWhatsapp = '';
 
-        // 1. Tenta obter do local storage (offline fallback)
-        const mockSession = localStorage.getItem('os-session');
-        if (mockSession) {
-          try {
-            const parsed = JSON.parse(mockSession);
-            initialName = parsed.company_name || '';
-            initialEmail = parsed.email || '';
-            initialPhone = parsed.phone || '';
-            initialWhatsapp = parsed.whatsapp || '';
-          } catch (e) {
-            console.error(e);
-          }
-        }
-
-        // 2. Tenta obter do Supabase Auth
+        // Pré-preenche a partir do metadata do cadastro no Supabase Auth
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
@@ -176,10 +159,10 @@ export default function OnboardingModal() {
         if (initialWhatsapp && !initialPhone) initialPhone = initialWhatsapp;
         if (initialPhone && !initialWhatsapp) initialWhatsapp = initialPhone;
 
-        if (!initialName && company.name && company.name !== 'Trust Care T.I.') initialName = company.name;
-        if (!initialPhone && company.phone && company.phone !== '(66) 99999-9999') initialPhone = company.phone;
+        if (!initialName && company.name) initialName = company.name;
+        if (!initialPhone && company.phone) initialPhone = company.phone;
         if (!initialWhatsapp && company.whatsapp) initialWhatsapp = company.whatsapp;
-        if (!initialEmail && company.email && company.email !== 'contato@trustcare.com.br') initialEmail = company.email;
+        if (!initialEmail && company.email) initialEmail = company.email;
 
         setTimeout(() => {
           setIsOpen(true);
@@ -281,10 +264,13 @@ export default function OnboardingModal() {
 
     try {
       let finalLogoUrl = logoUrl;
-      const targetCompanyId = company.id || 'mock-company-id';
+
+      if (!company.id) {
+        throw new Error('Empresa não carregada. Recarregue a página e tente novamente.');
+      }
 
       if (file) {
-        finalLogoUrl = await handleUploadLogo(targetCompanyId);
+        finalLogoUrl = await handleUploadLogo(company.id);
         setLogoUrl(finalLogoUrl);
       }
 
@@ -296,20 +282,12 @@ export default function OnboardingModal() {
         whatsapp: whatsapp.trim()
       };
 
-      if (company.id && company.id !== 'mock-company-id' && company.id.length === 36) {
-        const { error: updateErr } = await supabase
-          .from('companies')
-          .update(updateData)
-          .eq('id', company.id);
+      const { error: updateErr } = await supabase
+        .from('companies')
+        .update(updateData)
+        .eq('id', company.id);
 
-        if (updateErr) throw updateErr;
-      } else {
-        const localCompany = {
-          ...company,
-          ...updateData
-        };
-        localStorage.setItem('mock-company-settings', JSON.stringify(localCompany));
-      }
+      if (updateErr) throw updateErr;
 
       // Guardar preferências operacionais no localStorage
       localStorage.setItem('company-onboarding-terms', JSON.stringify({

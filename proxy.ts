@@ -58,19 +58,27 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  
-  // Verification flags
-  const isDev = process.env.NODE_ENV === 'development';
-  const isMockAuthenticated = request.cookies.get('os-session-mock')?.value === 'true';
-  // Permitir mock apenas em ambiente local de desenvolvimento
-  const isAdminAuthenticated = !!user || (isDev && isMockAuthenticated);
 
-  const isPortalAuthenticated = request.cookies.get('portal-session-mock')?.value === 'true';
+  // Clientes finais autenticam no mesmo pool do Supabase Auth que a equipe,
+  // mas não possuem perfil — o metadata portal_client os separa. O acesso ao
+  // /dashboard é decidido pela existência de um profile (fonte da verdade no
+  // banco), não pelo metadata, que o próprio usuário consegue alterar.
+  const isPortalClient = user?.user_metadata?.portal_client === true;
+
+  let hasStaffProfile = false;
+  if (user && (pathname.startsWith('/dashboard') || pathname.startsWith('/backoffice'))) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    hasStaffProfile = !!profile;
+  }
 
   // Backoffice (God Mode) protection
   if (pathname.startsWith('/backoffice')) {
-    const godModeEmail = 'lsp3037@gmail.com';
-    if (!user || user.email !== godModeEmail) {
+    const godModeEmail = process.env.BACKOFFICE_ADMIN_EMAIL;
+    if (!user || !hasStaffProfile || !godModeEmail || user.email !== godModeEmail) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);
@@ -78,27 +86,27 @@ export async function proxy(request: NextRequest) {
   }
 
   // 2. Admin dashboard route protection
-  if (pathname.startsWith('/dashboard') && !isAdminAuthenticated) {
+  if (pathname.startsWith('/dashboard') && !hasStaffProfile) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
-  if ((pathname === '/login' || pathname === '/register') && isAdminAuthenticated) {
+  if ((pathname === '/login' || pathname === '/register') && user && !isPortalClient) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
   // 3. Customer Portal route protection
-  if (pathname.startsWith('/portal/dashboard') && !isPortalAuthenticated) {
+  if (pathname.startsWith('/portal/dashboard') && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/portal';
     return NextResponse.redirect(url);
   }
 
-  if (pathname === '/portal' && isPortalAuthenticated) {
+  if (pathname === '/portal' && user) {
     const url = request.nextUrl.clone();
     url.pathname = '/portal/dashboard';
     return NextResponse.redirect(url);

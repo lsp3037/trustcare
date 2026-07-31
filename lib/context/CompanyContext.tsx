@@ -32,9 +32,9 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [company, setCompany] = useState<Company>({
-    name: 'Trust Care T.I.',
-    phone: '(66) 99999-9999',
-    email: 'contato@trustcare.com.br',
+    name: '',
+    phone: '',
+    email: '',
     logo_url: '',
     whatsapp: '',
     subscription_plan: 'starter',
@@ -58,9 +58,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       if (data) {
         const companyObj = {
           id: data.id,
-          name: data.name || 'Trust Care T.I.',
-          phone: data.phone || '(66) 99999-9999',
-          email: data.email || 'contato@trustcare.com.br',
+          name: data.name || '',
+          phone: data.phone || '',
+          email: data.email || '',
           logo_url: data.logo_url || '',
           whatsapp: data.whatsapp || '',
           subscription_plan: (data.subscription_plan || 'starter') as SubscriptionPlan,
@@ -69,29 +69,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           subdomain: data.subdomain || ''
         };
         setCompany(companyObj);
-        // Salva localmente para uso offline também
-        localStorage.setItem('mock-company-settings', JSON.stringify(companyObj));
       }
     } catch (err) {
-      console.warn('Erro ao carregar dados da empresa do Supabase, carregando local:', err);
-      // Carrega localmente
-      const localCompany = localStorage.getItem('mock-company-settings');
-      if (localCompany) {
-        setCompany(JSON.parse(localCompany));
-      } else {
-        // Inicializa com dados padrão
-        const defaultCompany = {
-          name: 'Trust Care T.I.',
-          phone: '(66) 99999-9999',
-          email: 'contato@trustcare.com.br',
-          logo_url: '',
-          whatsapp: '',
-          subscription_plan: 'starter' as SubscriptionPlan,
-          subscription_status: 'trialing' as SubscriptionStatus
-        };
-        localStorage.setItem('mock-company-settings', JSON.stringify(defaultCompany));
-        setCompany(defaultCompany);
-      }
+      console.error('Erro ao carregar dados da empresa:', err);
     } finally {
       setLoading(false);
     }
@@ -105,19 +85,14 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         if (session) {
           await fetchCompanyData();
         } else {
-          // Tenta carregar local se não houver sessão ativa
-          const localCompany = localStorage.getItem('mock-company-settings');
-          if (localCompany) {
-            setCompany(JSON.parse(localCompany));
-          }
           setLoading(false);
         }
       } else if (event === 'SIGNED_OUT') {
         // Limpa se deslogar
         setCompany({
-          name: 'Trust Care T.I.',
-          phone: '(66) 99999-9999',
-          email: 'contato@trustcare.com.br',
+          name: '',
+          phone: '',
+          email: '',
           logo_url: '',
           whatsapp: '',
           subscription_plan: 'starter',

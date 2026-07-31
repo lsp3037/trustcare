@@ -184,28 +184,10 @@ export default function InventoryPage() {
 
       setProducts(data || []);
     } catch (err) {
-      console.warn('Erro ao buscar estoque do Supabase, usando fallback local:', err);
-      loadLocalProducts();
+      console.error('Erro ao buscar estoque:', err);
+      setProducts([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadLocalProducts = () => {
-    const localProducts = localStorage.getItem('mock-inventory');
-    if (localProducts) {
-      setProducts(JSON.parse(localProducts));
-    } else {
-      // Fallback de dados mockados com as novas propriedades para T.I.
-      const initialMock = [
-        { id: 'p1', name: 'SSD 480GB Kingston SATA III', sku: 'SSD-KG-480', category: 'SSD', brand: 'Kingston', capacity: '480GB', quantity: 12, cost_price: 120.00, sale_price: 249.90, min_stock_alert: 5 },
-        { id: 'p2', name: 'Memória RAM DDR4 8GB 3200MHz Corsair', sku: 'MEM-CS-8G', category: 'Memória RAM', brand: 'Corsair', capacity: '8GB', quantity: 3, cost_price: 90.00, sale_price: 199.00, min_stock_alert: 5 },
-        { id: 'p3', name: 'Cabo de Rede CAT6 Furukawa 10m', sku: 'CAB-FK-10M', category: 'Cabo / Acessório', brand: 'Furukawa', capacity: '10 metros', quantity: 25, cost_price: 15.00, sale_price: 45.00, min_stock_alert: 10 },
-        { id: 'p4', name: 'Roteador TP-Link Archer C6 AC1200', sku: 'ROT-TP-C6', category: 'Outro', brand: 'TP-Link', capacity: 'N/A', quantity: 1, cost_price: 110.00, sale_price: 229.00, min_stock_alert: 3 },
-        { id: 'p5', name: 'Pasta Térmica Arctic MX-4 4g', sku: 'PST-AR-MX4', category: 'Outro', brand: 'Arctic', capacity: '4g', quantity: 8, cost_price: 25.00, sale_price: 65.00, min_stock_alert: 2 },
-      ];
-      localStorage.setItem('mock-inventory', JSON.stringify(initialMock));
-      setProducts(initialMock);
     }
   };
 
@@ -221,19 +203,16 @@ export default function InventoryPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
 
-        if (profile?.company_id) {
-          companyId = profile.company_id;
-        }
-      }
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const companyId = profile.company_id;
 
       const newProductData = {
         company_id: companyId,
@@ -250,17 +229,7 @@ export default function InventoryPage() {
 
       const { error } = await supabase.from('products_inventory').insert(newProductData);
 
-      if (error) {
-        console.warn('Falha Supabase, inserindo mock local:', error.message);
-
-        // Salva mock
-        const currentMock = [...products];
-        currentMock.push({
-          id: `mock-prod-${Date.now()}`,
-          ...newProductData
-        });
-        localStorage.setItem('mock-inventory', JSON.stringify(currentMock));
-      }
+      if (error) throw error;
 
       setFormSuccess(true);
       setTimeout(() => {
@@ -288,17 +257,7 @@ export default function InventoryPage() {
         .delete()
         .eq('id', id);
 
-      if (error) {
-        console.warn('Erro ao deletar no Supabase, deletando do mock local:', error.message);
-
-        // Deleta do mock local
-        const localProducts = localStorage.getItem('mock-inventory');
-        if (localProducts) {
-          const parsed = JSON.parse(localProducts);
-          const filtered = parsed.filter((p: any) => p.id !== id);
-          localStorage.setItem('mock-inventory', JSON.stringify(filtered));
-        }
-      }
+      if (error) throw error;
 
       // Recarrega o estoque
       fetchInventory();
@@ -327,16 +286,8 @@ export default function InventoryPage() {
       setProducts(prev => prev.filter(p => !selectedProductIds.includes(p.id)));
       alert('Produtos excluídos com sucesso!');
     } catch (err) {
-      console.warn('Erro ao excluir online, aplicando localmente:', err);
-
-      const localProducts = localStorage.getItem('mock-inventory');
-      if (localProducts) {
-        const parsed = JSON.parse(localProducts);
-        const filtered = parsed.filter((p: any) => !selectedProductIds.includes(p.id));
-        localStorage.setItem('mock-inventory', JSON.stringify(filtered));
-        setProducts(filtered);
-        alert('[Offline] Produtos excluídos localmente com sucesso!');
-      }
+      console.error('Erro ao excluir produtos:', err);
+      alert(`Não foi possível excluir os produtos: ${(err as Error).message}`);
     } finally {
       setSelectedProductIds([]);
       setDeletingBulk(false);

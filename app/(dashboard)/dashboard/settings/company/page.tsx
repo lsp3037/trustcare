@@ -143,11 +143,14 @@ export default function CompanySettingsPage() {
 
     try {
       let finalLogoUrl = logoUrl;
-      const targetCompanyId = company.id || 'mock-company-id';
+
+      if (!company.id) {
+        throw new Error('Empresa não carregada. Recarregue a página e tente novamente.');
+      }
 
       // 1. Upload logo to Supabase Storage if a new file is staged
       if (file) {
-        finalLogoUrl = await handleUploadLogo(targetCompanyId);
+        finalLogoUrl = await handleUploadLogo(company.id);
         setLogoUrl(finalLogoUrl);
       }
 
@@ -159,22 +162,13 @@ export default function CompanySettingsPage() {
         whatsapp: whatsapp.trim()
       };
 
-      // 2. Save configurations (Supabase or Local Fallback)
-      if (company.id && company.id !== 'mock-company-id' && company.id.length === 36) {
-        const { error: updateErr } = await supabase
-          .from('companies')
-          .update(updateData)
-          .eq('id', company.id);
+      // 2. Save configurations
+      const { error: updateErr } = await supabase
+        .from('companies')
+        .update(updateData)
+        .eq('id', company.id);
 
-        if (updateErr) throw updateErr;
-      } else {
-        // Mock fallback sync
-        const localCompany = {
-          ...company,
-          ...updateData
-        };
-        localStorage.setItem('mock-company-settings', JSON.stringify(localCompany));
-      }
+      if (updateErr) throw updateErr;
 
       // 3. Refresh Context state
       await refreshCompany();
@@ -229,7 +223,7 @@ export default function CompanySettingsPage() {
             <Building className="w-5 h-5 text-emerald-500" />
             <h2 className="text-base font-bold text-white">Configurações Gerais</h2>
           </div>
-          <span className="text-[10px] text-text-subtle font-mono">ID Tenant: {company.id || 'offline-mock'}</span>
+          <span className="text-[10px] text-text-subtle font-mono">ID Tenant: {company.id || '—'}</span>
         </div>
 
         {/* Form Body */}

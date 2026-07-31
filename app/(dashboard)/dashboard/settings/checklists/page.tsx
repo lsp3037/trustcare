@@ -74,14 +74,9 @@ export default function ChecklistSettingsPage() {
         }
       } catch (err) {
         const errorObj = err as Error;
-        console.warn('Erro ao carregar categorias do Supabase, buscando local:', errorObj.message);
-        const mockCats = localStorage.getItem('mock-equipment-categories');
-        const allCats = mockCats ? JSON.parse(mockCats) : [
-          { id: 'cat1', name: 'Notebook' },
-          { id: 'cat2', name: 'Desktop' }
-        ];
+        console.error('Erro ao carregar categorias:', errorObj.message);
         if (active) {
-          setCategories(allCats);
+          setCategories([]);
         }
       } finally {
         if (active) {
@@ -114,27 +109,14 @@ export default function ChecklistSettingsPage() {
           if (data && data.schema && Array.isArray(data.schema.items)) {
             setItems(data.schema.items);
           } else {
-            // Tenta buscar nos mocks do localStorage
-            const mockTemplatesStr = localStorage.getItem('mock-checklist-templates');
-            const mockTemplates = mockTemplatesStr ? JSON.parse(mockTemplatesStr) : {};
-            if (mockTemplates[selectedCategoryId] && Array.isArray(mockTemplates[selectedCategoryId].items)) {
-              setItems(mockTemplates[selectedCategoryId].items);
-            } else {
-              setItems(DEFAULT_CHECKLIST_ITEMS);
-            }
+            setItems(DEFAULT_CHECKLIST_ITEMS);
           }
         }
       } catch (err) {
         const errorObj = err as Error;
         console.warn('Erro ao carregar template, usando padrão:', errorObj.message);
         if (active) {
-          const mockTemplatesStr = localStorage.getItem('mock-checklist-templates');
-          const mockTemplates = mockTemplatesStr ? JSON.parse(mockTemplatesStr) : {};
-          if (mockTemplates[selectedCategoryId] && Array.isArray(mockTemplates[selectedCategoryId].items)) {
-            setItems(mockTemplates[selectedCategoryId].items);
-          } else {
-            setItems(DEFAULT_CHECKLIST_ITEMS);
-          }
+          setItems(DEFAULT_CHECKLIST_ITEMS);
         }
       } finally {
         if (active) {
@@ -200,11 +182,11 @@ export default function ChecklistSettingsPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-        if (profile?.company_id) companyId = profile.company_id;
-      }
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const companyId = profile.company_id;
 
       // Upsert no Supabase
       const { error } = await supabase
@@ -216,15 +198,7 @@ export default function ChecklistSettingsPage() {
           updated_at: new Date().toISOString()
         }, { onConflict: 'company_id,category_id' });
 
-      if (error) {
-        console.warn('Erro ao salvar no Supabase, salvando localmente:', error.message);
-        
-        // Salva nos mocks do localStorage
-        const mockTemplatesStr = localStorage.getItem('mock-checklist-templates');
-        const mockTemplates = mockTemplatesStr ? JSON.parse(mockTemplatesStr) : {};
-        mockTemplates[selectedCategoryId] = { items };
-        localStorage.setItem('mock-checklist-templates', JSON.stringify(mockTemplates));
-      }
+      if (error) throw error;
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);

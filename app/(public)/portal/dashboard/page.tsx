@@ -26,57 +26,29 @@ export default function PortalDashboard() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // 1. Obtém dados do cliente autenticado
-    const storedClient = localStorage.getItem('portal-client');
-    if (!storedClient) {
-      document.cookie = "portal-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "portal-client-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      router.push('/portal');
-      return;
-    }
-    const parsedClient = JSON.parse(storedClient);
-    setClient(parsedClient);
-
     const fetchData = async () => {
       try {
         setLoading(true);
         setErrorMsg('');
 
-        // 2. Busca OSs e Equipamentos do cliente (Online)
-        const { data: osData, error: osErr } = await supabase
-          .from('service_orders')
-          .select('*')
-          .eq('client_id', parsedClient.id)
-          .order('created_at', { ascending: false });
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-        const { data: eqData, error: eqErr } = await supabase
-          .from('client_equipments')
-          .select('*')
-          .eq('client_id', parsedClient.id)
-          .order('name');
-
-        if (osErr || eqErr) {
-          console.warn('Erro ao consultar Supabase, tentando local:', osErr?.message || eqErr?.message);
+        if (!user) {
+          router.push('/portal');
+          return;
         }
 
-        let finalOrders = osData || [];
-        let finalEquipments = eqData || [];
+        // Uma única RPC resolve tudo. O escopo vem do e-mail verificado no
+        // JWT — não existe parâmetro de client_id para adulterar.
+        const { data, error } = await supabase.rpc('get_my_portal_data');
 
-        // 3. Fallback Local / Offline
-        if (finalOrders.length === 0) {
-          const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
-          const localOrders = JSON.parse(localOrdersStr);
-          finalOrders = localOrders.filter((o: any) => o.client_id === parsedClient.id);
-        }
+        if (error) throw error;
 
-        if (finalEquipments.length === 0) {
-          const localEqsStr = localStorage.getItem('mock-equipments') || '[]';
-          const localEqs = JSON.parse(localEqsStr);
-          finalEquipments = localEqs.filter((e: any) => e.client_id === parsedClient.id);
-        }
-
-        setOrders(finalOrders);
-        setEquipments(finalEquipments);
+        setClient(data?.clients?.[0] ?? { name: user.email });
+        setOrders(data?.orders ?? []);
+        setEquipments(data?.equipments ?? []);
       } catch (err: any) {
         setErrorMsg('Erro ao carregar dados do portal.');
       } finally {
@@ -87,10 +59,8 @@ export default function PortalDashboard() {
     fetchData();
   }, [router]);
 
-  const handleLogout = () => {
-    document.cookie = "portal-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "portal-client-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    localStorage.removeItem('portal-client');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/portal');
   };
 

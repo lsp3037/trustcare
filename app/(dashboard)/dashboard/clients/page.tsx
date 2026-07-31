@@ -66,31 +66,10 @@ export default function ClientsPage() {
       }));
       setClients(processed);
     } catch (err) {
-      console.warn('Erro ao carregar clientes do Supabase, usando fallback local:', err);
-      loadLocalClients();
+      console.error('Erro ao carregar clientes:', err);
+      setClients([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadLocalClients = () => {
-    const localClients = localStorage.getItem('mock-clients');
-    if (localClients) {
-      const parsed = JSON.parse(localClients);
-      const processed = parsed.map((c: any, index: number) => ({
-        ...c,
-        client_number: c.client_number || (1001 + index)
-      }));
-      setClients(processed);
-    } else {
-      const initialMock = [
-        { id: 'c1', client_number: 1001, type: 'PJ', name: 'Tech Solutions Ltda', document: '12.345.678/0001-90', phone: '(11) 98765-4321', email: 'contato@techsolutions.com' },
-        { id: 'c2', client_number: 1002, type: 'PF', name: 'Carlos Henrique Souza', document: '123.456.789-00', phone: '(21) 99999-8888', email: 'carlos.souza@gmail.com' },
-        { id: 'c3', client_number: 1003, type: 'PJ', name: 'Clínica Sorriso Perfeito', document: '98.765.432/0001-21', phone: '(11) 5555-4444', email: 'financeiro@sorrisoperfeito.com.br' },
-        { id: 'c4', client_number: 1004, type: 'PF', name: 'Juliana Mendes', document: '987.654.321-11', phone: '(31) 98888-7777', email: 'juliana.mendes@outlook.com' },
-      ];
-      localStorage.setItem('mock-clients', JSON.stringify(initialMock));
-      setClients(initialMock);
     }
   };
 
@@ -110,19 +89,16 @@ export default function ClientsPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single();
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
 
-        if (profile?.company_id) {
-          companyId = profile.company_id;
-        }
-      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const companyId = profile.company_id;
 
       const newClientData = {
         company_id: companyId,
@@ -139,25 +115,9 @@ export default function ClientsPage() {
         .select()
         .single();
 
-      let finalClient = insertedClient;
+      if (error) throw error;
 
-      if (error) {
-        console.warn('Falha Supabase, salvando mock local:', error.message);
-        
-        // Salva mock com número sequencial
-        const currentMock = [...clients];
-        const nextNumber = Math.max(...currentMock.map(c => c.client_number || 1000), 1000) + 1;
-        const mockId = `mock-client-${Date.now()}`;
-        finalClient = {
-          id: mockId,
-          client_number: nextNumber,
-          ...newClientData
-        };
-        currentMock.push(finalClient);
-        localStorage.setItem('mock-clients', JSON.stringify(currentMock));
-      }
-
-      setCreatedClient(finalClient);
+      setCreatedClient(insertedClient);
       setFormSuccess(true);
       fetchClients();
 
@@ -178,11 +138,11 @@ export default function ClientsPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-        if (profile?.company_id) companyId = profile.company_id;
-      }
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const companyId = profile.company_id;
 
       const newEq = {
         company_id: companyId,
@@ -199,28 +159,9 @@ export default function ClientsPage() {
         .select()
         .single();
 
-      let finalEq = insertedEq;
+      if (error) throw error;
 
-      if (error) {
-        console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
-        
-        const mockEqs = localStorage.getItem('mock-equipments');
-        const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-          { id: 'eq1', client_id: 'c1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-          { id: 'eq2', client_id: 'c2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-          { id: 'eq3', client_id: 'c3', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-          { id: 'eq4', client_id: 'c4', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-        ];
-        
-        finalEq = {
-          id: `mock-eq-${Date.now()}`,
-          ...newEq
-        };
-        allEqs.push(finalEq);
-        localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
-      }
-
-      setAddedEquipments((prev) => [...prev, finalEq || newEq]);
+      setAddedEquipments((prev) => [...prev, insertedEq]);
       setEqSuccess(true);
       setEqName('');
       setEqBrand('');
@@ -278,18 +219,8 @@ export default function ClientsPage() {
         return;
       }
 
-      console.warn('Erro ao excluir cliente no Supabase, tentando excluir localmente:', err.message);
-      
-      const localClients = localStorage.getItem('mock-clients');
-      if (localClients) {
-        const parsed = JSON.parse(localClients);
-        const filtered = parsed.filter((c: any) => c.id !== id);
-        localStorage.setItem('mock-clients', JSON.stringify(filtered));
-        setClients(prev => prev.filter(c => c.id !== id));
-        alert('Cliente excluído com sucesso (local)!');
-      } else {
-        alert(`Erro ao excluir cliente: ${err.message || 'Erro desconhecido'}`);
-      }
+      console.error('Erro ao excluir cliente:', err.message);
+      alert(`Erro ao excluir cliente: ${err.message || 'Erro desconhecido'}`);
     }
   };
 

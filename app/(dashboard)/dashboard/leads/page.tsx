@@ -22,12 +22,6 @@ import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { Button, buttonClasses } from '@/components/ui';
 
-function createUniqueId(prefix: string): string {
-  const timestamp = new Date().getTime();
-  const random = Math.floor(Math.random() * 10000);
-  return `${prefix}-${timestamp}-${random}`;
-}
-
 interface Lead {
   id: string;
   company_id?: string;
@@ -106,43 +100,19 @@ export default function LeadsFunnelPage() {
 
       setLeads(data as Lead[] || []);
     } catch (err) {
-      console.warn('Erro ao carregar leads do Supabase, buscando mock local:', err);
-      loadLocalLeads();
+      console.error('Erro ao carregar leads:', err);
+      setLeads([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadLocalLeads = () => {
-    const stored = localStorage.getItem('mock-leads');
-    let loadedLeads: Lead[] = [];
-    if (stored) {
-      loadedLeads = JSON.parse(stored);
-    } else {
-      loadedLeads = [
-        { id: 'l1', name: 'Ana Paula Souza', phone: '(11) 98888-7777', equipment_info: 'MacBook Pro M2 - Upgrade de SSD', problem_description: 'Upgrade para maior capacidade', origem: 'WhatsApp', status: 'Novo Contato', valor_estimado: 1200.00, created_at: new Date(Date.now() - 3600000 * 3).toISOString() },
-        { id: 'l2', name: 'Marcos Vinícius', phone: '(21) 97777-6666', equipment_info: 'Console PS5 - Limpeza e Superaquecimento', problem_description: 'Desliga sozinho ao jogar', origem: 'Instagram Ads', status: 'Em Negociação', valor_estimado: 450.00, created_at: new Date(Date.now() - 3600000 * 20).toISOString() },
-        { id: 'l3', name: 'Roberto da Silva', phone: '(19) 99999-8888', equipment_info: 'Notebook Dell Inspiron - Reparo de Carcaça', problem_description: 'Dobradiça quebrada', origem: 'Indicação', status: 'Aguardando Equipamento', valor_estimado: 350.00, created_at: new Date(Date.now() - 3600000 * 48).toISOString() },
-        { id: 'l4', name: 'Lúcia Ferreira', phone: '(31) 96666-5555', equipment_info: 'iPhone 13 - Troca de Tela', problem_description: 'Vidro quebrado e touch falhando', origem: 'Telefone', status: 'Ganho/Convertido', valor_estimado: 600.00, created_at: new Date(Date.now() - 3600000 * 72).toISOString() },
-        { id: 'l5', name: 'Julio Cesar Santos', phone: '(11) 97777-8888', equipment_info: 'Placa Mãe PC Desktop - Reparo de Trilhas', problem_description: 'Curto circuito na linha de entrada', origem: 'Outro', status: 'Perdido', valor_estimado: 750.00, motivo_perda: 'Preço muito alto', created_at: new Date(Date.now() - 3600000 * 96).toISOString() }
-      ];
-      localStorage.setItem('mock-leads', JSON.stringify(loadedLeads));
-    }
-    setLeads(loadedLeads);
-  };
-
   useEffect(() => {
     if (company?.id) {
       fetchLeads();
-    } else {
-      loadLocalLeads();
     }
   }, [company?.id]);
 
-  const saveLeadsToStorage = (updatedLeads: Lead[]) => {
-    setLeads(updatedLeads);
-    localStorage.setItem('mock-leads', JSON.stringify(updatedLeads));
-  };
 
   // Drag & Drop native handlers
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -220,19 +190,10 @@ export default function LeadsFunnelPage() {
         .eq('id', leadId);
 
       if (error) throw error;
-      
-      // Sync local storage
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updatedLocal = parsedLeads.map((l: any) => 
-        l.id === leadId 
-          ? { ...l, status: newStatus, motivo_perda: newStatus === 'Perdido' ? motivoPerda : null, updated_at: new Date().toISOString() } 
-          : l
-      );
-      localStorage.setItem('mock-leads', JSON.stringify(updatedLocal));
     } catch (err) {
-      console.warn('Erro ao atualizar status do lead no Supabase, aplicando localmente:', err);
-      saveLeadsToStorage(updated);
+      console.error('Erro ao atualizar status do lead:', err);
+      alert(`Não foi possível atualizar o lead: ${(err as Error).message}`);
+      fetchLeads();
     }
   };
 
@@ -276,34 +237,12 @@ export default function LeadsFunnelPage() {
 
       if (data) {
         setLeads([data as Lead, ...leads]);
-        
-        // Sync local storage
-        const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-        const parsedLeads = JSON.parse(localLeadsStr);
-        parsedLeads.unshift(data);
-        localStorage.setItem('mock-leads', JSON.stringify(parsedLeads));
-
         setIsCreating(false);
         resetForm();
       }
     } catch (err) {
-      console.warn('Erro Supabase ao salvar lead, salvando mock local:', err);
-      
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      
-      const localNewLead: Lead = {
-        id: `mock-lead-${Date.now()}`,
-        ...newLeadData,
-        created_at: new Date().toISOString()
-      };
-      
-      parsedLeads.unshift(localNewLead);
-      localStorage.setItem('mock-leads', JSON.stringify(parsedLeads));
-      
-      setLeads([localNewLead, ...leads]);
-      setIsCreating(false);
-      resetForm();
+      console.error('Erro ao salvar lead:', err);
+      alert(`Não foi possível salvar o lead: ${(err as Error).message}`);
     }
   };
 
@@ -333,28 +272,11 @@ export default function LeadsFunnelPage() {
 
       const updatedLead = { ...selectedLead, ...updateData };
       setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
-      
-      // Sync local storage
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.map((l: any) => l.id === selectedLead.id ? { ...l, ...updateData } : l);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
-
       setSelectedLead(updatedLead);
       setIsEditing(false);
     } catch (err) {
-      console.warn('Erro ao atualizar lead no Supabase, aplicando localmente:', err);
-      
-      const updatedLead = { ...selectedLead, ...updateData };
-      setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
-      
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.map((l: any) => l.id === selectedLead.id ? { ...l, ...updateData } : l);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
-      
-      setSelectedLead(updatedLead);
-      setIsEditing(false);
+      console.error('Erro ao atualizar lead:', err);
+      alert(`Não foi possível atualizar o lead: ${(err as Error).message}`);
     }
   };
 
@@ -374,18 +296,10 @@ export default function LeadsFunnelPage() {
         .eq('id', leadId);
 
       if (error) throw error;
-      
-      // Sync local storage
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.filter((l: any) => l.id !== leadId);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
     } catch (err) {
-      console.warn('Erro ao deletar lead no Supabase, aplicando localmente:', err);
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.filter((l: any) => l.id !== leadId);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
+      console.error('Erro ao deletar lead:', err);
+      alert(`Não foi possível excluir o lead: ${(err as Error).message}`);
+      fetchLeads();
     }
   };
 
@@ -401,62 +315,69 @@ export default function LeadsFunnelPage() {
   };
 
   // Convert to O.S. (Duplicate Verification Flow)
-  const handleConvertToOS = () => {
-    if (!selectedLead) return;
+  const handleConvertToOS = async () => {
+    if (!selectedLead || !company?.id) return;
 
-    // Load mock clients list
-    const storedClientsRaw = localStorage.getItem('mock-clients');
-    const storedClients: Client[] = storedClientsRaw ? JSON.parse(storedClientsRaw) : [];
-
-    // Search duplicate by name or phone
+    // Procura cliente já existente por nome ou telefone no tenant atual
     const cleanedPhone = selectedLead.phone.replace(/\D/g, '');
-    const duplicate = storedClients.find((c) => {
-      const matchName = c.name.toLowerCase().trim() === selectedLead.name.toLowerCase().trim();
-      const matchPhone = cleanedPhone && c.phone.replace(/\D/g, '') === cleanedPhone;
-      return matchName || matchPhone;
-    });
 
-    if (duplicate) {
-      setDuplicateClient(duplicate);
-      setShowDuplicateModal(true);
-    } else {
-      // Direct Conversion
-      proceedWithNewClientCreation();
+    try {
+      const { data: existingClients, error } = await supabase
+        .from('clients')
+        .select('id, client_number, type, name, document, phone, email')
+        .eq('company_id', company.id);
+
+      if (error) throw error;
+
+      const duplicate = (existingClients || []).find((c) => {
+        const matchName = c.name?.toLowerCase().trim() === selectedLead.name.toLowerCase().trim();
+        const matchPhone = cleanedPhone && c.phone?.replace(/\D/g, '') === cleanedPhone;
+        return matchName || matchPhone;
+      });
+
+      if (duplicate) {
+        setDuplicateClient(duplicate as Client);
+        setShowDuplicateModal(true);
+      } else {
+        await proceedWithNewClientCreation();
+      }
+    } catch (err) {
+      console.error('Erro ao verificar clientes duplicados:', err);
+      alert(`Não foi possível converter o lead: ${(err as Error).message}`);
     }
   };
 
   // Scenario 1: Create a new client and redirect
-  const proceedWithNewClientCreation = () => {
-    if (!selectedLead) return;
+  const proceedWithNewClientCreation = async () => {
+    if (!selectedLead || !company?.id) return;
 
-    const storedClientsRaw = localStorage.getItem('mock-clients');
-    const storedClients: Client[] = storedClientsRaw ? JSON.parse(storedClientsRaw) : [];
+    try {
+      const { data: newClient, error } = await supabase
+        .from('clients')
+        .insert({
+          company_id: company.id,
+          type: 'PF',
+          name: selectedLead.name,
+          document: '',
+          phone: selectedLead.phone,
+          email: ''
+        })
+        .select('id')
+        .single();
 
-    const nextNumber = Math.max(...storedClients.map((c) => c.client_number || 1000), 1000) + 1;
-    const newClientId = createUniqueId('mock-client');
-    const newClient: Client = {
-      id: newClientId,
-      client_number: nextNumber,
-      type: 'PF',
-      name: selectedLead.name,
-      document: '',
-      phone: selectedLead.phone,
-      email: ''
-    };
+      if (error) throw error;
 
-    // Save client
-    const updatedClients = [...storedClients, newClient];
-    localStorage.setItem('mock-clients', JSON.stringify(updatedClients));
+      await updateLeadStatus(selectedLead.id, 'Ganho/Convertido');
 
-    // Convert Lead status to Won/Converted
-    updateLeadStatus(selectedLead.id, 'Ganho/Convertido');
+      const equipment = selectedLead.equipment_info;
+      setShowDuplicateModal(false);
+      setSelectedLead(null);
 
-    // Close Modals
-    setShowDuplicateModal(false);
-    setSelectedLead(null);
-
-    // Redirect to New O.S. Form with prefilled parameters
-    router.push(`/dashboard/orders?new=true&client_id=${newClientId}&equipment=${encodeURIComponent(selectedLead.equipment_info)}`);
+      router.push(`/dashboard/orders?new=true&client_id=${newClient.id}&equipment=${encodeURIComponent(equipment)}`);
+    } catch (err) {
+      console.error('Erro ao criar cliente a partir do lead:', err);
+      alert(`Não foi possível criar o cliente: ${(err as Error).message}`);
+    }
   };
 
   // Scenario 2: Use existing matching client and redirect

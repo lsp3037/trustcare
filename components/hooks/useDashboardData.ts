@@ -122,68 +122,19 @@ export function useDashboardData(dateRange: DateRange | null) {
     }
   };
 
-  const loadLocalDashboardMock = (from: Date, to: Date) => {
-    const mockOrders = localStorage.getItem('mock-orders');
-    let ordersList = [];
-    if (mockOrders) {
-      ordersList = JSON.parse(mockOrders);
-    } else {
-      ordersList = [
-        { id: '1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', status: 'Em Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-        { id: '2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', status: 'Aguardando Peças', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
-        { id: '3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', status: 'Pronto para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
-        { id: '4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', status: 'Em Análise', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString() },
-      ];
-    }
-
-    const filteredByDate = ordersList.filter((o: any) => {
-      if (!o.created_at) return false;
-      const orderDate = new Date(o.created_at);
-      return orderDate >= from && orderDate <= to;
-    });
-
-    setRecentOrders(filteredByDate.slice(0, 5));
-    setChartData(processChartDataForRange(ordersList, from, to));
-
-    const paidOrders = ordersList.filter((o: any) => {
-      const dateToUse = o.payment_date || o.created_at;
-      if (!dateToUse) return false;
-      const orderDate = new Date(dateToUse);
-      return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && orderDate >= from && orderDate <= to;
-    });
-
-    const billingTotal = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_value || 0), 0);
-    const ticketMedio = paidOrders.length > 0 ? (billingTotal / paidOrders.length) : 0;
-    
-    const dist = paidOrders.reduce((acc: any, order: any) => {
-      const method = order.payment_method || 'Não Informado';
-      acc[method] = (acc[method] || 0) + Number(order.total_value || 0);
-      return acc;
-    }, {} as Record<string, number>);
-    setPaymentDistribution(dist);
-    
-    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Entregue', 'Cancelado'].includes(o.status)).length;
-    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado', 'Entregue'].includes(o.status)).length;
-
-    const localClients = localStorage.getItem('mock-clients');
-    const parsedClients = localClients ? JSON.parse(localClients) : [];
-    const clientsCount = parsedClients.length || 4;
-    const pj = parsedClients.filter((c: any) => c.type === 'PJ').length || 28;
-    const pf = parsedClients.filter((c: any) => c.type === 'PF').length || 14;
-
-    const localProducts = localStorage.getItem('mock-inventory');
-    const productsList = localProducts ? JSON.parse(localProducts) : [];
-    const lowStockCount = productsList.filter((p: any) => p.quantity < p.min_stock_alert).length;
-
+  const resetDashboardState = () => {
+    setRecentOrders([]);
+    setChartData([]);
+    setPaymentDistribution({});
     setStats({
-      billing: billingTotal,
-      ticketMedio: ticketMedio,
-      openOrders: open,
-      completedOrders: completed,
-      totalClients: clientsCount,
-      lowStockCount: lowStockCount || 3,
-      pjCount: pj,
-      pfCount: pf
+      billing: 0,
+      ticketMedio: 0,
+      openOrders: 0,
+      completedOrders: 0,
+      totalClients: 0,
+      lowStockCount: 0,
+      pjCount: 0,
+      pfCount: 0
     });
   };
 
@@ -285,45 +236,11 @@ export function useDashboardData(dateRange: DateRange | null) {
 
         setChartData(processChartDataForRange(orders, fromDate, toDate));
       } else {
-        const isCustomCompany = company && company.name !== 'Trust Care T.I.';
-        if (isCustomCompany) {
-          setRecentOrders([]);
-          setChartData([]);
-          setStats({
-            billing: 0,
-            ticketMedio: 0,
-            openOrders: 0,
-            completedOrders: 0,
-            totalClients: 0,
-            lowStockCount: 0,
-            pjCount: 0,
-            pfCount: 0
-          });
-          setPaymentDistribution({});
-        } else {
-          loadLocalDashboardMock(from, to);
-        }
+        resetDashboardState();
       }
     } catch (error) {
-      console.warn('Erro ao buscar dados do dashboard do Supabase, usando fallback local:', error);
-      const isCustomCompany = company && company.name !== 'Trust Care T.I.';
-      if (isCustomCompany) {
-        setRecentOrders([]);
-        setChartData([]);
-        setStats({
-          billing: 0,
-          ticketMedio: 0,
-          openOrders: 0,
-          completedOrders: 0,
-          totalClients: 0,
-          lowStockCount: 0,
-          pjCount: 0,
-          pfCount: 0
-        });
-        setPaymentDistribution({});
-      } else {
-        loadLocalDashboardMock(from, to);
-      }
+      console.error('Erro ao buscar dados do dashboard:', error);
+      resetDashboardState();
     } finally {
       setLoading(false);
     }
@@ -341,15 +258,8 @@ export function useDashboardData(dateRange: DateRange | null) {
       alert(`Status da OS atualizado para "${newStatus}"!`);
       if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
     } catch (err) {
-      console.warn('Erro ao atualizar online, aplicando localmente:', err);
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsed = JSON.parse(localOrders);
-        const updated = parsed.map((o: any) => o.id === orderId ? { ...o, status: newStatus } : o);
-        localStorage.setItem('mock-orders', JSON.stringify(updated));
-        alert(`[Offline] Status da OS atualizado para "${newStatus}"!`);
-        if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
-      }
+      console.error('Erro ao atualizar status da OS:', err);
+      alert(`Não foi possível atualizar o status: ${(err as Error).message}`);
     }
   };
 

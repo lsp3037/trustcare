@@ -14,11 +14,6 @@ export function OrderDetailsDataFetcher({ id }: { id: string }) {
   useEffect(() => {
     async function fetchData() {
       if (!id) return;
-      if (id.startsWith('mock-os')) {
-        setLoading(false);
-        return; // Let it render empty, or handle mock differently
-      }
-
       try {
         const { data: osData } = await supabase.from('service_orders').select('*, clients(*)').eq('id', id).single();
         if (!osData) {

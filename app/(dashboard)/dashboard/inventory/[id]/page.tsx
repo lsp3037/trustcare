@@ -128,30 +128,8 @@ export default function ProductDetailPage() {
         parseCapacitySpecs(productData.category || 'SSD', productData.capacity || '');
       }
     } catch (err) {
-      console.warn('Erro ao carregar produto do Supabase, usando mock local:', err);
-      
-      // Fallback para localStorage
-      const localProducts = localStorage.getItem('mock-inventory');
-      if (localProducts) {
-        const parsed = JSON.parse(localProducts);
-        const found = parsed.find((p: any) => p.id === id);
-        
-        if (found) {
-          setProduct(found);
-          setName(found.name);
-          setSku(found.sku);
-          setCategory(found.category || 'SSD');
-          setBrand(found.brand || '');
-          setCapacity(found.capacity || '');
-          setQuantity(found.quantity.toString());
-          setCostPrice(found.cost_price.toString());
-          setSalePrice(found.sale_price.toString());
-          setMinStockAlert(found.min_stock_alert.toString());
-          parseCapacitySpecs(found.category || 'SSD', found.capacity || '');
-        } else {
-          setProduct(null);
-        }
-      }
+      console.error('Erro ao carregar produto:', err);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -185,22 +163,7 @@ export default function ProductDetailPage() {
         .update(updatedData)
         .eq('id', id);
 
-      if (error) {
-        console.warn('Erro no Supabase, atualizando local storage:', error.message);
-        
-        // Local storage update
-        const localProducts = localStorage.getItem('mock-inventory');
-        if (localProducts) {
-          const parsed = JSON.parse(localProducts);
-          const updatedList = parsed.map((p: any) => {
-            if (p.id === id) {
-              return { ...p, ...updatedData };
-            }
-            return p;
-          });
-          localStorage.setItem('mock-inventory', JSON.stringify(updatedList));
-        }
-      }
+      if (error) throw error;
 
       setSaveSuccess(true);
       setTimeout(() => {
@@ -229,17 +192,7 @@ export default function ProductDetailPage() {
         .delete()
         .eq('id', id);
 
-      if (error) {
-        console.warn('Erro ao deletar no Supabase, deletando do mock local:', error.message);
-        
-        // Deleta do mock local
-        const localProducts = localStorage.getItem('mock-inventory');
-        if (localProducts) {
-          const parsed = JSON.parse(localProducts);
-          const filtered = parsed.filter((p: any) => p.id !== id);
-          localStorage.setItem('mock-inventory', JSON.stringify(filtered));
-        }
-      }
+      if (error) throw error;
 
       router.push('/dashboard/inventory');
     } catch (err: any) {

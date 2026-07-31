@@ -41,7 +41,6 @@ export default function UserManagementPage() {
   const { maxTechnicians, isReadOnly } = useCompany();
   const [loading, setLoading] = useState(true);
   const [checkingAccess, setCheckingAccess] = useState(true);
-  const [isMock, setIsMock] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -69,26 +68,18 @@ export default function UserManagementPage() {
       if (role !== 'admin') {
         router.push('/dashboard');
       } else {
-        const usingMock = !user;
-        setIsMock(usingMock);
         setCheckingAccess(false);
-        fetchUsers(usingMock);
+        fetchUsers();
       }
     };
 
     verifyAdminAccess();
   }, [router, role, user, userLoading]);
 
-  async function fetchUsers(forceMock?: boolean) {
-    const activeMock = forceMock !== undefined ? forceMock : isMock;
+  async function fetchUsers() {
     try {
       setLoading(true);
 
-      if (activeMock) {
-        loadLocalUsers();
-        return;
-      }
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*');
@@ -105,27 +96,12 @@ export default function UserManagementPage() {
       }));
       setUsers(processed);
     } catch (err) {
-      console.warn('Erro ao carregar usuários do Supabase, usando mock local:', err);
-      loadLocalUsers();
+      console.error('Erro ao carregar usuários:', err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   }
-
-  const loadLocalUsers = () => {
-    const localProfiles = localStorage.getItem('mock-profiles');
-    if (localProfiles) {
-      setUsers(JSON.parse(localProfiles));
-    } else {
-      const initialMocks = [
-        { id: 'p1', name: 'Luan Sabino Paixão', email: 'luan@techassist.com.br', phone: '(66) 99999-1111', role: 'admin', status: 'Ativo' },
-        { id: 'p2', name: 'Samira Paniago', email: 'samira@techassist.com.br', phone: '(66) 99233-8238', role: 'technician', status: 'Ativo' },
-        { id: 'p3', name: 'Carlos Oliveira', email: 'carlos@techassist.com.br', phone: '(66) 99999-3333', role: 'viewer', status: 'Ativo' }
-      ];
-      localStorage.setItem('mock-profiles', JSON.stringify(initialMocks));
-      setUsers(initialMocks);
-    }
-  };
 
   // Invite flow: generates a secure token, inserts into `invites` table, and produces a copyable link.
   const handleCreateInvite = async (e: React.FormEvent) => {
@@ -198,21 +174,6 @@ export default function UserManagementPage() {
     setFormSuccess(false);
 
     try {
-      if (isMock) {
-        const localProfiles = localStorage.getItem('mock-profiles') || '[]';
-        const currentList = JSON.parse(localProfiles);
-        const updatedList = currentList.map((u: any) =>
-          u.id === editingUser.id
-            ? { ...u, name: fullName, email, phone, role: selectedRole }
-            : u
-        );
-        localStorage.setItem('mock-profiles', JSON.stringify(updatedList));
-        setUsers(updatedList);
-        setFormSuccess(true);
-        setTimeout(() => closeModal(), 1500);
-        return;
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update({ role: selectedRole, full_name: fullName, email, phone })
@@ -257,15 +218,8 @@ export default function UserManagementPage() {
         alert('Usuário removido com sucesso!');
         fetchUsers();
       } catch (err) {
-        console.warn('Erro Supabase, excluindo usuário mock local:', err);
-        const localProfiles = localStorage.getItem('mock-profiles');
-        if (localProfiles) {
-          const parsed = JSON.parse(localProfiles);
-          const filtered = parsed.filter((p: any) => p.id !== id);
-          localStorage.setItem('mock-profiles', JSON.stringify(filtered));
-          setUsers(filtered);
-          alert('[Local] Usuário removido com sucesso!');
-        }
+        console.error('Erro ao remover usuário:', err);
+        alert(`Não foi possível remover o usuário: ${(err as Error).message}`);
       }
     }
   };

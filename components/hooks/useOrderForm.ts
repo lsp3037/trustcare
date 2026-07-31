@@ -46,7 +46,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [equipments, setEquipments] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [isManualEquipment, setIsManualEquipment] = useState(false);
-  const [companyId, setCompanyId] = useState('mock-tenant-id');
+  const [companyId, setCompanyId] = useState('');
   const [clientsList, setClientsList] = useState<Client[]>(clients);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
@@ -158,15 +158,10 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
           .from('products_inventory')
           .select('*')
           .order('name');
-        if (invData && invData.length > 0) {
-          setInventory(invData);
-        } else {
-          const localInv = localStorage.getItem('mock-inventory');
-          if (localInv) setInventory(JSON.parse(localInv));
-        }
-      } catch {
-        const localInv = localStorage.getItem('mock-inventory');
-        if (localInv) setInventory(JSON.parse(localInv));
+        setInventory(invData || []);
+      } catch (err) {
+        console.error('Erro ao carregar estoque:', err);
+        setInventory([]);
       }
     };
 
@@ -183,33 +178,19 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       }
     };
 
-    const loadLocalTechnicians = () => {
-      const localProfiles = localStorage.getItem('mock-profiles');
-      if (localProfiles) {
-        const parsed = JSON.parse(localProfiles);
-        const techs = parsed.filter((p: any) => p.role === 'tecnico' || p.role === 'technician');
-        setTechnicians(techs.map((t: any) => ({ id: t.id, name: t.name })));
-      } else {
-        setTechnicians([]);
-      }
-    };
-
     const fetchTechnicians = async () => {
       try {
         const { data } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
           .eq('role', 'technician');
-        if (data && data.length > 0) {
-          setTechnicians(data.map(t => ({
-            id: t.id,
-            name: t.full_name || t.email?.split('@')[0] || 'Técnico',
-          })));
-        } else {
-          loadLocalTechnicians();
-        }
-      } catch {
-        loadLocalTechnicians();
+        setTechnicians((data || []).map(t => ({
+          id: t.id,
+          name: t.full_name || t.email?.split('@')[0] || 'Técnico',
+        })));
+      } catch (err) {
+        console.error('Erro ao carregar técnicos:', err);
+        setTechnicians([]);
       }
     };
 
@@ -224,23 +205,6 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       setEquipments([]);
       setEquipmentId('');
       return;
-    }
-
-    const localEqs = localStorage.getItem('mock-equipments');
-    if (localEqs) {
-      const localFiltered = JSON.parse(localEqs).filter((e: any) => e.client_id === clientId);
-      setEquipments(localFiltered);
-      if (localFiltered.length > 0) {
-        const hasQueryEq = queryEquipmentId && localFiltered.some((e: any) => e.id === queryEquipmentId);
-        setEquipmentId(hasQueryEq ? queryEquipmentId : (queryEquipmentName ? 'manual' : localFiltered[0].id));
-        setIsManualEquipment(hasQueryEq ? false : !!queryEquipmentName);
-      } else {
-        setEquipmentId('manual');
-        setIsManualEquipment(true);
-      }
-    } else {
-      setEquipmentId('manual');
-      setIsManualEquipment(true);
     }
 
     const fetchOnlineEquipments = async () => {
@@ -330,17 +294,8 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         .select()
         .single();
 
-      if (clientErr) {
-        const mockClientsStr = localStorage.getItem('mock-clients') || '[]';
-        const parsedClients = JSON.parse(mockClientsStr);
-        const nextNumber = Math.max(...parsedClients.map((c: any) => c.client_number || 1000), 1000) + 1;
-        const mockClientId = `mock-client-${Date.now()}`;
-        newClient = { id: mockClientId, ...clientData };
-        parsedClients.push({ ...newClient, client_number: nextNumber });
-        localStorage.setItem('mock-clients', JSON.stringify(parsedClients));
-      } else {
-        newClient = insertedClient;
-      }
+      if (clientErr) throw clientErr;
+      newClient = insertedClient;
 
       if (!newClient) throw new Error('Falha ao registrar novo cliente.');
 
@@ -359,15 +314,8 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         .select()
         .single();
 
-      if (eqErr) {
-        const mockEqsStr = localStorage.getItem('mock-equipments') || '[]';
-        const parsedEqs = JSON.parse(mockEqsStr);
-        newEquipment = { id: `mock-eq-${Date.now()}`, ...eqData };
-        parsedEqs.push(newEquipment);
-        localStorage.setItem('mock-equipments', JSON.stringify(parsedEqs));
-      } else {
-        newEquipment = insertedEq;
-      }
+      if (eqErr) throw eqErr;
+      newEquipment = insertedEq;
 
       setClientsList((prev) => [...prev, newClient!]);
       setClientId(newClient.id);
@@ -434,15 +382,8 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         .select()
         .single();
 
-      if (prodErr) {
-        const mockInvStr = localStorage.getItem('mock-inventory') || '[]';
-        const parsedInv = JSON.parse(mockInvStr);
-        newProduct = { id: `mock-prod-${Date.now()}`, ...productData };
-        parsedInv.push(newProduct);
-        localStorage.setItem('mock-inventory', JSON.stringify(parsedInv));
-      } else {
-        newProduct = insertedProd;
-      }
+      if (prodErr) throw prodErr;
+      newProduct = insertedProd;
 
       if (!newProduct) throw new Error('Falha ao registrar novo produto.');
 
@@ -547,15 +488,16 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let resolvedCompanyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single();
-        if (profile?.company_id) resolvedCompanyId = profile.company_id;
-      }
+      if (!user) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('Usuário sem empresa vinculada.');
+      const resolvedCompanyId = profile.company_id;
 
       const osData = {
         company_id: resolvedCompanyId,
@@ -578,46 +520,9 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         .select()
         .single();
 
-      if (error) {
-        // Fallback mock local
-        const mockOrders = localStorage.getItem('mock-orders') || '[]';
-        const parsed = JSON.parse(mockOrders);
-        const newOsId = `mock-os-${Date.now()}`;
-        parsed.push({
-          id: newOsId,
-          ...osData,
-          clients: { name: clients.find(c => c.id === clientId)?.name || 'Cliente' },
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('mock-orders', JSON.stringify(parsed));
+      if (error) throw error;
 
-        if (selectedProducts.length > 0) {
-          const localItems = localStorage.getItem('mock-order-items') || '[]';
-          const parsedItems = JSON.parse(localItems);
-          selectedProducts.forEach((item, index) => {
-            parsedItems.push({
-              id: `mock-item-${Date.now()}-${index}`,
-              service_order_id: newOsId,
-              product_id: item.product_id,
-              name: item.name,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-            });
-          });
-          localStorage.setItem('mock-order-items', JSON.stringify(parsedItems));
-
-          const localInv = localStorage.getItem('mock-inventory');
-          if (localInv) {
-            const parsedInv = JSON.parse(localInv);
-            localStorage.setItem('mock-inventory', JSON.stringify(
-              parsedInv.map((p: any) => {
-                const matched = selectedProducts.find(sp => sp.product_id === p.id);
-                return matched ? { ...p, quantity: Math.max(0, p.quantity - matched.quantity) } : p;
-              })
-            ));
-          }
-        }
-      } else if (insertedOs) {
+      if (insertedOs) {
         for (const item of selectedProducts) {
           await supabase.from('service_order_items').insert({
             company_id: resolvedCompanyId,

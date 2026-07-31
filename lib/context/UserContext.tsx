@@ -40,28 +40,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
       }
       
-      // 1. Tenta pegar sessão local/mock
-      const mockSession = localStorage.getItem('os-session');
-      if (mockSession) {
-        const parsed = JSON.parse(mockSession);
-        const rawRole = parsed.role || 'admin';
-        // Normaliza roles mockadas para os valores do Supabase
-        const normalizedRole: UserRole = 
-          rawRole === 'tecnico' ? 'technician' : 
-          rawRole === 'recepcionista' ? 'viewer' : 
-          rawRole as UserRole;
-
-        const mockProfile: UserProfile = {
-          role: normalizedRole,
-          full_name: parsed.email ? parsed.email.split('@')[0] : 'Usuário Mock',
-          email: parsed.email || 'mock@trustcare.com.br'
-        };
-        setUser(mockProfile);
-        setLoading(false);
-        return;
-      }
-
-      // 2. Tenta do Supabase Auth
       let authUser = sessionUser;
       if (!authUser) {
         const { data } = await supabase.auth.getUser();
@@ -86,14 +64,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             avatar_url: profile.avatar_url || ''
           });
         } else {
-          // Fallback se não houver profile mas houver usuário
-          setUser({
-            id: authUser.id,
-            user_id: authUser.id,
-            role: 'admin',
-            full_name: authUser.user_metadata?.full_name || 'Usuário',
-            email: authUser.email || ''
-          });
+          // Sessão válida sem profile = cliente do Portal ou conta órfã.
+          // Nunca assumir 'admin' aqui: o papel vem do banco ou não vem.
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -113,14 +86,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           await fetchUserData(session.user);
         } else {
-          // Se houver uma sessão mock no localStorage, mantêm o login mockado
-          const mockSession = typeof window !== 'undefined' ? localStorage.getItem('os-session') : null;
-          if (mockSession) {
-            await fetchUserData(undefined, true);
-          } else {
-            setUser(null);
-            setLoading(false);
-          }
+          setUser(null);
+          setLoading(false);
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
