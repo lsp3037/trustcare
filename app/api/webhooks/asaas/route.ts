@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { isPlanId } from '@/lib/config/plans';
 
 // Validador simples de UUID para segurança
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: Request) {
   try {
+    // Falha fechada: sem ASAAS_WEBHOOK_TOKEN no ambiente, nenhuma requisição
+    // é aceita. Caso contrário um endpoint público conseguiria promover
+    // qualquer empresa para 'active'.
+    const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN;
+    if (!expectedToken) {
+      console.error('[Asaas Webhook] ASAAS_WEBHOOK_TOKEN não configurada — recusando evento.');
+      return NextResponse.json({ error: 'Webhook não configurado' }, { status: 503 });
+    }
+
     const accessToken = req.headers.get('asaas-access-token');
-    // Ensure you have ASAAS_WEBHOOK_TOKEN defined in your environment variables
-    if (!accessToken || accessToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
+    if (!accessToken || accessToken !== expectedToken) {
       console.warn('[Asaas Webhook] Token de acesso inválido ou ausente.');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -113,8 +122,9 @@ export async function POST(req: Request) {
     if (subscriptionAsaasId) {
       updateData.asaas_subscription_id = subscriptionAsaasId;
     }
-    // Se o webhook trouxe uma mudança de plano estruturada, atualiza
-    if (targetPlan && ['starter', 'pro', 'premium'].includes(targetPlan)) {
+    // Se o webhook trouxe uma mudança de plano estruturada, atualiza.
+    // A promoção de plano acontece SÓ aqui — o checkout nunca ativa nada.
+    if (targetPlan && isPlanId(targetPlan)) {
       updateData.subscription_plan = targetPlan;
     }
 

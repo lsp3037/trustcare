@@ -7,7 +7,8 @@ import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 import { CreditCard, AlertCircle, CheckCircle2, ShieldCheck, Users, HardDrive } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge, Modal, Input } from '@/components/ui';
+import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
 
 export default function BillingSettingsPage() {
   const router = useRouter();
@@ -21,6 +22,12 @@ export default function BillingSettingsPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // O Asaas exige CPF/CNPJ para abrir a assinatura. Se a empresa ainda não
+  // tem o documento salvo, pedimos antes de seguir para o pagamento.
+  const [documentModalPlan, setDocumentModalPlan] = useState<string | null>(null);
+  const [documentInput, setDocumentInput] = useState('');
+  const [documentError, setDocumentError] = useState('');
 
   useEffect(() => {
     if (!userLoading && role !== 'admin') {
@@ -120,19 +127,28 @@ export default function BillingSettingsPage() {
     ? Number((storageUsed * BigInt(100)) / maxStorageBytes) 
     : 0;
 
-  const handleSubscribe = async (planId: string) => {
+  const startCheckout = async (planId: string, document?: string) => {
     try {
       setCheckoutLoading(planId);
       const res = await fetch('/api/checkout/asaas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId })
+        body: JSON.stringify(document ? { planId, document } : { planId })
       });
 
       const data = await res.json();
+
       if (!res.ok) {
+        // O backend sinaliza quando falta o documento do titular
+        if (data.code === 'DOCUMENT_REQUIRED' || data.code === 'DOCUMENT_INVALID') {
+          setDocumentModalPlan(planId);
+          setDocumentError(data.code === 'DOCUMENT_INVALID' ? data.error : '');
+          return;
+        }
         throw new Error(data.error || 'Erro ao gerar link de pagamento');
       }
+
+      setDocumentModalPlan(null);
 
       if (data.url) {
         if (data.url.startsWith('http')) {
@@ -147,6 +163,21 @@ export default function BillingSettingsPage() {
     } finally {
       setCheckoutLoading(null);
     }
+  };
+
+  const handleSubscribe = (planId: string) => startCheckout(planId);
+
+  const handleConfirmDocument = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!documentModalPlan) return;
+
+    if (!validateDocument(documentInput)) {
+      setDocumentError('CPF ou CNPJ inválido. Verifique os dígitos.');
+      return;
+    }
+
+    setDocumentError('');
+    startCheckout(documentModalPlan, documentInput);
   };
 
   return (
@@ -377,6 +408,54 @@ export default function BillingSettingsPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        open={documentModalPlan !== null}
+        onClose={() => {
+          setDocumentModalPlan(null);
+          setDocumentError('');
+        }}
+        title="Dados do titular da assinatura"
+        description="Precisamos do CPF ou CNPJ para emitir a cobrança. Ele fica salvo para as próximas faturas."
+        size="sm"
+        footer={
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDocumentModalPlan(null);
+                setDocumentError('');
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmDocument}
+              loading={checkoutLoading !== null}
+              disabled={!documentInput}
+            >
+              Continuar para o pagamento
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={handleConfirmDocument}>
+          <Input
+            label="CPF ou CNPJ"
+            required
+            error={documentError}
+            value={documentInput}
+            onChange={(e) => {
+              setDocumentInput(formatDocument(e.target.value));
+              setDocumentError('');
+            }}
+            placeholder="000.000.000-00 ou 00.000.000/0000-00"
+            maxLength={18}
+            inputMode="numeric"
+            autoFocus
+          />
+        </form>
+      </Modal>
     </div>
   );
 }
