@@ -8,8 +8,26 @@ import { Badge, Button, buttonClasses } from '@/components/ui';
 
 interface SubscriptionBlockedScreenProps {
   companyName: string;
-  status: 'canceled' | 'past_due' | string;
+  status: 'canceled' | 'past_due' | 'trialing' | string;
 }
+
+const BLOCK_COPY: Record<string, { badge: string; body: string; cta: string }> = {
+  canceled: {
+    badge: 'Acesso Suspenso',
+    body: 'Sua assinatura do Trust Care foi cancelada. Para continuar utilizando a plataforma e gerenciar suas ordens de serviço, é necessário reativar seu plano.',
+    cta: 'Falar com Suporte (Reativar)',
+  },
+  trialing: {
+    badge: 'Período de Testes Encerrado',
+    body: 'Seus 7 dias de teste do Trust Care chegaram ao fim. Escolha um plano para voltar a criar ordens de serviço, clientes e lançamentos financeiros.',
+    cta: 'Escolher um Plano',
+  },
+  past_due: {
+    badge: 'Acesso Suspenso',
+    body: 'Identificamos uma pendência no pagamento da sua assinatura. Para evitar a perda definitiva de acesso e garantir a continuidade dos seus serviços, regularize seu plano.',
+    cta: 'Falar com Suporte (Regularizar)',
+  },
+};
 
 export default function SubscriptionBlockedScreen({ companyName, status }: SubscriptionBlockedScreenProps) {
   const router = useRouter();
@@ -22,7 +40,8 @@ export default function SubscriptionBlockedScreen({ companyName, status }: Subsc
     router.push('/login');
   };
 
-  const isCanceled = status === 'canceled';
+  const copy = BLOCK_COPY[status] ?? BLOCK_COPY.past_due;
+  const isTrialExpired = status === 'trialing';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface p-4 overflow-y-auto">
@@ -39,14 +58,10 @@ export default function SubscriptionBlockedScreen({ companyName, status }: Subsc
 
         <div className="space-y-3">
           <Badge tone="danger" className="uppercase tracking-wider">
-            Acesso Suspenso
+            {copy.badge}
           </Badge>
           <h1 className="text-h1 text-text">{companyName}</h1>
-          <p className="text-body text-text-muted max-w-md mx-auto">
-            {isCanceled
-              ? 'Sua assinatura do Trust Care foi cancelada. Para continuar utilizando a plataforma e gerenciar suas ordens de serviço, é necessário reativar seu plano.'
-              : 'Identificamos uma pendência no pagamento da sua assinatura. Para evitar a perda definitiva de acesso e garantir a continuidade dos seus serviços, regularize seu plano.'}
-          </p>
+          <p className="text-body text-text-muted max-w-md mx-auto">{copy.body}</p>
         </div>
 
         {/* Info Box */}
@@ -62,14 +77,20 @@ export default function SubscriptionBlockedScreen({ companyName, status }: Subsc
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <a
-            href="https://wa.me/5565999620703?text=Ol%C3%A1!%20Gostaria%20de%20reativar%20minha%20assinatura%20do%20Trust%20Care%20para%20a%20empresa%20"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClasses({ className: 'flex-1' })}
-          >
-            <MessageSquare className="w-4 h-4" aria-hidden /> Falar com Suporte (Reativar)
-          </a>
+          {isTrialExpired ? (
+            <a href="/dashboard/settings/billing" className={buttonClasses({ className: 'flex-1' })}>
+              <CreditCard className="w-4 h-4" aria-hidden /> {copy.cta}
+            </a>
+          ) : (
+            <a
+              href="https://wa.me/5565999620703?text=Ol%C3%A1!%20Gostaria%20de%20reativar%20minha%20assinatura%20do%20Trust%20Care%20para%20a%20empresa%20"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClasses({ className: 'flex-1' })}
+            >
+              <MessageSquare className="w-4 h-4" aria-hidden /> {copy.cta}
+            </a>
+          )}
 
           <Button
             variant="secondary"

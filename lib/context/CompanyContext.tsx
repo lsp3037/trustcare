@@ -132,16 +132,26 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Determina se a empresa está em modo apenas-leitura (atraso de mais de 5 dias ou cancelado)
+  // Determina se a empresa está em modo apenas-leitura.
+  // Espelha public.is_company_read_only() no Postgres — as duas implementações
+  // precisam concordar, senão a UI libera uma ação que a RLS vai recusar.
   const isReadOnly = React.useMemo(() => {
     if (!company.subscription_status) return false;
     if (company.subscription_status === 'canceled') return true;
+
     if (company.subscription_status === 'past_due') {
-      if (!company.subscription_expires_at) return false;
+      if (!company.subscription_expires_at) return true;
       const expiresDate = new Date(company.subscription_expires_at);
       const gracePeriodEnd = new Date(expiresDate.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 dias
       return new Date() > gracePeriodEnd;
     }
+
+    // Trial vencido: sem período de graça. Sem data definida = vencido.
+    if (company.subscription_status === 'trialing') {
+      if (!company.subscription_expires_at) return true;
+      return new Date() > new Date(company.subscription_expires_at);
+    }
+
     return false;
   }, [company.subscription_status, company.subscription_expires_at]);
 

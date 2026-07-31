@@ -459,13 +459,19 @@ function DashboardLayoutContent({
             className="bg-danger/10 border-b border-danger/25 text-danger px-6 py-2.5 text-center text-small font-medium flex items-center justify-center gap-2 print:hidden"
           >
             <span className="w-2 h-2 bg-danger shrink-0" aria-hidden />
-            <span>Assinatura atrasada: A conta entrou em modo de apenas-leitura. Regularize o faturamento para reabilitar novas OS e cadastros.</span>
+            <span>
+              {company.subscription_status === 'trialing'
+                ? 'Período de testes encerrado: a conta entrou em modo apenas-leitura. Escolha um plano para reabilitar novas OS e cadastros.'
+                : 'Assinatura atrasada: a conta entrou em modo de apenas-leitura. Regularize o faturamento para reabilitar novas OS e cadastros.'}
+            </span>
           </div>
         )}
 
         {/* Page Body */}
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">
-          {company.subscription_status === 'canceled' || isReadOnly ? (
+          {/* A tela de billing precisa continuar acessível durante o bloqueio —
+              é por ela que o tenant regulariza o pagamento e sai do modo apenas-leitura. */}
+          {(company.subscription_status === 'canceled' || isReadOnly) && pathname !== '/dashboard/settings/billing' ? (
             <SubscriptionBlockedScreen companyName={company.name} status={company.subscription_status || ''} />
           ) : (
             children
