@@ -1,6 +1,16 @@
 -- ==========================================
 -- ESTRUTURA DO BANCO DE DADOS - OS-MANAGER (SAAS MULTI-TENANT)
 -- ==========================================
+--
+-- ⚠️  FONTE DA VERDADE: supabase/migrations/ (rastreadas em
+--     supabase_migrations.schema_migrations). Este arquivo é um retrato
+--     consolidado para leitura — NÃO o execute contra um banco existente.
+--
+--     Em 2026-07-31 uma auditoria encontrou drift severo: várias migrações
+--     versionadas nunca haviam sido aplicadas em produção porque eram
+--     coladas à mão no SQL Editor. Aplique sempre via `supabase db push`
+--     (ou apply_migration), nunca por cópia manual.
+-- ==========================================
 
 -- Extensão para geração de UUIDs (geralmente ativa por padrão no Supabase)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -140,7 +150,7 @@ CREATE TABLE public.service_orders (
     equipment_details TEXT,
     reported_problem TEXT NOT NULL,
     technical_report TEXT,
-    status TEXT NOT NULL DEFAULT 'Em Análise' CHECK (status IN ('Aguardando Equipamento', 'Em Análise', 'Aguardando Aprovação', 'Aguardando Peças', 'Em Execução', 'Em Testes', 'Pronto para Retirada', 'Finalizado', 'Cancelado')),
+    status TEXT NOT NULL DEFAULT 'Em Análise' CHECK (status IN ('Aguardando Equipamento', 'Em Análise', 'Aguardando Aprovação', 'Aprovado', 'Aguardando Peças', 'Em Execução', 'Em Testes', 'Pronto para Retirada', 'Finalizado', 'Cancelado')),
     priority TEXT NOT NULL DEFAULT 'Média' CHECK (priority IN ('Baixa', 'Média', 'Alta')),
     technician_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     delivery_prediction TIMESTAMPTZ,
@@ -149,9 +159,18 @@ CREATE TABLE public.service_orders (
     total_value NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (total_value >= 0),
     codigo_os VARCHAR UNIQUE,
     pago BOOLEAN DEFAULT FALSE,
+    payment_status TEXT NOT NULL DEFAULT 'pendente' CHECK (payment_status IN ('pendente', 'pago', 'parcial')),
+    payment_method TEXT CHECK (payment_method IS NULL OR payment_method IN ('Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Transferência Bancária', 'Boleto Bancário', 'Outro')),
+    payment_date TIMESTAMPTZ,
     media JSONB DEFAULT '[]'::jsonb,
     entry_checklist JSONB,
     exit_checklist JSONB,
+    -- Assinatura digital do cliente na aprovação pública do orçamento
+    client_signature TEXT,
+    client_signature_name TEXT,
+    client_signature_ip TEXT,
+    client_signature_at TIMESTAMPTZ,
+    analysis_started_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -180,7 +199,7 @@ ALTER TABLE public.service_order_items ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION public.get_my_company_id()
 RETURNS UUID AS $$
   SELECT company_id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1;
-$$ LANGUAGE sql SECURITY DEFINER;
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
 -- Função auxiliar: Checar se a empresa está em modo apenas-leitura (atraso de assinatura)
 CREATE OR REPLACE FUNCTION public.is_company_read_only(comp_id UUID)
@@ -201,7 +220,7 @@ BEGIN
     RETURN FALSE;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
 -- Função auxiliar: Calcular tamanho total do armazenamento da empresa no bucket 'os-media'
 CREATE OR REPLACE FUNCTION public.get_company_storage_bytes(comp_id UUID)
@@ -215,7 +234,7 @@ BEGIN
     AND path_tokens[1] = comp_id::text;
   RETURN v_total_bytes;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Função auxiliar: Validar cota e permissão de upload para o bucket 'os-media'
 CREATE OR REPLACE FUNCTION public.can_upload_to_os_media(name TEXT, metadata JSONB)
@@ -263,7 +282,7 @@ BEGIN
 
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Função auxiliar: Validar cota de técnicos ativos antes de adicionar perfil
 CREATE OR REPLACE FUNCTION public.check_technician_quota()
@@ -530,7 +549,7 @@ BEGIN
 
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Trigger associado à inserção em auth.users
 CREATE OR REPLACE TRIGGER on_auth_user_created
@@ -606,7 +625,7 @@ BEGIN
              END)
         );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 
 -- ==========================================
@@ -808,3 +827,96 @@ CREATE POLICY write_leads ON public.leads
         AND NOT public.is_company_read_only(company_id)
     );
 
+-- ==========================================
+-- ÍNDICES NAS FKS (Performance & Estabilidade)
+-- ==========================================
+CREATE INDEX IF NOT EXISTS idx_profiles_company_id ON public.profiles(company_id);
+CREATE INDEX IF NOT EXISTS idx_clients_company_id ON public.clients(company_id);
+CREATE INDEX IF NOT EXISTS idx_client_equipments_company_id ON public.client_equipments(company_id);
+CREATE INDEX IF NOT EXISTS idx_client_equipments_client_id ON public.client_equipments(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_equipments_category_id ON public.client_equipments(category_id);
+CREATE INDEX IF NOT EXISTS idx_checklist_templates_company_id ON public.checklist_templates(company_id);
+CREATE INDEX IF NOT EXISTS idx_checklist_templates_category_id ON public.checklist_templates(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_inventory_company_id ON public.products_inventory(company_id);
+CREATE INDEX IF NOT EXISTS idx_service_orders_company_id ON public.service_orders(company_id);
+CREATE INDEX IF NOT EXISTS idx_services_company_id ON public.services(company_id);
+CREATE INDEX IF NOT EXISTS idx_order_services_company_id ON public.order_services(company_id);
+CREATE INDEX IF NOT EXISTS idx_order_services_os_id ON public.order_services(os_id);
+CREATE INDEX IF NOT EXISTS idx_leads_company_id ON public.leads(company_id);
+CREATE INDEX IF NOT EXISTS idx_invites_company_id ON public.invites(company_id);
+
+-- ====================================================
+-- DESPESAS DA EMPRESA (Módulo Financeiro)
+-- ====================================================
+
+CREATE TABLE IF NOT EXISTS public.company_expenses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    amount NUMERIC(10,2) NOT NULL CHECK (amount >= 0),
+    category TEXT NOT NULL CHECK (category IN ('Marketing', 'Equipamentos', 'Aluguel', 'Salários', 'Software/Nuvem', 'Infraestrutura', 'Outros')),
+    recurrence TEXT NOT NULL DEFAULT 'Única' CHECK (recurrence IN ('Única', 'Diária', 'Semanal', 'Mensal', 'Anual')),
+    end_date TIMESTAMPTZ,
+    expense_date TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.company_expenses ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS select_expenses ON public.company_expenses;
+CREATE POLICY select_expenses ON public.company_expenses
+    FOR SELECT USING (company_id = public.get_my_company_id());
+
+DROP POLICY IF EXISTS insert_expenses ON public.company_expenses;
+CREATE POLICY insert_expenses ON public.company_expenses
+    FOR INSERT WITH CHECK (company_id = public.get_my_company_id());
+
+DROP POLICY IF EXISTS delete_expenses ON public.company_expenses;
+CREATE POLICY delete_expenses ON public.company_expenses
+    FOR DELETE USING (company_id = public.get_my_company_id());
+
+
+-- ====================================================
+-- VERIFICAÇÃO OTP DO RASTREIO PÚBLICO
+-- ====================================================
+
+CREATE TABLE IF NOT EXISTS public.os_verifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    os_id UUID NOT NULL REFERENCES public.service_orders(id) ON DELETE CASCADE,
+    code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    -- Após 5 tentativas erradas o token é invalidado (anti força bruta)
+    attempts INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.os_verifications ENABLE ROW LEVEL SECURITY;
+
+-- Acesso exclusivo via service role (a API do Next.js bypassa RLS)
+DROP POLICY IF EXISTS service_role_only ON public.os_verifications;
+CREATE POLICY service_role_only ON public.os_verifications
+    FOR ALL USING (false) WITH CHECK (false);
+
+
+-- ====================================================
+-- RATE LIMIT DAS ROTAS PÚBLICAS
+-- ====================================================
+
+CREATE TABLE IF NOT EXISTS public.rate_limit_hits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ip_address TEXT NOT NULL,
+    request_path TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.rate_limit_hits ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS idx_rate_limit_ip_path
+  ON public.rate_limit_hits(ip_address, request_path, created_at);
+
+
+-- ====================================================
+-- RPCs PÚBLICAS DE ORÇAMENTO (SECURITY DEFINER)
+-- Ver 20260731130000_reconcile_schema_drift.sql para os corpos completos
+-- de approve_budget_by_client() e get_public_budget_details().
+-- ====================================================
