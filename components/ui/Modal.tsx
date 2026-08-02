@@ -20,7 +20,8 @@ export interface ModalProps {
   size?: keyof typeof SIZES;
   /** Rodapé de ações. Normalmente um par de <Button>. */
   footer?: React.ReactNode;
-  children: React.ReactNode;
+  /** Opcional: diálogos de confirmação são só título + descrição + ações. */
+  children?: React.ReactNode;
   className?: string;
 }
 
@@ -106,7 +107,7 @@ export function Modal({
       role="presentation"
     >
       <div
-        className="absolute inset-0 bg-surface/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-xl"
         onClick={onClose}
         aria-hidden
       />
@@ -117,15 +118,17 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          'relative w-full bg-surface-raised border border-border rounded-2xl shadow-2xl',
+          'relative w-full bg-surface-raised/90 backdrop-blur-2xl border border-glass-border-strong rounded-[20px] shadow-2xl',
           'max-h-[calc(100vh-2rem)] flex flex-col',
           SIZES[size],
           className,
         )}
       >
-        <header className="flex items-start justify-between gap-4 p-5 border-b border-border shrink-0">
+        <header className="flex items-start justify-between gap-4 p-5 border-b border-glass-divider shrink-0">
           <div className="min-w-0">
-            <h2 id={titleId} className="text-base font-semibold text-text truncate">
+            {/* Sem `truncate`: título de diálogo é frase, não rótulo de linha —
+                cortar a pergunta esconde justamente o que se está decidindo. */}
+            <h2 id={titleId} className="text-base font-semibold text-text">
               {title}
             </h2>
             {description && (
@@ -144,10 +147,12 @@ export function Modal({
           </button>
         </header>
 
-        <div className="p-5 overflow-y-auto min-h-0">{children}</div>
+        {children != null && (
+          <div className="p-5 overflow-y-auto min-h-0">{children}</div>
+        )}
 
         {footer && (
-          <footer className="flex items-center justify-end gap-3 p-5 border-t border-border shrink-0">
+          <footer className="flex items-center justify-end gap-3 p-5 border-t border-glass-divider shrink-0">
             {footer}
           </footer>
         )}

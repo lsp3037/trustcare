@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Printer, FileText, Link2, MessageCircle } from 'lucide-react';
 import { SlaTracker } from '@/components/ui/SlaTracker';
-import { StatusBadge, Button, buttonClasses } from '@/components/ui';
+import { StatusBadge, Button, buttonClasses, useToast } from '@/components/ui';
 import { generateOrderPdf } from '@/lib/utils/pdfGenerator';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +32,7 @@ export function OrderHeader({
   status,
   priority
 }: OrderHeaderProps) {
+  const toast = useToast();
   const osCode = order?.codigo_os || order?.id?.slice(0, 8);
 
   const handleDownloadPdf = () => {
@@ -84,10 +85,16 @@ export function OrderHeader({
               variant="secondary"
               size="sm"
               icon={<Link2 className="w-4 h-4" />}
-              onClick={() => {
+              onClick={async () => {
                 const url = `${window.location.origin}/orcamento/${order?.id}`;
-                navigator.clipboard.writeText(url);
-                alert('Link do orçamento copiado para a área de transferência!');
+                try {
+                  await navigator.clipboard.writeText(url);
+                  toast.success('Link do orçamento copiado', {
+                    description: 'Envie ao cliente para ele aprovar online.',
+                  });
+                } catch {
+                  toast.error('Não foi possível copiar o link');
+                }
               }}
             >
               Copiar Link

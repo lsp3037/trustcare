@@ -211,22 +211,22 @@ function TrackingContent() {
   const currentStepIndex = order ? getStepIndex(order.status) : -1;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-surface-sunken text-text flex flex-col font-sans">
       {/* Background patterns */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(30,58,138,0.1),transparent_50%)] pointer-events-none" />
 
       {/* Header */}
-      <header className="h-20 border-b border-slate-900 bg-slate-950/60 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 lg:px-16">
+      <header className="h-20 border-b border-border bg-surface/60 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 lg:px-16">
         <div className="flex items-center gap-2.5 font-bold text-lg text-white">
-          <div className="p-1.5 bg-blue-600 rounded-xl shadow-md shadow-blue-500/20">
+          <div className="p-1.5 bg-info rounded-xl shadow-md shadow-blue-500/20">
             <Wrench className="w-5 h-5" />
           </div>
-          <span className="tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">TrustCare Rastreamento</span>
+          <span className="tracking-tight bg-gradient-to-r from-white to-text-muted bg-clip-text text-transparent">TrustCare Rastreamento</span>
         </div>
 
         <Link 
           href="/login" 
-          className="text-xs font-semibold text-slate-400 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl"
+          className="text-xs font-semibold text-text-muted hover:text-white transition-colors bg-surface-raised border border-border px-4 py-2 rounded-xl"
         >
           Área do Técnico
         </Link>
@@ -245,27 +245,27 @@ function TrackingContent() {
               <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
                 Acompanhe o status do seu conserto
               </h1>
-              <p className="text-sm text-slate-400 max-w-md mx-auto">
+              <p className="text-sm text-text-muted max-w-md mx-auto">
                 Consulte o andamento em tempo real do seu aparelho de forma rápida e segura.
               </p>
             </div>
 
             <form onSubmit={handleSearchSubmit} className="space-y-4">
               <div className="relative group">
-                <div className="absolute inset-0 bg-blue-600 rounded-xl blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
-                <div className="relative flex items-center bg-slate-900 border border-slate-800 rounded-xl p-2.5">
-                  <Search className="w-5 h-5 text-slate-500 ml-3" />
+                <div className="absolute inset-0 bg-info rounded-xl blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
+                <div className="relative flex items-center bg-surface-raised border border-border rounded-xl p-2.5">
+                  <Search className="w-5 h-5 text-text-muted ml-3" />
                   <input
                     type="text"
                     required
                     placeholder="Código da OS (Ex: 0e15ff9a)..."
                     value={searchId}
                     onChange={(e) => setSearchId(e.target.value)}
-                    className="flex-1 bg-transparent border-0 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-0 px-3 py-2"
+                    className="flex-1 bg-transparent border-0 text-sm text-text placeholder-slate-500 focus:outline-none focus:ring-0 px-3 py-2"
                   />
                   <button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-blue-500/15 cursor-pointer shrink-0"
+                    className="bg-info hover:bg-info text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-blue-500/15 cursor-pointer shrink-0"
                   >
                     Buscar
                   </button>
@@ -273,14 +273,14 @@ function TrackingContent() {
               </div>
 
               {errorMsg && (
-                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2.5">
+                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs flex items-center gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
             </form>
 
-            <div className="pt-6 border-t border-slate-900 flex justify-center items-center gap-2 text-xs text-slate-500 font-medium">
+            <div className="pt-6 border-t border-border flex justify-center items-center gap-2 text-xs text-text-muted font-medium">
               <Lock className="w-3.5 h-3.5" />
               <span>Nenhum dado pessoal ou financeiro é exposto publicamente</span>
             </div>
@@ -297,16 +297,16 @@ function TrackingContent() {
               <h1 className="text-2xl font-extrabold text-white tracking-tight sm:text-3xl">
                 Digite o código de acesso
               </h1>
-              <p className="text-sm text-slate-400 max-w-md mx-auto">
+              <p className="text-sm text-text-muted max-w-md mx-auto">
                 Enviamos um código de verificação para o e-mail cadastrado:<br />
-                <strong className="text-blue-400">{maskedEmail}</strong>
+                <strong className="text-info">{maskedEmail}</strong>
               </p>
             </div>
 
             <form onSubmit={verifyToken} className="space-y-4">
               <div className="relative group">
-                <div className="absolute inset-0 bg-emerald-600 rounded-xl blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
-                <div className="relative flex items-center bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+                <div className="absolute inset-0 bg-brand-hover rounded-xl blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
+                <div className="relative flex items-center bg-surface-raised border border-border rounded-xl p-2.5">
                   <input
                     type="text"
                     required
@@ -314,11 +314,11 @@ function TrackingContent() {
                     placeholder="Código de 6 dígitos"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    className="flex-1 bg-transparent border-0 text-center text-lg font-mono tracking-widest text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-0 py-2"
+                    className="flex-1 bg-transparent border-0 text-center text-lg font-mono tracking-widest text-text placeholder-slate-600 focus:outline-none focus:ring-0 py-2"
                   />
                   <button
                     type="submit"
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-emerald-500/15 cursor-pointer shrink-0"
+                    className="bg-brand-hover hover:bg-brand text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-lg cursor-pointer shrink-0"
                   >
                     Verificar
                   </button>
@@ -326,11 +326,11 @@ function TrackingContent() {
               </div>
 
               {devToken && (
-                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center">
+                <div className="p-3 bg-info/10 border border-info/25 rounded-xl text-center">
                   <button
                     type="button"
                     onClick={() => setOtpCode(devToken)}
-                    className="text-xs text-blue-400 hover:text-blue-300 underline font-mono"
+                    className="text-xs text-info hover:text-info underline font-mono"
                   >
                     [Modo de Testes] Clique aqui para auto-preencher o código: {devToken}
                   </button>
@@ -338,7 +338,7 @@ function TrackingContent() {
               )}
 
               {errorMsg && (
-                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2.5">
+                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs flex items-center gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -352,7 +352,7 @@ function TrackingContent() {
                     setErrorMsg('');
                     setOtpCode('');
                   }}
-                  className="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+                  className="text-xs font-semibold text-text-muted hover:text-white transition-colors flex items-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Voltar para busca
                 </button>
@@ -360,7 +360,7 @@ function TrackingContent() {
                 <button
                   type="button"
                   onClick={() => requestToken(searchId)}
-                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-xs font-semibold text-info hover:text-info transition-colors"
                 >
                   Reenviar código
                 </button>
@@ -372,8 +372,8 @@ function TrackingContent() {
         {/* Loading Spinner */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-            <LoadingSpinner className="w-10 h-10 text-blue-500 animate-spin" />
-            <p className="text-sm text-slate-400 font-medium">Processando solicitação...</p>
+            <LoadingSpinner className="w-10 h-10 text-info animate-spin" />
+            <p className="text-sm text-text-muted font-medium">Processando solicitação...</p>
           </div>
         )}
 
@@ -381,7 +381,7 @@ function TrackingContent() {
         {stage === 'result' && order && !loading && (
           <div className="w-full space-y-8 py-8 animate-fadeIn">
             {/* Navigation / Header details */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-900 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
               <button
                 onClick={() => {
                   setOrder(null);
@@ -392,23 +392,23 @@ function TrackingContent() {
                   setDevToken('');
                   router.push('/rastreio');
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors self-start"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors self-start"
               >
                 <ArrowLeft className="w-4 h-4" /> Buscar outro equipamento
               </button>
 
-              <div className="flex items-center gap-2 text-xs font-medium text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start">
-                <Clock className="w-3.5 h-3.5 text-blue-500" />
+              <div className="flex items-center gap-2 text-xs font-medium text-text-muted bg-surface-raised px-3.5 py-2 rounded-xl border border-border self-start">
+                <Clock className="w-3.5 h-3.5 text-info" />
                 <span>Entrada em: {new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
               </div>
             </div>
 
             {/* Quick overview widget */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-900 rounded-xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="bg-surface-raised/40 backdrop-blur-xl border border-border rounded-xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
               <div className="space-y-4 z-2">
                 <div className="flex items-center gap-3">
                   <StatusBadge status={order.status} className="uppercase tracking-wider" />
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  <span className="text-xs font-bold text-text-muted uppercase tracking-widest">
                     OS #{order.codigo_os || order.id.slice(0, 8)}
                   </span>
                 </div>
@@ -417,26 +417,26 @@ function TrackingContent() {
                   {order.equipment_name || 'Aparelho'} {order.equipment_brand} {order.equipment_model}
                 </h2>
                 
-                <div className="text-xs text-slate-400 space-y-1 mt-2">
-                  <span className="font-semibold text-slate-300">Defeito relatado:</span>
+                <div className="text-xs text-text-muted space-y-1 mt-2">
+                  <span className="font-semibold text-text">Defeito relatado:</span>
                   <div 
-                    className="prose prose-invert max-w-none text-xs text-slate-400 italic font-medium break-words whitespace-pre-wrap"
+                    className="prose prose-invert max-w-none text-xs text-text-muted italic font-medium break-words whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: order.reported_problem }}
                   />
                 </div>
               </div>
 
               {/* Delivery Prediction Info */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-850 shrink-0 md:w-64 space-y-1.5 text-center md:text-left z-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-center md:justify-start gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-blue-500" /> Previsão de Entrega
+              <div className="p-4 bg-surface/80 rounded-xl border border-border shrink-0 md:w-64 space-y-1.5 text-center md:text-left z-2">
+                <p className="text-caption font-bold text-text-muted uppercase tracking-wider flex items-center justify-center md:justify-start gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-info" /> Previsão de Entrega
                 </p>
                 <p className="text-sm font-extrabold text-white">
                   {order.delivery_prediction 
                     ? new Date(order.delivery_prediction).toLocaleDateString('pt-BR') 
                     : 'A combinar'}
                 </p>
-                <p className="text-[10px] text-slate-500 font-medium">
+                <p className="text-caption text-text-muted font-medium">
                   {order.status === 'Pronto para Retirada' 
                     ? 'Seu aparelho já está pronto!' 
                     : 'Sujeito a alterações técnicas.'}
@@ -446,12 +446,12 @@ function TrackingContent() {
 
             {/* Cancelled Alert Box */}
             {order.status === 'Cancelado' && (
-              <div className="p-6 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-400 space-y-2">
+              <div className="p-6 rounded-xl bg-danger/5 border border-danger/25 text-danger space-y-2">
                 <div className="flex items-center gap-2 font-bold text-sm">
-                  <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
+                  <AlertCircle className="w-5 h-5 shrink-0 text-danger" />
                   <span>Serviço Cancelado</span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed pl-7">
+                <p className="text-xs text-text-muted leading-relaxed pl-7">
                   Esta ordem de serviço foi classificada como cancelada. Para obter informações detalhadas sobre a recusa do orçamento, entrega de peças ou devolução do aparelho físico, por favor, entre em contato diretamente com o nosso suporte via WhatsApp.
                 </p>
               </div>
@@ -459,19 +459,19 @@ function TrackingContent() {
 
             {/* Main Interactive Progress Stepper */}
             {order.status !== 'Cancelada' && (
-              <div className="bg-slate-900/20 border border-slate-900 rounded-xl p-6 sm:p-8 shadow-xl space-y-8">
-                <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+              <div className="bg-surface-raised/20 border border-border rounded-xl p-6 sm:p-8 shadow-xl space-y-8">
+                <h3 className="text-sm font-bold text-text uppercase tracking-wider">
                   Progresso do Reparo
                 </h3>
 
                 {/* Desktop Stepper */}
                 <div className="hidden md:grid grid-cols-6 gap-2 relative">
                   {/* Connecting background bar */}
-                  <div className="absolute top-5 left-[8%] right-[8%] h-0.5 bg-slate-800 z-1" />
+                  <div className="absolute top-5 left-[8%] right-[8%] h-0.5 bg-surface-overlay z-1" />
                   {/* Active progress bar */}
                   {currentStepIndex > 0 && (
                     <div 
-                      className="absolute top-5 left-[8%] h-0.5 bg-blue-600 z-2 transition-all duration-500" 
+                      className="absolute top-5 left-[8%] h-0.5 bg-info z-2 transition-all duration-500" 
                       style={{ width: `${(currentStepIndex / (steps.length - 1)) * 84}%` }}
                     />
                   )}
@@ -487,10 +487,10 @@ function TrackingContent() {
                         <div 
                           className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${
                             isCompleted 
-                              ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20' 
+                              ? 'bg-info text-white border-info shadow-md shadow-blue-500/20' 
                               : isCurrent 
-                              ? 'bg-slate-900 border-blue-500 text-blue-400 shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10 animate-pulse' 
-                              : 'bg-slate-950 border-slate-850 text-slate-600'
+                              ? 'bg-surface-raised border-info text-info shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10 animate-pulse' 
+                              : 'bg-surface-sunken border-border text-text-subtle'
                           }`}
                         >
                           {isCompleted ? <CheckCircle2 className="w-5 h-5 text-white" /> : idx + 1}
@@ -498,10 +498,10 @@ function TrackingContent() {
 
                         {/* Step labels */}
                         <div className="space-y-1">
-                          <p className={`text-xs font-extrabold tracking-tight ${isCurrent ? 'text-blue-400' : isPending ? 'text-slate-500' : 'text-slate-200'}`}>
+                          <p className={`text-xs font-extrabold tracking-tight ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
                             {step.label}
                           </p>
-                          <p className="text-[10px] text-slate-500 leading-normal max-w-[120px] mx-auto">
+                          <p className="text-caption text-text-muted leading-normal max-w-[120px] mx-auto">
                             {step.desc}
                           </p>
                         </div>
@@ -511,12 +511,12 @@ function TrackingContent() {
                 </div>
 
                 {/* Mobile Stepper (Vertical) */}
-                <div className="md:hidden space-y-6 relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+                <div className="md:hidden space-y-6 relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-overlay">
                   
                   {/* Mobile Progress Bar Fill */}
                   {currentStepIndex > 0 && (
                     <div 
-                      className="absolute left-2 top-2 w-0.5 bg-blue-600 transition-all duration-500" 
+                      className="absolute left-2 top-2 w-0.5 bg-info transition-all duration-500" 
                       style={{ height: `${(currentStepIndex / (steps.length - 1)) * 96}%` }}
                     />
                   )}
@@ -532,22 +532,22 @@ function TrackingContent() {
                         <div 
                           className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center shrink-0 -ml-[23px] transition-all duration-300 ${
                             isCompleted 
-                              ? 'bg-blue-600 border-blue-500 text-white' 
+                              ? 'bg-info border-info text-white' 
                               : isCurrent 
-                              ? 'bg-slate-950 border-blue-500 ring-4 ring-blue-500/15 text-blue-400 animate-pulse' 
-                              : 'bg-slate-950 border-slate-850 text-slate-700'
+                              ? 'bg-surface-sunken border-info ring-4 ring-blue-500/15 text-info animate-pulse' 
+                              : 'bg-surface-sunken border-border text-text-subtle'
                           }`}
                         >
-                          {isCompleted && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                          {isCompleted && <div className="w-1.5 h-1.5 bg-surface-raised rounded-full" />}
                         </div>
 
                         {/* Labels */}
                         <div className="space-y-0.5">
-                          <p className={`text-xs font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-blue-400' : isPending ? 'text-slate-500' : 'text-slate-200'}`}>
+                          <p className={`text-xs font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
                             {step.label}
-                            {isCurrent && <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 animate-ping" />}
+                            {isCurrent && <span className="inline-block h-1.5 w-1.5 rounded-full bg-info animate-ping" />}
                           </p>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-caption text-text-muted">
                             {step.desc}
                           </p>
                         </div>
@@ -560,30 +560,30 @@ function TrackingContent() {
 
             {/* Technical Report / Laudo Técnico (If present) */}
             {order.technical_report && (
-              <div className="bg-slate-900/20 border border-slate-900 rounded-xl p-6 sm:p-8 shadow-xl space-y-4">
-                <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-blue-500" />
+              <div className="bg-surface-raised/20 border border-border rounded-xl p-6 sm:p-8 shadow-xl space-y-4">
+                <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-info" />
                   Laudo Técnico / Diagnóstico do Serviço / Serviço Realizado
                 </h3>
                 <div 
-                  className="text-xs text-slate-300 prose prose-invert max-w-none leading-relaxed bg-slate-950/40 p-4 rounded-xl border border-slate-850 font-medium"
+                  className="text-xs text-text prose prose-invert max-w-none leading-relaxed bg-surface/40 p-4 rounded-xl border border-border font-medium"
                   dangerouslySetInnerHTML={{ __html: order.technical_report }}
                 />
               </div>
             )}
 
             {/* Footer help notice */}
-            <div className="p-6 bg-slate-900/10 border border-slate-900 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-6 bg-surface-raised/10 border border-border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
-                <p className="text-xs font-bold text-slate-200">Dúvidas sobre o conserto?</p>
-                <p className="text-[10px] text-slate-500">Estamos à disposição no canal de atendimento direto.</p>
+                <p className="text-xs font-bold text-text">Dúvidas sobre o conserto?</p>
+                <p className="text-caption text-text-muted">Estamos à disposição no canal de atendimento direto.</p>
               </div>
 
               <a 
                 href="https://wa.me/5565999620703" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-emerald-600/10 flex items-center gap-1.5"
+                className="bg-brand-hover hover:bg-brand text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5"
               >
                 Falar com Suporte no WhatsApp <ChevronRight className="w-4 h-4" />
               </a>
@@ -595,7 +595,7 @@ function TrackingContent() {
       </main>
 
       {/* Footer copyright */}
-      <footer className="h-16 border-t border-slate-900 flex items-center justify-center text-[10px] text-slate-500 font-semibold tracking-wide uppercase px-6">
+      <footer className="h-16 border-t border-border flex items-center justify-center text-caption text-text-muted font-semibold tracking-wide uppercase px-6">
         <span>© {new Date().getFullYear()} Trust Care - Consultoria em T.I • Todos os direitos reservados.</span>
       </footer>
     </div>
@@ -605,9 +605,9 @@ function TrackingContent() {
 export default function PublicTrackingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center">
-        <LoadingSpinner className="w-10 h-10 text-blue-500 animate-spin" />
-        <p className="text-sm text-slate-400 font-medium mt-4">Carregando portal...</p>
+      <div className="min-h-screen bg-surface-sunken text-text flex flex-col items-center justify-center">
+        <LoadingSpinner className="w-10 h-10 text-info animate-spin" />
+        <p className="text-sm text-text-muted font-medium mt-4">Carregando portal...</p>
       </div>
     }>
       <TrackingContent />

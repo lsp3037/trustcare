@@ -26,7 +26,7 @@ export function WhatsAppButton({ phone, className, showText = false, ...props }:
       target="_blank"
       rel="noopener noreferrer"
       title="Enviar mensagem no WhatsApp"
-      className={className || "p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-all flex items-center justify-center"}
+      className={className || "p-1.5 rounded-full backdrop-blur-md border border-glass-border shrink-0 bg-success/10 text-success hover:bg-success/20 transition-all flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"}
       {...props}
     >
       <WhatsAppIcon className={showText ? "w-3.5 h-3.5 mr-1.5" : "w-3.5 h-3.5"} />

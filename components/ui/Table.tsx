@@ -1,31 +1,64 @@
+'use client';
+
 import React from 'react';
 import { cn } from '@/lib/utils';
+
+export type Density = 'comfortable' | 'compact';
+
+/** Altura de linha por densidade. `compact` cabe ~40% mais linhas na tela. */
+const DENSITY_CELL: Record<Density, string> = {
+  comfortable: 'py-3 px-4',
+  compact: 'py-1.5 px-3',
+};
+
+const DensityContext = React.createContext<Density>('comfortable');
+
+export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
+  /** `compact` para quem trabalha com listas longas (200+ OS). */
+  density?: Density;
+  /** Mantém o cabeçalho visível durante o scroll vertical da listagem. */
+  stickyHeader?: boolean;
+}
 
 /**
  * Tabela de dados. O wrapper faz o scroll horizontal próprio para que
  * a página nunca role na horizontal em telas estreitas.
  */
 export function Table({
+  density = 'comfortable',
+  stickyHeader = false,
   className,
   children,
   ...props
-}: React.TableHTMLAttributes<HTMLTableElement>) {
+}: TableProps) {
   return (
-    <div className="w-full overflow-x-auto">
-      <table className={cn('w-full text-sm border-collapse', className)} {...props}>
-        {children}
-      </table>
-    </div>
+    <DensityContext.Provider value={density}>
+      <div className={cn('w-full overflow-x-auto', stickyHeader && 'max-h-[70vh] overflow-y-auto')}>
+        <table className={cn('w-full text-sm border-collapse', className)} {...props}>
+          {children}
+        </table>
+      </div>
+    </DensityContext.Provider>
   );
 }
 
 export function THead({
+  sticky = false,
   className,
   children,
   ...props
-}: React.HTMLAttributes<HTMLTableSectionElement>) {
+}: React.HTMLAttributes<HTMLTableSectionElement> & { sticky?: boolean }) {
   return (
-    <thead className={cn('border-b border-border', className)} {...props}>
+    <thead
+      className={cn(
+        'border-b border-border',
+        // Precisa de fundo opaco: sem isso as linhas passam por baixo do
+        // cabeçalho durante o scroll.
+        sticky && 'sticky top-0 z-10 bg-surface-raised',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </thead>
   );
@@ -74,11 +107,13 @@ const ALIGN = {
 } as const;
 
 export function TH({ align = 'left', className, children, ...props }: CellProps) {
+  const density = React.useContext(DensityContext);
   return (
     <th
       scope="col"
       className={cn(
-        'py-3 px-4 text-xs font-semibold text-text-subtle whitespace-nowrap',
+        DENSITY_CELL[density],
+        'text-caption font-semibold text-text-subtle whitespace-nowrap',
         ALIGN[align],
         className,
       )}
@@ -96,10 +131,12 @@ export function TD({
   children,
   ...props
 }: CellProps & React.TdHTMLAttributes<HTMLTableCellElement>) {
+  const density = React.useContext(DensityContext);
   return (
     <td
       className={cn(
-        'py-3 px-4 text-text align-middle',
+        DENSITY_CELL[density],
+        'text-text align-middle',
         ALIGN[align],
         numeric && 'font-mono tabular-nums',
         className,

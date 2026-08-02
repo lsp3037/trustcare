@@ -12,6 +12,7 @@ import {
   Field,
   Input,
   Select,
+  useConfirm,
 } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
@@ -52,6 +53,7 @@ export function OrderDetailsClient({
 }: any) {
   const router = useRouter();
   const { company, isReadOnly } = useCompany();
+  const confirm = useConfirm();
 
   const [order, setOrder] = useState<any>(initialOrder);
   const [client, setClient] = useState<any>(initialClient);
@@ -374,12 +376,22 @@ export function OrderDetailsClient({
   };
 
   const handleDeleteOrder = async () => {
-    const confirmDelete = window.confirm("Deseja realmente excluir esta Ordem de Serviço?");
-    if (!confirmDelete) return;
+    // A checagem de somente-leitura vem antes do diálogo: não faz sentido
+    // perguntar se o usuário quer excluir para depois dizer que não pode.
     if (isReadOnly) {
       setErrorMsg('A conta está em modo apenas-leitura devido a atraso no pagamento. Exclusão de OS não é permitida.');
       return;
     }
+
+    const confirmed = await confirm({
+      title: `Excluir a OS #${order?.codigo_os || id.slice(0, 8)}?`,
+      description:
+        'O laudo técnico, o checklist e os anexos são perdidos. As peças alocadas não voltam automaticamente ao estoque. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir OS',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
     setSaving(true);
     setErrorMsg('');
     try {

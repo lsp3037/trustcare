@@ -18,6 +18,24 @@ import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
 import { useRouter } from 'next/navigation';
 import DatePickerWithRange from '@/components/DatePickerWithRange';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  SegmentedControl,
+  Skeleton,
+  SkeletonTable,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
+  useConfirm,
+  useToast,
+} from '@/components/ui';
 import { KpiCard } from './_components/KpiCard';
 import { PaymentTable } from './_components/PaymentTable';
 import { FinanceiroBarChart, FinanceiroPieChart } from './_components/FinanceiroChart';
@@ -217,6 +235,8 @@ function buildPieData(orders: Order[]) {
 export default function FinanceiroPage() {
   const router = useRouter();
   const { isAdmin, loading: userLoading } = useUser();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const defaultFrom = new Date();
   defaultFrom.setDate(1);
@@ -281,57 +301,72 @@ export default function FinanceiroPage() {
     fetchData();
   }, [fetchData]);
 
-  // Excluir despesa
-  const handleDeleteExpense = async (id: string) => {
-    const confirmDelete = window.confirm('Deseja realmente excluir esta despesa?');
-    if (!confirmDelete) return;
+  /** Ocorrências projetadas carregam `-proj-N` no id; o banco só conhece a raiz. */
+  const rootExpenseId = (id: string) => (id.includes('-proj-') ? id.split('-proj-')[0] : id);
+
+  const handleDeleteExpense = async (expense: Expense) => {
+    const isRecorrente = Boolean(expense.recurrence && expense.recurrence !== 'Única');
+
+    const confirmed = await confirm({
+      title: `Excluir a despesa "${expense.description}"?`,
+      description: isRecorrente
+        ? 'Esta é uma despesa recorrente: excluir remove TODAS as ocorrências, inclusive as já passadas. Para parar só daqui para frente, use "Encerrar recorrência".'
+        : 'A despesa sai do cálculo de lucro do período. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir despesa',
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
-      const baseId = id.includes('-proj-') ? id.split('-proj-')[0] : id;
       const { error } = await supabase
         .from('company_expenses')
         .delete()
-        .eq('id', baseId);
+        .eq('id', rootExpenseId(expense.id));
 
       if (error) throw error;
+      toast.success('Despesa excluída');
       fetchData();
     } catch (err: any) {
-      alert(`Erro ao excluir despesa: ${err.message}`);
+      toast.error('Não foi possível excluir a despesa', {
+        description: err.message || 'Erro inesperado.',
+      });
     }
   };
 
-  // Encerrar despesa recorrente
-  const handleEndRecurrence = async (id: string) => {
-    const confirmEnd = window.confirm('Deseja realmente encerrar a recorrência desta despesa a partir de hoje?');
-    if (!confirmEnd) return;
+  const handleEndRecurrence = async (expense: Expense) => {
+    const confirmed = await confirm({
+      title: `Encerrar a recorrência de "${expense.description}"?`,
+      description:
+        'As ocorrências passadas continuam no histórico; a despesa deixa de ser projetada a partir de hoje.',
+      confirmLabel: 'Encerrar recorrência',
+    });
+    if (!confirmed) return;
 
     try {
-      const baseId = id.includes('-proj-') ? id.split('-proj-')[0] : id;
-      // Define a data de encerramento como hoje (fim do dia local ou data atual)
-      const todayStr = new Date().toISOString();
       const { error } = await supabase
         .from('company_expenses')
-        .update({ end_date: todayStr })
-        .eq('id', baseId);
+        .update({ end_date: new Date().toISOString() })
+        .eq('id', rootExpenseId(expense.id));
 
       if (error) throw error;
+      toast.success('Recorrência encerrada');
       fetchData();
     } catch (err: any) {
-      alert(`Erro ao encerrar despesa recorrente: ${err.message}`);
+      toast.error('Não foi possível encerrar a recorrência', {
+        description: err.message || 'Erro inesperado.',
+      });
     }
   };
 
-  // Editar despesa
   const handleEditExpense = (expense: Expense) => {
-    // Se for uma despesa projetada, precisamos obter o ID original limpo do banco
-    const baseId = expense.id.includes('-proj-') ? expense.id.split('-proj-')[0] : expense.id;
-    // Buscamos a despesa original da lista de despesas carregadas
-    const originalExpense = expenses.find((e) => e.id === baseId);
+    const originalExpense = expenses.find((e) => e.id === rootExpenseId(expense.id));
     if (originalExpense) {
       setExpenseToEdit(originalExpense);
       setIsAddExpenseOpen(true);
     } else {
-      alert('Despesa original não encontrada.');
+      toast.error('Despesa original não encontrada', {
+        description: 'Atualize a página e tente de novo.',
+      });
     }
   };
 
@@ -421,17 +456,37 @@ export default function FinanceiroPage() {
     );
   };
 
-  if (userLoading || (!isAdmin && !userLoading)) {
+  if (userLoading || !isAdmin) {
     return (
-      <div className="min-h-screen bg-surface-sunken flex items-center justify-center">
-        <span className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="space-y-6" aria-busy="true" aria-label="Carregando financeiro">
+        <Skeleton className="h-8 w-56" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <Card key={i} padding="sm">
+              <Skeleton className="h-3 w-28 mb-2" style={{ animationDelay: `${i * 80}ms` }} />
+              <Skeleton className="h-7 w-32" />
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
+  const TABS = [
+    { value: 'pendentes' as const, label: `A Receber (${pendingOrders.length})` },
+    { value: 'recebidos' as const, label: `Recebido (${paidOrders.length})` },
+    { value: 'despesas' as const, label: `Despesas (${periodExpenses.length})` },
+  ];
+
+  const exportAtual =
+    activeTab === 'pendentes'
+      ? handleExportPending
+      : activeTab === 'recebidos'
+        ? handleExportPaid
+        : handleExportExpenses;
+
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-screen-xl mx-auto">
-      {/* Add Expense Modal */}
+    <div className="space-y-6">
       {isAddExpenseOpen && (
         <AddExpenseModal
           expenseToEdit={expenseToEdit || undefined}
@@ -443,262 +498,233 @@ export default function FinanceiroPage() {
         />
       )}
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-bold text-white tracking-tight">Financeiro</h1>
-          <p className="text-xs text-text-muted mt-0.5">
-            Controle de fluxo de caixa, custos de peças e lucratividade
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <button
-            onClick={() => {
-              const transactions = [
-                ...paidOrders.map(o => ({
-                  date: o.payment_date || o.created_at,
-                  type: 'income',
-                  description: `OS #${o.codigo_os || (o.id ? o.id.slice(0, 8) : '')} - ${o.clients?.name || 'Cliente'}`,
-                  amount: o.total_value,
-                  status: 'Pago'
-                })),
-                ...periodExpenses.map(e => ({
-                  date: e.expense_date,
-                  type: 'expense',
-                  description: `${e.description} (${e.category})`,
-                  amount: e.amount,
-                  status: e.recurrence || 'Único'
-                }))
-              ];
-              exportFinancialToCsv(transactions);
-            }}
-            className="px-3 py-1.5 text-xs font-semibold text-text hover:text-white border border-border hover:border-slate-700 bg-surface-sunken flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Exportar Relatório CSV"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="hidden sm:inline">Exportar CSV</span>
-          </button>
-          <button
-            onClick={fetchData}
-            className="p-2 text-text-muted hover:text-white border border-white/5 hover:border-white/10 rounded-full backdrop-blur-md transition-colors"
-            title="Atualizar"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <DatePickerWithRange onChange={setDateRange} />
-        </div>
-      </div>
+      <PageHeader
+        icon={<DollarSign />}
+        title="Financeiro"
+        description="Controle de fluxo de caixa, custos de peças e lucratividade."
+        actions={
+          <>
+            <DatePickerWithRange onChange={setDateRange} />
+            <Button
+              variant="secondary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={() => {
+                const transactions = [
+                  ...paidOrders.map((o) => ({
+                    date: o.payment_date || o.created_at,
+                    type: 'income',
+                    description: `OS #${o.codigo_os || (o.id ? o.id.slice(0, 8) : '')} - ${o.clients?.name || 'Cliente'}`,
+                    amount: o.total_value,
+                    status: 'Pago',
+                  })),
+                  ...periodExpenses.map((e) => ({
+                    date: e.expense_date,
+                    type: 'expense',
+                    description: `${e.description} (${e.category})`,
+                    amount: e.amount,
+                    status: e.recurrence || 'Único',
+                  })),
+                ];
+                exportFinancialToCsv(transactions);
+              }}
+            >
+              Exportar CSV
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={fetchData}
+              title="Atualizar dados"
+              aria-label="Atualizar dados"
+              className="px-2.5"
+            >
+              <RefreshCw className="w-4 h-4" aria-hidden />
+            </Button>
+          </>
+        }
+      />
 
-      {/* ── KPI Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           title="Faturamento (Caixa)"
-          value={loading ? '...' : fmtCurrency(receitaRecebida)}
+          value={loading ? '—' : fmtCurrency(receitaRecebida)}
           subtitle={`${paidOrders.length} OS pagas no período`}
           icon={CheckCircle2}
-          accentColor="emerald"
+          accentColor="success"
         />
         <KpiCard
           title="Custos Operacionais"
-          value={loading ? '...' : fmtCurrency(totalCustos)}
-          subtitle={`Peças: ${fmtCurrency(totalPartsCost)} | Despesas: ${fmtCurrency(totalGeneralExpenses)}`}
+          value={loading ? '—' : fmtCurrency(totalCustos)}
+          subtitle={`Peças: ${fmtCurrency(totalPartsCost)} · Despesas: ${fmtCurrency(totalGeneralExpenses)}`}
           icon={TrendingUp}
-          accentColor="rose"
+          accentColor="danger"
         />
         <KpiCard
           title="Lucro Líquido"
-          value={loading ? '...' : fmtCurrency(lucroLiquido)}
-          subtitle="Faturamento - Custos acumulados"
+          value={loading ? '—' : fmtCurrency(lucroLiquido)}
+          subtitle="Faturamento menos custos acumulados"
           icon={DollarSign}
-          accentColor={lucroLiquido >= 0 ? 'emerald' : 'rose'}
+          accentColor={lucroLiquido >= 0 ? 'success' : 'danger'}
         />
         <KpiCard
           title="A Receber"
-          value={loading ? '...' : fmtCurrency(aReceber)}
+          value={loading ? '—' : fmtCurrency(aReceber)}
           subtitle={`${pendingOrders.length} OS pendentes`}
           icon={Clock}
-          accentColor="amber"
+          accentColor="warning"
         />
       </div>
 
-      {/* ── Charts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-slate-900 border border-border rounded-xl p-5">
-          <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">
-            Comparativo Faturamento vs Custos
+        <Card className="lg:col-span-2">
+          <h2 className="text-caption font-semibold text-text-muted uppercase tracking-wider mb-4">
+            Faturamento vs Custos
           </h2>
-          {loading ? (
-            <div className="h-[220px] flex items-center justify-center">
-              <span className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <FinanceiroBarChart data={barData} />
-          )}
-        </div>
-        <div className="bg-slate-900 border border-border rounded-xl p-5">
-          <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">
+          {loading ? <Skeleton className="h-[220px] w-full" /> : <FinanceiroBarChart data={barData} />}
+        </Card>
+        <Card>
+          <h2 className="text-caption font-semibold text-text-muted uppercase tracking-wider mb-4">
             Faturamento por Forma de Pagamento
           </h2>
-          {loading ? (
-            <div className="h-[220px] flex items-center justify-center">
-              <span className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <FinanceiroPieChart data={pieData} />
-          )}
-        </div>
+          {loading ? <Skeleton className="h-[220px] w-full" /> : <FinanceiroPieChart data={pieData} />}
+        </Card>
       </div>
 
-      {/* ── Tabs: Pendentes / Recebidos / Despesas Gerais ── */}
-      <div className="bg-slate-900 border border-border rounded-xl">
-        {/* Tab bar */}
-        <div className="flex border-b border-border overflow-x-auto">
-          {(['pendentes', 'recebidos', 'despesas'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 whitespace-nowrap ${
-                activeTab === tab
-                  ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-text-subtle hover:text-text'
-              }`}
-            >
-              {tab === 'pendentes'
-                ? `A Receber (${pendingOrders.length})`
-                : tab === 'recebidos'
-                  ? `Faturamento Recebido (${paidOrders.length})`
-                  : `Despesas Gerais (${periodExpenses.length})`}
-            </button>
-          ))}
-          <div className="ml-auto flex items-center px-4 gap-2 py-2 sm:py-0">
+      <Card padding="none">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-border">
+          <SegmentedControl
+            label="Seção do financeiro"
+            value={activeTab}
+            onChange={setActiveTab}
+            options={TABS}
+          />
+
+          <div className="flex items-center gap-2">
             {activeTab === 'despesas' && (
-              <button
+              <Button
+                size="sm"
+                icon={<Plus className="w-3.5 h-3.5" />}
                 onClick={() => setIsAddExpenseOpen(true)}
-                className="flex items-center gap-1 text-xs bg-rose-600 hover:bg-rose-500 text-white font-medium px-3 py-1.5 rounded-xl transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
                 Nova Despesa
-              </button>
+              </Button>
             )}
-            <button
-              onClick={
-                activeTab === 'pendentes'
-                  ? handleExportPending
-                  : activeTab === 'recebidos'
-                    ? handleExportPaid
-                    : handleExportExpenses
-              }
-              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-white border border-slate-700 hover:border-slate-600 px-3 py-1.5 rounded-xl transition-colors whitespace-nowrap"
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download className="w-3.5 h-3.5" />}
+              onClick={exportAtual}
             >
-              <Download className="w-3.5 h-3.5" />
               Exportar CSV
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="p-2">
+        <div>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <span className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            </div>
+            <SkeletonTable rows={5} columns={5} />
           ) : activeTab === 'pendentes' ? (
-            <PaymentTable
-              orders={pendingOrders}
-              mode="pending"
-              onPaymentSuccess={fetchData}
-            />
+            <PaymentTable orders={pendingOrders} mode="pending" onPaymentSuccess={fetchData} />
           ) : activeTab === 'recebidos' ? (
-            <PaymentTable
-              orders={paidOrders}
-              mode="paid"
-              onPaymentSuccess={fetchData}
+            <PaymentTable orders={paidOrders} mode="paid" onPaymentSuccess={fetchData} />
+          ) : periodExpenses.length === 0 ? (
+            <EmptyState
+              icon={<AlertTriangle />}
+              title="Nenhuma despesa neste período"
+              description="Cadastre custos fixos e variáveis para que o lucro líquido reflita a realidade."
+              action={
+                <Button
+                  icon={<Plus className="w-4 h-4" />}
+                  onClick={() => setIsAddExpenseOpen(true)}
+                >
+                  Cadastrar despesa
+                </Button>
+              }
             />
           ) : (
-            /* Despesas Gerais Table */
-            <div className="overflow-x-auto">
-              {periodExpenses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-text-subtle gap-2">
-                  <AlertTriangle className="w-8 h-8 opacity-30 text-rose-500" />
-                  <p className="text-sm">Nenhuma despesa geral registrada neste período.</p>
-                </div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Data</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Descrição</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Categoria</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Valor</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {periodExpenses.map((exp) => (
-                      <tr
-                        key={exp.id}
-                        className="border-b border-border/60 hover:bg-slate-800/40 transition-colors"
-                      >
-                        <td className="py-3 px-4 text-text-muted text-xs font-medium">
-                          {exp.expense_date ? new Date(exp.expense_date).toLocaleDateString('pt-BR') : '—'}
-                        </td>
-                        <td className="py-3 px-4 text-slate-200 font-semibold truncate max-w-[200px]">
-                          <div className="flex flex-col gap-0.5">
-                            <span>{exp.description}</span>
-                            {exp.recurrence && exp.recurrence !== 'Única' && (
-                              <span className="text-[9px] text-rose-400 font-mono font-semibold uppercase tracking-wider">
-                                ⟳ {exp.recurrence}
-                                {exp.end_date && ` (Até ${new Date(exp.end_date).toLocaleDateString('pt-BR')})`}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-[11px] font-semibold px-2 py-0.5 border border-slate-700 bg-slate-800/80 text-text rounded-xl">
-                            {exp.category}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right font-bold text-rose-400 tabular-nums">
-                          {fmtCurrency(Number(exp.amount))}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => handleEditExpense(exp)}
-                              className="text-text-subtle hover:text-blue-400 transition-colors p-1 rounded-xl"
-                              title="Editar Despesa"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Data</TH>
+                  <TH>Descrição</TH>
+                  <TH>Categoria</TH>
+                  <TH align="right">Valor</TH>
+                  <TH align="right">Ações</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {periodExpenses.map((exp) => {
+                  const isRecorrente = Boolean(exp.recurrence && exp.recurrence !== 'Única');
+                  return (
+                    <TR key={exp.id}>
+                      <TD numeric className="text-text-muted">
+                        {exp.expense_date
+                          ? new Date(exp.expense_date).toLocaleDateString('pt-BR')
+                          : '—'}
+                      </TD>
+                      <TD className="font-semibold max-w-[240px]">
+                        <div className="flex flex-col gap-1">
+                          <span className="truncate">{exp.description}</span>
+                          {isRecorrente && (
+                            <Badge tone="info" className="w-fit">
+                              ⟳ {exp.recurrence}
+                              {exp.end_date &&
+                                ` até ${new Date(exp.end_date).toLocaleDateString('pt-BR')}`}
+                            </Badge>
+                          )}
+                        </div>
+                      </TD>
+                      <TD>
+                        <Badge>{exp.category}</Badge>
+                      </TD>
+                      <TD align="right" numeric className="font-semibold text-danger">
+                        {fmtCurrency(Number(exp.amount))}
+                      </TD>
+                      <TD align="right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-1.5"
+                            onClick={() => handleEditExpense(exp)}
+                            title="Editar despesa"
+                            aria-label={`Editar ${exp.description}`}
+                          >
+                            <Pencil className="w-4 h-4" aria-hidden />
+                          </Button>
 
-                            {exp.recurrence && exp.recurrence !== 'Única' && !exp.end_date && (
-                              <button
-                                onClick={() => handleEndRecurrence(exp.id)}
-                                className="text-text-subtle hover:text-amber-500 transition-colors p-1 rounded-xl"
-                                title="Encerrar Recorrência"
-                              >
-                                <CalendarOff className="w-4 h-4" />
-                              </button>
-                            )}
-
-                            <button
-                              onClick={() => handleDeleteExpense(exp.id)}
-                              className="text-text-subtle hover:text-rose-500 transition-colors p-1 rounded-xl"
-                              title="Excluir Despesa"
+                          {isRecorrente && !exp.end_date && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="px-1.5 hover:text-warning"
+                              onClick={() => handleEndRecurrence(exp)}
+                              title="Encerrar recorrência"
+                              aria-label={`Encerrar recorrência de ${exp.description}`}
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                              <CalendarOff className="w-4 h-4" aria-hidden />
+                            </Button>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-1.5 hover:text-danger"
+                            onClick={() => handleDeleteExpense(exp)}
+                            title="Excluir despesa"
+                            aria-label={`Excluir ${exp.description}`}
+                          >
+                            <Trash2 className="w-4 h-4" aria-hidden />
+                          </Button>
+                        </div>
+                      </TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

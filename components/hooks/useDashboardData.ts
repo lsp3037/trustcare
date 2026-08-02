@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { useUser } from '@/lib/context/UserContext';
+import { useToast } from '@/components/ui';
 
 export interface DateRange {
   from: Date;
@@ -41,6 +42,7 @@ export interface DashboardStats {
 export function useDashboardData(dateRange: DateRange | null) {
   const { company } = useCompany();
   const { user, role, loading: userLoading } = useUser();
+  const toast = useToast();
   const [stats, setStats] = useState<DashboardStats>({
     billing: 0,
     ticketMedio: 0,
@@ -337,18 +339,22 @@ export function useDashboardData(dateRange: DateRange | null) {
         .eq('id', orderId);
 
       if (error) throw error;
-      
-      alert(`Status da OS atualizado para "${newStatus}"!`);
+
+      toast.success(`OS movida para "${newStatus}"`);
       if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
     } catch (err) {
       console.warn('Erro ao atualizar online, aplicando localmente:', err);
       const localOrders = localStorage.getItem('mock-orders');
       if (localOrders) {
         const parsed = JSON.parse(localOrders);
-        const updated = parsed.map((o: any) => o.id === orderId ? { ...o, status: newStatus } : o);
+        const updated = parsed.map((o: any) => (o.id === orderId ? { ...o, status: newStatus } : o));
         localStorage.setItem('mock-orders', JSON.stringify(updated));
-        alert(`[Offline] Status da OS atualizado para "${newStatus}"!`);
+        toast.warning(`OS movida para "${newStatus}" apenas neste dispositivo`, {
+          description: 'Sem conexão com o servidor. A alteração não foi sincronizada.',
+        });
         if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
+      } else {
+        toast.error('Não foi possível atualizar o status da OS');
       }
     }
   };

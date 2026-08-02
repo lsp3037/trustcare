@@ -197,8 +197,8 @@ export default function CompanySettingsPage() {
 
   if (userLoading || role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-xl">
-        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-sunken border border-border rounded-xl">
+        <LoadingSpinner className="w-8 h-8 text-brand animate-spin mb-4" />
         <p className="text-sm text-text-muted">Verificando permissões...</p>
       </div>
     );
@@ -206,8 +206,8 @@ export default function CompanySettingsPage() {
 
   if (contextLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-xl">
-        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-sunken border border-border rounded-xl">
+        <LoadingSpinner className="w-8 h-8 text-brand animate-spin mb-4" />
         <p className="text-sm text-text-muted">Carregando configurações da empresa...</p>
       </div>
     );
@@ -217,19 +217,19 @@ export default function CompanySettingsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-h2 text-text flex items-center gap-2">
-          <Building className="w-6 h-6 text-emerald-500" /> Dados da Empresa
+          <Building className="w-6 h-6 text-brand" /> Dados da Empresa
         </h1>
         <p className="text-small text-text-muted mt-1">Configure os dados de identidade e contato da sua assistência técnica.</p>
       </div>
 
-      <div className="bg-slate-900 border-2 border-border shadow-2xl shadow-black/50 overflow-hidden rounded-xl">
+      <div className="bg-surface-raised border-2 border-border shadow-2xl shadow-black/50 overflow-hidden rounded-xl">
         {/* Tab Header */}
         <div className="border-b-2 border-border bg-surface-sunken/80 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Building className="w-5 h-5 text-emerald-500" />
+            <Building className="w-5 h-5 text-brand" />
             <h2 className="text-base font-bold text-white">Configurações Gerais</h2>
           </div>
-          <span className="text-[10px] text-text-subtle font-mono">ID Tenant: {company.id || 'offline-mock'}</span>
+          <span className="text-caption text-text-subtle font-mono">ID Tenant: {company.id || 'offline-mock'}</span>
         </div>
 
         {/* Form Body */}
@@ -242,7 +242,7 @@ export default function CompanySettingsPage() {
           )}
 
           {successMsg && (
-            <div className="p-4 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 text-sm flex items-start gap-3 animate-in fade-in duration-200 rounded-xl">
+            <div className="p-4 bg-brand/10 border-l-4 border-brand text-brand text-sm flex items-start gap-3 animate-in fade-in duration-200 rounded-xl">
               <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
               <span>{successMsg}</span>
             </div>
@@ -251,7 +251,7 @@ export default function CompanySettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Logo Drag & Drop Upload Block */}
             <div className="md:col-span-1 flex flex-col items-center space-y-3">
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Logotipo do Sistema</span>
+              <span className="text-caption font-bold text-text-muted uppercase tracking-wider block">Logotipo do Sistema</span>
               
               <div 
                 onDragEnter={handleDrag}
@@ -260,8 +260,8 @@ export default function CompanySettingsPage() {
                 onDrop={handleDrop}
                 className={`relative w-full aspect-square max-w-[160px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200 group bg-surface-sunken/30 ${
                   isDragActive 
-                    ? 'border-emerald-500 bg-emerald-500/5 shadow-inner' 
-                    : 'border-border hover:border-emerald-500'
+                    ? 'border-brand bg-brand/5 shadow-inner' 
+                    : 'border-border hover:border-brand'
                 }`}
               >
                 {previewUrl ? (
@@ -269,8 +269,8 @@ export default function CompanySettingsPage() {
                     <img src={previewUrl} alt="Logotipo" className="max-w-full max-h-full object-contain" />
                     
                     {/* Hover replacement info */}
-                    <label className="absolute inset-0 bg-surface-sunken/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] gap-1.5 rounded-xl font-bold">
-                      <Upload className="w-4 h-4 text-emerald-400" />
+                    <label className="absolute inset-0 bg-surface-sunken/90 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-caption gap-1.5 rounded-xl font-bold">
+                      <Upload className="w-4 h-4 text-brand" />
                       <span>Substituir</span>
                       <input 
                         type="file" 
@@ -282,9 +282,9 @@ export default function CompanySettingsPage() {
                   </div>
                 ) : (
                   <div className="text-center p-4 flex flex-col items-center justify-center">
-                    <ImageIcon className="w-8 h-8 text-slate-700 group-hover:text-emerald-500/40 transition-colors mb-2" />
-                    <span className="text-[9px] text-text-subtle font-bold uppercase tracking-wider block">Arraste a logo</span>
-                    <label className="text-[9px] text-emerald-400 hover:underline cursor-pointer font-bold block mt-1">
+                    <ImageIcon className="w-8 h-8 text-text-subtle group-hover:text-brand/40 transition-colors mb-2" />
+                    <span className="text-caption text-text-subtle font-bold uppercase tracking-wider block">Arraste a logo</span>
+                    <label className="text-caption text-brand hover:underline cursor-pointer font-bold block mt-1">
                       ou selecione
                       <input 
                         type="file" 
@@ -298,7 +298,7 @@ export default function CompanySettingsPage() {
 
                 {/* Loading overlay during upload */}
                 {uploading && (
-                  <div className="absolute inset-0 bg-surface-sunken/90 flex flex-col items-center justify-center rounded-xl text-emerald-400 text-[10px] gap-2 font-bold">
+                  <div className="absolute inset-0 bg-surface-sunken/90 flex flex-col items-center justify-center rounded-xl text-brand text-caption gap-2 font-bold">
                     <LoadingSpinner className="w-6 h-6 animate-spin" />
                     <span>Enviando...</span>
                   </div>
@@ -310,7 +310,7 @@ export default function CompanySettingsPage() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-auto py-0 text-[10px] text-danger hover:text-danger"
+                  className="h-auto py-0 text-caption text-danger hover:text-danger"
                   icon={<Trash2 className="w-3.5 h-3.5" />}
                   onClick={handleRemovePreview}
                 >
@@ -318,14 +318,14 @@ export default function CompanySettingsPage() {
                 </Button>
               )}
               
-              <p className="text-[9px] text-text-subtle text-center leading-normal max-w-[150px]">Imagens JPG, PNG ou WEBP. Tamanho máximo de 2MB.</p>
+              <p className="text-caption text-text-subtle text-center leading-normal max-w-[150px]">Imagens JPG, PNG ou WEBP. Tamanho máximo de 2MB.</p>
             </div>
 
             {/* Inputs Block */}
             <div className="md:col-span-2 space-y-4">
               {/* Name */}
               <div className="space-y-1">
-                <label htmlFor="company-name" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                <label htmlFor="company-name" className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                   Nome da Empresa / Razão Social
                 </label>
                 <div className="relative">
@@ -337,7 +337,7 @@ export default function CompanySettingsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Trust Care T.I."
-                    className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-brand focus:ring-0 transition-all placeholder:text-text-subtle font-semibold"
                   />
                 </div>
               </div>
@@ -346,7 +346,7 @@ export default function CompanySettingsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label htmlFor="company-phone" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                    <label htmlFor="company-phone" className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                       Telefone de Contato
                     </label>
                     <div className="relative">
@@ -357,13 +357,13 @@ export default function CompanySettingsPage() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="Ex: (66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                        className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-brand focus:ring-0 transition-all placeholder:text-text-subtle font-semibold"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label htmlFor="company-whatsapp" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                    <label htmlFor="company-whatsapp" className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                       WhatsApp de Contato
                     </label>
                     <div className="relative">
@@ -374,14 +374,14 @@ export default function CompanySettingsPage() {
                         value={whatsapp}
                         onChange={(e) => setWhatsapp(e.target.value)}
                         placeholder="Ex: (66) 99999-9999"
-                        className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                        className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-brand focus:ring-0 transition-all placeholder:text-text-subtle font-semibold"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="company-email" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                  <label htmlFor="company-email" className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                     E-mail de Contato
                   </label>
                   <div className="relative">
@@ -392,7 +392,7 @@ export default function CompanySettingsPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Ex: contato@trustcare.com.br"
-                      className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all placeholder:text-slate-700 font-semibold"
+                      className="w-full pl-10 pr-4 py-2.5 bg-surface-sunken border-b-2 border-border border-t-0 border-l-0 border-r-0 rounded-xl text-sm text-text focus:outline-none focus:border-brand focus:ring-0 transition-all placeholder:text-text-subtle font-semibold"
                     />
                   </div>
                 </div>
@@ -406,7 +406,7 @@ export default function CompanySettingsPage() {
               loading={saving || uploading}
               disabled={saving || uploading}
               icon={<CheckCircle2 className="w-3.5 h-3.5" />}
-              className="px-8 py-3 h-auto text-black uppercase tracking-wider border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
+              className="px-8 py-3 h-auto text-black uppercase tracking-wider border-b-4 border-brand/25 hover:border-brand/40 active:border-b-0 active:translate-y-1"
             >
               {(saving || uploading) ? 'Salvando Configurações...' : 'Salvar Dados'}
             </Button>

@@ -23,10 +23,18 @@ const SIZES: Record<Size, string> = {
 };
 
 const BASE =
-  'inline-flex items-center justify-center font-semibold whitespace-nowrap rounded-xl ' +
+  'inline-flex items-center justify-center font-semibold whitespace-nowrap rounded-full ' +
   'transition-all duration-200 cursor-pointer ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ' +
-  'disabled:opacity-50 disabled:pointer-events-none hover:shadow-md hover:-translate-y-0.5';
+  'disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97]';
+
+/**
+ * Elevação no hover só onde ela tem peso: a ação primária da tela. Aplicada a
+ * todos os botões, fazia ícones `sm` dentro de célula de tabela pularem ao
+ * passar o mouse — movimento desproporcional ao elemento, o oposto da
+ * Deferência do HIG.
+ */
+const LIFT = 'hover:shadow-md hover:-translate-y-0.5';
 
 /**
  * Mesmas classes do <Button>, para elementos que precisam ser `<a>`/`<Link>`
@@ -39,7 +47,15 @@ export function buttonClasses(opts: {
   className?: string;
 } = {}) {
   const { variant = 'primary', size = 'md', fullWidth = false, className } = opts;
-  return cn(BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className);
+  const lifts = variant === 'primary' && size !== 'sm';
+  return cn(
+    BASE,
+    VARIANTS[variant],
+    SIZES[size],
+    lifts && LIFT,
+    fullWidth && 'w-full',
+    className,
+  );
 }
 
 export interface ButtonProps

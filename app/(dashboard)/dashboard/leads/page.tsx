@@ -2,31 +2,48 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  TrendingUp, 
-  Plus, 
-  Wrench, 
-  Phone, 
-  DollarSign, 
-  AlertCircle, 
-  Trash2, 
-  Building, 
-  User, 
-  X, 
+import {
+  TrendingUp,
+  Plus,
+  Wrench,
+  Phone,
+  DollarSign,
+  Trash2,
   ArrowRight,
   Info,
   Check,
-  FileText
+  FileText,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
-import { Button, buttonClasses } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  buttonClasses,
+  Card,
+  EmptyState,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Skeleton,
+  StatusBadge,
+  Textarea,
+  useConfirm,
+  useToast,
+} from '@/components/ui';
+import { getStatusDot, LEAD_STATUS_FLOW } from '@/lib/design/status';
+import { getOriginClasses, LEAD_ORIGINS } from '@/lib/design/lead-origin';
+import { cn } from '@/lib/utils';
 
 function createUniqueId(prefix: string): string {
   const timestamp = new Date().getTime();
   const random = Math.floor(Math.random() * 10000);
   return `${prefix}-${timestamp}-${random}`;
 }
+
+const brl = (value: number) =>
+  `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 interface Lead {
   id: string;
@@ -53,42 +70,48 @@ interface Client {
   email: string;
 }
 
-const COLUMNS = [
-  { id: 'Novo Contato', title: 'Novo Contato', headerColor: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
-  { id: 'Em Negociação', title: 'Em Negociação', headerColor: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
-  { id: 'Aguardando Equipamento', title: 'Aguardando Equipamento', headerColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
-  { id: 'Ganho/Convertido', title: 'Ganho/Convertido', headerColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  { id: 'Perdido', title: 'Perdido', headerColor: 'text-rose-400 bg-rose-500/10 border-rose-500/20' }
-] as const;
+/** Etapas em que faz sentido criar um lead — "Perdido" não é ponto de partida. */
+const STATUS_INICIAL = LEAD_STATUS_FLOW.filter((s) => s !== 'Perdido');
+
+const MOTIVOS_DE_PERDA = [
+  'Preço muito alto',
+  'Prazo de entrega longo',
+  'Sem peças em estoque',
+  'Desistiu do reparo / Não compensa',
+  'Sem contato com o cliente (Ghosting)',
+  'Outro',
+];
 
 export default function LeadsFunnelPage() {
   const router = useRouter();
   const { company } = useCompany();
-  
-  // State variables
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
-  
-  // Modal control states
+
+  // Controle dos diálogos
   const [isCreating, setIsCreating] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showLossReasonModal, setShowLossReasonModal] = useState(false);
   const [leadToLoseId, setLeadToLoseId] = useState<string | null>(null);
   const [lossReason, setLossReason] = useState('');
-  
-  // Duplicate client check states
+  const [lossReasonCustom, setLossReasonCustom] = useState('');
+
+  // Verificação de cliente duplicado
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
-  // Form states
+  // Formulário
   const [nomeCliente, setNomeCliente] = useState('');
   const [telefone, setTelefone] = useState('');
   const [equipamentoInteresse, setEquipamentoInteresse] = useState('');
   const [problemDescription, setProblemDescription] = useState('');
-  const [origem, setOrigem] = useState<'WhatsApp' | 'Instagram Ads' | 'Indicação' | 'Telefone' | 'Outro'>('WhatsApp');
+  const [origem, setOrigem] = useState<Lead['origem']>('WhatsApp');
   const [valorEstimado, setValorEstimado] = useState('0.00');
   const [statusFunil, setStatusFunil] = useState<Lead['status']>('Novo Contato');
 
@@ -104,10 +127,13 @@ export default function LeadsFunnelPage() {
 
       if (error) throw error;
 
-      setLeads(data as Lead[] || []);
+      setLeads((data as Lead[]) || []);
     } catch (err) {
       console.warn('Erro ao carregar leads do Supabase, buscando mock local:', err);
       loadLocalLeads();
+      toast.warning('Exibindo dados salvos neste dispositivo', {
+        description: 'Não foi possível falar com o servidor. O funil pode estar desatualizado.',
+      });
     } finally {
       setLoading(false);
     }
@@ -124,7 +150,7 @@ export default function LeadsFunnelPage() {
         { id: 'l2', name: 'Marcos Vinícius', phone: '(21) 97777-6666', equipment_info: 'Console PS5 - Limpeza e Superaquecimento', problem_description: 'Desliga sozinho ao jogar', origem: 'Instagram Ads', status: 'Em Negociação', valor_estimado: 450.00, created_at: new Date(Date.now() - 3600000 * 20).toISOString() },
         { id: 'l3', name: 'Roberto da Silva', phone: '(19) 99999-8888', equipment_info: 'Notebook Dell Inspiron - Reparo de Carcaça', problem_description: 'Dobradiça quebrada', origem: 'Indicação', status: 'Aguardando Equipamento', valor_estimado: 350.00, created_at: new Date(Date.now() - 3600000 * 48).toISOString() },
         { id: 'l4', name: 'Lúcia Ferreira', phone: '(31) 96666-5555', equipment_info: 'iPhone 13 - Troca de Tela', problem_description: 'Vidro quebrado e touch falhando', origem: 'Telefone', status: 'Ganho/Convertido', valor_estimado: 600.00, created_at: new Date(Date.now() - 3600000 * 72).toISOString() },
-        { id: 'l5', name: 'Julio Cesar Santos', phone: '(11) 97777-8888', equipment_info: 'Placa Mãe PC Desktop - Reparo de Trilhas', problem_description: 'Curto circuito na linha de entrada', origem: 'Outro', status: 'Perdido', valor_estimado: 750.00, motivo_perda: 'Preço muito alto', created_at: new Date(Date.now() - 3600000 * 96).toISOString() }
+        { id: 'l5', name: 'Julio Cesar Santos', phone: '(11) 97777-8888', equipment_info: 'Placa Mãe PC Desktop - Reparo de Trilhas', problem_description: 'Curto circuito na linha de entrada', origem: 'Outro', status: 'Perdido', valor_estimado: 750.00, motivo_perda: 'Preço muito alto', created_at: new Date(Date.now() - 3600000 * 96).toISOString() },
       ];
       localStorage.setItem('mock-leads', JSON.stringify(loadedLeads));
     }
@@ -136,6 +162,7 @@ export default function LeadsFunnelPage() {
       fetchLeads();
     } else {
       loadLocalLeads();
+      setLoading(false);
     }
   }, [company?.id]);
 
@@ -144,7 +171,8 @@ export default function LeadsFunnelPage() {
     localStorage.setItem('mock-leads', JSON.stringify(updatedLeads));
   };
 
-  // Drag & Drop native handlers
+  /* ─── Arrastar e soltar ─── */
+
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id);
     setDraggedLeadId(id);
@@ -173,39 +201,41 @@ export default function LeadsFunnelPage() {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead || lead.status === targetColumn) return;
 
-    // Handle Loss transition
+    // Perder um lead exige justificativa — a transição passa pelo diálogo.
     if (targetColumn === 'Perdido') {
       setLeadToLoseId(leadId);
       setLossReason('');
+      setLossReasonCustom('');
       setShowLossReasonModal(true);
       return;
     }
 
-    // Default status transition
     updateLeadStatus(leadId, targetColumn);
   };
 
-  const updateLeadStatus = async (leadId: string, newStatus: Lead['status'], motivoPerda?: string) => {
-    // Optimistic UI update
-    const updated = leads.map((l) => {
-      if (l.id === leadId) {
-        return {
-          ...l,
-          status: newStatus,
-          motivo_perda: newStatus === 'Perdido' ? motivoPerda : undefined,
-          updated_at: new Date().toISOString()
-        };
-      }
-      return l;
-    });
+  const updateLeadStatus = async (
+    leadId: string,
+    newStatus: Lead['status'],
+    motivoPerda?: string,
+  ) => {
+    // Atualização otimista
+    const updated = leads.map((l) =>
+      l.id === leadId
+        ? {
+            ...l,
+            status: newStatus,
+            motivo_perda: newStatus === 'Perdido' ? motivoPerda : undefined,
+            updated_at: new Date().toISOString(),
+          }
+        : l,
+    );
     setLeads(updated);
-    
-    // Update active details modal if open
+
     if (selectedLead && selectedLead.id === leadId) {
       setSelectedLead({
         ...selectedLead,
         status: newStatus,
-        motivo_perda: newStatus === 'Perdido' ? motivoPerda : undefined
+        motivo_perda: newStatus === 'Perdido' ? motivoPerda : undefined,
       });
     }
 
@@ -215,39 +245,51 @@ export default function LeadsFunnelPage() {
         .update({
           status: newStatus,
           motivo_perda: newStatus === 'Perdido' ? motivoPerda : null,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', leadId);
 
       if (error) throw error;
-      
-      // Sync local storage
+
       const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
       const parsedLeads = JSON.parse(localLeadsStr);
-      const updatedLocal = parsedLeads.map((l: any) => 
-        l.id === leadId 
-          ? { ...l, status: newStatus, motivo_perda: newStatus === 'Perdido' ? motivoPerda : null, updated_at: new Date().toISOString() } 
-          : l
+      const updatedLocal = parsedLeads.map((l: any) =>
+        l.id === leadId
+          ? { ...l, status: newStatus, motivo_perda: newStatus === 'Perdido' ? motivoPerda : null, updated_at: new Date().toISOString() }
+          : l,
       );
       localStorage.setItem('mock-leads', JSON.stringify(updatedLocal));
     } catch (err) {
       console.warn('Erro ao atualizar status do lead no Supabase, aplicando localmente:', err);
       saveLeadsToStorage(updated);
+      // Antes isto era silencioso: o card mudava de coluna na tela e nada
+      // chegava ao servidor.
+      toast.warning('Mudança salva apenas neste dispositivo', {
+        description: 'Sem conexão com o servidor. O funil não foi sincronizado.',
+      });
     }
   };
 
-  // Submit loss reason
   const handleLossReasonSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leadToLoseId || !lossReason.trim()) return;
+    const motivo = lossReason === 'Outro' ? lossReasonCustom.trim() : lossReason;
+    if (!leadToLoseId || !motivo) return;
 
-    updateLeadStatus(leadToLoseId, 'Perdido', lossReason.trim());
+    updateLeadStatus(leadToLoseId, 'Perdido', motivo);
     setShowLossReasonModal(false);
     setLeadToLoseId(null);
     setLossReason('');
+    setLossReasonCustom('');
+    toast.info('Lead movido para Perdido', { description: `Motivo: ${motivo}` });
   };
 
-  // Add Lead
+  const cancelLossReason = () => {
+    setShowLossReasonModal(false);
+    setLeadToLoseId(null);
+    // Re-sincroniza a lista para desfazer visualmente o arrasto.
+    setLeads([...leads]);
+  };
+
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nomeCliente.trim()) return;
@@ -260,12 +302,12 @@ export default function LeadsFunnelPage() {
       problem_description: problemDescription.trim(),
       origem,
       status: statusFunil,
-      valor_estimado: parseFloat(valorEstimado) || 0.00
+      valor_estimado: parseFloat(valorEstimado) || 0.0,
     };
 
     try {
       if (!company?.id) throw new Error('Empresa não selecionada');
-      
+
       const { data, error } = await supabase
         .from('leads')
         .insert(newLeadData)
@@ -276,8 +318,7 @@ export default function LeadsFunnelPage() {
 
       if (data) {
         setLeads([data as Lead, ...leads]);
-        
-        // Sync local storage
+
         const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
         const parsedLeads = JSON.parse(localLeadsStr);
         parsedLeads.unshift(data);
@@ -285,29 +326,32 @@ export default function LeadsFunnelPage() {
 
         setIsCreating(false);
         resetForm();
+        toast.success(`Lead "${newLeadData.name}" criado`);
       }
     } catch (err) {
       console.warn('Erro Supabase ao salvar lead, salvando mock local:', err);
-      
+
       const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
       const parsedLeads = JSON.parse(localLeadsStr);
-      
+
       const localNewLead: Lead = {
         id: `mock-lead-${Date.now()}`,
         ...newLeadData,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
-      
+
       parsedLeads.unshift(localNewLead);
       localStorage.setItem('mock-leads', JSON.stringify(parsedLeads));
-      
+
       setLeads([localNewLead, ...leads]);
       setIsCreating(false);
       resetForm();
+      toast.warning('Lead salvo apenas neste dispositivo', {
+        description: 'Sem conexão com o servidor. Ele não aparecerá para o resto da equipe.',
+      });
     }
   };
 
-  // Edit Lead
   const handleUpdateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead || !nomeCliente.trim()) return;
@@ -318,9 +362,24 @@ export default function LeadsFunnelPage() {
       equipment_info: equipamentoInteresse.trim(),
       problem_description: problemDescription.trim(),
       origem,
-      valor_estimado: parseFloat(valorEstimado) || 0.00,
+      valor_estimado: parseFloat(valorEstimado) || 0.0,
       status: statusFunil,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+    };
+
+    const applyLocally = () => {
+      const updatedLead = { ...selectedLead, ...updateData };
+      setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? updatedLead : l)));
+
+      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
+      const parsedLeads = JSON.parse(localLeadsStr);
+      const updated = parsedLeads.map((l: any) =>
+        l.id === selectedLead.id ? { ...l, ...updateData } : l,
+      );
+      localStorage.setItem('mock-leads', JSON.stringify(updated));
+
+      setSelectedLead(updatedLead);
+      setIsEditing(false);
     };
 
     try {
@@ -331,65 +390,55 @@ export default function LeadsFunnelPage() {
 
       if (error) throw error;
 
-      const updatedLead = { ...selectedLead, ...updateData };
-      setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
-      
-      // Sync local storage
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.map((l: any) => l.id === selectedLead.id ? { ...l, ...updateData } : l);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
-
-      setSelectedLead(updatedLead);
-      setIsEditing(false);
+      applyLocally();
+      toast.success('Lead atualizado');
     } catch (err) {
       console.warn('Erro ao atualizar lead no Supabase, aplicando localmente:', err);
-      
-      const updatedLead = { ...selectedLead, ...updateData };
-      setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
-      
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.map((l: any) => l.id === selectedLead.id ? { ...l, ...updateData } : l);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
-      
-      setSelectedLead(updatedLead);
-      setIsEditing(false);
+      applyLocally();
+      toast.warning('Alteração salva apenas neste dispositivo', {
+        description: 'Sem conexão com o servidor.',
+      });
     }
   };
 
-  // Delete Lead
-  const handleDeleteLead = async (leadId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este Lead?')) return;
-    
-    // Optimistic UI update
-    setLeads(prev => prev.filter((l) => l.id !== leadId));
+  const handleDeleteLead = async (lead: Lead) => {
+    const confirmed = await confirm({
+      title: `Excluir o lead "${lead.name}"?`,
+      description:
+        'O histórico de contato e o valor estimado são perdidos. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir lead',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
+    setLeads((prev) => prev.filter((l) => l.id !== lead.id));
     setSelectedLead(null);
     setIsEditing(false);
 
-    try {
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .eq('id', leadId);
-
-      if (error) throw error;
-      
-      // Sync local storage
+    const removeLocally = () => {
       const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
       const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.filter((l: any) => l.id !== leadId);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
+      localStorage.setItem(
+        'mock-leads',
+        JSON.stringify(parsedLeads.filter((l: any) => l.id !== lead.id)),
+      );
+    };
+
+    try {
+      const { error } = await supabase.from('leads').delete().eq('id', lead.id);
+      if (error) throw error;
+
+      removeLocally();
+      toast.success(`Lead "${lead.name}" excluído`);
     } catch (err) {
       console.warn('Erro ao deletar lead no Supabase, aplicando localmente:', err);
-      const localLeadsStr = localStorage.getItem('mock-leads') || '[]';
-      const parsedLeads = JSON.parse(localLeadsStr);
-      const updated = parsedLeads.filter((l: any) => l.id !== leadId);
-      localStorage.setItem('mock-leads', JSON.stringify(updated));
+      removeLocally();
+      toast.warning('Exclusão aplicada apenas neste dispositivo', {
+        description: 'O lead continua no servidor até a próxima sincronização.',
+      });
     }
   };
 
-  // Reset fields
   const resetForm = () => {
     setNomeCliente('');
     setTelefone('');
@@ -400,15 +449,25 @@ export default function LeadsFunnelPage() {
     setStatusFunil('Novo Contato');
   };
 
-  // Convert to O.S. (Duplicate Verification Flow)
+  const openEditForm = (lead: Lead) => {
+    setNomeCliente(lead.name);
+    setTelefone(lead.phone);
+    setEquipamentoInteresse(lead.equipment_info);
+    setProblemDescription(lead.problem_description || '');
+    setOrigem(lead.origem);
+    setValorEstimado(lead.valor_estimado.toString());
+    setStatusFunil(lead.status);
+    setIsEditing(true);
+  };
+
+  /* ─── Conversão em OS, com verificação de duplicado ─── */
+
   const handleConvertToOS = () => {
     if (!selectedLead) return;
 
-    // Load mock clients list
     const storedClientsRaw = localStorage.getItem('mock-clients');
     const storedClients: Client[] = storedClientsRaw ? JSON.parse(storedClientsRaw) : [];
 
-    // Search duplicate by name or phone
     const cleanedPhone = selectedLead.phone.replace(/\D/g, '');
     const duplicate = storedClients.find((c) => {
       const matchName = c.name.toLowerCase().trim() === selectedLead.name.toLowerCase().trim();
@@ -420,12 +479,10 @@ export default function LeadsFunnelPage() {
       setDuplicateClient(duplicate);
       setShowDuplicateModal(true);
     } else {
-      // Direct Conversion
       proceedWithNewClientCreation();
     }
   };
 
-  // Scenario 1: Create a new client and redirect
   const proceedWithNewClientCreation = () => {
     if (!selectedLead) return;
 
@@ -441,682 +498,621 @@ export default function LeadsFunnelPage() {
       name: selectedLead.name,
       document: '',
       phone: selectedLead.phone,
-      email: ''
+      email: '',
     };
 
-    // Save client
-    const updatedClients = [...storedClients, newClient];
-    localStorage.setItem('mock-clients', JSON.stringify(updatedClients));
+    localStorage.setItem('mock-clients', JSON.stringify([...storedClients, newClient]));
 
-    // Convert Lead status to Won/Converted
     updateLeadStatus(selectedLead.id, 'Ganho/Convertido');
 
-    // Close Modals
+    const equipment = selectedLead.equipment_info;
     setShowDuplicateModal(false);
     setSelectedLead(null);
 
-    // Redirect to New O.S. Form with prefilled parameters
-    router.push(`/dashboard/orders?new=true&client_id=${newClientId}&equipment=${encodeURIComponent(selectedLead.equipment_info)}`);
+    toast.success('Lead convertido — cliente novo criado');
+    router.push(
+      `/dashboard/orders?new=true&client_id=${newClientId}&equipment=${encodeURIComponent(equipment)}`,
+    );
   };
 
-  // Scenario 2: Use existing matching client and redirect
   const handleUseExistingClient = () => {
     if (!selectedLead || !duplicateClient) return;
 
-    // Convert Lead status to Won/Converted
     updateLeadStatus(selectedLead.id, 'Ganho/Convertido');
 
-    // Close Modals
+    const equipment = selectedLead.equipment_info;
+    const clientId = duplicateClient.id;
     setShowDuplicateModal(false);
     setSelectedLead(null);
 
-    // Redirect with existing client id
-    router.push(`/dashboard/orders?new=true&client_id=${duplicateClient.id}&equipment=${encodeURIComponent(selectedLead.equipment_info)}`);
+    toast.success('Lead vinculado ao cliente existente');
+    router.push(
+      `/dashboard/orders?new=true&client_id=${clientId}&equipment=${encodeURIComponent(equipment)}`,
+    );
   };
 
-  // Color badges helper
-  const getOriginBadgeStyle = (orig: Lead['origem']) => {
-    switch (orig) {
-      case 'WhatsApp': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-      case 'Instagram Ads': return 'bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20';
-      case 'Indicação': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-      case 'Telefone': return 'bg-sky-500/10 text-sky-400 border border-sky-500/20';
-      default: return 'bg-slate-500/10 text-text-muted border border-slate-500/20';
-    }
-  };
-
-  // Sum total value of active leads per column
   const getColumnTotals = (colId: Lead['status']) => {
     const filtered = leads.filter((l) => l.status === colId);
-    const sum = filtered.reduce((total, lead) => total + lead.valor_estimado, 0);
     return {
       count: filtered.length,
-      sum
+      sum: filtered.reduce((total, lead) => total + lead.valor_estimado, 0),
     };
+  };
+
+  const whatsappLink = (lead: Lead) => {
+    const digits = lead.phone.replace(/\D/g, '');
+    const withCountry = digits.startsWith('55') ? digits : `55${digits}`;
+    const message = `Olá ${lead.name}, tudo bem? Sou da equipe da ${company?.name || 'TrustCare'}. Gostaria de conversar sobre o seu ${lead.equipment_info}.`;
+    return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
   };
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-text flex items-center gap-2.5">
-            <TrendingUp className="w-8 h-8 text-emerald-500" /> Funil de CRM & Leads
-          </h1>
-          <p className="text-small text-text-muted mt-1">Gerencie e qualifique seus prospects antes de abrirem uma O.S.</p>
-        </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setIsCreating(true);
-          }}
-          icon={<Plus className="w-4 h-4" />}
-        >
-          Novo Lead
-        </Button>
-      </div>
+      <PageHeader
+        icon={<TrendingUp />}
+        title="Funil de CRM & Leads"
+        description="Gerencie e qualifique seus prospects antes de abrirem uma O.S."
+        actions={
+          <Button
+            onClick={() => {
+              resetForm();
+              setIsCreating(true);
+            }}
+            icon={<Plus className="w-4 h-4" />}
+          >
+            Novo Lead
+          </Button>
+        }
+      />
 
-      {/* Warning/Instructions Info Bar */}
-      <div className="p-4 bg-slate-900/50 border border-border rounded-xl flex items-center gap-3.5 text-text text-xs">
-        <Info className="w-5 h-5 text-emerald-400 shrink-0" />
-        <div>
-          <span className="font-bold text-white block">CRM Conectado ao Supabase (com sincronização offline local)</span>
-          Arraste e solte os cards entre as colunas para atualizar as fases do funil. Ao converter um lead, o sistema verificará duplicados e pré-preencherá a tela de abertura de O.S.
+      <Card padding="sm" className="flex items-start gap-3.5">
+        <div className="p-2 rounded-2xl bg-info/15 text-info shrink-0" aria-hidden>
+          <Info className="w-4 h-4" strokeWidth={1.8} />
         </div>
-      </div>
+        <div className="min-w-0">
+          <p className="text-small font-semibold text-text">
+            Arraste os cards entre as colunas para mudar a fase
+          </p>
+          <p className="text-caption text-text-muted mt-0.5">
+            Ao converter um lead, o sistema verifica clientes duplicados e pré-preenche a
+            abertura de O.S. Prefere teclado? Abra o lead e mude a fase pelo campo
+            &ldquo;Status do Funil&rdquo;.
+          </p>
+        </div>
+      </Card>
 
-      {/* Kanban Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-sm text-text-muted">Carregando funil de vendas...</p>
+        <div
+          className="flex flex-col lg:flex-row gap-6"
+          aria-busy="true"
+          aria-label="Carregando funil de vendas"
+        >
+          {LEAD_STATUS_FLOW.map((status, colIndex) => (
+            <Card key={status} padding="sm" className="flex-1 min-w-[280px] lg:max-w-[320px]">
+              <Skeleton className="h-4 w-32 mb-2" style={{ animationDelay: `${colIndex * 80}ms` }} />
+              <Skeleton className="h-3 w-24 mb-5" />
+              <div className="space-y-3">
+                {[0, 1].map((i) => (
+                  <Skeleton key={i} className="h-28 w-full rounded-[20px]" />
+                ))}
+              </div>
+            </Card>
+          ))}
         </div>
+      ) : leads.length === 0 ? (
+        // Kanban vazio não é um estado de "arraste algo": não há o que
+        // arrastar. As 5 colunas vazias só ocupam a tela sem dizer o que fazer.
+        <Card>
+          <EmptyState
+            icon={<TrendingUp />}
+            title="Nenhum lead no funil ainda"
+            description="Cadastre os contatos que chegam por WhatsApp, indicação ou anúncio. Quando um deles fechar, o lead vira uma O.S. com o cliente já preenchido."
+            action={
+              <Button
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => {
+                  resetForm();
+                  setIsCreating(true);
+                }}
+              >
+                Criar primeiro lead
+              </Button>
+            }
+          />
+        </Card>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin select-none">
-          {COLUMNS.map((col) => {
-            const { count, sum } = getColumnTotals(col.id);
-            const filteredLeads = leads.filter((l) => l.status === col.id);
-            const isOver = dragOverColumn === col.id;
+        <div className="flex flex-col lg:flex-row gap-6 overflow-x-auto pb-4 thin-scrollbar">
+          {LEAD_STATUS_FLOW.map((colId) => {
+            const { count, sum } = getColumnTotals(colId);
+            const filteredLeads = leads.filter((l) => l.status === colId);
+            const isOver = dragOverColumn === colId;
 
             return (
-              <div
-                key={col.id}
+              <section
+                key={colId}
+                aria-label={`${colId} — ${count} ${count === 1 ? 'lead' : 'leads'}`}
                 onDragOver={handleDragOver}
-                onDragEnter={(e) => handleDragEnter(e, col.id)}
+                onDragEnter={(e) => handleDragEnter(e, colId)}
                 onDragLeave={() => setDragOverColumn(null)}
-                onDrop={(e) => handleDrop(e, col.id)}
-                className={`flex-1 min-w-[280px] lg:max-w-[320px] bg-slate-900/30 border border-border/80 rounded-xl p-4 flex flex-col min-h-[600px] transition-all duration-200 ${
-                  isOver ? 'border-dashed border-emerald-500/50 bg-emerald-500/5 shadow-md shadow-emerald-500/5' : ''
-                }`}
+                onDrop={(e) => handleDrop(e, colId)}
+                className={cn(
+                  'flex-1 min-w-[280px] lg:max-w-[320px] p-4 flex flex-col min-h-[600px]',
+                  'bg-surface-sunken/50 border border-border rounded-[20px]',
+                  'transition-all duration-200',
+                  isOver && 'border-dashed border-brand/50 bg-brand/5',
+                )}
               >
-                {/* Column Header */}
-                <div className="mb-4 pb-3 border-b border-border/60">
-                  <div className="flex justify-between items-center mb-1">
-                    <h3 className="text-sm font-bold text-text flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${col.id === 'Novo Contato' ? 'bg-sky-400 animate-pulse' : col.id === 'Em Negociação' ? 'bg-amber-500' : col.id === 'Aguardando Equipamento' ? 'bg-indigo-400' : col.id === 'Ganho/Convertido' ? 'bg-emerald-400' : 'bg-rose-500'}`} />
-                      {col.title}
-                    </h3>
-                    <span className="text-[10px] font-bold bg-slate-900 px-2 py-0.5 rounded-full border border-border text-text-muted">
-                      {count}
-                    </span>
+                <header className="mb-4 pb-3 border-b border-border">
+                  <div className="flex justify-between items-center gap-2 mb-1">
+                    <h2 className="text-small font-semibold text-text flex items-center gap-2 min-w-0">
+                      <span
+                        className={cn('w-2 h-2 rounded-full shrink-0', getStatusDot(colId))}
+                        aria-hidden
+                      />
+                      <span className="truncate">{colId}</span>
+                    </h2>
+                    <Badge className="shrink-0 font-mono tabular-nums">{count}</Badge>
                   </div>
-                  <span className="text-[11px] text-text-subtle font-mono">
-                    Total: R$ {sum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <span className="text-caption text-text-subtle font-mono tabular-nums">
+                    Total: {brl(sum)}
                   </span>
-                </div>
+                </header>
 
-                {/* Cards Container */}
-                <div className="flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1">
+                <div className="flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1 thin-scrollbar">
                   {filteredLeads.length === 0 ? (
-                    <div className="h-28 border border-dashed border-border/50 rounded-xl flex items-center justify-center text-center p-4">
-                      <p className="text-[11px] text-slate-600">Arraste um lead para esta etapa</p>
+                    <div className="h-28 border border-dashed border-border rounded-[20px] flex items-center justify-center text-center p-4">
+                      <p className="text-caption text-text-subtle">
+                        Arraste um lead para esta etapa
+                      </p>
                     </div>
                   ) : (
                     filteredLeads.map((lead) => (
-                      <div
+                      <Card
                         key={lead.id}
-                        draggable="true"
+                        interactive
+                        padding="sm"
+                        draggable
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Abrir lead ${lead.name}`}
                         onDragStart={(e) => handleDragStart(e, lead.id)}
                         onDragEnd={handleDragEnd}
                         onClick={() => {
                           setSelectedLead(lead);
                           setIsEditing(false);
                         }}
-                        className={`bg-slate-900 border border-border/80 rounded-xl p-4 shadow-sm hover:border-emerald-500/30 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-[1.01] flex flex-col justify-between ${
-                          draggedLeadId === lead.id ? 'opacity-40 border-dashed border-emerald-500/20' : ''
-                        }`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedLead(lead);
+                            setIsEditing(false);
+                          }
+                        }}
+                        className={cn(
+                          'flex flex-col justify-between cursor-grab active:cursor-grabbing',
+                          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
+                          draggedLeadId === lead.id && 'opacity-40 border-dashed',
+                        )}
                       >
                         <div>
-                          {/* Origem badge */}
-                          <div className="flex justify-between items-center mb-2">
-                            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${getOriginBadgeStyle(lead.origem)}`}>
-                              {lead.origem}
-                            </span>
-                            <span className="text-[9px] text-text-subtle font-semibold font-mono">
+                          <div className="flex justify-between items-center gap-2 mb-2">
+                            <Badge className={getOriginClasses(lead.origem)}>{lead.origem}</Badge>
+                            <span className="text-caption text-text-subtle font-mono tabular-nums shrink-0">
                               {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
 
-                          <h4 className="font-bold text-white text-sm tracking-tight leading-tight truncate hover:text-emerald-400 transition-colors">
-                            {lead.name}
-                          </h4>
-                          
-                          <p className="text-xs text-text-muted font-semibold mt-1 flex items-center gap-1.5 truncate">
-                            <Wrench className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                          <h3 className="text-h3 text-text truncate">{lead.name}</h3>
+
+                          <p className="text-small text-text-muted mt-1 flex items-center gap-1.5 truncate">
+                            <Wrench className="w-3.5 h-3.5 text-text-subtle shrink-0" aria-hidden />
                             {lead.equipment_info}
                           </p>
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-border/55 flex justify-between items-center">
-                          <span className="text-xs text-emerald-400 font-extrabold font-mono flex items-center">
-                            <DollarSign className="w-3 h-3 text-emerald-500" />
-                            {lead.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <div className="mt-4 pt-3 border-t border-border flex justify-between items-center gap-2">
+                          <span className="text-small font-semibold text-text font-mono tabular-nums">
+                            {brl(lead.valor_estimado)}
                           </span>
-                          
+
                           {lead.phone && (
-                            <span className="text-[10px] text-text-subtle flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-text-subtle" />
+                            <span className="text-caption text-text-subtle flex items-center gap-1 shrink-0">
+                              <Phone className="w-3 h-3" aria-hidden />
                               {lead.phone}
                             </span>
                           )}
                         </div>
-                      </div>
+                      </Card>
                     ))
                   )}
                 </div>
-              </div>
+              </section>
             );
           })}
         </div>
       )}
 
-      {/* MODAL: Criar Novo Lead */}
-      {isCreating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-sunken/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-md p-6 shadow-2xl relative">
-            <Button
-              onClick={() => setIsCreating(false)}
-              variant="ghost"
-              size="sm"
-              className="absolute right-4 top-4 px-1.5"
-              aria-label="Fechar"
-            >
-              <X className="w-4.5 h-4.5" />
+      {/* ─── Criar lead ─── */}
+      <Modal
+        open={isCreating}
+        onClose={() => setIsCreating(false)}
+        title="Novo Lead de CRM"
+        description="Qualifique as necessidades do cliente antes de gerar o chamado técnico."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsCreating(false)}>
+              Cancelar
             </Button>
-
-            <h3 className="text-h3 text-text mb-2 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-500" /> Novo Lead de CRM
-            </h3>
-            <p className="text-xs text-text-muted mb-6">Qualifique as necessidades do cliente antes de gerar o chamado técnico.</p>
-
-            <form onSubmit={handleCreateLead} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Nome do Cliente</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Ana Paula Souza"
-                    value={nomeCliente}
-                    onChange={(e) => setNomeCliente(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Telefone de Contato</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                  <input
-                    type="text"
-                    placeholder="Ex: (11) 98888-7777"
-                    value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Equipamento & Serviço Desejado</label>
-                <div className="relative">
-                  <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: MacBook Pro - Troca de Bateria"
-                    value={equipamentoInteresse}
-                    onChange={(e) => setEquipamentoInteresse(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Descrição do Problema (Opcional)</label>
-                <div className="relative">
-                  <FileText className="absolute left-3 top-3 w-4 h-4 text-text-subtle" />
-                  <textarea
-                    placeholder="Ex: O aparelho está esquentando e desligando sozinho..."
-                    value={problemDescription}
-                    onChange={(e) => setProblemDescription(e.target.value)}
-                    rows={2}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Origem do Lead</label>
-                  <select
-                    value={origem}
-                    onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
-                  >
-                    <option value="WhatsApp">WhatsApp</option>
-                    <option value="Instagram Ads">Instagram Ads</option>
-                    <option value="Indicação">Indicação</option>
-                    <option value="Telefone">Telefone</option>
-                    <option value="Outro">Outro</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Valor Estimado (R$)</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={valorEstimado}
-                      onChange={(e) => setValorEstimado(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-9 pr-4 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Etapa Inicial no Funil</label>
-                <select
-                  value={statusFunil}
-                  onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
-                >
-                  <option value="Novo Contato">Novo Contato</option>
-                  <option value="Em Negociação">Em Negociação</option>
-                  <option value="Aguardando Equipamento">Aguardando Equipamento</option>
-                  <option value="Ganho/Convertido">Ganho/Convertido (Direto)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button type="button" variant="secondary" size="sm" onClick={() => setIsCreating(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" size="sm">
-                  Salvar Lead
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Visualizar & Editar Detalhes do Lead */}
-      {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-sunken/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-lg p-6 shadow-2xl relative">
-            <Button
-              onClick={() => setSelectedLead(null)}
-              variant="ghost"
-              size="sm"
-              className="absolute right-4 top-4 px-1.5"
-              aria-label="Fechar"
-            >
-              <X className="w-4.5 h-4.5" />
+            <Button type="submit" form="form-novo-lead">
+              Salvar Lead
             </Button>
+          </>
+        }
+      >
+        <form id="form-novo-lead" onSubmit={handleCreateLead} className="space-y-4">
+          <Input
+            label="Nome do Cliente"
+            required
+            placeholder="Ex: Ana Paula Souza"
+            value={nomeCliente}
+            onChange={(e) => setNomeCliente(e.target.value)}
+          />
+          <Input
+            label="Telefone de Contato"
+            placeholder="Ex: (11) 98888-7777"
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+          />
+          <Input
+            label="Equipamento & Serviço Desejado"
+            required
+            placeholder="Ex: MacBook Pro - Troca de Bateria"
+            value={equipamentoInteresse}
+            onChange={(e) => setEquipamentoInteresse(e.target.value)}
+          />
+          <Textarea
+            label="Descrição do Problema"
+            hint="Opcional"
+            rows={2}
+            placeholder="Ex: O aparelho está esquentando e desligando sozinho..."
+            value={problemDescription}
+            onChange={(e) => setProblemDescription(e.target.value)}
+          />
 
-            {!isEditing ? (
-              // Modo Visualização
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${getOriginBadgeStyle(selectedLead.origem)}`}>
-                      {selectedLead.origem}
-                    </span>
-                    <span className="text-[10px] font-bold bg-surface-sunken text-text-muted px-2 py-0.5 rounded border border-border">
-                      Fase: {selectedLead.status}
-                    </span>
-                  </div>
-                  
-                  <h3 className="text-h3 text-text">{selectedLead.name}</h3>
-                  <p className="text-xs text-text-subtle mt-1">Cadastrado em {new Date(selectedLead.created_at).toLocaleString('pt-BR')}</p>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Origem do Lead"
+              value={origem}
+              onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
+            >
+              {LEAD_ORIGINS.map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </Select>
 
-                <div className="bg-surface-sunken/60 p-4 border border-border rounded-xl space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Wrench className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Equipamento / Interesse</p>
-                      <p className="text-sm font-semibold text-slate-200">{selectedLead.equipment_info}</p>
-                    </div>
-                  </div>
-
-                  {selectedLead.problem_description && (
-                    <div className="flex items-start gap-3 pt-2 border-t border-slate-900/60">
-                      <FileText className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Descrição do Problema</p>
-                        <p className="text-sm text-slate-200 leading-relaxed">{selectedLead.problem_description}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-900/60">
-                    <div className="flex items-start gap-3">
-                      <Phone className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Telefone</p>
-                        <p className="text-sm font-semibold text-slate-200">{selectedLead.phone || '—'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <DollarSign className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-[10px] text-text-subtle uppercase font-bold tracking-wider">Valor Estimado</p>
-                        <p className="text-sm font-extrabold text-emerald-400 font-mono">
-                          R$ {selectedLead.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedLead.status === 'Perdido' && selectedLead.motivo_perda && (
-                    <div className="pt-3 mt-3 border-t border-rose-500/10 bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">
-                      <p className="text-[10px] text-rose-400 uppercase font-bold tracking-wider mb-1">Motivo do Descarte (Perdido)</p>
-                      <p className="text-xs text-rose-300 italic">&ldquo;{selectedLead.motivo_perda}&rdquo;</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border">
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="flex-1 sm:flex-initial"
-                      onClick={() => {
-                        setNomeCliente(selectedLead.name);
-                        setTelefone(selectedLead.phone);
-                        setEquipamentoInteresse(selectedLead.equipment_info);
-                        setProblemDescription(selectedLead.problem_description || '');
-                        setOrigem(selectedLead.origem);
-                        setValorEstimado(selectedLead.valor_estimado.toString());
-                        setStatusFunil(selectedLead.status);
-                        setIsEditing(true);
-                      }}
-                    >
-                      Editar Lead
-                    </Button>
-                    {selectedLead.phone && (
-                      <a
-                        href={`https://wa.me/${selectedLead.phone.replace(/\D/g, '').startsWith('55') ? selectedLead.phone.replace(/\D/g, '') : '55' + selectedLead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                          `Olá ${selectedLead.name}, tudo bem? Sou da equipe da TrustCare. Gostaria de conversar sobre o seu ${selectedLead.equipment_info}.`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={buttonClasses({ size: 'sm' })}
-                      >
-                        <Phone className="w-3.5 h-3.5" /> WhatsApp
-                      </a>
-                    )}
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      className="px-2.5"
-                      onClick={() => handleDeleteLead(selectedLead.id)}
-                      title="Excluir Lead"
-                    >
-                      <Trash2 className="w-4.5 h-4.5" />
-                    </Button>
-                  </div>
-
-                  {/* Converter em OS Flow Trigger (Only if not already Won/Lost) */}
-                  {selectedLead.status !== 'Ganho/Convertido' && (
-                    <Button
-                      size="sm"
-                      className="w-full sm:w-auto"
-                      onClick={handleConvertToOS}
-                    >
-                      Convertido: Gerar O.S. <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              // Modo Edição
-              <form onSubmit={handleUpdateLead} className="space-y-4">
-                <h3 className="text-h3 text-text mb-4">Editar Lead</h3>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Nome do Cliente</label>
-                  <input
-                    type="text"
-                    required
-                    value={nomeCliente}
-                    onChange={(e) => setNomeCliente(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Telefone</label>
-                  <input
-                    type="text"
-                    value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Equipamento / Interesse</label>
-                  <input
-                    type="text"
-                    required
-                    value={equipamentoInteresse}
-                    onChange={(e) => setEquipamentoInteresse(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Descrição do Problema (Opcional)</label>
-                  <textarea
-                    placeholder="Descrição detalhada..."
-                    value={problemDescription}
-                    onChange={(e) => setProblemDescription(e.target.value)}
-                    rows={2}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors resize-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Origem</label>
-                    <select
-                      value={origem}
-                      onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
-                    >
-                      <option value="WhatsApp">WhatsApp</option>
-                      <option value="Instagram Ads">Instagram Ads</option>
-                      <option value="Indicação">Indicação</option>
-                      <option value="Telefone">Telefone</option>
-                      <option value="Outro">Outro</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Valor Estimado (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={valorEstimado}
-                      onChange={(e) => setValorEstimado(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Status do Funil</label>
-                  <select
-                    value={statusFunil}
-                    onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
-                  >
-                    <option value="Novo Contato">Novo Contato</option>
-                    <option value="Em Negociação">Em Negociação</option>
-                    <option value="Aguardando Equipamento">Aguardando Equipamento</option>
-                    <option value="Ganho/Convertido">Ganho/Convertido</option>
-                    <option value="Perdido">Perdido</option>
-                  </select>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                    Voltar
-                  </Button>
-                  <Button type="submit" size="sm">
-                    Atualizar Dados
-                  </Button>
-                </div>
-              </form>
-            )}
+            <Input
+              label="Valor Estimado (R$)"
+              type="number"
+              step="0.01"
+              min="0"
+              value={valorEstimado}
+              onChange={(e) => setValorEstimado(e.target.value)}
+            />
           </div>
-        </div>
-      )}
 
-      {/* MINI-MODAL: Confirmação de Justificativa de Perda (Motivo de Perda) */}
-      {showLossReasonModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-surface-sunken/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-sm p-5 shadow-2xl">
-            <h4 className="font-bold text-white text-base mb-2 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-rose-500" /> Justificar Perda de Lead
-            </h4>
-            <p className="text-xs text-text-muted mb-4">Selecione ou digite o motivo pelo qual este lead foi cancelado/descartado:</p>
+          <Select
+            label="Etapa Inicial no Funil"
+            value={statusFunil}
+            onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
+          >
+            {STATUS_INICIAL.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Select>
+        </form>
+      </Modal>
 
-            <form onSubmit={handleLossReasonSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <select
-                  value={lossReason}
-                  onChange={(e) => setLossReason(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
-                  required
-                >
-                  <option value="">Selecione um motivo...</option>
-                  <option value="Preço muito alto">Preço muito alto</option>
-                  <option value="Prazo de entrega longo">Prazo de entrega longo</option>
-                  <option value="Sem peças em estoque">Sem peças em estoque</option>
-                  <option value="Desistiu do reparo / Não compensa">Desistiu do reparo / Não compensa</option>
-                  <option value="Sem contato com o cliente (Ghosting)">Sem contato com o cliente (Ghosting)</option>
-                  <option value="Outro">Outro (digite abaixo)</option>
-                </select>
-
-                {lossReason === 'Outro' && (
-                  <input
-                    type="text"
-                    placeholder="Digite o motivo customizado..."
-                    required
-                    onChange={(e) => setLossReason(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
-                  />
+      {/* ─── Detalhes / edição ─── */}
+      <Modal
+        open={selectedLead !== null && !isEditing}
+        onClose={() => setSelectedLead(null)}
+        title={selectedLead?.name ?? ''}
+        description={
+          selectedLead
+            ? `Cadastrado em ${new Date(selectedLead.created_at).toLocaleString('pt-BR')}`
+            : undefined
+        }
+        size="lg"
+        footer={
+          selectedLead && (
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 w-full">
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" size="sm" onClick={() => openEditForm(selectedLead)}>
+                  Editar Lead
+                </Button>
+                {selectedLead.phone && (
+                  <a
+                    href={whatsappLink(selectedLead)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonClasses({ variant: 'secondary', size: 'sm' })}
+                  >
+                    <Phone className="w-3.5 h-3.5" aria-hidden /> WhatsApp
+                  </a>
                 )}
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-border">
                 <Button
-                  type="button"
-                  variant="secondary"
+                  variant="danger"
                   size="sm"
-                  onClick={() => {
-                    setShowLossReasonModal(false);
-                    setLeadToLoseId(null);
-                    // Re-sync original list to trigger full visual cancellation
-                    setLeads([...leads]);
-                  }}
+                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                  onClick={() => handleDeleteLead(selectedLead)}
                 >
-                  Cancelar
-                </Button>
-                <Button type="submit" variant="danger" size="sm">
-                  Confirmar Perda
+                  Excluir
                 </Button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* MINI-MODAL: Confirmação de Duplicado (Opção B) */}
-      {showDuplicateModal && duplicateClient && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-surface-sunken/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-border rounded-xl w-full max-w-md p-6 shadow-2xl">
-            <h4 className="font-bold text-white text-base mb-2 flex items-center gap-2">
-              <Building className="w-5 h-5 text-amber-500" /> Vínculo de Cliente Encontrado
-            </h4>
-            <p className="text-xs text-text-muted mb-4">
-              Encontramos um cadastro de cliente que coincide com os dados de contato do Lead:
-            </p>
-
-            <div className="bg-surface-sunken p-4 border border-border rounded-xl space-y-1 mb-6 text-xs text-text">
-              <p><strong>Nome:</strong> {duplicateClient.name}</p>
-              {duplicateClient.phone && <p><strong>Telefone:</strong> {duplicateClient.phone}</p>}
-              {duplicateClient.email && <p><strong>Email:</strong> {duplicateClient.email}</p>}
-              <p><strong>Código Interno:</strong> #{duplicateClient.client_number}</p>
+              {selectedLead.status !== 'Ganho/Convertido' && (
+                <Button size="sm" onClick={handleConvertToOS}>
+                  Gerar O.S. <ArrowRight className="w-3.5 h-3.5" aria-hidden />
+                </Button>
+              )}
+            </div>
+          )
+        }
+      >
+        {selectedLead && (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className={getOriginClasses(selectedLead.origem)}>
+                {selectedLead.origem}
+              </Badge>
+              <StatusBadge status={selectedLead.status} dot />
             </div>
 
-            <p className="text-xs text-text-muted mb-6">
-              Como você deseja vincular este novo chamado?
-            </p>
+            <dl className="bg-surface-sunken p-4 border border-border rounded-xl space-y-3">
+              <div className="flex items-start gap-3">
+                <Wrench className="w-4 h-4 text-text-muted shrink-0 mt-0.5" aria-hidden />
+                <div className="min-w-0">
+                  <dt className="text-caption text-text-subtle uppercase tracking-wider">
+                    Equipamento / Interesse
+                  </dt>
+                  <dd className="text-small font-semibold text-text">
+                    {selectedLead.equipment_info}
+                  </dd>
+                </div>
+              </div>
+
+              {selectedLead.problem_description && (
+                <div className="flex items-start gap-3 pt-3 border-t border-border">
+                  <FileText className="w-4 h-4 text-text-muted shrink-0 mt-0.5" aria-hidden />
+                  <div className="min-w-0">
+                    <dt className="text-caption text-text-subtle uppercase tracking-wider">
+                      Descrição do Problema
+                    </dt>
+                    <dd className="text-small text-text leading-relaxed">
+                      {selectedLead.problem_description}
+                    </dd>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border">
+                <div className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 text-text-muted shrink-0 mt-0.5" aria-hidden />
+                  <div className="min-w-0">
+                    <dt className="text-caption text-text-subtle uppercase tracking-wider">
+                      Telefone
+                    </dt>
+                    <dd className="text-small font-semibold text-text font-mono tabular-nums">
+                      {selectedLead.phone || '—'}
+                    </dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <DollarSign className="w-4 h-4 text-text-muted shrink-0 mt-0.5" aria-hidden />
+                  <div className="min-w-0">
+                    <dt className="text-caption text-text-subtle uppercase tracking-wider">
+                      Valor Estimado
+                    </dt>
+                    <dd className="text-small font-semibold text-text font-mono tabular-nums">
+                      {brl(selectedLead.valor_estimado)}
+                    </dd>
+                  </div>
+                </div>
+              </div>
+            </dl>
+
+            {selectedLead.status === 'Perdido' && selectedLead.motivo_perda && (
+              <div className="bg-danger/10 border border-danger/25 p-3 rounded-xl">
+                <p className="text-caption text-danger uppercase tracking-wider mb-1">
+                  Motivo do descarte
+                </p>
+                <p className="text-small text-text">
+                  &ldquo;{selectedLead.motivo_perda}&rdquo;
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* ─── Edição ─── */}
+      <Modal
+        open={selectedLead !== null && isEditing}
+        onClose={() => setIsEditing(false)}
+        title="Editar Lead"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsEditing(false)}>
+              Voltar
+            </Button>
+            <Button type="submit" form="form-editar-lead">
+              Atualizar Dados
+            </Button>
+          </>
+        }
+      >
+        <form id="form-editar-lead" onSubmit={handleUpdateLead} className="space-y-4">
+          <Input
+            label="Nome do Cliente"
+            required
+            value={nomeCliente}
+            onChange={(e) => setNomeCliente(e.target.value)}
+          />
+          <Input
+            label="Telefone"
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+          />
+          <Input
+            label="Equipamento / Interesse"
+            required
+            value={equipamentoInteresse}
+            onChange={(e) => setEquipamentoInteresse(e.target.value)}
+          />
+          <Textarea
+            label="Descrição do Problema"
+            hint="Opcional"
+            rows={2}
+            placeholder="Descrição detalhada..."
+            value={problemDescription}
+            onChange={(e) => setProblemDescription(e.target.value)}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Origem"
+              value={origem}
+              onChange={(e) => setOrigem(e.target.value as Lead['origem'])}
+            >
+              {LEAD_ORIGINS.map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </Select>
+
+            <Input
+              label="Valor Estimado (R$)"
+              type="number"
+              step="0.01"
+              min="0"
+              value={valorEstimado}
+              onChange={(e) => setValorEstimado(e.target.value)}
+            />
+          </div>
+
+          <Select
+            label="Status do Funil"
+            value={statusFunil}
+            onChange={(e) => setStatusFunil(e.target.value as Lead['status'])}
+          >
+            {LEAD_STATUS_FLOW.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Select>
+        </form>
+      </Modal>
+
+      {/* ─── Justificativa de perda ─── */}
+      <Modal
+        open={showLossReasonModal}
+        onClose={cancelLossReason}
+        title="Por que este lead foi perdido?"
+        description="O motivo fica registrado no histórico e alimenta o relatório de perdas."
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={cancelLossReason}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="form-motivo-perda" variant="danger">
+              Confirmar Perda
+            </Button>
+          </>
+        }
+      >
+        <form id="form-motivo-perda" onSubmit={handleLossReasonSubmit} className="space-y-3">
+          <Select
+            label="Motivo"
+            required
+            value={lossReason}
+            onChange={(e) => setLossReason(e.target.value)}
+          >
+            <option value="">Selecione um motivo...</option>
+            {MOTIVOS_DE_PERDA.map((m) => (
+              <option key={m} value={m}>
+                {m === 'Outro' ? 'Outro (digite abaixo)' : m}
+              </option>
+            ))}
+          </Select>
+
+          {lossReason === 'Outro' && (
+            <Input
+              label="Motivo customizado"
+              required
+              autoFocus
+              placeholder="Digite o motivo..."
+              value={lossReasonCustom}
+              onChange={(e) => setLossReasonCustom(e.target.value)}
+            />
+          )}
+        </form>
+      </Modal>
+
+      {/* ─── Cliente duplicado ─── */}
+      <Modal
+        open={showDuplicateModal && duplicateClient !== null}
+        onClose={() => setShowDuplicateModal(false)}
+        title="Já existe um cliente com estes dados"
+        description="Vincular ao cadastro existente evita duplicar histórico e financeiro."
+        footer={
+          <Button variant="ghost" onClick={() => setShowDuplicateModal(false)}>
+            Voltar
+          </Button>
+        }
+      >
+        {duplicateClient && (
+          <div className="space-y-5">
+            <dl className="bg-surface-sunken p-4 border border-border rounded-xl space-y-2 text-small">
+              <div className="flex gap-2">
+                <dt className="text-text-muted">Nome:</dt>
+                <dd className="text-text font-semibold">{duplicateClient.name}</dd>
+              </div>
+              {duplicateClient.phone && (
+                <div className="flex gap-2">
+                  <dt className="text-text-muted">Telefone:</dt>
+                  <dd className="text-text font-mono tabular-nums">{duplicateClient.phone}</dd>
+                </div>
+              )}
+              {duplicateClient.email && (
+                <div className="flex gap-2">
+                  <dt className="text-text-muted">Email:</dt>
+                  <dd className="text-text">{duplicateClient.email}</dd>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <dt className="text-text-muted">Código interno:</dt>
+                <dd className="text-text font-mono tabular-nums">
+                  #{duplicateClient.client_number}
+                </dd>
+              </div>
+            </dl>
 
             <div className="flex flex-col gap-3">
               <Button
-                type="button"
                 fullWidth
                 icon={<Check className="w-4 h-4" />}
                 onClick={handleUseExistingClient}
               >
-                Vincular ao Cliente Existente (Recomendado)
+                Vincular ao cliente existente
               </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                fullWidth
-                onClick={proceedWithNewClientCreation}
-              >
-                Criar Novo Cadastro para o Lead
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                fullWidth
-                className="text-[11px] uppercase tracking-wider"
-                onClick={() => setShowDuplicateModal(false)}
-              >
-                Voltar
+              <Button variant="secondary" fullWidth onClick={proceedWithNewClientCreation}>
+                Criar cadastro novo mesmo assim
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

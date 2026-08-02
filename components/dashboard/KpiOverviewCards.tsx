@@ -79,7 +79,7 @@ function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCa
       }
     >
       <div className="flex justify-between items-start gap-3 mb-4">
-        <div className={cn('p-2.5 rounded-full backdrop-blur-md border border-white/5', ICON_TONE[tone])} aria-hidden>
+        <div className={cn('p-2.5 rounded-2xl backdrop-blur-md border border-white/5', ICON_TONE[tone])} aria-hidden>
           {icon}
         </div>
         {meta && (

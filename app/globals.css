@@ -2,10 +2,6 @@
 @plugin "@tailwindcss/typography";
 
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
 
 @theme {
   /* ─────────────────────────────────────────────────────────────
@@ -86,6 +82,16 @@
   --color-border: #2a2e34;
   --color-border-strong: #3a3f47;
 
+  /* ── Materiais translúcidos (vidro / Vibrancy) ──
+     Camada acima de `surface`: card, modal, sidebar, header. Antes esses
+     valores eram literais (`bg-white/[0.04]`, `border-white/[0.08]`), o que
+     no tema claro pinta branco 4% sobre um fundo quase branco — o card
+     sumia. Como token, cada tema define seu próprio material. */
+  --color-glass: rgb(255 255 255 / 0.04);
+  --color-glass-border: rgb(255 255 255 / 0.08);
+  --color-glass-border-strong: rgb(255 255 255 / 0.12);
+  --color-glass-divider: rgb(255 255 255 / 0.06);
+
   /* Texto — 3 níveis, todos AA sobre surface */
   --color-text: #e8e9eb;
   --color-text-muted: #9ba1a9;
@@ -117,23 +123,29 @@
   --color-status-pronto: #10b981;      /* verde — pronto para o cliente */
   --color-status-finalizado: #059669;  /* verde escuro — encerrado */
   --color-status-cancelado: #f43f5e;   /* morto */
+
+  /* ── Origem do lead ──
+     De onde o contato veio. Não é status — não indica progresso nem
+     severidade —, mas precisa ser distinguível de relance no kanban.
+     Como token, acompanha o tema; antes eram literais (`emerald-400`,
+     `fuchsia-400`) que perdiam contraste sobre fundo claro. */
+  --color-origem-whatsapp: #10b981;
+  --color-origem-instagram: #d946ef;
+  --color-origem-indicacao: #f59e0b;
+  --color-origem-telefone: #38bdf8;
+  --color-origem-outro: #64748b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
+/* `--background`/`--foreground` eram um segundo sistema, paralelo a
+   `--color-surface`/`--color-text`, com um `@media (prefers-color-scheme)`
+   próprio que não respeitava a classe `.light`. O resultado: o fundo do
+   `body` ficava presto no escuro mesmo com o tema claro ativo. O tema é
+   decidido em um lugar só — a classe `.light` no `<html>`. */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Fundo e cor de texto do body vêm das utilities `bg-surface text-text`
+   aplicadas no <body> (ver app/layout.tsx) — a mesma via que o resto da
+   aplicação usa, em vez de uma regra crua com `var()`. */
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-sans);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
@@ -152,6 +164,23 @@ h1, h2 {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Entrada dos toasts. O bloco global de `prefers-reduced-motion` acima já
+   neutraliza a duração para quem pediu menos movimento. */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-enter {
+  animation: toast-enter 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Scrollbar fina para áreas internas com overflow (ex: nav do sidebar) */
@@ -173,21 +202,11 @@ h1, h2 {
   background-color: var(--color-slate-600);
 }
 
-/* Profundidade visual para elementos interativos sharp (rounded-xl) */
-input:not([type="checkbox"]):not([type="radio"]),
-textarea,
-select {
-  border-color: rgb(51 65 85); /* slate-700 — contraste mais alto que slate-800 */
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-input:not([type="checkbox"]):not([type="radio"]):focus,
-textarea:focus,
-select:focus {
-  border-color: rgb(100 116 139); /* slate-500 */
-  box-shadow: 0 0 0 1px rgb(100 116 139 / 0.2);
-  outline: none;
-}
+/* O foco de campo é responsabilidade do componente `Field` (borda `brand` +
+   outline `brand/40`). Existia aqui um bloco `input:focus` com borda slate e
+   box-shadow próprios: dois sistemas de foco no mesmo elemento, produzindo um
+   híbrido não intencional. Campos fora do `Field` herdam o foco do navegador,
+   que é o comportamento correto até serem migrados. */
 
 /* Light Theme Variables Override */
 html.light {
@@ -201,6 +220,14 @@ html.light {
 
   --color-border: #e4e4e7;
   --color-border-strong: #d4d4d8;
+
+  /* Materiais translúcidos — no claro o vidro é branco de alta opacidade
+     sobre o fundo cinza da página, e a divisória é escura. Espelha o papel
+     do token no escuro, não o valor. */
+  --color-glass: rgb(255 255 255 / 0.72);
+  --color-glass-border: rgb(9 9 11 / 0.08);
+  --color-glass-border-strong: rgb(9 9 11 / 0.14);
+  --color-glass-divider: rgb(9 9 11 / 0.07);
 
   --color-text: #09090b;
   --color-text-muted: #52525b;
@@ -227,6 +254,13 @@ html.light {
   --color-status-finalizado: #065f46;
   --color-status-cancelado: #be123c;
 
+  /* Origem do lead — escurecida para manter AA sobre fundo claro */
+  --color-origem-whatsapp: #047857;
+  --color-origem-instagram: #a21caf;
+  --color-origem-indicacao: #b45309;
+  --color-origem-telefone: #0369a1;
+  --color-origem-outro: #52525b;
+
   /* ── Legado: inversão de escalas (remover ao fim da Fase 3) ── */
   /* Invert Slate Color Scales with Sophisticated Zinc Palette */
   --color-slate-950: #f9f9fb; /* Page Background */
@@ -241,10 +275,6 @@ html.light {
   --color-slate-200: #18181b; /* Primary text */
   --color-slate-100: #09090b; /* Main Headings */
   --color-slate-50: #09090b;  /* High contrast elements */
-
-  /* Global background/foreground overrides */
-  --background: #f9f9fb;
-  --foreground: #09090b;
 
   /* Smooth light mode filters */
   color-scheme: light;

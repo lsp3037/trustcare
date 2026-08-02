@@ -1,66 +1,63 @@
 import { LucideIcon } from 'lucide-react';
+import { Card } from '@/components/ui';
+import { cn } from '@/lib/utils';
+
+type Accent = 'success' | 'danger' | 'warning' | 'info';
 
 interface KpiCardProps {
   title: string;
   value: string;
   subtitle?: string;
   icon: LucideIcon;
-  accentColor: 'emerald' | 'rose' | 'amber' | 'blue';
+  accentColor: Accent;
   trend?: {
-    value: number; // percentage
+    /** Variação percentual. Negativo aparece em `danger`. */
+    value: number;
     label: string;
   };
 }
 
-const accentMap = {
-  emerald: {
-    border: 'border-l-emerald-500',
-    icon: 'bg-emerald-500/10 text-emerald-400',
-    trend: 'text-emerald-400',
-  },
-  rose: {
-    border: 'border-l-rose-500',
-    icon: 'bg-rose-500/10 text-rose-400',
-    trend: 'text-rose-400',
-  },
-  amber: {
-    border: 'border-l-amber-400',
-    icon: 'bg-amber-400/10 text-amber-400',
-    trend: 'text-amber-400',
-  },
-  blue: {
-    border: 'border-l-blue-500',
-    icon: 'bg-blue-500/10 text-blue-400',
-    trend: 'text-blue-400',
-  },
+const ACCENT: Record<Accent, { border: string; icon: string }> = {
+  success: { border: 'border-l-success', icon: 'bg-success/10 text-success' },
+  danger: { border: 'border-l-danger', icon: 'bg-danger/10 text-danger' },
+  warning: { border: 'border-l-warning', icon: 'bg-warning/10 text-warning' },
+  info: { border: 'border-l-info', icon: 'bg-info/10 text-info' },
 };
 
 export function KpiCard({ title, value, subtitle, icon: Icon, accentColor, trend }: KpiCardProps) {
-  const accent = accentMap[accentColor];
+  const accent = ACCENT[accentColor];
 
   return (
-    <div
-      className={`bg-slate-900 border border-border border-l-4 ${accent.border} rounded-xl p-5 flex flex-col gap-3 transition-all duration-200 hover:border-slate-700`}
-    >
-      <div className="flex items-start justify-between">
-        <div>
+    <Card padding="sm" className={cn('flex flex-col gap-3 border-l-4', accent.border)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-small font-semibold text-text-muted">{title}</p>
           <p className="text-h1 font-mono tabular-nums text-text mt-1">{value}</p>
           {subtitle && <p className="text-caption text-text-subtle mt-0.5">{subtitle}</p>}
         </div>
-        <div className={`p-2.5 rounded-full backdrop-blur-md border border-white/5 `}>
-          <Icon className="w-5 h-5" />
+        {/* O contêiner do ícone precisa carregar a cor do acento: antes ele
+            estava vazio e o ícone saía sem tom nenhum. */}
+        <div
+          className={cn('p-2.5 rounded-2xl border border-glass-border shrink-0', accent.icon)}
+          aria-hidden
+        >
+          <Icon className="w-5 h-5" strokeWidth={1.8} />
         </div>
       </div>
 
       {trend && (
         <div className="flex items-center gap-1.5 pt-1 border-t border-border">
-          <span className={`text-xs font-semibold tabular-nums ${trend.value >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <span
+            className={cn(
+              'text-caption font-semibold tabular-nums',
+              trend.value >= 0 ? 'text-success' : 'text-danger',
+            )}
+          >
             {trend.value >= 0 ? '▲' : '▼'} {Math.abs(trend.value).toFixed(1)}%
           </span>
-          <span className="text-xs text-text-subtle">{trend.label}</span>
+          <span className="text-caption text-text-subtle">{trend.label}</span>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

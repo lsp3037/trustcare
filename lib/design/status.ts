@@ -64,6 +64,9 @@ export const STATUS: Record<string, StatusEntry> = {
   // ── Funil de leads ──
   'Novo Contato': { label: 'Novo Contato', tone: 'analise', desc: 'Lead recebido, ainda sem orçamento' },
   'Em Orçamento': { label: 'Em Orçamento', tone: 'analise', desc: 'Orçamento sendo montado' },
+  'Em Negociação': { label: 'Em Negociação', tone: 'aprovacao', desc: 'Proposta enviada, decisão com o cliente' },
+  'Ganho/Convertido': { label: 'Ganho/Convertido', tone: 'finalizado', desc: 'Lead virou ordem de serviço' },
+  'Perdido': { label: 'Perdido', tone: 'cancelado', desc: 'Lead descartado, com motivo registrado' },
   'Aprovado (Na Fila)': { label: 'Aprovado (Na Fila)', tone: 'aprovado', desc: 'Aprovado, aguardando início' },
 
   // ── Ciclo da OS ──
@@ -88,6 +91,15 @@ export const STATUS: Record<string, StatusEntry> = {
  * Use isto para popular seletores — `Object.keys(STATUS)` traria
  * também os status de lead e os aliases legados.
  */
+/** Etapas do funil de leads, na ordem do kanban. */
+export const LEAD_STATUS_FLOW = [
+  'Novo Contato',
+  'Em Negociação',
+  'Aguardando Equipamento',
+  'Ganho/Convertido',
+  'Perdido',
+] as const;
+
 export const OS_STATUS_FLOW = [
   'Aguardando Equipamento',
   'Em Análise',

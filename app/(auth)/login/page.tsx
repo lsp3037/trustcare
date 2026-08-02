@@ -83,15 +83,15 @@ export default function LoginPage() {
   return (
     <>
       {/* ── Painel Esquerdo: Identidade de Marca (Sempre Escuro) ── */}
-      <div className="hidden md:flex md:w-5/12 bg-[#0a0d16] p-8 flex-col justify-between border-r border-slate-800/80 relative overflow-hidden">
+      <div className="hidden md:flex md:w-5/12 bg-[#0a0d16] p-8 flex-col justify-between border-r border-border/80 relative overflow-hidden">
         {/* Glow de fundo interno */}
-        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-blue-500/10 blur-[80px] pointer-events-none" />
+        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-info/10 blur-[80px] pointer-events-none" />
         
         {/* Brand Header */}
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-8">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Trust Care Platform</span>
+            <ShieldCheck className="w-5 h-5 text-brand" />
+            <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Trust Care Platform</span>
           </div>
         </div>
 
@@ -109,26 +109,26 @@ export default function LoginPage() {
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-white leading-tight">
             Bem-vindo à<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-brand-hover">
               Trust Care
             </span>
           </h2>
-          <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-emerald-500 my-4" />
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-brand my-4" />
+          <p className="text-xs text-text-muted leading-relaxed">
             Preencha os campos e acesse a plataforma para gerenciar suas ordens de serviço, clientes e estoque.
           </p>
         </div>
 
         {/* Footer */}
         <div className="relative z-10">
-          <p className="text-[10px] text-slate-600">
+          <p className="text-caption text-text-subtle">
             © {new Date().getFullYear()} Trust Care T.I.
           </p>
         </div>
       </div>
 
       {/* ── Painel Direito: Formulário de Autenticação (Fixo Claro) ── */}
-      <div className="flex-1 bg-slate-50 p-8 flex flex-col justify-center transition-colors duration-200">
+      <div className="flex-1 bg-surface p-8 flex flex-col justify-center transition-colors duration-200">
         <div className="w-full max-w-sm mx-auto space-y-6">
           
           {/* Header Mobile / Info */}
@@ -140,33 +140,33 @@ export default function LoginPage() {
               height={80} 
               className="object-contain"
             />
-            <h1 className="text-xl font-bold text-slate-900">Trust Care</h1>
-            <p className="text-xs text-slate-500">Gerenciamento de Ordens de Serviço</p>
+            <h1 className="text-xl font-bold text-text">Trust Care</h1>
+            <p className="text-xs text-text-muted">Gerenciamento de Ordens de Serviço</p>
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-900 hidden md:block">Acessar Plataforma</h2>
-            <p className="text-xs text-slate-500">Entre com suas credenciais para continuar.</p>
+            <h2 className="text-lg font-bold text-text hidden md:block">Acessar Plataforma</h2>
+            <p className="text-xs text-text-muted">Entre com suas credenciais para continuar.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600">
+              <div className="p-3 rounded-lg bg-danger/10 border border-danger/25 text-xs text-rose-600">
                 {errorMsg}
               </div>
             )}
 
             {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email</label>
+              <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-muted" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seuemail@empresa.com"
-                  className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                  className="w-full bg-surface-raised border border-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                   required
                 />
               </div>
@@ -175,17 +175,17 @@ export default function LoginPage() {
             {/* Senha Field */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Senha</label>
-                <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline transition-all">Esqueceu a senha?</Link>
+                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Senha</label>
+                <Link href="/forgot-password" className="text-xs text-info hover:underline transition-all">Esqueceu a senha?</Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-text-muted" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                  className="w-full bg-surface-raised border border-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                   required
                 />
               </div>
@@ -198,9 +198,9 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={keepConnected}
                 onChange={(e) => setKeepConnected(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500/20 cursor-pointer"
+                className="w-4 h-4 rounded border-border-strong bg-surface-raised text-info focus:ring-info/20 cursor-pointer"
               />
-              <label htmlFor="keep-connected" className="ml-2 text-xs text-slate-600 cursor-pointer select-none">
+              <label htmlFor="keep-connected" className="ml-2 text-xs text-text-subtle cursor-pointer select-none">
                 Manter conectado
               </label>
             </div>
@@ -209,7 +209,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55 cursor-pointer"
+              className="w-full bg-info hover:bg-info text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center gap-2 transition-all duration-200 mt-2 disabled:opacity-55 cursor-pointer"
             >
               {loading ? (
                 <LoadingSpinner className="w-4 h-4 animate-spin" />
@@ -224,9 +224,9 @@ export default function LoginPage() {
           {/* Divisor "ou" */}
           <div className="relative flex items-center justify-center my-1">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
-            <span className="relative px-3 text-[10px] font-bold text-slate-400 bg-slate-50 uppercase tracking-widest">ou</span>
+            <span className="relative px-3 text-caption font-bold text-text-muted bg-surface uppercase tracking-widest">ou</span>
           </div>
 
           {/* Botão Google OAuth */}
@@ -234,7 +234,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-lg shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-55"
+            className="w-full flex items-center justify-center gap-2 border border-border bg-surface-raised hover:bg-surface text-text-subtle font-semibold py-2.5 px-4 rounded-lg shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-55"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -260,17 +260,17 @@ export default function LoginPage() {
           {/* Botão Auxiliar: Problema de Acesso */}
           <a
             href="mailto:suporte@trustcare.com.br?subject=Problema de Acesso - Trust Care"
-            className="w-full border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold py-2.5 rounded-lg text-slate-600 hover:text-slate-900 text-center flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="w-full border border-border bg-surface-raised hover:bg-surface-sunken text-xs font-semibold py-2.5 rounded-lg text-text-subtle hover:text-text text-center flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
-            <HelpCircle className="w-4 h-4 text-slate-400" />
+            <HelpCircle className="w-4 h-4 text-text-muted" />
             Problema de acesso
           </a>
 
           {/* Cadastro Link */}
-          <div className="text-center pt-2 border-t border-slate-200/80">
-            <p className="text-xs text-slate-500">
+          <div className="text-center pt-2 border-t border-border">
+            <p className="text-xs text-text-muted">
               Não tem uma conta?{' '}
-              <Link href="/register" className="text-blue-600 font-bold hover:underline transition-all">
+              <Link href="/register" className="text-info font-bold hover:underline transition-all">
                 Cadastre seu Tenant/Empresa
               </Link>
             </p>

@@ -1,39 +1,40 @@
+import { Card, Skeleton } from '@/components/ui';
+
 export default function DashboardLoading() {
   return (
-    <div className="w-full h-full p-8 animate-pulse">
-      {/* Header skeleton */}
-      <div className="flex justify-between items-center mb-8">
+    <div className="w-full h-full space-y-8" aria-busy="true" aria-label="Carregando">
+      {/* Cabeçalho */}
+      <div className="flex justify-between items-center gap-4">
         <div className="space-y-2">
-          <div className="h-8 w-48 bg-slate-200 rounded-lg"></div>
-          <div className="h-4 w-32 bg-slate-100 rounded-lg"></div>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
         </div>
-        <div className="h-10 w-32 bg-slate-200 rounded-lg"></div>
+        <Skeleton className="h-10 w-32 rounded-full" />
       </div>
-      
-      {/* Metrics Grid skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm h-32">
+
+      {/* Grade de KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[0, 1, 2, 3].map((i) => (
+          <Card key={i}>
             <div className="flex justify-between items-start mb-4">
-              <div className="h-4 w-24 bg-slate-100 rounded"></div>
-              <div className="h-8 w-8 bg-slate-100 rounded-lg"></div>
+              <Skeleton className="h-9 w-9 rounded-2xl" style={{ animationDelay: `${i * 80}ms` }} />
+              <Skeleton className="h-4 w-12 rounded-full" />
             </div>
-            <div className="h-8 w-16 bg-slate-200 rounded"></div>
-          </div>
+            <Skeleton className="h-3 w-24 mb-2" />
+            <Skeleton className="h-7 w-16" />
+          </Card>
         ))}
       </div>
 
-      {/* Main Content skeleton */}
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 h-96">
-        <div className="h-6 w-48 bg-slate-200 rounded mb-6"></div>
+      {/* Conteúdo principal */}
+      <Card>
+        <Skeleton className="h-6 w-48 mb-6" />
         <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-4">
-              <div className="h-12 w-full bg-slate-50 rounded-lg border border-slate-100"></div>
-            </div>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" style={{ animationDelay: `${i * 60}ms` }} />
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

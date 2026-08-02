@@ -1,26 +1,67 @@
 'use client';
-import { Package, Plus, CheckCircle2, Search, AlertCircle, Boxes, Trash2, Download, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, AlertCircle, Boxes, Trash2, Download } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge, EmptyState } from '@/components/ui';
+import {
+  Badge,
+  BulkActionBar,
+  Button,
+  Card,
+  Checkbox,
+  DropdownMenu,
+  DropdownMenuItem,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  SkeletonTable,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSearch,
+  useConfirm,
+  useToast,
+} from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { exportInventoryToCsv } from '@/lib/utils/csvExport';
+import { cn } from '@/lib/utils';
+
+const OFFLINE_HINT = 'Sem conexão com o servidor. A alteração ficou só neste dispositivo.';
+
+const CATEGORIES = [
+  'HD',
+  'SSD',
+  'Memória RAM',
+  'Placa de Vídeo',
+  'Fonte de Alimentação',
+  'Gabinete',
+  'Processador',
+  'Placa-Mãe',
+  'Cabo / Acessório',
+  'Ferramentas',
+  'Outro',
+];
+
+const RAM_TECHS = ['DDR', 'DDR2', 'DDR3', 'DDR4', 'DDR5'];
+const RAM_SIZES = ['2GB', '4GB', '8GB', '16GB', '32GB', '64GB'];
+const SSD_TECHS = ['SATA III', 'NVMe', 'M.2 SATA'];
+const SSD_SIZES = ['120GB', '240GB', '256GB', '480GB', '500GB', '960GB', '1TB', '2TB'];
 
 export default function InventoryPage() {
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = () => setActiveDropdownId(null);
-    window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
-  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -31,7 +72,7 @@ export default function InventoryPage() {
     }
   }, []);
 
-  // Estados para adicionar item no estoque
+  // Cadastro de produto
   const [isCreating, setIsCreating] = useState(false);
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
@@ -43,16 +84,15 @@ export default function InventoryPage() {
   const [salePrice, setSalePrice] = useState('');
   const [minStockAlert, setMinStockAlert] = useState('');
 
-  // Estados para especificações dinâmicas de RAM e SSD
+  // Especificações dinâmicas de RAM e SSD
   const [ramApp, setRamApp] = useState('');
   const [ramTech, setRamTech] = useState('');
   const [ramSpeed, setRamSpeed] = useState('');
   const [ramGb, setRamGb] = useState('');
-
   const [ssdTech, setSsdTech] = useState('');
   const [ssdGb, setSsdGb] = useState('');
 
-  // Estados dos Filtros por Coluna
+  // Filtros por coluna
   const [filterName, setFilterName] = useState('');
   const [filterSku, setFilterSku] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -63,15 +103,15 @@ export default function InventoryPage() {
   const [filterSale, setFilterSale] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  // Escuta o clique de navegação no menu lateral para voltar ao listado
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [deletingBulk, setDeletingBulk] = useState(false);
+
+  // O menu lateral avisa quando "Estoque" é clicado, para sair do formulário.
   useEffect(() => {
-    const handleNavClick = () => {
-      setIsCreating(false);
-    };
+    const handleNavClick = () => setIsCreating(false);
     window.addEventListener('nav-estoque-click', handleNavClick);
-    return () => {
-      window.removeEventListener('nav-estoque-click', handleNavClick);
-    };
+    return () => window.removeEventListener('nav-estoque-click', handleNavClick);
   }, []);
 
   const resetForm = () => {
@@ -92,7 +132,7 @@ export default function InventoryPage() {
     setSsdGb('');
   };
 
-  // Auto-preenchimento dinâmico de Nome e Capacidade
+  // Nome e capacidade se montam sozinhos para RAM e SSD.
   useEffect(() => {
     if (category === 'Memória RAM') {
       if (!ramGb || !ramTech || !ramApp) {
@@ -100,9 +140,7 @@ export default function InventoryPage() {
         setName('');
         return;
       }
-      const computedCapacity = `${ramGb} ${ramTech}${ramSpeed ? ` ${ramSpeed}` : ''} (${ramApp})`;
-      setCapacity(computedCapacity);
-
+      setCapacity(`${ramGb} ${ramTech}${ramSpeed ? ` ${ramSpeed}` : ''} (${ramApp})`);
       const speedPart = ramSpeed ? ` ${ramSpeed}` : '';
       const brandPart = brand ? ` ${brand}` : '';
       setName(`Memória RAM ${ramTech} ${ramGb}${speedPart}${brandPart}`);
@@ -112,80 +150,55 @@ export default function InventoryPage() {
         setName('');
         return;
       }
-      const computedCapacity = `${ssdGb} ${ssdTech}`;
-      setCapacity(computedCapacity);
-
+      setCapacity(`${ssdGb} ${ssdTech}`);
       const brandPart = brand ? ` ${brand}` : '';
       setName(`SSD ${ssdGb}${brandPart} ${ssdTech}`);
     }
   }, [category, brand, ramApp, ramTech, ramSpeed, ramGb, ssdTech, ssdGb]);
 
-  // Geração automática e inteligente de SKU
+  // SKU sequencial a partir de categoria + marca.
   useEffect(() => {
     if (!category || !brand) {
       setSku('');
       return;
     }
 
-    // 1. Iniciais da categoria
-    const catClean = category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
-    const catCode = catClean.slice(0, 3).padEnd(3, 'X');
+    const initials = (value: string) =>
+      value
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-zA-Z]/g, '')
+        .toUpperCase()
+        .slice(0, 3)
+        .padEnd(3, 'X');
 
-    // 2. Iniciais da marca
-    const brandClean = brand.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
-    const brandCode = brandClean.slice(0, 3).padEnd(3, 'X');
+    const prefix = `${initials(category)}-${initials(brand)}-`;
 
-    const prefix = `${catCode}-${brandCode}-`;
-
-    // 3. Busca o sequencial inteligente na listagem atual de produtos
-    const matchingProducts = products.filter(p => p.sku && p.sku.startsWith(prefix));
-    const numbers = matchingProducts.map(p => {
-      const parts = p.sku.split('-');
-      const lastPart = parts[parts.length - 1];
-      const num = parseInt(lastPart);
-      return isNaN(num) ? 0 : num;
-    });
+    const numbers = products
+      .filter((p) => p.sku && p.sku.startsWith(prefix))
+      .map((p) => {
+        const num = parseInt(p.sku.split('-').pop());
+        return isNaN(num) ? 0 : num;
+      });
 
     const nextNum = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
-    const paddedNum = String(nextNum).padStart(3, '0');
-
-    setSku(`${prefix}${paddedNum}`);
+    setSku(`${prefix}${String(nextNum).padStart(3, '0')}`);
   }, [category, brand, products]);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState(false);
-
-  const categories = [
-    'HD',
-    'SSD',
-    'Memória RAM',
-    'Placa de Vídeo',
-    'Fonte de Alimentação',
-    'Gabinete',
-    'Processador',
-    'Placa-Mãe',
-    'Cabo / Acessório',
-    'Ferramentas',
-    'Outro'
-  ];
 
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('products_inventory')
-        .select('*')
-        .order('name');
+      const { data, error } = await supabase.from('products_inventory').select('*').order('name');
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setProducts(data || []);
     } catch (err) {
       console.warn('Erro ao buscar estoque do Supabase, usando fallback local:', err);
       loadLocalProducts();
+      toast.warning('Exibindo dados salvos neste dispositivo', {
+        description: 'Não foi possível falar com o servidor. O estoque pode estar desatualizado.',
+      });
     } finally {
       setLoading(false);
     }
@@ -196,13 +209,12 @@ export default function InventoryPage() {
     if (localProducts) {
       setProducts(JSON.parse(localProducts));
     } else {
-      // Fallback de dados mockados com as novas propriedades para T.I.
       const initialMock = [
-        { id: 'p1', name: 'SSD 480GB Kingston SATA III', sku: 'SSD-KG-480', category: 'SSD', brand: 'Kingston', capacity: '480GB', quantity: 12, cost_price: 120.00, sale_price: 249.90, min_stock_alert: 5 },
-        { id: 'p2', name: 'Memória RAM DDR4 8GB 3200MHz Corsair', sku: 'MEM-CS-8G', category: 'Memória RAM', brand: 'Corsair', capacity: '8GB', quantity: 3, cost_price: 90.00, sale_price: 199.00, min_stock_alert: 5 },
-        { id: 'p3', name: 'Cabo de Rede CAT6 Furukawa 10m', sku: 'CAB-FK-10M', category: 'Cabo / Acessório', brand: 'Furukawa', capacity: '10 metros', quantity: 25, cost_price: 15.00, sale_price: 45.00, min_stock_alert: 10 },
-        { id: 'p4', name: 'Roteador TP-Link Archer C6 AC1200', sku: 'ROT-TP-C6', category: 'Outro', brand: 'TP-Link', capacity: 'N/A', quantity: 1, cost_price: 110.00, sale_price: 229.00, min_stock_alert: 3 },
-        { id: 'p5', name: 'Pasta Térmica Arctic MX-4 4g', sku: 'PST-AR-MX4', category: 'Outro', brand: 'Arctic', capacity: '4g', quantity: 8, cost_price: 25.00, sale_price: 65.00, min_stock_alert: 2 },
+        { id: 'p1', name: 'SSD 480GB Kingston SATA III', sku: 'SSD-KG-480', category: 'SSD', brand: 'Kingston', capacity: '480GB', quantity: 12, cost_price: 120.0, sale_price: 249.9, min_stock_alert: 5 },
+        { id: 'p2', name: 'Memória RAM DDR4 8GB 3200MHz Corsair', sku: 'MEM-CS-8G', category: 'Memória RAM', brand: 'Corsair', capacity: '8GB', quantity: 3, cost_price: 90.0, sale_price: 199.0, min_stock_alert: 5 },
+        { id: 'p3', name: 'Cabo de Rede CAT6 Furukawa 10m', sku: 'CAB-FK-10M', category: 'Cabo / Acessório', brand: 'Furukawa', capacity: '10 metros', quantity: 25, cost_price: 15.0, sale_price: 45.0, min_stock_alert: 10 },
+        { id: 'p4', name: 'Roteador TP-Link Archer C6 AC1200', sku: 'ROT-TP-C6', category: 'Outro', brand: 'TP-Link', capacity: 'N/A', quantity: 1, cost_price: 110.0, sale_price: 229.0, min_stock_alert: 3 },
+        { id: 'p5', name: 'Pasta Térmica Arctic MX-4 4g', sku: 'PST-AR-MX4', category: 'Outro', brand: 'Arctic', capacity: '4g', quantity: 8, cost_price: 25.0, sale_price: 65.0, min_stock_alert: 2 },
       ];
       localStorage.setItem('mock-inventory', JSON.stringify(initialMock));
       setProducts(initialMock);
@@ -216,11 +228,11 @@ export default function InventoryPage() {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setFormError('');
-    setFormSuccess(false);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let companyId = 'mock-tenant-id';
 
       if (user) {
@@ -229,10 +241,7 @@ export default function InventoryPage() {
           .select('company_id')
           .eq('user_id', user.id)
           .single();
-
-        if (profile?.company_id) {
-          companyId = profile.company_id;
-        }
+        if (profile?.company_id) companyId = profile.company_id;
       }
 
       const newProductData = {
@@ -252,67 +261,70 @@ export default function InventoryPage() {
 
       if (error) {
         console.warn('Falha Supabase, inserindo mock local:', error.message);
-
-        // Salva mock
-        const currentMock = [...products];
-        currentMock.push({
-          id: `mock-prod-${Date.now()}`,
-          ...newProductData
-        });
+        const currentMock = [...products, { id: `mock-prod-${Date.now()}`, ...newProductData }];
         localStorage.setItem('mock-inventory', JSON.stringify(currentMock));
+        toast.warning('Produto salvo apenas neste dispositivo', { description: OFFLINE_HINT });
+      } else {
+        toast.success(`"${newProductData.name}" cadastrado`);
       }
 
-      setFormSuccess(true);
-      setTimeout(() => {
-        setIsCreating(false);
-        resetForm();
-        setFormSuccess(false);
-        fetchInventory();
-      }, 1000);
-
+      setIsCreating(false);
+      resetForm();
+      fetchInventory();
     } catch (err: any) {
-      setFormError(err.message || 'Falha ao salvar produto.');
+      toast.error('Não foi possível salvar o produto', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!window.confirm('Tem certeza de que deseja excluir este produto do estoque?')) {
-      return;
-    }
+  const handleDeleteProduct = async (product: any) => {
+    const confirmed = await confirm({
+      title: `Excluir "${product.name}" do estoque?`,
+      description:
+        'O produto some da listagem e deixa de aparecer na hora de alocar peças em uma OS. As OS que já usaram esta peça não são afetadas.',
+      confirmLabel: 'Excluir produto',
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
-      const { error } = await supabase
-        .from('products_inventory')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('products_inventory').delete().eq('id', product.id);
 
       if (error) {
         console.warn('Erro ao deletar no Supabase, deletando do mock local:', error.message);
-
-        // Deleta do mock local
         const localProducts = localStorage.getItem('mock-inventory');
         if (localProducts) {
-          const parsed = JSON.parse(localProducts);
-          const filtered = parsed.filter((p: any) => p.id !== id);
+          const filtered = JSON.parse(localProducts).filter((p: any) => p.id !== product.id);
           localStorage.setItem('mock-inventory', JSON.stringify(filtered));
         }
+        toast.warning('Exclusão aplicada apenas neste dispositivo', { description: OFFLINE_HINT });
+      } else {
+        toast.success(`"${product.name}" excluído`);
       }
 
-      // Recarrega o estoque
       fetchInventory();
     } catch (err: any) {
-      alert(err.message || 'Erro ao excluir produto.');
+      toast.error('Não foi possível excluir o produto', {
+        description: err.message || 'Erro inesperado.',
+      });
     }
   };
 
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
-  const [deletingBulk, setDeletingBulk] = useState(false);
-
   const handleBulkDeleteProducts = async () => {
-    const confirmDelete = window.confirm(`Deseja realmente excluir os ${selectedProductIds.length} produtos selecionados do estoque? Esta ação não pode ser desfeita.`);
-    if (!confirmDelete) return;
+    const count = selectedProductIds.length;
+
+    const confirmed = await confirm({
+      title:
+        count === 1 ? 'Excluir este produto do estoque?' : `Excluir ${count} produtos do estoque?`,
+      description:
+        'Eles somem da listagem e deixam de aparecer na hora de alocar peças em uma OS. Esta ação não pode ser desfeita.',
+      confirmLabel: count === 1 ? 'Excluir produto' : `Excluir ${count} produtos`,
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
       setDeletingBulk(true);
@@ -324,23 +336,40 @@ export default function InventoryPage() {
 
       if (error) throw error;
 
-      setProducts(prev => prev.filter(p => !selectedProductIds.includes(p.id)));
-      alert('Produtos excluídos com sucesso!');
+      setProducts((prev) => prev.filter((p) => !selectedProductIds.includes(p.id)));
+      toast.success(count === 1 ? 'Produto excluído' : `${count} produtos excluídos`);
     } catch (err) {
       console.warn('Erro ao excluir online, aplicando localmente:', err);
 
       const localProducts = localStorage.getItem('mock-inventory');
       if (localProducts) {
-        const parsed = JSON.parse(localProducts);
-        const filtered = parsed.filter((p: any) => !selectedProductIds.includes(p.id));
+        const filtered = JSON.parse(localProducts).filter(
+          (p: any) => !selectedProductIds.includes(p.id),
+        );
         localStorage.setItem('mock-inventory', JSON.stringify(filtered));
         setProducts(filtered);
-        alert('[Offline] Produtos excluídos localmente com sucesso!');
+        toast.warning('Exclusão aplicada apenas neste dispositivo', {
+          description: 'Os produtos continuam no servidor até a próxima sincronização.',
+        });
+      } else {
+        toast.error('Não foi possível excluir os produtos');
       }
     } finally {
       setSelectedProductIds([]);
       setDeletingBulk(false);
     }
+  };
+
+  const clearColumnFilters = () => {
+    setFilterName('');
+    setFilterSku('');
+    setFilterCategory('');
+    setFilterBrand('');
+    setFilterCapacity('');
+    setFilterQuantity('');
+    setFilterCost('');
+    setFilterSale('');
+    setFilterStatus('');
   };
 
   const hasActiveFilters =
@@ -362,11 +391,13 @@ export default function InventoryPage() {
       (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesLowStock = !showLowStockOnly || (p.quantity < p.min_stock_alert);
+    const matchesLowStock = !showLowStockOnly || p.quantity < p.min_stock_alert;
 
     const matchesName = p.name.toLowerCase().includes(filterName.toLowerCase());
     const matchesSku = p.sku.toLowerCase().includes(filterSku.toLowerCase());
-    const matchesCategory = filterCategory === '' || (p.category && p.category.toLowerCase() === filterCategory.toLowerCase());
+    const matchesCategory =
+      filterCategory === '' ||
+      (p.category && p.category.toLowerCase() === filterCategory.toLowerCase());
     const matchesBrand = p.brand.toLowerCase().includes(filterBrand.toLowerCase());
     const matchesCapacity = (p.capacity || '').toLowerCase().includes(filterCapacity.toLowerCase());
 
@@ -408,44 +439,49 @@ export default function InventoryPage() {
     );
   });
 
+  const allVisibleSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((p) => selectedProductIds.includes(p.id));
+  const someVisibleSelected = filteredProducts.some((p) => selectedProductIds.includes(p.id));
+
+  const isRamOrSsd = category === 'Memória RAM' || category === 'SSD';
+
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-text flex items-center gap-2.5">
-            <Package className="w-8 h-8 text-emerald-500" /> Estoque de Produtos
-          </h1>
-          <p className="text-small text-text-muted mt-1">Gerencie peças de reposição e componentes da assistência.</p>
-        </div>
-        {!isCreating && (
-          <div className="flex items-center gap-3">
-            <Button
-              variant="secondary"
-              icon={<Download className="w-4 h-4 text-emerald-500" />}
-              onClick={() => exportInventoryToCsv(filteredProducts)}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() => {
-                resetForm();
-                setIsCreating(true);
-              }}
-            >
-              Cadastrar Produto
-            </Button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={<Package />}
+        title="Estoque de Produtos"
+        description="Gerencie peças de reposição e componentes da assistência."
+        actions={
+          !isCreating && (
+            <>
+              <Button
+                variant="secondary"
+                icon={<Download className="w-4 h-4" />}
+                onClick={() => exportInventoryToCsv(filteredProducts)}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => {
+                  resetForm();
+                  setIsCreating(true);
+                }}
+              >
+                Cadastrar Produto
+              </Button>
+            </>
+          )
+        }
+      />
 
       {isCreating ? (
-        <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
+        <Card padding="lg" className="max-w-2xl mx-auto">
+          <div className="flex justify-between items-start gap-4 mb-6 pb-4 border-b border-border">
             <div>
               <h2 className="text-h2 text-text">Cadastrar Produto / Peça</h2>
-              <p className="text-xs text-text-muted mt-0.5">Cadastre um item no inventário.</p>
+              <p className="text-small text-text-muted mt-0.5">Cadastre um item no inventário.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
               Cancelar
@@ -453,545 +489,476 @@ export default function InventoryPage() {
           </div>
 
           <form onSubmit={handleCreateProduct} className="space-y-4">
-            {formSuccess && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5" />
-                <p className="font-semibold text-sm">Produto cadastrado com sucesso!</p>
-              </div>
-            )}
+            <Input
+              label="Descrição / Nome do Produto"
+              required
+              placeholder="Ex: SSD 1TB Kingston NV2 NVMe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              hint={isRamOrSsd ? 'Montado automaticamente pelas especificações abaixo' : undefined}
+            />
 
-            {formError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
-                {formError}
-              </div>
-            )}
-
-            {/* Descrição / Nome do Produto */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Descrição / Nome do Produto</label>
-              <input
-                type="text"
-                placeholder="Ex: SSD 1TB Kingston NV2 NVMe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+            <div
+              className={cn(
+                'grid grid-cols-1 gap-4',
+                isRamOrSsd ? 'md:grid-cols-2' : 'md:grid-cols-3',
+              )}
+            >
+              <Select
+                label="Categoria"
                 required
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Selecione uma categoria...</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </Select>
+
+              <Input
+                label="Marca"
+                required
+                placeholder="Ex: Kingston"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
               />
-            </div>
 
-            <div className={`grid grid-cols-1 ${category === 'Memória RAM' || category === 'SSD' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
-              {/* Categoria */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Categoria</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
-                  required
-                >
-                  <option value="">Selecione uma categoria...</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Marca */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Marca</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Kingston"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
-                  required
+              {!isRamOrSsd && (
+                <Input
+                  label="Capacidade"
+                  placeholder="Ex: 1TB / 8GB / 10m"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
                 />
-              </div>
-
-              {/* Capacidade (Apenas se não for RAM nem SSD) */}
-              {category !== 'Memória RAM' && category !== 'SSD' && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Capacidade</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: 1TB / 8GB / 10m"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
-                  />
-                </div>
               )}
             </div>
 
-            {/* Campos Condicionais para Memória RAM */}
             {category === 'Memória RAM' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-sunken/40 p-4 border border-slate-900 rounded-xl">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Aplicação</label>
-                  <select
-                    value={ramApp}
-                    onChange={(e) => setRamApp(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                    required
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="PC">PC (Desktop)</option>
-                    <option value="Notebook">Notebook</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tecnologia</label>
-                  <select
-                    value={ramTech}
-                    onChange={(e) => setRamTech(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                    required
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="DDR">DDR</option>
-                    <option value="DDR2">DDR2</option>
-                    <option value="DDR3">DDR3</option>
-                    <option value="DDR4">DDR4</option>
-                    <option value="DDR5">DDR5</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Velocidade</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: 3200MHz"
-                    value={ramSpeed}
-                    onChange={(e) => setRamSpeed(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tamanho (GB)</label>
-                  <select
-                    value={ramGb}
-                    onChange={(e) => setRamGb(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                    required
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="2GB">2GB</option>
-                    <option value="4GB">4GB</option>
-                    <option value="8GB">8GB</option>
-                    <option value="16GB">16GB</option>
-                    <option value="32GB">32GB</option>
-                    <option value="64GB">64GB</option>
-                  </select>
-                </div>
-              </div>
+              <fieldset className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-sunken p-4 border border-border rounded-xl">
+                <legend className="sr-only">Especificações da memória RAM</legend>
+                <Select
+                  label="Aplicação"
+                  required
+                  value={ramApp}
+                  onChange={(e) => setRamApp(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="PC">PC (Desktop)</option>
+                  <option value="Notebook">Notebook</option>
+                </Select>
+                <Select
+                  label="Tecnologia"
+                  required
+                  value={ramTech}
+                  onChange={(e) => setRamTech(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {RAM_TECHS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label="Velocidade"
+                  placeholder="Ex: 3200MHz"
+                  value={ramSpeed}
+                  onChange={(e) => setRamSpeed(e.target.value)}
+                />
+                <Select
+                  label="Tamanho"
+                  required
+                  value={ramGb}
+                  onChange={(e) => setRamGb(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {RAM_SIZES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </Select>
+              </fieldset>
             )}
 
-            {/* Campos Condicionais para SSD */}
             {category === 'SSD' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-sunken/40 p-4 border border-slate-900 rounded-xl">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tecnologia SSD</label>
-                  <select
-                    value={ssdTech}
-                    onChange={(e) => setSsdTech(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                    required
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="SATA III">SATA III</option>
-                    <option value="NVMe">NVMe</option>
-                    <option value="M.2 SATA">M.2 SATA</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tamanho (GB/TB)</label>
-                  <select
-                    value={ssdGb}
-                    onChange={(e) => setSsdGb(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                    required
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="120GB">120GB</option>
-                    <option value="240GB">240GB</option>
-                    <option value="256GB">256GB</option>
-                    <option value="480GB">480GB</option>
-                    <option value="500GB">500GB</option>
-                    <option value="960GB">960GB</option>
-                    <option value="1TB">1TB</option>
-                    <option value="2TB">2TB</option>
-                  </select>
-                </div>
-              </div>
+              <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-sunken p-4 border border-border rounded-xl">
+                <legend className="sr-only">Especificações do SSD</legend>
+                <Select
+                  label="Tecnologia SSD"
+                  required
+                  value={ssdTech}
+                  onChange={(e) => setSsdTech(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {SSD_TECHS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Tamanho"
+                  required
+                  value={ssdGb}
+                  onChange={(e) => setSsdGb(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {SSD_SIZES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </Select>
+              </fieldset>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* SKU */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">SKU / Código</label>
-                <input
-                  type="text"
-                  placeholder="Gerado automaticamente..."
-                  value={sku}
-                  disabled
-                  className="w-full bg-surface-sunken/55 border border-border rounded-xl py-2 px-3 text-sm text-text-muted focus:outline-none cursor-not-allowed opacity-60 transition-colors"
-                  required
-                />
-              </div>
-
-              {/* Alerta de Estoque Mínimo */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Estoque Mínimo (Alerta)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={minStockAlert}
-                  onChange={(e) => setMinStockAlert(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
+              <Input
+                label="SKU / Código"
+                placeholder="Gerado automaticamente..."
+                value={sku}
+                disabled
+                hint="Derivado da categoria e da marca"
+                className="font-mono"
+              />
+              <Input
+                label="Estoque Mínimo (Alerta)"
+                type="number"
+                min="0"
+                required
+                value={minStockAlert}
+                onChange={(e) => setMinStockAlert(e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Quantidade Inicial */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Qtd. Inicial</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
-
-              {/* Preço de Custo */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Preço de Custo (R$)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={costPrice}
-                  onChange={(e) => setCostPrice(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
-
-              {/* Preço de Venda */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Preço de Venda (R$)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={salePrice}
-                  onChange={(e) => setSalePrice(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
+              <Input
+                label="Qtd. Inicial"
+                type="number"
+                min="0"
+                required
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+              />
+              <Input
+                label="Preço de Custo (R$)"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+              />
+              <Input
+                label="Preço de Venda (R$)"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                value={salePrice}
+                onChange={(e) => setSalePrice(e.target.value)}
+              />
             </div>
 
-            {/* Ações */}
             <div className="flex justify-end gap-3 pt-4 border-t border-border">
-              <Button type="submit" loading={submitting} disabled={formSuccess}>
+              <Button type="submit" loading={submitting}>
                 Salvar Produto
               </Button>
             </div>
           </form>
-        </div>
+        </Card>
       ) : (
         <>
-          {/* Barra de Busca e Filtro Ativo */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl border border-border/60 shadow-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-              <input
-                type="text"
-                placeholder="Buscar por produto, marca, categoria ou SKU..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-            {showLowStockOnly && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400">
-                <span>Filtro: Apenas Estoque Baixo</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-1 px-0.5 h-auto text-danger hover:text-danger"
-                  onClick={() => {
-                    setShowLowStockOnly(false);
-                    if (typeof window !== 'undefined') {
-                      window.history.replaceState({}, '', window.location.pathname);
-                    }
-                  }}
-                >
-                  ✕
-                </Button>
-              </div>
-            )}
-            {hasActiveFilters && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setFilterName('');
-                  setFilterSku('');
-                  setFilterCategory('');
-                  setFilterBrand('');
-                  setFilterCapacity('');
-                  setFilterQuantity('');
-                  setFilterCost('');
-                  setFilterSale('');
-                  setFilterStatus('');
-                }}
-              >
-                Limpar Filtros das Colunas
-              </Button>
-            )}
-          </div>
+          <Toolbar>
+            <ToolbarSearch
+              aria-label="Buscar produtos"
+              placeholder="Buscar por produto, marca, categoria ou SKU..."
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
 
-          {/* Listagem de Estoque */}
+            <ToolbarGroup>
+              {showLowStockOnly && (
+                <Badge tone="danger" className="gap-2">
+                  Apenas estoque baixo
+                  <button
+                    type="button"
+                    aria-label="Remover filtro de estoque baixo"
+                    onClick={() => {
+                      setShowLowStockOnly(false);
+                      window.history.replaceState({}, '', window.location.pathname);
+                    }}
+                    className="cursor-pointer hover:opacity-70"
+                  >
+                    ✕
+                  </button>
+                </Badge>
+              )}
+              {hasActiveFilters && (
+                <Button variant="secondary" size="sm" onClick={clearColumnFilters}>
+                  Limpar filtros das colunas
+                </Button>
+              )}
+            </ToolbarGroup>
+          </Toolbar>
+
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-              <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-sm text-text-muted">Carregando inventário...</p>
-            </div>
+            <Card padding="none">
+              <SkeletonTable rows={6} columns={6} />
+            </Card>
           ) : filteredProducts.length === 0 ? (
-            <div className="bg-surface-raised border border-border rounded-2xl">
+            <Card>
               <EmptyState
                 icon={<AlertCircle />}
-                title="Nenhum produto em estoque"
-                description="Tente redefinir seus filtros ou cadastrar peças."
+                title={
+                  hasActiveFilters || searchTerm || showLowStockOnly
+                    ? 'Nenhum produto com esses filtros'
+                    : 'Nenhum produto em estoque'
+                }
+                description={
+                  hasActiveFilters || searchTerm || showLowStockOnly
+                    ? 'Tente limpar a busca ou os filtros das colunas.'
+                    : 'Cadastre as peças de reposição que você mantém em estoque para acompanhar quantidade e alerta de reposição.'
+                }
+                action={
+                  hasActiveFilters || searchTerm || showLowStockOnly ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        clearColumnFilters();
+                        setSearchTerm('');
+                        setShowLowStockOnly(false);
+                      }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  ) : (
+                    <Button
+                      icon={<Plus className="w-4 h-4" />}
+                      onClick={() => {
+                        resetForm();
+                        setIsCreating(true);
+                      }}
+                    >
+                      Cadastrar primeiro produto
+                    </Button>
+                  )
+                }
               />
-            </div>
+            </Card>
           ) : (
-            <div className="bg-surface-raised border border-border shadow-sm/60 rounded-xl overflow-hidden shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
-                      <th className="py-4 px-6 text-center w-12">
-                        <input
-                          type="checkbox"
-                          checked={filteredProducts.length > 0 && selectedProductIds.length === filteredProducts.length}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedProductIds(filteredProducts.map(p => p.id));
-                            } else {
-                              setSelectedProductIds([]);
+            <Card padding="none">
+              <Table>
+                <THead>
+                  <tr className="border-b border-border">
+                    <TH align="center" className="w-12">
+                      <Checkbox
+                        aria-label="Selecionar todos os produtos visíveis"
+                        checked={allVisibleSelected}
+                        indeterminate={someVisibleSelected && !allVisibleSelected}
+                        onChange={(e) =>
+                          setSelectedProductIds(
+                            e.target.checked ? filteredProducts.map((p) => p.id) : [],
+                          )
+                        }
+                      />
+                    </TH>
+                    <TH>Produto</TH>
+                    <TH align="center">SKU</TH>
+                    <TH>Categoria</TH>
+                    <TH align="center">Marca</TH>
+                    <TH align="center">Qtd</TH>
+                    <TH align="center">Status</TH>
+                    <TH align="center" className="w-12">
+                      <span className="sr-only">Ações</span>
+                    </TH>
+                  </tr>
+                  {/* Linha de filtros por coluna. Era feita com <td> dentro do
+                      <thead>, o que é HTML inválido e confunde leitor de tela. */}
+                  <tr className="border-b border-border bg-surface-sunken/40">
+                    <TH />
+                    <TH>
+                      <Input
+                        aria-label="Filtrar por produto"
+                        placeholder="Filtrar produto..."
+                        value={filterName}
+                        onChange={(e) => setFilterName(e.target.value)}
+                        className="py-1 text-caption"
+                      />
+                    </TH>
+                    <TH>
+                      <Input
+                        aria-label="Filtrar por SKU"
+                        placeholder="SKU..."
+                        value={filterSku}
+                        onChange={(e) => setFilterSku(e.target.value)}
+                        className="py-1 text-caption text-center"
+                      />
+                    </TH>
+                    <TH>
+                      <Select
+                        aria-label="Filtrar por categoria"
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="py-1 text-caption"
+                      >
+                        <option value="">Todos</option>
+                        {CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </Select>
+                    </TH>
+                    <TH>
+                      <Input
+                        aria-label="Filtrar por marca"
+                        placeholder="Marca..."
+                        value={filterBrand}
+                        onChange={(e) => setFilterBrand(e.target.value)}
+                        className="py-1 text-caption text-center"
+                      />
+                    </TH>
+                    <TH>
+                      <Input
+                        aria-label="Filtrar por quantidade"
+                        placeholder="Qtd..."
+                        value={filterQuantity}
+                        onChange={(e) => setFilterQuantity(e.target.value)}
+                        className="py-1 text-caption text-center"
+                      />
+                    </TH>
+                    <TH>
+                      <Select
+                        aria-label="Filtrar por status de estoque"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="py-1 text-caption"
+                      >
+                        <option value="">Todos</option>
+                        <option value="SAUDÁVEL">Saudável</option>
+                        <option value="REABASTECER">Reabastecer</option>
+                        <option value="ESGOTADO">Esgotado</option>
+                      </Select>
+                    </TH>
+                    <TH />
+                  </tr>
+                </THead>
+                <TBody>
+                  {filteredProducts.map((p) => {
+                    const isLowStock = p.quantity < p.min_stock_alert;
+                    const isOut = p.quantity === 0;
+
+                    return (
+                      <tr key={p.id} className="transition-colors hover:bg-surface-overlay">
+                        <TD align="center">
+                          <Checkbox
+                            aria-label={`Selecionar ${p.name}`}
+                            checked={selectedProductIds.includes(p.id)}
+                            onChange={(e) =>
+                              setSelectedProductIds(
+                                e.target.checked
+                                  ? [...selectedProductIds, p.id]
+                                  : selectedProductIds.filter((id) => id !== p.id),
+                              )
                             }
-                          }}
-                          className="w-4 h-4 rounded border-border bg-surface-sunken text-blue-500 focus:ring-blue-500 cursor-pointer"
-                        />
-                      </th>
-                      <th className="py-4 px-6">Produto</th>
-                      <th className="py-4 px-6 text-center">SKU</th>
-                      <th className="py-4 px-6">Categoria</th>
-                      <th className="py-4 px-6 text-center">Marca</th>
-                      <th className="py-4 px-6 text-center">Qtd</th>
-                      <th className="py-4 px-6 text-center">Status</th>
-                      <th className="py-4 px-6 text-center">Ações</th>
-                    </tr>
-                    <tr className="bg-surface-sunken/30 border-b border-border/80">
-                      <td className="py-2 px-6"></td>
-                      <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="Filtrar produto..."
-                          value={filterName}
-                          onChange={(e) => setFilterName(e.target.value)}
-                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="SKU..."
-                          value={filterSku}
-                          onChange={(e) => setFilterSku(e.target.value)}
-                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
-                        <select
-                          value={filterCategory}
-                          onChange={(e) => setFilterCategory(e.target.value)}
-                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                          <option value="">Todos</option>
-                          {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="Marca..."
-                          value={filterBrand}
-                          onChange={(e) => setFilterBrand(e.target.value)}
-                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
-                        <input
-                          type="text"
-                          placeholder="Qtd..."
-                          value={filterQuantity}
-                          onChange={(e) => setFilterQuantity(e.target.value)}
-                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text placeholder:text-slate-700 text-center focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="py-2 px-6">
-                        <select
-                          value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value)}
-                          className="w-full bg-surface-sunken/80 border border-border rounded px-2 py-1 text-xs text-text focus:outline-none focus:border-blue-500 cursor-pointer"
-                        >
-                          <option value="">Todos</option>
-                          <option value="SAUDÁVEL">Saudável</option>
-                          <option value="REABASTECER">Reabastecer</option>
-                          <option value="ESGOTADO">Esgotado</option>
-                        </select>
-                      </td>
-                      <td className="py-2 px-6"></td>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/40">
-                    {filteredProducts.map((p) => {
-                      const isLowStock = p.quantity < p.min_stock_alert;
-                      const isOut = p.quantity === 0;
-
-                      return (
-                        <tr key={p.id} className="hover:bg-slate-800/20 transition-colors">
-                          <td className="py-4 px-6 text-center">
-                            <input
-                              type="checkbox"
-                              checked={selectedProductIds.includes(p.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedProductIds([...selectedProductIds, p.id]);
-                                } else {
-                                  setSelectedProductIds(selectedProductIds.filter(id => id !== p.id));
-                                }
-                              }}
-                              className="w-4 h-4 rounded border-border bg-surface-sunken text-blue-500 focus:ring-blue-500 cursor-pointer"
-                            />
-                          </td>
-                          <td className="py-4 px-6 font-bold text-slate-200">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 ${isOut ? 'bg-rose-500/10 text-rose-500' : isLowStock ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'}`}>
-                                <Boxes className="w-4 h-4" />
-                              </div>
-                              <Link href={`/dashboard/inventory/${p.id}`} className="truncate max-w-[280px] md:max-w-md lg:max-w-lg hover:text-blue-400 hover:underline transition-colors">
-                                {p.name}
-                              </Link>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 text-center font-semibold text-text-muted text-xs font-mono">{p.sku}</td>
-                          <td className="py-4 px-6">
-                            <Badge>{p.category || 'Outro'}</Badge>
-                          </td>
-                          <td className="py-4 px-6 text-center text-text font-semibold">{p.brand || '—'}</td>
-                          <td className="py-4 px-6 text-center font-mono font-bold text-slate-200">
-                            {p.quantity} <span className="text-[10px] text-text-subtle font-normal">/ {p.min_stock_alert}</span>
-                          </td>
-                          <td className="py-4 px-6 text-center">
-                            {isOut ? (
-                              <Badge tone="danger">
-                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" /> Esgotado
-                              </Badge>
-                            ) : isLowStock ? (
-                              <Badge tone="warning">
-                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 animate-pulse" /> Reabastecer
-                              </Badge>
-                            ) : (
-                              <Badge tone="success">
-                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" /> Saudável
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="py-4 px-6 text-center relative">
-                            <button
-                              type="button"
-                              aria-label={`Ações do produto ${p.name}`}
-                              aria-expanded={activeDropdownId === p.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveDropdownId(activeDropdownId === p.id ? null : p.id);
-                              }}
-                              className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          />
+                        </TD>
+                        <TD className="font-semibold">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={cn(
+                                'p-1.5 rounded-2xl border border-glass-border shrink-0',
+                                isOut
+                                  ? 'bg-danger/10 text-danger'
+                                  : isLowStock
+                                    ? 'bg-warning/10 text-warning'
+                                    : 'bg-info/10 text-info',
+                              )}
+                              aria-hidden
                             >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-
-                            {activeDropdownId === p.id && (
-                              <div className="absolute right-8 top-1/2 -translate-y-1/2 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
-                                <Link
-                                  href={`/dashboard/inventory/${p.id}`}
-                                  className="block w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
-                                >
-                                  Ver Detalhes
-                                </Link>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveDropdownId(null);
-                                    handleDeleteProduct(p.id);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-small font-medium text-danger hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                                >
-                                  Excluir Produto
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                              <Boxes className="w-4 h-4" />
+                            </div>
+                            <Link
+                              href={`/dashboard/inventory/${p.id}`}
+                              className="truncate max-w-[280px] md:max-w-md hover:text-brand hover:underline transition-colors rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                            >
+                              {p.name}
+                            </Link>
+                          </div>
+                        </TD>
+                        <TD align="center" numeric className="text-text-muted">
+                          {p.sku}
+                        </TD>
+                        <TD>
+                          <Badge>{p.category || 'Outro'}</Badge>
+                        </TD>
+                        <TD align="center" className="font-semibold">
+                          {p.brand || '—'}
+                        </TD>
+                        <TD align="center" numeric className="font-semibold">
+                          {p.quantity}{' '}
+                          <span className="text-caption text-text-subtle font-normal">
+                            / {p.min_stock_alert}
+                          </span>
+                        </TD>
+                        <TD align="center">
+                          {isOut ? (
+                            <Badge tone="danger">
+                              <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                              Esgotado
+                            </Badge>
+                          ) : isLowStock ? (
+                            <Badge tone="warning">
+                              <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                              Reabastecer
+                            </Badge>
+                          ) : (
+                            <Badge tone="success">
+                              <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                              Saudável
+                            </Badge>
+                          )}
+                        </TD>
+                        <TD align="center">
+                          <DropdownMenu label={`Ações do produto ${p.name}`}>
+                            <DropdownMenuItem href={`/dashboard/inventory/${p.id}`}>
+                              Ver detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem destructive onSelect={() => handleDeleteProduct(p)}>
+                              Excluir produto
+                            </DropdownMenuItem>
+                          </DropdownMenu>
+                        </TD>
+                      </tr>
+                    );
+                  })}
+                </TBody>
+              </Table>
+            </Card>
           )}
         </>
       )}
 
-      {/* Barra de Ações em Massa - Estoque */}
-      {selectedProductIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md border border-border rounded-xl py-3.5 px-6 shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <span className="text-xs font-semibold text-text">
-            <strong className="text-white">{selectedProductIds.length}</strong> {selectedProductIds.length === 1 ? 'produto selecionado' : 'produtos selecionados'}
-          </span>
-          <div className="h-4 w-px bg-slate-800" />
-          <Button
-            variant="danger"
-            size="sm"
-            loading={deletingBulk}
-            icon={<Trash2 className="w-3.5 h-3.5" />}
-            onClick={handleBulkDeleteProducts}
-          >
-            Excluir Selecionados
-          </Button>
-          <div className="h-4 w-px bg-slate-800" />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[11px] uppercase tracking-wider"
-            onClick={() => setSelectedProductIds([])}
-          >
-            Limpar
-          </Button>
-        </div>
-      )}
+      <BulkActionBar
+        count={selectedProductIds.length}
+        itemLabel={['produto selecionado', 'produtos selecionados']}
+        onClear={() => setSelectedProductIds([])}
+      >
+        <Button
+          variant="danger"
+          size="sm"
+          loading={deletingBulk}
+          icon={<Trash2 className="w-3.5 h-3.5" />}
+          onClick={handleBulkDeleteProducts}
+        >
+          Excluir selecionados
+        </Button>
+      </BulkActionBar>
     </div>
   );
 }

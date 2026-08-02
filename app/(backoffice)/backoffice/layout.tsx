@@ -11,28 +11,28 @@ export const metadata = {
 
 export default function BackofficeLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen bg-slate-950 text-white font-sans overflow-hidden">
+    <div className="flex h-screen bg-surface text-white font-sans overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 flex flex-col justify-between border-r border-slate-800 bg-slate-900 z-10 hidden md:flex">
+      <aside className="w-64 flex flex-col justify-between border-r border-border bg-surface-raised z-10 hidden md:flex">
         <div>
           <div className="p-6 flex items-center space-x-3">
-            <ShieldAlert className="w-8 h-8 text-red-500" />
+            <ShieldAlert className="w-8 h-8 text-danger" />
             <h1 className="text-h2 text-white uppercase">God Mode</h1>
           </div>
           <nav className="mt-6 px-4 space-y-2">
             <Link
               href="/backoffice"
-              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-red-500/10 text-red-500 hover:bg-red-500/20"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-danger/10 text-danger hover:bg-danger/20"
             >
               <Building2 className="w-5 h-5" />
               <span>Tenants (Empresas)</span>
             </Link>
           </nav>
         </div>
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-border">
           <Link
             href="/dashboard"
-            className="flex w-full items-center justify-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-800 text-slate-300 hover:bg-slate-700"
+            className="flex w-full items-center justify-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-surface-overlay text-text hover:bg-surface-overlay"
           >
             <LogOut className="w-4 h-4" />
             <span>Sair do Modo Deus</span>
@@ -41,14 +41,14 @@ export default function BackofficeLayout({ children }: { children: ReactNode }) 
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
         {/* Header mobile */}
-        <header className="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
+        <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface-raised">
           <div className="flex items-center space-x-2">
-            <ShieldAlert className="w-6 h-6 text-red-500" />
+            <ShieldAlert className="w-6 h-6 text-danger" />
             <h1 className="text-h3">God Mode</h1>
           </div>
-          <Link href="/dashboard" className="text-slate-400">
+          <Link href="/dashboard" className="text-text-muted">
             <LogOut className="w-5 h-5" />
           </Link>
         </header>

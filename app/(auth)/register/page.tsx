@@ -62,15 +62,15 @@ export default function RegisterPage() {
   return (
     <>
       {/* ── Painel Esquerdo: Identidade de Marca (Sempre Escuro) ── */}
-      <div className="hidden md:flex md:w-5/12 bg-[#0a0d16] p-8 flex-col justify-between border-r border-slate-800/80 relative overflow-hidden">
+      <div className="hidden md:flex md:w-5/12 bg-[#0a0d16] p-8 flex-col justify-between border-r border-border/80 relative overflow-hidden">
         {/* Glow de fundo interno */}
-        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-emerald-500/5 blur-[80px] pointer-events-none" />
+        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-brand/5 blur-[80px] pointer-events-none" />
         
         {/* Brand Header */}
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-8">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Trust Care Platform</span>
+            <ShieldCheck className="w-5 h-5 text-brand" />
+            <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Trust Care Platform</span>
           </div>
         </div>
 
@@ -88,26 +88,26 @@ export default function RegisterPage() {
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-white leading-tight">
             Crie sua conta<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-hover to-blue-400">
               Corporativa
             </span>
           </h2>
-          <div className="w-12 h-1 bg-gradient-to-r from-emerald-500 to-blue-500 my-4" />
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <div className="w-12 h-1 bg-gradient-to-r from-brand to-blue-500 my-4" />
+          <p className="text-xs text-text-muted leading-relaxed">
             Cadastre sua empresa e equipe em poucos passos e comece a automatizar seus checklists e controle de faturamento hoje mesmo.
           </p>
         </div>
 
         {/* Footer */}
         <div className="relative z-10">
-          <p className="text-[10px] text-slate-600">
+          <p className="text-caption text-text-subtle">
             © {new Date().getFullYear()} Trust Care T.I.
           </p>
         </div>
       </div>
 
       {/* ── Painel Direito: Formulário de Cadastro (Fixo Claro) ── */}
-      <div className="flex-1 bg-slate-50 p-8 flex flex-col justify-center transition-colors duration-200">
+      <div className="flex-1 bg-surface p-8 flex flex-col justify-center transition-colors duration-200">
         <div className="w-full max-w-sm mx-auto space-y-5">
 
           {/* Header Mobile / Info */}
@@ -119,39 +119,39 @@ export default function RegisterPage() {
               height={80} 
               className="object-contain"
             />
-            <h1 className="text-xl font-bold text-slate-900">Trust Care</h1>
-            <p className="text-xs text-slate-500">Cadastre seu Tenant/Empresa</p>
+            <h1 className="text-xl font-bold text-text">Trust Care</h1>
+            <p className="text-xs text-text-muted">Cadastre seu Tenant/Empresa</p>
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-900 hidden md:block">Nova Conta</h2>
-            <p className="text-xs text-slate-500">Preencha os dados abaixo para se cadastrar.</p>
+            <h2 className="text-lg font-bold text-text hidden md:block">Nova Conta</h2>
+            <p className="text-xs text-text-muted">Preencha os dados abaixo para se cadastrar.</p>
           </div>
 
           {success ? (
-            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-center text-emerald-600">
+            <div className="p-4 rounded-lg bg-brand/10 border border-brand/25 text-center text-brand">
               <p className="font-semibold text-sm">Empresa cadastrada com sucesso!</p>
-              <p className="text-xs text-slate-500 mt-1">Redirecionando para a tela de login...</p>
+              <p className="text-xs text-text-muted mt-1">Redirecionando para a tela de login...</p>
             </div>
           ) : (
             <form onSubmit={handleRegister} className="space-y-3.5">
               {errorMsg && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600">
+                <div className="p-3 rounded-lg bg-danger/10 border border-danger/25 text-xs text-rose-600">
                   {errorMsg}
                 </div>
               )}
 
               {/* Nome da Empresa */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nome da Empresa (Tenant)</label>
+                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Nome da Empresa (Tenant)</label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Ex: Assistência Express"
-                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -159,15 +159,15 @@ export default function RegisterPage() {
 
               {/* Seu Nome */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Seu Nome</label>
+                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Seu Nome</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Ex: João Silva"
-                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -175,15 +175,15 @@ export default function RegisterPage() {
 
               {/* WhatsApp */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">WhatsApp da Empresa</label>
+                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">WhatsApp da Empresa</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
                     type="text"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     placeholder="Ex: (66) 99999-9999"
-                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -191,15 +191,15 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email Corporativo</label>
+                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Email Corporativo</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seuemail@empresa.com"
-                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -207,15 +207,15 @@ export default function RegisterPage() {
 
               {/* Senha */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Senha</label>
+                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Senha</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
-                    className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-4 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -227,7 +227,7 @@ export default function RegisterPage() {
                 fullWidth
                 loading={loading}
                 icon={<ArrowRight className="w-4 h-4" />}
-                className="rounded-lg bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 mt-2 text-xs"
+                className="rounded-lg bg-info hover:bg-info shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 mt-2 text-xs"
               >
                 Cadastrar Empresa
               </Button>
@@ -235,10 +235,10 @@ export default function RegisterPage() {
           )}
 
           {/* Login Link */}
-          <div className="text-center pt-2 border-t border-slate-200/80">
-            <p className="text-xs text-slate-500">
+          <div className="text-center pt-2 border-t border-border">
+            <p className="text-xs text-text-muted">
               Já possui cadastro?{' '}
-              <Link href="/login" className="text-blue-600 font-bold hover:underline transition-all">
+              <Link href="/login" className="text-info font-bold hover:underline transition-all">
                 Fazer Login
               </Link>
             </p>

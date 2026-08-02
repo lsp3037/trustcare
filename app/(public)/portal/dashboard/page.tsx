@@ -103,18 +103,18 @@ export default function PortalDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#020617] text-text font-sans">
       {/* Navbar Superior */}
-      <header className="border-b border-slate-900 bg-[#070a13] px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-border bg-[#070a13] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <ShieldCheck className="w-5 h-5 text-emerald-500" />
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Portal do Cliente</span>
+          <ShieldCheck className="w-5 h-5 text-brand" />
+          <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Portal do Cliente</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-300 font-medium">Olá, {client?.name}</span>
+          <span className="text-sm text-text font-medium">Olá, {client?.name}</span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors border border-slate-800 hover:border-rose-950 py-1.5 px-3 rounded-xl cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-danger transition-colors border border-border hover:border-rose-950 py-1.5 px-3 rounded-xl cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sair
           </button>
@@ -124,24 +124,24 @@ export default function PortalDashboard() {
       {/* Grid Principal */}
       <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Painel Esquerdo - Equipamentos */}
-        <section className="lg:col-span-1 border border-slate-900 bg-[#070a13] p-5">
-          <div className="flex items-center gap-2 mb-6 border-b border-slate-900 pb-3">
-            <Laptop className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Meus Equipamentos</h2>
+        <section className="lg:col-span-1 border border-border bg-[#070a13] p-5">
+          <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
+            <Laptop className="w-4 h-4 text-brand" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-text">Meus Equipamentos</h2>
           </div>
 
           {equipments.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">Nenhum equipamento cadastrado.</p>
+            <p className="text-xs text-text-muted italic">Nenhum equipamento cadastrado.</p>
           ) : (
             <div className="space-y-4">
               {equipments.map((eq) => (
-                <div key={eq.id} className="p-3 border border-slate-950 bg-[#04060b]">
-                  <p className="text-sm font-medium text-slate-200">{eq.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">
+                <div key={eq.id} className="p-3 border border-border bg-[#04060b]">
+                  <p className="text-sm font-medium text-text">{eq.name}</p>
+                  <p className="text-xs text-text-muted mt-1">
                     {eq.brand} {eq.model}
                   </p>
                   {eq.serial_number && (
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1.5 font-mono">
+                    <p className="text-caption text-text-muted uppercase tracking-wider mt-1.5 font-mono">
                       S/N: {eq.serial_number}
                     </p>
                   )}
@@ -152,14 +152,14 @@ export default function PortalDashboard() {
         </section>
 
         {/* Painel Central/Direito - Ordens de Serviço */}
-        <section className="lg:col-span-2 border border-slate-900 bg-[#070a13] p-5">
-          <div className="flex items-center gap-2 mb-6 border-b border-slate-900 pb-3">
-            <Wrench className="w-4 h-4 text-emerald-500" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">Minhas Ordens de Serviço</h2>
+        <section className="lg:col-span-2 border border-border bg-[#070a13] p-5">
+          <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
+            <Wrench className="w-4 h-4 text-brand" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-text">Minhas Ordens de Serviço</h2>
           </div>
 
           {orders.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">Nenhuma ordem de serviço registrada.</p>
+            <p className="text-xs text-text-muted italic">Nenhuma ordem de serviço registrada.</p>
           ) : (
             <div className="space-y-5">
               {orders.map((os) => {
@@ -170,51 +170,51 @@ export default function PortalDashboard() {
                     className={`border p-4 transition-colors ${
                       isWaitingApproval 
                         ? 'border-amber-950 bg-amber-500/[0.02]' 
-                        : 'border-slate-950 bg-[#04060b]'
+                        : 'border-border bg-[#04060b]'
                     }`}
                   >
                     {/* Header da OS */}
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                       <div>
-                        <span className="text-xs font-semibold text-emerald-500 font-mono">
+                        <span className="text-xs font-semibold text-brand font-mono">
                           {os.codigo_os || `ID: ${os.id.slice(0, 8)}`}
                         </span>
-                        <h3 className="text-sm font-semibold text-slate-200 mt-0.5">
+                        <h3 className="text-sm font-semibold text-text mt-0.5">
                           {os.equipment_details || 'Equipamento'}
                         </h3>
                       </div>
                       
                       {/* Status Tag */}
-                      <span className={`text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 ${
+                      <span className={`text-caption font-semibold uppercase tracking-widest px-2.5 py-1 ${
                         os.status === 'Finalizado' || os.status === 'Pronto para Retirada'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-brand/10 text-brand border border-brand/25'
                           : os.status === 'Aguardando Aprovação'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          ? 'bg-warning/10 text-warning border border-warning/25'
                           : os.status === 'Cancelado'
-                          ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          ? 'bg-danger/10 text-danger border border-danger/25'
+                          : 'bg-info/10 text-info border border-info/25'
                       }`}>
                         {os.status}
                       </span>
                     </div>
 
                     {/* Descrição do Problema */}
-                    <div className="text-xs text-slate-400 mb-4 border-l border-slate-800 pl-3 py-1">
-                      <p className="font-semibold text-slate-500 mb-1">Problema Reportado:</p>
+                    <div className="text-xs text-text-muted mb-4 border-l border-border pl-3 py-1">
+                      <p className="font-semibold text-text-muted mb-1">Problema Reportado:</p>
                       <div dangerouslySetInnerHTML={{ __html: os.reported_problem }} />
                     </div>
 
                     {/* Rodapé da OS */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-950 pt-3 text-xs">
-                      <div className="flex gap-5 text-slate-500">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-3 text-xs">
+                      <div className="flex gap-5 text-text-muted">
                         <div>
                           <span>Abertura: </span>
-                          <span className="text-slate-300">{new Date(os.created_at).toLocaleDateString('pt-BR')}</span>
+                          <span className="text-text">{new Date(os.created_at).toLocaleDateString('pt-BR')}</span>
                         </div>
                         {os.delivery_prediction && (
                           <div>
                             <span>Previsão: </span>
-                            <span className="text-slate-300">{new Date(os.delivery_prediction).toLocaleDateString('pt-BR')}</span>
+                            <span className="text-text">{new Date(os.delivery_prediction).toLocaleDateString('pt-BR')}</span>
                           </div>
                         )}
                       </div>
@@ -230,7 +230,7 @@ export default function PortalDashboard() {
                       ) : (
                         <a
                           href={`/rastreio?id=${os.id}`}
-                          className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 text-text-muted hover:text-text transition-colors cursor-pointer"
                         >
                           Ver Linha do Tempo <ExternalLink className="w-3.5 h-3.5" />
                         </a>

@@ -190,7 +190,7 @@ export default function ProfileSettingsPage() {
       </div>
 
       {successMsg && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-4 py-3 rounded-xl flex items-center gap-3">
+        <div className="bg-brand/10 border border-brand/25 text-brand px-4 py-3 rounded-xl flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <p className="text-sm font-medium">{successMsg}</p>
         </div>
@@ -249,7 +249,7 @@ export default function ProfileSettingsPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center gap-2 bg-brand text-brand-contrast px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 bg-brand text-brand-contrast px-5 py-2.5 rounded-xl font-medium hover:bg-brand-hover transition-colors disabled:opacity-50"
                 >
                   {loading ? (
                     <span className="w-4 h-4 border-2 border-brand-contrast/30 border-t-brand-contrast rounded-full animate-spin" />
@@ -353,7 +353,7 @@ export default function ProfileSettingsPage() {
                 {/* Overlay de hover para troca */}
                 <div className="absolute inset-0 bg-surface-overlay/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
                   <Upload className="w-5 h-5 text-text mb-1" />
-                  <span className="text-[10px] font-medium text-text">Trocar foto</span>
+                  <span className="text-caption font-medium text-text">Trocar foto</span>
                 </div>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function ProfileSettingsPage() {
               <div className="bg-surface-sunken border border-border/50 rounded-xl px-4 py-2.5 text-text-subtle text-sm cursor-not-allowed">
                 {user?.email}
               </div>
-              <p className="text-[10px] text-text-muted mt-2 leading-relaxed">
+              <p className="text-caption text-text-muted mt-2 leading-relaxed">
                 A alteração de e-mail deve ser solicitada ao administrador da conta por motivos de segurança.
               </p>
             </div>

@@ -6,7 +6,6 @@ import {
   Card,
   EmptyState,
   LoadingSpinner,
-  Input,
   Select,
   Table,
   THead,
@@ -14,6 +13,17 @@ import {
   TR,
   TH,
   TD,
+  useToast,
+  useConfirm,
+  PageHeader,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSearch,
+  ToolbarDivider,
+  SegmentedControl,
+  BulkActionBar,
+  BulkDivider,
+  Checkbox,
 } from '@/components/ui';
 import { OS_STATUS_FLOW } from '@/lib/design/status';
 
@@ -21,7 +31,6 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ClipboardList,
-  Search,
   Filter,
   Plus,
   Wrench,
@@ -36,7 +45,6 @@ import { supabase } from '@/lib/supabase/client';
 import NewOrderForm from '@/components/NewOrderForm';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { exportOrdersToCsv } from '@/lib/utils/csvExport';
-import { cn } from '@/lib/utils';
 
 const stripHtml = (html: string) => {
   if (!html) return '';
@@ -74,6 +82,8 @@ interface Client {
 function OrdersContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { isReadOnly } = useCompany();
   const isCreating = searchParams.get('new') === 'true';
 
@@ -166,9 +176,11 @@ function OrdersContent() {
   const [updatingBulk, setUpdatingBulk] = useState(false);
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
+    const count = selectedOrderIds.length;
+
     try {
       setUpdatingBulk(true);
-      
+
       const { error } = await supabase
         .from('service_orders')
         .update({ status: newStatus })
@@ -177,7 +189,9 @@ function OrdersContent() {
       if (error) throw error;
 
       setOrders(prev => prev.map(o => selectedOrderIds.includes(o.id) ? { ...o, status: newStatus } : o));
-      alert(`Status das ordens selecionadas atualizado para "${newStatus}"!`);
+      toast.success(
+        `${count} ${count === 1 ? 'OS movida' : 'OS movidas'} para "${newStatus}"`,
+      );
     } catch (err) {
       console.warn('Erro ao atualizar online, aplicando localmente:', err);
       const localOrders = localStorage.getItem('mock-orders');
@@ -191,7 +205,13 @@ function OrdersContent() {
         });
         localStorage.setItem('mock-orders', JSON.stringify(updated));
         setOrders(updated);
-        alert(`[Offline] Status das ordens selecionadas atualizado para "${newStatus}"!`);
+        toast.warning(
+          `${count} ${count === 1 ? 'OS movida' : 'OS movidas'} para "${newStatus}" apenas neste dispositivo`,
+          {
+            description:
+              'Sem conexão com o servidor. A alteração está salva localmente e não foi sincronizada.',
+          },
+        );
       }
     } finally {
       setSelectedOrderIds([]);
@@ -200,8 +220,19 @@ function OrdersContent() {
   };
 
   const handleBulkDelete = async () => {
-    const confirmDelete = window.confirm(`Deseja realmente excluir as ${selectedOrderIds.length} ordens de serviço selecionadas? As peças alocadas retornarão ao estoque e esta ação não poderá ser desfeita.`);
-    if (!confirmDelete) return;
+    const count = selectedOrderIds.length;
+
+    const confirmed = await confirm({
+      title:
+        count === 1
+          ? 'Excluir esta ordem de serviço?'
+          : `Excluir ${count} ordens de serviço?`,
+      description:
+        'As peças alocadas voltam para o estoque. Esta ação não pode ser desfeita.',
+      confirmLabel: count === 1 ? 'Excluir OS' : `Excluir ${count} OS`,
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
       setUpdatingBulk(true);
@@ -244,7 +275,10 @@ function OrdersContent() {
       if (error) throw error;
 
       setOrders(prev => prev.filter(o => !selectedOrderIds.includes(o.id)));
-      alert('Ordens de Serviço excluídas com sucesso!');
+      toast.success(
+        count === 1 ? 'Ordem de serviço excluída' : `${count} ordens de serviço excluídas`,
+        { description: 'As peças alocadas voltaram para o estoque.' },
+      );
     } catch (err) {
       console.warn('Erro ao excluir online, aplicando localmente:', err);
       
@@ -280,7 +314,10 @@ function OrdersContent() {
         localStorage.setItem('mock-inventory', JSON.stringify(parsedInv));
 
         setOrders(updatedOrders);
-        alert('[Offline] Ordens de Serviço excluídas localmente com sucesso!');
+        toast.warning('Exclusão aplicada apenas neste dispositivo', {
+          description:
+            'Sem conexão com o servidor. As OS continuam no servidor até a próxima sincronização.',
+        });
       }
     } finally {
       setSelectedOrderIds([]);
@@ -311,36 +348,38 @@ function OrdersContent() {
 
   const hasActiveFilters = Boolean(searchTerm) || statusFilter !== 'Todos';
 
+  const allVisibleSelected =
+    filteredOrders.length > 0 && filteredOrders.every((o) => selectedOrderIds.includes(o.id));
+  const someVisibleSelected = filteredOrders.some((o) => selectedOrderIds.includes(o.id));
+
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-text flex items-center gap-2.5">
-            <ClipboardList className="w-7 h-7 text-text-subtle" aria-hidden /> Ordens de Serviço
-          </h1>
-          <p className="text-small text-text-muted mt-2">Acompanhe e gerencie as Ordens de Serviço (OS).</p>
-        </div>
-        {!isCreating && (
-          <div className="flex items-center gap-3">
-            <Button
-              variant="secondary"
-              icon={<Download className="w-4 h-4" />}
-              onClick={() => exportOrdersToCsv(filteredOrders)}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              icon={<Plus className="w-4 h-4" />}
-              disabled={isReadOnly}
-              title={isReadOnly ? 'Conta em modo apenas-leitura por faturamento pendente' : undefined}
-              onClick={() => router.push('/dashboard/orders?new=true')}
-            >
-              Nova Ordem de Serviço
-            </Button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={<ClipboardList />}
+        title="Ordens de Serviço"
+        description="Acompanhe e gerencie as Ordens de Serviço (OS)."
+        actions={
+          !isCreating && (
+            <>
+              <Button
+                variant="secondary"
+                icon={<Download className="w-4 h-4" />}
+                onClick={() => exportOrdersToCsv(filteredOrders)}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                icon={<Plus className="w-4 h-4" />}
+                disabled={isReadOnly}
+                title={isReadOnly ? 'Conta em modo apenas-leitura por faturamento pendente' : undefined}
+                onClick={() => router.push('/dashboard/orders?new=true')}
+              >
+                Nova Ordem de Serviço
+              </Button>
+            </>
+          )
+        }
+      />
 
       {isCreating ? (
         <Card padding="lg" className="max-w-4xl mx-auto">
@@ -371,25 +410,15 @@ function OrdersContent() {
       ) : (
         <>
           {/* Barra de Filtros e Busca */}
-          <Card padding="sm" className="flex flex-col md:flex-row gap-4 md:items-center justify-between">
-            {/* Campo de Busca */}
-            <div className="relative w-full md:max-w-md">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle pointer-events-none z-10"
-                aria-hidden
-              />
-              <Input
-                type="search"
-                aria-label="Buscar ordens de serviço"
-                placeholder="Buscar por cliente, equipamento, problema..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          <Toolbar>
+            <ToolbarSearch
+              aria-label="Buscar ordens de serviço"
+              placeholder="Buscar por cliente, equipamento, problema..."
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
 
-            {/* Filtro de Status e Controle de Visualização */}
-            <div className="flex items-center gap-3 w-full md:w-auto shrink-0 md:justify-end">
+            <ToolbarGroup>
               <Filter className="w-4 h-4 text-text-subtle shrink-0" aria-hidden />
               <Select
                 aria-label="Filtrar por status"
@@ -405,37 +434,29 @@ function OrdersContent() {
                 ))}
               </Select>
 
-              <div className="h-8 w-px bg-border hidden sm:block mx-1" />
+              <ToolbarDivider />
 
-              <div
-                className="flex items-center bg-surface-sunken border border-border p-1 shrink-0"
-                role="group"
-                aria-label="Modo de visualização"
-              >
-                {([
-                  { mode: 'grid' as const, icon: LayoutGrid, label: 'Visualização em Cards' },
-                  { mode: 'table' as const, icon: List, label: 'Visualização em Tabela' },
-                ]).map(({ mode, icon: Icon, label }) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => handleSetViewMode(mode)}
-                    aria-pressed={viewMode === mode}
-                    title={label}
-                    className={cn(
-                      'p-1.5 transition-colors cursor-pointer',
-                      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
-                      viewMode === mode
-                        ? 'bg-brand text-brand-contrast'
-                        : 'text-text-subtle hover:text-text',
-                    )}
-                  >
-                    <Icon className="w-4 h-4" aria-hidden />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </Card>
+              <SegmentedControl
+                label="Modo de visualização"
+                value={viewMode}
+                onChange={handleSetViewMode}
+                options={[
+                  {
+                    value: 'grid',
+                    label: 'Visualização em Cards',
+                    icon: <LayoutGrid className="w-4 h-4" aria-hidden />,
+                    iconOnly: true,
+                  },
+                  {
+                    value: 'table',
+                    label: 'Visualização em Tabela',
+                    icon: <List className="w-4 h-4" aria-hidden />,
+                    iconOnly: true,
+                  },
+                ]}
+              />
+            </ToolbarGroup>
+          </Toolbar>
 
           {/* Listagem de OS */}
           {loading ? (
@@ -482,17 +503,18 @@ function OrdersContent() {
               {filteredOrders.map((order) => (
                 <Card
                   key={order.id}
-                  interactive
                   padding="sm"
-                  onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                  href={`/dashboard/orders/${order.id}`}
+                  linkLabel={`Abrir OS ${order.codigo_os || order.id.slice(0, 8)} — ${order.clients?.name || 'Cliente'}`}
                   className="flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     {/* Header do Card */}
                     <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
+                      {/* `relative z-10`: o link que cobre o card fica acima do
+                          conteúdo comum; sem isto o checkbox não recebe clique. */}
+                      <div className="flex items-center gap-2 relative z-10">
+                        <Checkbox
                           aria-label={`Selecionar OS ${order.codigo_os || order.id.slice(0, 8)}`}
                           checked={selectedOrderIds.includes(order.id)}
                           onChange={(e) => {
@@ -502,8 +524,6 @@ function OrdersContent() {
                               setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id));
                             }
                           }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 border-border bg-surface-sunken accent-brand cursor-pointer"
                         />
                         <StatusBadge status={order.status} />
                       </div>
@@ -557,10 +577,10 @@ function OrdersContent() {
                 <THead>
                   <TR>
                     <TH className="w-8">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         aria-label="Selecionar todas as OS visíveis"
-                        checked={filteredOrders.length > 0 && filteredOrders.every(o => selectedOrderIds.includes(o.id))}
+                        checked={allVisibleSelected}
+                        indeterminate={someVisibleSelected && !allVisibleSelected}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSelectedOrderIds(filteredOrders.map(o => o.id));
@@ -568,7 +588,6 @@ function OrdersContent() {
                             setSelectedOrderIds([]);
                           }
                         }}
-                        className="w-4 h-4 border-border bg-surface-sunken accent-brand cursor-pointer"
                       />
                     </TH>
                     <TH>OS</TH>
@@ -591,8 +610,7 @@ function OrdersContent() {
                       onClick={() => router.push(`/dashboard/orders/${order.id}`)}
                     >
                       <TD onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           aria-label={`Selecionar OS ${order.codigo_os || order.id.slice(0, 8)}`}
                           checked={selectedOrderIds.includes(order.id)}
                           onChange={(e) => {
@@ -602,7 +620,6 @@ function OrdersContent() {
                               setSelectedOrderIds(selectedOrderIds.filter(id => id !== order.id));
                             }
                           }}
-                          className="w-4 h-4 border-border bg-surface-sunken accent-brand cursor-pointer"
                         />
                       </TD>
                       <TD numeric className="text-text-muted">
@@ -648,17 +665,11 @@ function OrdersContent() {
         </>
       )}
       {/* Barra de Ações em Massa */}
-      {selectedOrderIds.length > 0 && (
-        <div
-          role="toolbar"
-          aria-label="Ações em massa"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[calc(100vw-2rem)] bg-surface-overlay border border-border-strong py-3 px-4 shadow-2xl flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
-        >
-          <span className="text-small text-text-muted">
-            <strong className="font-mono tabular-nums text-text">{selectedOrderIds.length}</strong>{' '}
-            {selectedOrderIds.length === 1 ? 'OS selecionada' : 'OS selecionadas'}
-          </span>
-          <div className="h-4 w-px bg-border" />
+      <BulkActionBar
+        count={selectedOrderIds.length}
+        itemLabel={['OS selecionada', 'OS selecionadas']}
+        onClear={() => setSelectedOrderIds([])}
+      >
           <Select
             aria-label="Alterar status das OS selecionadas"
             onChange={async (e) => {
@@ -676,7 +687,9 @@ function OrdersContent() {
               <option key={status} value={status}>{status}</option>
             ))}
           </Select>
-          <div className="h-4 w-px bg-border" />
+
+          <BulkDivider />
+
           <Button
             variant="danger"
             size="sm"
@@ -686,11 +699,7 @@ function OrdersContent() {
           >
             Excluir OS
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedOrderIds([])}>
-            Limpar
-          </Button>
-        </div>
-      )}
+      </BulkActionBar>
     </div>
   );
 }

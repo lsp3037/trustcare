@@ -43,7 +43,7 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
     await expect(page.getByText('Pasta Térmica Grizzly')).toBeVisible();
     await expect(page.getByText('Limpeza Interna Completa')).toBeVisible();
     await expect(page.getByText(/Desconto: - R\$ 20\.00/)).toBeVisible();
-    await expect(page.getByText('Valor Total', { exact: true })).toBeVisible();
+    await expect(page.getByText('Valor total', { exact: true })).toBeVisible();
     await expect(page.getByText('R$ 580.00')).toBeVisible();
 
     // Seção de assinatura eletrônica
@@ -56,31 +56,32 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
     const approveBtn = page.getByRole('button', { name: /Aprovar Orçamento e Iniciar Serviço/i });
     await expect(approveBtn).toBeVisible();
 
-    // A tela valida por `window.alert`; capturamos a mensagem e garantimos
-    // que nenhuma chamada de aprovação saiu.
+    // A validação é inline, no próprio campo — não mais por `window.alert`.
     let approvalAttempted = false;
     await page.route('**/rest/v1/rpc/approve_budget_by_client*', (route) => {
       approvalAttempted = true;
       return route.fulfill({ status: 200, contentType: 'application/json', body: 'true' });
     });
 
+    // Nenhum diálogo nativo deve aparecer em nenhum momento.
     const dialogs: string[] = [];
     page.on('dialog', async (dialog) => {
       dialogs.push(dialog.message());
       await dialog.dismiss();
     });
 
-    // 1. Sem nome e sem assinatura
+    // 1. Sem nome e sem assinatura — os dois erros aparecem de uma vez
     await approveBtn.click();
-    await expect.poll(() => dialogs.length).toBe(1);
-    expect(dialogs[0]).toMatch(/nome por extenso/i);
+    await expect(page.getByText(/Informe seu nome por extenso/i)).toBeVisible();
+    await expect(page.getByText(/Assine no painel abaixo/i)).toBeVisible();
 
-    // 2. Com nome, mas ainda sem assinatura
-    await page.getByLabel(/Nome Completo do Signatário/i).fill('Maria Oliveira');
+    // 2. Com nome, o erro do nome some e sobra o da assinatura
+    await page.getByLabel(/Nome completo do signatário/i).fill('Maria Oliveira');
     await approveBtn.click();
-    await expect.poll(() => dialogs.length).toBe(2);
-    expect(dialogs[1]).toMatch(/assinatura digital/i);
+    await expect(page.getByText(/Informe seu nome por extenso/i)).toHaveCount(0);
+    await expect(page.getByText(/Assine no painel abaixo/i)).toBeVisible();
 
+    expect(dialogs).toEqual([]);
     expect(approvalAttempted).toBe(false);
     // Segue na tela de aprovação, sem confirmação de sucesso.
     await expect(page.getByText(/Orçamento Aprovado/i)).toHaveCount(0);
@@ -90,7 +91,7 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
     await mockSupabaseRpc(page, 'approve_budget_by_client', true);
     await page.goto(BUDGET_URL);
 
-    await page.getByLabel(/Nome Completo do Signatário/i).fill('Maria Oliveira');
+    await page.getByLabel(/Nome completo do signatário/i).fill('Maria Oliveira');
     await drawSignature(page);
 
     await page.getByRole('button', { name: /Aprovar Orçamento e Iniciar Serviço/i }).click();
@@ -100,6 +101,6 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
     await expect(page.getByText(/Assinatura e Auditoria Registradas/i)).toBeVisible();
     await expect(page.getByText('Maria Oliveira')).toBeVisible();
     await expect(page.getByText('203.0.113.10')).toBeVisible();
-    await expect(page.getByAltText('Assinatura Digital')).toBeVisible();
+    await expect(page.getByAltText(/Assinatura digital/i)).toBeVisible();
   });
 });

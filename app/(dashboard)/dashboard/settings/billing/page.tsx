@@ -7,12 +7,13 @@ import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 import { CreditCard, AlertCircle, CheckCircle2, ShieldCheck, Users, HardDrive } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge, useToast } from '@/components/ui';
 
 export default function BillingSettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { role, loading: userLoading } = useUser();
+  const toast = useToast();
   const { company, loading: contextLoading, maxTechnicians, maxStorageBytes } = useCompany();
 
   // Usage states
@@ -143,7 +144,9 @@ export default function BillingSettingsPage() {
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.message || 'Erro inesperado ao gerar checkout.');
+      toast.error('Não foi possível abrir o checkout', {
+        description: err.message || 'Tente novamente em instantes.',
+      });
     } finally {
       setCheckoutLoading(null);
     }
@@ -163,14 +166,14 @@ export default function BillingSettingsPage() {
       </div>
 
       {successMessage && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium rounded-xl flex items-center gap-3">
+        <div className="p-4 bg-brand/10 border border-brand/25 text-brand text-sm font-medium rounded-xl flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5" />
           {successMessage}
         </div>
       )}
 
       {/* Main Billing Card */}
-      <div className="bg-slate-900 border border-border p-6 md:p-8 rounded-xl relative overflow-hidden">
+      <div className="bg-surface-raised border border-border p-6 md:p-8 rounded-xl relative overflow-hidden">
         {/* Glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -190,7 +193,7 @@ export default function BillingSettingsPage() {
             {company.subscription_expires_at && (
               <p className="text-xs text-text-muted">
                 {currentStatus === 'trialing' ? 'O período de testes de 7 dias expira em: ' : 'Próxima renovação em: '}
-                <strong className="text-slate-200">
+                <strong className="text-text">
                   {new Date(company.subscription_expires_at).toLocaleDateString('pt-BR')}
                 </strong>
               </p>
@@ -228,7 +231,7 @@ export default function BillingSettingsPage() {
       {/* Usage Analytics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Technicians Usage */}
-        <div className="bg-slate-900 border border-border p-6 rounded-xl space-y-4">
+        <div className="bg-surface-raised border border-border p-6 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-2">
               <Users className="w-4.5 h-4.5 text-blue-500" />
@@ -245,13 +248,13 @@ export default function BillingSettingsPage() {
               style={{ width: `${loadingStats || maxTechnicians > 1000 ? 0 : techPercent}%` }} 
             />
           </div>
-          <p className="text-[10px] text-text-subtle leading-relaxed">
+          <p className="text-caption text-text-subtle leading-relaxed">
             Seu plano permite {maxTechnicians > 1000 ? 'usuários ilimitados' : `até ${maxTechnicians} contas de técnicos ativos simultaneamente`} no painel.
           </p>
         </div>
 
         {/* Storage Usage */}
-        <div className="bg-slate-900 border border-border p-6 rounded-xl space-y-4">
+        <div className="bg-surface-raised border border-border p-6 rounded-xl space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-2">
               <HardDrive className="w-4.5 h-4.5 text-blue-500" />
@@ -268,7 +271,7 @@ export default function BillingSettingsPage() {
               style={{ width: `${loadingStats ? 0 : storagePercent}%` }} 
             />
           </div>
-          <p className="text-[10px] text-text-subtle leading-relaxed">
+          <p className="text-caption text-text-subtle leading-relaxed">
             Mídias anexadas às ordens de serviço (fotos, vídeos, arquivos de diagnóstico).
           </p>
         </div>
@@ -281,19 +284,19 @@ export default function BillingSettingsPage() {
             <ShieldCheck className="w-4.5 h-4.5 text-blue-500" />
             Tabela Comparativa de Planos
           </h3>
-          <p className="text-[10px] text-text-subtle mt-1">
+          <p className="text-caption text-text-subtle mt-1">
             Profissionalize sua assistência técnica hoje mesmo. Atualize ou assine o plano ideal.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 border border-border bg-surface-sunken divide-y md:divide-y-0 md:divide-x divide-slate-800">
+        <div className="grid grid-cols-1 md:grid-cols-3 border border-border bg-surface-sunken divide-y md:divide-y-0 md:divide-x divide-border">
           {/* Plan Starter */}
           <div className={`p-6 flex flex-col justify-between space-y-6 transition-all duration-300 ${currentPlan === 'starter' && currentStatus !== 'trialing' ? 'bg-surface-raised' : ''}`}>
             <div className="space-y-4">
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white">Starter</h4>
                 <p className="text-h2 font-mono tabular-nums text-text">R$ 29,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
-                <p className="text-[10px] text-text-subtle">Menos de 1 real por dia para aposentar sua planilha.</p>
+                <p className="text-caption text-text-subtle">Menos de 1 real por dia para aposentar sua planilha.</p>
               </div>
               <ul className="text-xs text-text-muted space-y-2.5">
                 <li className="flex items-center gap-2">✓ 1 Usuário</li>
@@ -327,9 +330,9 @@ export default function BillingSettingsPage() {
                   <Badge tone="info">Recomendado</Badge>
                 </h4>
                 <p className="text-h2 font-mono tabular-nums text-text">R$ 69,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
-                <p className="text-[10px] text-text-subtle">Ideal para o balcão e a bancada.</p>
+                <p className="text-caption text-text-subtle">Ideal para o balcão e a bancada.</p>
               </div>
-              <ul className="text-xs text-slate-200 space-y-2.5">
+              <ul className="text-xs text-text space-y-2.5">
                 <li className="flex items-center gap-2">✓ Até 3 Usuários</li>
                 <li className="flex items-center gap-2 font-bold text-white">✓ Controle de Estoque</li>
                 <li className="flex items-center gap-2 font-bold text-white">✓ Módulo Financeiro</li>
@@ -354,7 +357,7 @@ export default function BillingSettingsPage() {
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white">Premium</h4>
                 <p className="text-h2 font-mono tabular-nums text-text">R$ 149,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
-                <p className="text-[10px] text-text-subtle">Para operações em grande escala.</p>
+                <p className="text-caption text-text-subtle">Para operações em grande escala.</p>
               </div>
               <ul className="text-xs text-text-muted space-y-2.5">
                 <li className="flex items-center gap-2">✓ Usuários Ilimitados</li>

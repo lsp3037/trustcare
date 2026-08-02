@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Sans_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import ThemeSync from "@/components/ThemeSync";
+import { ToastProvider, ConfirmProvider } from "@/components/ui";
 
 /**
  * Superfamília única (decisão D1 do frontend-redesign-plan).
@@ -46,6 +46,10 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable} h-full antialiased`}
+      // O script inline abaixo escreve a classe `light` no <html> antes da
+      // hidratação — de propósito, para não haver piscada de tema. Sem isto,
+      // o React acusa divergência entre servidor e cliente a cada carga.
+      suppressHydrationWarning
     >
       <head>
         <script
@@ -69,9 +73,13 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
-        <ThemeSync />
-        {children}
+      <body className="min-h-full flex flex-col bg-surface text-text">
+        {/* Feedback e confirmação valem para a aplicação inteira, não só para
+            o dashboard: as telas públicas (orçamento, rastreio) e as de
+            autenticação também precisam avisar o usuário do que aconteceu. */}
+        <ToastProvider>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );

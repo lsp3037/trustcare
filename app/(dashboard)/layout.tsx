@@ -31,7 +31,18 @@ import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import SubscriptionBlockedScreen from '@/components/SubscriptionBlockedScreen';
 import { cn } from '@/lib/utils';
-import { Tooltip } from '@/components/ui';
+import { Tooltip, Skeleton } from '@/components/ui';
+
+/**
+ * Fonte única do breakpoint do layout. Antes o mesmo comportamento era
+ * decidido em quatro lugares com valores diferentes: drawer em `md:`,
+ * botão de recolher em `lg:flex`, hambúrguer em `lg:hidden` e o handler
+ * de fechar em `window.innerWidth < 768`.
+ */
+const DESKTOP_QUERY = '(min-width: 1024px)';
+
+const isDesktop = () =>
+  typeof window !== 'undefined' && window.matchMedia(DESKTOP_QUERY).matches;
 
 /**
  * Aparência de um item de navegação. Os três tipos de item (grupo
@@ -53,7 +64,7 @@ function navItemClasses({
     collapsed ? 'justify-center px-0' : 'gap-3 px-3',
     nested ? 'py-2 text-small font-medium' : 'py-2.5 text-body font-medium',
     active
-      ? 'bg-brand text-brand-contrast'
+      ? 'bg-brand/15 text-brand font-semibold backdrop-blur-sm border border-brand/20'
       : 'text-text-muted hover:text-text hover:bg-surface-overlay',
   );
 }
@@ -64,6 +75,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
+    /* `ToastProvider` e `ConfirmProvider` vivem no layout raiz — montá-los de
+       novo aqui criaria duas pilhas de toast concorrentes. */
     <CompanyProvider>
       <UserProvider>
         <DashboardLayoutContent>{children}</DashboardLayoutContent>
@@ -96,7 +109,11 @@ function DashboardLayoutContent({
   const { company, isReadOnly } = useCompany();
   const { user, role, isAdmin, loading: userLoading } = useUser();
   
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Começa fechada: no mobile o drawer é sobreposto e abrir por padrão
+  // cobria o conteúdo a cada carregamento de página. O valor real é
+  // resolvido no mount (o layout já espera `userLoading`, então não há
+  // piscada) — desktop recupera a preferência salva, mobile sempre fecha.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/dashboard/settings'));
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -110,6 +127,28 @@ function DashboardLayoutContent({
       return () => clearTimeout(timer);
     }
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isDesktop()) return;
+    setSidebarOpen(localStorage.getItem('os-sidebar') !== 'collapsed');
+  }, []);
+
+  /** Alterna e persiste a preferência — só no desktop, onde ela é uma escolha
+   *  de densidade. No mobile o drawer é transitório e não vira preferência. */
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      if (isDesktop()) {
+        localStorage.setItem('os-sidebar', next ? 'open' : 'collapsed');
+      }
+      return next;
+    });
+  };
+
+  /** Fecha o drawer ao navegar — só onde ele é sobreposto. */
+  const closeSidebarOnMobile = () => {
+    if (!isDesktop()) setSidebarOpen(false);
+  };
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('os-theme');
@@ -145,15 +184,15 @@ function DashboardLayoutContent({
     return (
       <div className="min-h-screen bg-surface flex" aria-busy="true" aria-label="Carregando painel">
         {/* Sidebar skeleton */}
-        <div className="w-64 bg-surface-raised border-r border-border flex flex-col shrink-0">
+        <div className="w-64 bg-surface-raised border-r border-border hidden lg:flex flex-col shrink-0">
           <div className="h-16 border-b border-border flex items-center px-4 gap-3">
-            <div className="w-8 h-8 bg-surface-overlay animate-pulse" />
-            <div className="h-4 w-28 bg-surface-overlay animate-pulse" />
+            <Skeleton className="w-8 h-8" />
+            <Skeleton className="h-4 w-28" />
           </div>
           <div className="p-4 space-y-2">
-            <div className="h-10 bg-surface-overlay animate-pulse" />
+            <Skeleton className="h-10 w-full" />
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-9 bg-surface-overlay animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+              <Skeleton key={i} className="h-9 w-full" style={{ animationDelay: `${i * 60}ms` }} />
             ))}
           </div>
         </div>
@@ -161,13 +200,13 @@ function DashboardLayoutContent({
         <div className="flex-1 flex flex-col">
           <div className="h-16 border-b border-border bg-surface" />
           <div className="p-8 space-y-6">
-            <div className="h-7 w-48 bg-surface-overlay animate-pulse" />
-            <div className="grid grid-cols-4 gap-4">
+            <Skeleton className="h-7 w-48" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-28 bg-surface-raised border border-border animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+                <Skeleton key={i} className="h-28 w-full" style={{ animationDelay: `${i * 80}ms` }} />
               ))}
             </div>
-            <div className="h-64 bg-surface-raised border border-border animate-pulse" />
+            <Skeleton className="h-64 w-full" />
           </div>
         </div>
       </div>
@@ -213,8 +252,8 @@ function DashboardLayoutContent({
       <OnboardingModal />
       {/* Sidebar - Drawer Responsivo / Collapsible (Oculto na Impressão) */}
       <aside className={cn(
-        'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-raised border-r border-border transition-all duration-300 print:hidden',
-        sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-20',
+        'fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-raised/70 backdrop-blur-2xl border-r border-glass-divider transition-all duration-300 print:hidden',
+        sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20',
       )}>
         {/* Brand Logo & Toggle */}
         <div className={cn("flex border-b border-border shrink-0 transition-all duration-300", sidebarOpen ? "h-16 items-center justify-between px-4" : "flex-col items-center py-4 gap-4")}>
@@ -237,7 +276,7 @@ function DashboardLayoutContent({
           </Link>
           <button
             type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={toggleSidebar}
             aria-label={sidebarOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
             className="p-1.5 shrink-0 text-text-muted hover:text-text hover:bg-surface-overlay rounded-lg transition-colors cursor-pointer hidden lg:flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
@@ -299,11 +338,7 @@ function DashboardLayoutContent({
                             key={sub.href}
                             href={sub.href}
                             aria-current={isActive ? 'page' : undefined}
-                            onClick={() => {
-                              if (window.innerWidth < 768) {
-                                setSidebarOpen(false);
-                              }
-                            }}
+                            onClick={closeSidebarOnMobile}
                             className={navItemClasses({ active: isActive, nested: true })}
                           >
                             <SubIcon className="w-4 h-4 shrink-0" aria-hidden />
@@ -327,9 +362,7 @@ function DashboardLayoutContent({
                   if (item.href === '/dashboard/inventory') {
                     window.dispatchEvent(new Event('nav-estoque-click'));
                   }
-                  if (window.innerWidth < 768) {
-                    setSidebarOpen(false);
-                  }
+                  closeSidebarOnMobile();
                 }}
                 className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
               >
@@ -364,18 +397,21 @@ function DashboardLayoutContent({
         <div
           onClick={() => setSidebarOpen(false)}
           aria-hidden
-          className="fixed inset-0 bg-surface/70 backdrop-blur-sm z-40 md:hidden print:hidden"
+          className="fixed inset-0 bg-surface/70 backdrop-blur-sm z-40 lg:hidden print:hidden"
         />
       )}
 
       {/* Main Content Wrap */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'} print:pl-0`}>
+      {/* `min-w-0`: item de flex tem `min-width:auto` por padrão e não encolhe
+          abaixo do próprio conteúdo — bastava uma página larga para a janela
+          inteira ganhar rolagem horizontal. */}
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-20'} print:pl-0`}>
         {/* Header/Top Bar (Oculto na Impressão) */}
-        <header className="h-16 border-b border-border bg-surface sticky top-0 z-10 flex items-center justify-between gap-4 px-6 print:hidden">
+        <header className="h-16 border-b border-glass-divider bg-surface/80 backdrop-blur-xl sticky top-0 z-10 flex items-center justify-between gap-4 px-6 print:hidden">
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={toggleSidebar}
               aria-label={sidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'}
               className="p-1.5 shrink-0 text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >

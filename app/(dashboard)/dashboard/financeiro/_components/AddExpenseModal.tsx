@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, DollarSign, Calendar, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
+import { Button, Input, Modal, Select, useToast } from '@/components/ui';
 
 const EXPENSE_CATEGORIES = [
   'Marketing',
@@ -14,6 +15,16 @@ const EXPENSE_CATEGORIES = [
   'Infraestrutura',
   'Outros',
 ];
+
+const RECURRENCES = ['Única', 'Diária', 'Semanal', 'Mensal', 'Anual'];
+
+/** YYYY-MM-DD no fuso local — `toISOString()` empurraria a data um dia atrás. */
+function toDateInput(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 interface Expense {
   id: string;
@@ -33,236 +44,169 @@ interface AddExpenseModalProps {
 
 export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpenseModalProps) {
   const { company } = useCompany();
+  const toast = useToast();
+
   const [description, setDescription] = useState(expenseToEdit?.description || '');
   const [amount, setAmount] = useState(expenseToEdit?.amount ? String(expenseToEdit.amount) : '');
   const [category, setCategory] = useState(expenseToEdit?.category || 'Marketing');
   const [expenseDate, setExpenseDate] = useState(
     expenseToEdit?.expense_date
-      ? new Date(expenseToEdit.expense_date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0]
+      ? toDateInput(new Date(expenseToEdit.expense_date))
+      : toDateInput(new Date()),
   );
   const [recurrence, setRecurrence] = useState(expenseToEdit?.recurrence || 'Única');
   const [endDate, setEndDate] = useState(
-    expenseToEdit?.end_date
-      ? new Date(expenseToEdit.end_date).toISOString().split('T')[0]
-      : ''
+    expenseToEdit?.end_date ? toDateInput(new Date(expenseToEdit.end_date)) : '',
   );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [amountError, setAmountError] = useState('');
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim()) {
-      setError('A descrição é obrigatória.');
-      return;
-    }
+
     const val = parseFloat(amount);
     if (isNaN(val) || val <= 0) {
-      setError('O valor deve ser maior que zero.');
+      // O erro fica no campo que o causou, não num banner no rodapé.
+      setAmountError('O valor deve ser maior que zero.');
       return;
     }
-
+    setAmountError('');
     setLoading(true);
-    setError('');
 
     try {
       const companyId = company?.id;
-      if (!companyId) {
-        throw new Error('Nenhuma empresa encontrada no contexto.');
-      }
+      if (!companyId) throw new Error('Nenhuma empresa encontrada no contexto.');
+
+      const payload = {
+        description: description.trim(),
+        amount: val,
+        category,
+        expense_date: new Date(expenseDate).toISOString(),
+        recurrence,
+        end_date: recurrence !== 'Única' && endDate ? new Date(endDate).toISOString() : null,
+      };
 
       if (expenseToEdit) {
-        const { error: updateError } = await supabase
+        const { error } = await supabase
           .from('company_expenses')
-          .update({
-            description: description.trim(),
-            amount: val,
-            category,
-            expense_date: new Date(expenseDate).toISOString(),
-            recurrence,
-            end_date: (recurrence !== 'Única' && endDate) ? new Date(endDate).toISOString() : null,
-          })
+          .update(payload)
           .eq('id', expenseToEdit.id);
-
-        if (updateError) throw updateError;
+        if (error) throw error;
+        toast.success('Despesa atualizada');
       } else {
-        const { error: insertError } = await supabase
+        const { error } = await supabase
           .from('company_expenses')
-          .insert({
-            company_id: companyId,
-            description: description.trim(),
-            amount: val,
-            category,
-            expense_date: new Date(expenseDate).toISOString(),
-            recurrence,
-            end_date: (recurrence !== 'Única' && endDate) ? new Date(endDate).toISOString() : null,
-          });
-
-        if (insertError) throw insertError;
+          .insert({ company_id: companyId, ...payload });
+        if (error) throw error;
+        toast.success(`Despesa "${payload.description}" cadastrada`);
       }
+
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(`Erro ao salvar despesa: ${err.message || 'Tente novamente.'}`);
       console.error(err);
+      toast.error('Não foi possível salvar a despesa', {
+        description: err.message || 'Tente novamente.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-full backdrop-blur-md border border-white/5 bg--500/10 text--400">
-              <DollarSign className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-semibold text-white">
-              {expenseToEdit ? 'Editar Despesa' : 'Cadastrar Despesa'}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-text-muted hover:text-white transition-colors p-1 rounded-xl"
+    <Modal
+      open
+      onClose={onClose}
+      title={expenseToEdit ? 'Editar Despesa' : 'Cadastrar Despesa'}
+      description="Custos fixos e variáveis entram no cálculo do lucro do período."
+      size="sm"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            form="form-despesa"
+            loading={loading}
+            icon={<CheckCircle className="w-4 h-4" />}
           >
-            <X className="w-4 h-4" />
-          </button>
+            Salvar Despesa
+          </Button>
+        </>
+      }
+    >
+      <form id="form-despesa" onSubmit={handleConfirm} className="space-y-4">
+        <Input
+          label="Descrição"
+          required
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Ex: Anúncios do Meta Ads - Julho"
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Valor (R$)"
+            type="number"
+            step="0.01"
+            min="0"
+            required
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              if (amountError) setAmountError('');
+            }}
+            placeholder="0,00"
+            error={amountError}
+            className="font-mono tabular-nums"
+          />
+
+          <Select
+            label="Categoria"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {EXPENSE_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </Select>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleConfirm}>
-          <div className="p-5 space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-text uppercase tracking-wider">
-                Descrição
-              </label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Anúncios do Meta Ads - Julho"
-                className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-rose-500 transition-colors"
-                required
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Data Inicial"
+            type="date"
+            required
+            value={expenseDate}
+            onChange={(e) => setExpenseDate(e.target.value)}
+          />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text uppercase tracking-wider">
-                  Valor (R$)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-rose-500 transition-colors"
-                  required
-                />
-              </div>
+          <Select
+            label="Recorrência"
+            value={recurrence}
+            onChange={(e) => setRecurrence(e.target.value)}
+          >
+            {RECURRENCES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </Select>
+        </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text uppercase tracking-wider">
-                  Categoria
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
-                >
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-text-muted" />
-                  Data Inicial
-                </label>
-                <input
-                  type="date"
-                  value={expenseDate}
-                  onChange={(e) => setExpenseDate(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text uppercase tracking-wider">
-                  Recorrência
-                </label>
-                <select
-                  value={recurrence}
-                  onChange={(e) => setRecurrence(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
-                >
-                  <option value="Única">Única</option>
-                  <option value="Diária">Diária</option>
-                  <option value="Semanal">Semanal</option>
-                  <option value="Mensal">Mensal</option>
-                  <option value="Anual">Anual</option>
-                </select>
-              </div>
-            </div>
-
-            {recurrence !== 'Única' && (
-              <div className="space-y-1 animate-fadeIn">
-                <label className="text-xs font-semibold text-text uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-text-muted" />
-                  Recorrente até (Opcional)
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  placeholder="Sem data de término"
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2.5 px-3 text-sm text-text focus:outline-none focus:border-rose-500 transition-colors"
-                />
-                <span className="text-[10px] text-text-subtle block">Deixe em branco para correr por tempo indeterminado.</span>
-              </div>
-            )}
-
-            {error && (
-              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl animate-fadeIn">
-                {error}
-              </p>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="flex gap-3 p-5 border-t border-border">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 text-sm text-text-muted border border-slate-700 hover:border-slate-600 hover:text-white transition-colors rounded-xl"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-2.5 text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Salvar Despesa
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {recurrence !== 'Única' && (
+          <Input
+            label="Recorrente até"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            hint="Deixe em branco para correr por tempo indeterminado."
+          />
+        )}
+      </form>
+    </Modal>
   );
 }

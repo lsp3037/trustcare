@@ -6,7 +6,7 @@ import { ArrowLeft, Settings, ClipboardList, Trash2, Plus, CheckCircle2, AlertTr
 import React, { useState, useEffect } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge, useConfirm } from '@/components/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/context/UserContext';
@@ -37,6 +37,7 @@ interface EquipmentCategory {
 }
 
 export default function ChecklistSettingsPage() {
+  const confirm = useConfirm();
   const router = useRouter();
   const { role, loading: userLoading } = useUser();
   const [categories, setCategories] = useState<EquipmentCategory[]>([]);
@@ -239,7 +240,7 @@ export default function ChecklistSettingsPage() {
   if (userLoading || role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+        <LoadingSpinner className="w-8 h-8 text-brand animate-spin mb-4" />
         <p className="text-sm text-text-muted">Verificando permissões...</p>
       </div>
     );
@@ -250,11 +251,11 @@ export default function ChecklistSettingsPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header de Configurações */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-900">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
           <div className="flex items-center gap-3">
             <Link 
               href="/dashboard"
-              className="p-2 bg-slate-900 border border-border hover:bg-slate-800 text-text-muted hover:text-white rounded-xl transition-all"
+              className="p-2 bg-surface-raised border border-border hover:bg-surface-overlay text-text-muted hover:text-white rounded-xl transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
@@ -270,7 +271,7 @@ export default function ChecklistSettingsPage() {
         {/* Seleção de Categoria */}
         <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Selecione a Categoria de Equipamento</label>
+            <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Selecione a Categoria de Equipamento</label>
             <select
               value={selectedCategoryId}
               onChange={(e) => {
@@ -300,7 +301,7 @@ export default function ChecklistSettingsPage() {
             <div className="lg:col-span-2 bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl space-y-6">
               
               <div className="flex items-center justify-between border-b border-border pb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-text flex items-center gap-2">
                   <ClipboardList className="w-4 h-4 text-indigo-400" /> Itens do Checklist
                 </h3>
                 <Badge>{items.length} {items.length === 1 ? 'item' : 'itens'}</Badge>
@@ -322,8 +323,8 @@ export default function ChecklistSettingsPage() {
                       className="flex items-center justify-between p-3 bg-surface-sunken border border-border hover:border-border rounded-xl transition-all"
                     >
                       <div className="space-y-0.5">
-                        <p className="text-xs font-semibold text-slate-200">{item.label}</p>
-                        <p className="text-[10px] font-mono text-text-subtle">ID: {item.id}</p>
+                        <p className="text-xs font-semibold text-text">{item.label}</p>
+                        <p className="text-caption font-mono text-text-subtle">ID: {item.id}</p>
                       </div>
                       
                       <div className="flex items-center gap-3">
@@ -378,7 +379,7 @@ export default function ChecklistSettingsPage() {
                 <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">Ações</h4>
                 
                 {saveSuccess && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2 animate-fade-in">
+                  <div className="p-3 rounded-xl bg-brand/10 border border-brand/25 text-xs text-brand flex items-center gap-2 animate-fade-in">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Configuração salva com sucesso!
                   </div>
                 )}
@@ -403,10 +404,15 @@ export default function ChecklistSettingsPage() {
                   type="button"
                   variant="secondary"
                   fullWidth
-                  onClick={() => {
-                    if (window.confirm('Deseja resetar este checklist para as configurações clássicas padrão?')) {
-                      setItems(DEFAULT_CHECKLIST_ITEMS);
-                    }
+                  onClick={async () => {
+                    const confirmed = await confirm({
+                      title: 'Resetar este checklist para o padrão?',
+                      description:
+                        'Os itens que você personalizou nesta tela são descartados. As OS já preenchidas não mudam.',
+                      confirmLabel: 'Resetar checklist',
+                      destructive: true,
+                    });
+                    if (confirmed) setItems(DEFAULT_CHECKLIST_ITEMS);
                   }}
                 >
                   Resetar para Padrão
@@ -414,11 +420,11 @@ export default function ChecklistSettingsPage() {
               </div>
 
               {/* Informações de Apoio */}
-              <div className="bg-slate-900/20 border border-border rounded-xl p-6 text-text-muted space-y-3">
+              <div className="bg-surface-sunken border border-border rounded-xl p-6 text-text-muted space-y-3">
                 <h4 className="text-xs font-bold text-text flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-indigo-400" /> Boas práticas
                 </h4>
-                <ul className="text-[11px] list-disc list-inside space-y-2 leading-relaxed">
+                <ul className="text-caption list-disc list-inside space-y-2 leading-relaxed">
                   <li>O checklist dinâmico é ativado assim que um equipamento desta categoria for selecionado na tela de O.S.</li>
                   <li>Marque itens como <strong className="text-rose-400">Obrigatório</strong> para forçar o preenchimento pelo técnico no momento da entrada ou saída.</li>
                   <li>Mantenha as descrições curtas e autoexplicativas para caber nos relatórios de impressão física.</li>

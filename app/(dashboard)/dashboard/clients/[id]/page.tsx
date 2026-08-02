@@ -1,24 +1,67 @@
 'use client';
-import { QrCode, Save, Plus, ClipboardList, X, Wrench, AlertTriangle, ArrowLeft, Edit, CheckCircle2, Building, User, FileText, Phone, Mail, Laptop, Trash2, FolderPlus } from 'lucide-react';
+import {
+  QrCode,
+  Save,
+  Plus,
+  ClipboardList,
+  Wrench,
+  AlertTriangle,
+  ArrowLeft,
+  Edit,
+  Building,
+  User,
+  FileText,
+  Phone,
+  Mail,
+  Laptop,
+  Trash2,
+  FolderPlus,
+} from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, buttonClasses, Badge, StatusBadge, EmptyState } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  buttonClasses,
+  Card,
+  CardTitle,
+  EmptyState,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  Skeleton,
+  StatusBadge,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
+  useConfirm,
+  useToast,
+} from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
+
+const OFFLINE_HINT = 'Sem conexão com o servidor. A alteração ficou só neste dispositivo.';
 
 export default function ClientDetailPage() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [client, setClient] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [equipments, setEquipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados para edição do Cliente
+  // Edição do cliente
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState('PF');
@@ -26,26 +69,22 @@ export default function ClientDetailPage() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Estados para cadastro de Equipamento
+  // Cadastro de equipamento
   const [eqName, setEqName] = useState('');
   const [eqBrand, setEqBrand] = useState('');
   const [eqModel, setEqModel] = useState('');
   const [eqSerial, setEqSerial] = useState('');
   const [addingEq, setAddingEq] = useState(false);
-  const [eqError, setEqError] = useState('');
-  const [eqSuccess, setEqSuccess] = useState(false);
 
-  // Estados para Categorias e CRUD de Equipamentos
+  // Categorias e CRUD de equipamentos
   const [categories, setCategories] = useState<any[]>([]);
   const [eqCategoryId, setEqCategoryId] = useState('');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingEqId, setEditingEqId] = useState<string | null>(null);
 
-  // Estados para histórico clínico de checklists
+  // Histórico clínico de checklists
   const [selectedEqForHistory, setSelectedEqForHistory] = useState<any | null>(null);
   const [eqChecklistHistory, setEqChecklistHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -66,7 +105,10 @@ export default function ClientDetailPage() {
       console.warn('Erro ao carregar histórico no Supabase, buscando local:', err);
       const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
       const localOrders = JSON.parse(localOrdersStr);
-      const filtered = localOrders.filter((o: any) => o.equipment_id === eq.id || (o.equipment_details && o.equipment_details.includes(eq.name)));
+      const filtered = localOrders.filter(
+        (o: any) =>
+          o.equipment_id === eq.id || (o.equipment_details && o.equipment_details.includes(eq.name)),
+      );
       setEqChecklistHistory(filtered);
     } finally {
       setLoadingHistory(false);
@@ -76,8 +118,7 @@ export default function ClientDetailPage() {
   const fetchClientAndOrders = async () => {
     try {
       setLoading(true);
-      
-      // 1. Tenta buscar dados do cliente no Supabase
+
       const { data: clientData, error: clientErr } = await supabase
         .from('clients')
         .select('*')
@@ -87,13 +128,16 @@ export default function ClientDetailPage() {
       if (clientErr) throw clientErr;
 
       if (clientData) {
-        // Busca todos os clientes para calcular o ID numérico sequencial se estiver em branco
-        const { data: allClients } = await supabase.from('clients').select('id').order('created_at', { ascending: true });
-        const index = allClients ? allClients.findIndex(c => c.id === clientData.id) : 0;
-        
+        // Calcula o número sequencial quando o registro não tem um gravado.
+        const { data: allClients } = await supabase
+          .from('clients')
+          .select('id')
+          .order('created_at', { ascending: true });
+        const index = allClients ? allClients.findIndex((c) => c.id === clientData.id) : 0;
+
         const processedClient = {
           ...clientData,
-          client_number: clientData.client_number || (1001 + (index >= 0 ? index : 0))
+          client_number: clientData.client_number || 1001 + (index >= 0 ? index : 0),
         };
 
         setClient(processedClient);
@@ -103,52 +147,42 @@ export default function ClientDetailPage() {
         setPhone(processedClient.phone || '');
         setEmail(processedClient.email || '');
 
-        // Busca OSs do cliente
         const { data: ordersData } = await supabase
           .from('service_orders')
           .select('*')
           .eq('client_id', id)
           .order('created_at', { ascending: false });
 
-        if (ordersData) {
-          setOrders(ordersData);
-        }
+        if (ordersData) setOrders(ordersData);
 
-        // Busca Categorias de Equipamentos
         const { data: catData } = await supabase
           .from('equipment_categories')
           .select('*')
           .order('name');
-        
-        if (catData) {
-          setCategories(catData);
-        }
 
-        // Busca Equipamentos do cliente com a categoria relacionada
+        if (catData) setCategories(catData);
+
         const { data: eqData } = await supabase
           .from('client_equipments')
           .select('*, equipment_categories(name)')
           .eq('client_id', id)
           .order('created_at', { ascending: false });
 
-        if (eqData) {
-          setEquipments(eqData);
-        }
+        if (eqData) setEquipments(eqData);
       }
     } catch (err) {
       console.warn('Erro ao carregar do Supabase, buscando mock local:', err);
-      
-      // Fallback para localStorage
+
       const localClients = localStorage.getItem('mock-clients');
       if (localClients) {
         const parsedClients = JSON.parse(localClients);
         const index = parsedClients.findIndex((c: any) => c.id === id);
         const foundClient = parsedClients[index];
-        
+
         if (foundClient) {
           const processedClient = {
             ...foundClient,
-            client_number: foundClient.client_number || (1001 + (index >= 0 ? index : 0))
+            client_number: foundClient.client_number || 1001 + (index >= 0 ? index : 0),
           };
 
           setClient(processedClient);
@@ -157,47 +191,38 @@ export default function ClientDetailPage() {
           setDocument(processedClient.document || '');
           setPhone(processedClient.phone || '');
           setEmail(processedClient.email || '');
-          
-          // Busca ordens mockadas
-          const mockOrders = localStorage.getItem('mock-orders');
-          const allOrders = mockOrders ? JSON.parse(mockOrders) : [
-            { id: '1', client_id: 'c1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', reported_problem: 'Tela azul intermitente e desligamento automático', technical_report: 'Realizado limpeza interna e troca de pasta térmica.', status: 'Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-            { id: '2', client_id: 'c2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', reported_problem: 'Placa de vídeo liga mas não dá vídeo', technical_report: null, status: 'Aguardando Peça', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
-            { id: '3', client_id: 'c3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', reported_problem: 'Backup automático falhando', technical_report: 'Reconfiguração do script de backup.', status: 'Concluído', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
-            { id: '4', client_id: 'c4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', reported_problem: 'Teclado com teclas travadas', technical_report: null, status: 'Novo', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString() },
-          ];
-          
-          const filteredOrders = allOrders.filter((o: any) => o.client_id === id);
-          setOrders(filteredOrders);
 
-          // Busca categorias mockadas
+          const mockOrders = localStorage.getItem('mock-orders');
+          const allOrders = mockOrders ? JSON.parse(mockOrders) : [];
+          setOrders(allOrders.filter((o: any) => o.client_id === id));
+
           const mockCats = localStorage.getItem('mock-equipment-categories');
-          const allCats = mockCats ? JSON.parse(mockCats) : [
-            { id: 'cat1', name: 'Notebook' },
-            { id: 'cat2', name: 'Desktop' },
-          ];
+          const allCats = mockCats
+            ? JSON.parse(mockCats)
+            : [
+                { id: 'cat1', name: 'Notebook' },
+                { id: 'cat2', name: 'Desktop' },
+              ];
           setCategories(allCats);
 
-          // Busca equipamentos mockados
           const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728', equipment_categories: { name: 'Notebook' } },
-            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A', equipment_categories: { name: 'Desktop' } },
-            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B', equipment_categories: { name: 'Desktop' } },
-            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5', equipment_categories: { name: 'Notebook' } },
-          ];
-          const filteredEqs = allEqs.filter((e: any) => e.client_id === id);
-          const enrichedEqs = filteredEqs.map((e: any) => {
-            const cat = allCats.find((c: any) => c.id === e.category_id);
-            return {
-              ...e,
-              equipment_categories: cat ? { name: cat.name } : null
-            };
-          });
+          const allEqs = mockEqs ? JSON.parse(mockEqs) : [];
+          const enrichedEqs = allEqs
+            .filter((e: any) => e.client_id === id)
+            .map((e: any) => {
+              const cat = allCats.find((c: any) => c.id === e.category_id);
+              return { ...e, equipment_categories: cat ? { name: cat.name } : null };
+            });
           setEquipments(enrichedEqs);
+
+          toast.warning('Exibindo dados salvos neste dispositivo', {
+            description: 'Não foi possível falar com o servidor. Os dados podem estar desatualizados.',
+          });
         } else {
           setClient(null);
         }
+      } else {
+        setClient(null);
       }
     } finally {
       setLoading(false);
@@ -211,49 +236,39 @@ export default function ClientDetailPage() {
   const handleUpdateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setSaveError('');
-    setSaveSuccess(false);
 
     try {
-      const updatedData = {
-        name,
-        type,
-        document,
-        phone,
-        email,
-      };
+      const updatedData = { name, type, document, phone, email };
 
-      const { error } = await supabase
-        .from('clients')
-        .update(updatedData)
-        .eq('id', id);
+      const { error } = await supabase.from('clients').update(updatedData).eq('id', id);
 
       if (error) {
         console.warn('Falha no Supabase, atualizando mock local:', error.message);
-        
-        // Atualiza mock
+
         const localClients = localStorage.getItem('mock-clients');
         if (localClients) {
           const parsed = JSON.parse(localClients);
-          const updatedList = parsed.map((c: any) => {
-            if (c.id === id) {
-              return { ...c, ...updatedData };
-            }
-            return c;
-          });
+          const updatedList = parsed.map((c: any) =>
+            c.id === id ? { ...c, ...updatedData } : c,
+          );
           localStorage.setItem('mock-clients', JSON.stringify(updatedList));
         }
+
+        // Antes esta rota mostrava "Alterações salvas!" igual ao caminho de
+        // sucesso — o usuário achava que os dados tinham ido para o servidor.
+        toast.warning('Cadastro salvo apenas neste dispositivo', {
+          description: OFFLINE_HINT,
+        });
+      } else {
+        toast.success('Cadastro atualizado');
       }
 
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setIsEditing(false);
-        setSaveSuccess(false);
-        fetchClientAndOrders();
-      }, 1000);
-
+      setIsEditing(false);
+      fetchClientAndOrders();
     } catch (err: any) {
-      setSaveError(err.message || 'Falha ao salvar alterações.');
+      toast.error('Não foi possível salvar o cadastro', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setSaving(false);
     }
@@ -262,18 +277,27 @@ export default function ClientDetailPage() {
   const handleSaveEquipment = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddingEq(true);
-    setEqError('');
-    setEqSuccess(false);
+
+    // Marca se alguma etapa caiu para o armazenamento local, para que a
+    // mensagem final diga a verdade.
+    let usedFallback = false;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let companyId = 'mock-tenant-id';
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single();
         if (profile?.company_id) companyId = profile.company_id;
       }
 
-      const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+      const isUuid = (val: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
       const localEqData = {
         company_id: companyId,
         client_id: id,
@@ -289,96 +313,94 @@ export default function ClientDetailPage() {
         category_id: isUuid(eqCategoryId) ? eqCategoryId : null,
       };
 
+      const readLocalEquipments = () => {
+        const mockEqs = localStorage.getItem('mock-equipments');
+        return mockEqs ? JSON.parse(mockEqs) : [];
+      };
+
       if (editingEqId) {
-        // Modo Edição
-        const isMockId = editingEqId.startsWith('mock-eq-') || ['eq1', 'eq2', 'eq3', 'eq4'].includes(editingEqId);
-        
+        const isMockId =
+          editingEqId.startsWith('mock-eq-') || ['eq1', 'eq2', 'eq3', 'eq4'].includes(editingEqId);
+
         if (isMockId) {
-          const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-          ];
-          const updatedEqs = allEqs.map((e: any) => {
-            if (e.id === editingEqId) {
-              return { ...e, ...localEqData, id: editingEqId };
-            }
-            return e;
-          });
+          const updatedEqs = readLocalEquipments().map((eq: any) =>
+            eq.id === editingEqId ? { ...eq, ...localEqData, id: editingEqId } : eq,
+          );
           localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
         } else {
-          const { error } = await supabase.from('client_equipments').update(supabaseEqData).eq('id', editingEqId);
+          const { error } = await supabase
+            .from('client_equipments')
+            .update(supabaseEqData)
+            .eq('id', editingEqId);
           if (error) {
             console.warn('Falha Supabase ao atualizar, tentando mock local:', error.message);
-            const mockEqs = localStorage.getItem('mock-equipments');
-            if (mockEqs) {
-              const allEqs = JSON.parse(mockEqs);
-              const updatedEqs = allEqs.map((e: any) => {
-                if (e.id === editingEqId) {
-                  return { ...e, ...localEqData, id: editingEqId };
-                }
-                return e;
-              });
-              localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
-            } else {
-              throw error;
-            }
+            const allEqs = readLocalEquipments();
+            if (allEqs.length === 0) throw error;
+            const updatedEqs = allEqs.map((eq: any) =>
+              eq.id === editingEqId ? { ...eq, ...localEqData, id: editingEqId } : eq,
+            );
+            localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
+            usedFallback = true;
           }
         }
       } else {
-        // Modo Criação
         const { error } = await supabase.from('client_equipments').insert(supabaseEqData);
         if (error) {
           console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
-          
-          const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-            { id: 'eq1', client_id: 'c1', category_id: 'cat1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-            { id: 'eq2', client_id: 'c2', category_id: 'cat2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-            { id: 'eq3', client_id: 'c3', category_id: 'cat2', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-            { id: 'eq4', client_id: 'c4', category_id: 'cat1', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-          ];
-          allEqs.push({
-            id: `mock-eq-${Date.now()}`,
-            ...localEqData
-          });
+          const allEqs = readLocalEquipments();
+          allEqs.push({ id: `mock-eq-${Date.now()}`, ...localEqData });
           localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
+          usedFallback = true;
         }
       }
 
-      setEqSuccess(true);
-      
-      // Limpa os campos
+      const acao = editingEqId ? 'atualizado' : 'cadastrado';
+      const nomeEquipamento = eqName;
+
       setEqName('');
       setEqBrand('');
       setEqModel('');
       setEqSerial('');
       setEqCategoryId('');
       setEditingEqId(null);
-      
-      setTimeout(() => {
-        setEqSuccess(false);
-      }, 3000);
+
+      if (usedFallback) {
+        toast.warning(`Equipamento salvo apenas neste dispositivo`, {
+          description: OFFLINE_HINT,
+        });
+      } else {
+        toast.success(`"${nomeEquipamento}" ${acao}`);
+      }
 
       fetchClientAndOrders();
     } catch (err: any) {
-      setEqError(err.message || 'Erro ao salvar equipamento.');
+      toast.error('Não foi possível salvar o equipamento', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setAddingEq(false);
     }
   };
 
-  const handleDeleteEquipment = async (eqId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este equipamento?')) return;
-    
+  const handleDeleteEquipment = async (eq: any) => {
+    const confirmed = await confirm({
+      title: `Excluir o equipamento "${eq.name}"?`,
+      description:
+        'O histórico de checklists deixa de aparecer na ficha deste cliente. As ordens de serviço já emitidas não são afetadas.',
+      confirmLabel: 'Excluir equipamento',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
     try {
-      const { error } = await supabase.from('client_equipments').delete().eq('id', eqId);
+      const { error } = await supabase.from('client_equipments').delete().eq('id', eq.id);
       if (error) throw error;
+      toast.success(`"${eq.name}" excluído`);
       fetchClientAndOrders();
     } catch (err: any) {
-      alert(err.message || 'Erro ao excluir equipamento.');
+      toast.error('Não foi possível excluir o equipamento', {
+        description: err.message || 'Erro inesperado.',
+      });
     }
   };
 
@@ -389,7 +411,6 @@ export default function ClientDetailPage() {
     setEqModel(eq.model || '');
     setEqSerial(eq.serial_number || '');
     setEqCategoryId(eq.category_id || '');
-    // Scroll down to the form
     window.document.getElementById('equipment-form')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -402,10 +423,16 @@ export default function ClientDetailPage() {
     const catName = newCategoryName.trim();
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let companyId = 'mock-tenant-id';
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single();
         if (profile?.company_id) companyId = profile.company_id;
       }
 
@@ -414,7 +441,7 @@ export default function ClientDetailPage() {
         .insert({ name: catName, company_id: companyId })
         .select()
         .single();
-      
+
       if (error) {
         console.warn('Fallback mock categories:', error);
         const mockCats = localStorage.getItem('mock-equipment-categories');
@@ -424,31 +451,69 @@ export default function ClientDetailPage() {
         localStorage.setItem('mock-equipment-categories', JSON.stringify(allCats));
         setCategories(allCats);
         setEqCategoryId(newCat.id);
-        setIsCreatingCategory(false);
-        setNewCategoryName('');
+        toast.warning(`Categoria "${catName}" criada apenas neste dispositivo`, {
+          description: OFFLINE_HINT,
+        });
         return;
       }
 
       if (data) {
         setCategories([...categories, data]);
         setEqCategoryId(data.id);
+        toast.success(`Categoria "${catName}" criada`);
       }
-    } catch (err) {
-      alert('Erro ao criar categoria.');
+    } catch (err: any) {
+      toast.error('Não foi possível criar a categoria', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setIsCreatingCategory(false);
       setNewCategoryName('');
     }
   };
 
-
-
+  const cancelEquipmentEdit = () => {
+    setEditingEqId(null);
+    setEqName('');
+    setEqBrand('');
+    setEqModel('');
+    setEqSerial('');
+    setEqCategoryId('');
+  };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-        <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-sm text-text-muted">Carregando detalhes do cliente...</p>
+      <div className="space-y-8" aria-busy="true" aria-label="Carregando detalhes do cliente">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-8 w-72" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-1 h-fit">
+            <Skeleton className="h-5 w-40 mb-6" />
+            <div className="space-y-5">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="w-10 h-10 rounded-2xl" style={{ animationDelay: `${i * 80}ms` }} />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-2.5 w-24" />
+                    <Skeleton className="h-3.5 w-36" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <div className="lg:col-span-2 space-y-8">
+            <Card>
+              <Skeleton className="h-5 w-52 mb-6" />
+              <Skeleton className="h-32 w-full" />
+            </Card>
+            <Card>
+              <Skeleton className="h-5 w-44 mb-6" />
+              <Skeleton className="h-32 w-full" />
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -460,8 +525,8 @@ export default function ClientDetailPage() {
         title="Cliente não encontrado"
         description="O cliente solicitado não existe ou foi excluído."
         action={
-          <Link href="/dashboard/clients" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Voltar para a listagem
+          <Link href="/dashboard/clients" className={buttonClasses({ variant: 'secondary' })}>
+            <ArrowLeft className="w-4 h-4" aria-hidden /> Voltar para a listagem
           </Link>
         }
       />
@@ -470,120 +535,81 @@ export default function ClientDetailPage() {
 
   return (
     <div className="space-y-8">
-      {/* Breadcrumb e Back Link */}
-      <div className="flex flex-col gap-2">
-        <Link href="/dashboard/clients" className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-white transition-colors w-fit">
-          <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Clientes
-        </Link>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
-          <div>
-            <h1 className="text-h1 text-text flex items-center gap-3">
-              <span className="text-text-subtle font-mono text-xl bg-slate-900 border border-border px-3 py-1 rounded-xl">
-                #{client.client_number || 'Mock'}
-              </span>
-              {client.name}
-            </h1>
-            <p className="text-small text-text-muted mt-1">Dados de cadastro, equipamentos e histórico de chamados técnicos.</p>
-          </div>
-          {!isEditing && (
+      <PageHeader
+        backHref="/dashboard/clients"
+        backLabel="Voltar para Clientes"
+        title={client.name}
+        description="Dados de cadastro, equipamentos e histórico de chamados técnicos."
+        badges={
+          <Badge className="font-mono tabular-nums">#{client.client_number || '—'}</Badge>
+        }
+        actions={
+          !isEditing && (
             <Button
               variant="secondary"
-              icon={<Edit className="w-4 h-4 text-text-muted" />}
+              icon={<Edit className="w-4 h-4" />}
               onClick={() => setIsEditing(true)}
             >
               Editar Dados
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Detalhes do Cliente / Formulário de Edição */}
-        <div className="lg:col-span-1 bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl h-fit">
-          <h3 className="text-h3 text-text mb-6 border-b border-border pb-3">
+        {/* ─── Ficha de cadastro ─── */}
+        <Card className="lg:col-span-1 h-fit">
+          <CardTitle className="mb-6 border-b border-border pb-3">
             {isEditing ? 'Editar Cadastro' : 'Ficha de Cadastro'}
-          </h3>
+          </CardTitle>
 
           {isEditing ? (
             <form onSubmit={handleUpdateClient} className="space-y-4">
-              {saveSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" /> Alterações salvas!
-                </div>
-              )}
-              {saveError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
-                  {saveError}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Tipo</label>
+              <Field label="Tipo">
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={type === 'PF'}
-                      onChange={() => setType('PF')}
-                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border"
-                    />
-                    PF
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={type === 'PJ'}
-                      onChange={() => setType('PJ')}
-                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border"
-                    />
-                    PJ
-                  </label>
+                  {['PF', 'PJ'].map((option) => (
+                    <label
+                      key={option}
+                      className="flex items-center gap-2 text-small text-text cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="tipo-cadastro"
+                        checked={type === option}
+                        onChange={() => setType(option)}
+                        className="accent-brand h-4 w-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                      />
+                      {option}
+                    </label>
+                  ))}
                 </div>
-              </div>
+              </Field>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Nome / Razão Social</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Documento (CPF/CNPJ)</label>
-                <input
-                  type="text"
-                  value={document}
-                  onChange={(e) => setDocument(e.target.value)}
-                  placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Telefone</label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Ex: (11) 98765-4321"
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Ex: cliente@empresa.com"
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-sm text-text focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
+              <Input
+                label="Nome / Razão Social"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <Input
+                label={`Documento (${type === 'PF' ? 'CPF' : 'CNPJ'})`}
+                value={document}
+                onChange={(e) => setDocument(e.target.value)}
+                placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
+              />
+              <Input
+                label="Telefone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Ex: (11) 98765-4321"
+              />
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Ex: cliente@empresa.com"
+              />
 
               <div className="flex gap-2 pt-2">
                 <Button type="submit" size="sm" className="flex-1" loading={saving}>
@@ -596,7 +622,6 @@ export default function ClientDetailPage() {
                   className="flex-1"
                   onClick={() => {
                     setIsEditing(false);
-                    // Restaura estados
                     setName(client.name);
                     setType(client.type);
                     setDocument(client.document || '');
@@ -609,273 +634,240 @@ export default function ClientDetailPage() {
               </div>
             </form>
           ) : (
-            <div className="space-y-5">
-              {/* Tipo de Cadastro */}
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${client.type === 'PJ' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-200'}`}>
-                  {client.type === 'PJ' ? <Building className="w-5 h-5" /> : <User className="w-5 h-5" />}
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Tipo de Cadastro</p>
-                  <p className="text-sm font-semibold text-slate-200">{client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}</p>
-                </div>
-              </div>
-
-              {/* Documento */}
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">{client.type === 'PF' ? 'CPF' : 'CNPJ'}</p>
-                  <p className="text-sm font-semibold text-slate-200 font-mono">{client.document || '—'}</p>
-                </div>
-              </div>
-
-              {/* Telefone */}
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Telefone</p>
-                  <p className="text-sm font-semibold text-slate-200">{client.phone || '—'}</p>
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full backdrop-blur-md border border-white/5 bg-surface-sunken text-text-muted border border-border/50">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div className="overflow-hidden">
-                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">E-mail Corporativo</p>
-                  <p className="text-sm font-semibold text-slate-200 truncate hover:text-blue-400 cursor-pointer">{client.email || '—'}</p>
-                </div>
-              </div>
-            </div>
+            <dl className="space-y-5">
+              <FichaLinha
+                icon={client.type === 'PJ' ? <Building className="w-5 h-5" /> : <User className="w-5 h-5" />}
+                highlight={client.type === 'PJ'}
+                label="Tipo de Cadastro"
+                value={client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
+              />
+              <FichaLinha
+                icon={<FileText className="w-5 h-5" />}
+                label={client.type === 'PF' ? 'CPF' : 'CNPJ'}
+                value={client.document || '—'}
+                mono
+              />
+              <FichaLinha
+                icon={<Phone className="w-5 h-5" />}
+                label="Telefone"
+                value={client.phone || '—'}
+                mono
+              />
+              <FichaLinha
+                icon={<Mail className="w-5 h-5" />}
+                label="E-mail"
+                value={client.email || '—'}
+              />
+            </dl>
           )}
-        </div>
+        </Card>
 
-        {/* Histórico e Equipamentos */}
         <div className="lg:col-span-2 space-y-8">
-          
-          {/* Equipamentos Cadastrados */}
-          <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl">
-            <h3 className="text-h3 text-text mb-6 border-b border-border pb-3 flex items-center gap-2">
-              <Laptop className="w-5 h-5 text-emerald-400" /> Equipamentos do Cliente
-            </h3>
+          {/* ─── Equipamentos ─── */}
+          <Card>
+            <CardTitle className="mb-6 border-b border-border pb-3 flex items-center gap-2">
+              <Laptop className="w-5 h-5 text-text-subtle" aria-hidden /> Equipamentos do Cliente
+            </CardTitle>
 
-            {/* Listagem de Equipamentos */}
             {equipments.length === 0 ? (
-              <p className="text-center py-6 text-text-subtle text-xs">
+              <p className="text-center py-6 text-small text-text-subtle">
                 Nenhum equipamento cadastrado para este cliente.
               </p>
             ) : (
-              <div className="overflow-x-auto mb-6">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-border text-text-subtle font-semibold uppercase tracking-wider bg-surface-sunken/20">
-                      <th className="py-2.5 px-3">Equipamento</th>
-                      <th className="py-2.5 px-3">Categoria</th>
-                      <th className="py-2.5 px-3">Marca</th>
-                      <th className="py-2.5 px-3">Modelo</th>
-                      <th className="py-2.5 px-3">N/S (Serial)</th>
-                      <th className="py-2.5 px-3 text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/40">
+              <div className="mb-6">
+                <Table density="compact">
+                  <THead>
+                    <TR>
+                      <TH>Equipamento</TH>
+                      <TH>Categoria</TH>
+                      <TH>Marca</TH>
+                      <TH>Modelo</TH>
+                      <TH>N/S (Serial)</TH>
+                      <TH align="right">Ações</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
                     {equipments.map((eq) => (
-                      <tr key={eq.id} className="hover:bg-slate-800/10 transition-colors">
-                        <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
-                        <td className="py-2.5 px-3 text-text-muted">
+                      <TR key={eq.id}>
+                        <TD className="font-semibold">{eq.name}</TD>
+                        <TD className="text-text-muted">
                           {eq.equipment_categories?.name ? (
-                            <Badge tone="success">{eq.equipment_categories.name}</Badge>
-                          ) : '—'}
-                        </td>
-                        <td className="py-2.5 px-3 text-text-muted">{eq.brand || '—'}</td>
-                        <td className="py-2.5 px-3 text-text-muted">{eq.model || '—'}</td>
-                        <td className="py-2.5 px-3 font-mono text-text">{eq.serial_number || '—'}</td>
-                        <td className="py-2.5 px-3 text-right">
+                            <Badge>{eq.equipment_categories.name}</Badge>
+                          ) : (
+                            '—'
+                          )}
+                        </TD>
+                        <TD className="text-text-muted">{eq.brand || '—'}</TD>
+                        <TD className="text-text-muted">{eq.model || '—'}</TD>
+                        <TD numeric>{eq.serial_number || '—'}</TD>
+                        <TD align="right">
                           <div className="flex items-center justify-end gap-2">
                             <Button
-                              type="button"
-                              variant="secondary"
+                              variant="ghost"
                               size="sm"
-                              className="px-1.5 hover:text-success"
+                              className="px-1.5"
                               onClick={() => handleShowChecklistHistory(eq)}
-                              title="Histórico Clínico (Checklists)"
+                              title="Histórico clínico (checklists)"
+                              aria-label={`Histórico clínico de ${eq.name}`}
                             >
-                              <ClipboardList className="w-3.5 h-3.5" />
+                              <ClipboardList className="w-3.5 h-3.5" aria-hidden />
                             </Button>
                             <Button
-                              variant="secondary"
+                              variant="ghost"
                               size="sm"
                               className="px-1.5"
                               onClick={() => handleEditEquipment(eq)}
-                              title="Editar Equipamento"
+                              title="Editar equipamento"
+                              aria-label={`Editar ${eq.name}`}
                             >
-                              <Edit className="w-3.5 h-3.5" />
+                              <Edit className="w-3.5 h-3.5" aria-hidden />
                             </Button>
                             <Button
-                              variant="secondary"
+                              variant="ghost"
                               size="sm"
                               className="px-1.5 hover:text-danger"
-                              onClick={() => handleDeleteEquipment(eq.id)}
-                              title="Excluir Equipamento"
+                              onClick={() => handleDeleteEquipment(eq)}
+                              title="Excluir equipamento"
+                              aria-label={`Excluir ${eq.name}`}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5" aria-hidden />
                             </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </TD>
+                      </TR>
                     ))}
-                  </tbody>
-                </table>
+                  </TBody>
+                </Table>
               </div>
             )}
 
-            {/* Formulário para adicionar/editar Equipamento */}
-            <form id="equipment-form" onSubmit={handleSaveEquipment} className="border-t border-border pt-5 space-y-4">
-              <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            {/* Formulário de equipamento */}
+            <form
+              id="equipment-form"
+              onSubmit={handleSaveEquipment}
+              className="border-t border-border pt-5 space-y-4"
+            >
+              <h4 className="text-small font-semibold text-text flex items-center gap-2">
                 {editingEqId ? (
-                  <><Edit className="w-4 h-4 text-emerald-400" /> Atualizar Equipamento</>
+                  <>
+                    <Edit className="w-4 h-4 text-text-subtle" aria-hidden /> Atualizar Equipamento
+                  </>
                 ) : (
-                  <><Plus className="w-4 h-4 text-emerald-400" /> Cadastrar Novo Equipamento</>
+                  <>
+                    <Plus className="w-4 h-4 text-text-subtle" aria-hidden /> Cadastrar Novo Equipamento
+                  </>
                 )}
               </h4>
-              
-              {eqSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado!
-                </div>
-              )}
-              {eqError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
-                  {eqError}
-                </div>
-              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Identificação / Nome</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Notebook Luan"
-                    value={eqName}
-                    onChange={(e) => setEqName(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
+                <Input
+                  label="Identificação / Nome"
+                  required
+                  placeholder="Ex: Notebook Luan"
+                  value={eqName}
+                  onChange={(e) => setEqName(e.target.value)}
+                />
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Categoria</label>
+                <Field label="Categoria">
                   <div className="flex gap-2">
-                    <select
+                    <Select
+                      aria-label="Categoria do equipamento"
                       value={eqCategoryId}
                       onChange={(e) => setEqCategoryId(e.target.value)}
-                      className="flex-1 bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
+                      wrapperClassName="flex-1"
                     >
                       <option value="">Selecione...</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
                       ))}
-                    </select>
+                    </Select>
                     <Button
                       type="button"
                       variant="secondary"
-                      className="px-3 hover:text-success"
+                      className="px-3 shrink-0"
                       onClick={() => setIsCreatingCategory(!isCreatingCategory)}
-                      title="Nova Categoria"
+                      title="Nova categoria"
+                      aria-label="Criar nova categoria"
+                      aria-expanded={isCreatingCategory}
                     >
-                      <FolderPlus className="w-4 h-4" />
+                      <FolderPlus className="w-4 h-4" aria-hidden />
                     </Button>
                   </div>
-                </div>
+                </Field>
 
                 {isCreatingCategory && (
-                  <div className="col-span-1 md:col-span-2 space-y-1 animate-in slide-in-from-top-1 duration-150">
-                    <label className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider font-mono">Nova Categoria Inline</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Nome da categoria"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        className="flex-1 bg-surface-sunken border border-border rounded-xl py-1.5 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors font-mono"
-                        autoFocus
-                      />
-                      <Button type="button" size="sm" onClick={handleSaveCategory}>
-                        Salvar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setIsCreatingCategory(false);
-                          setNewCategoryName('');
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
+                  <div className="col-span-1 md:col-span-2">
+                    <Field label="Nova categoria">
+                      <div className="flex gap-2">
+                        <Input
+                          aria-label="Nome da nova categoria"
+                          placeholder="Nome da categoria"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          wrapperClassName="flex-1"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            // Enter aqui salvaria o formulário inteiro de
+                            // equipamento; o campo é um sub-fluxo próprio.
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveCategory();
+                            }
+                          }}
+                        />
+                        <Button type="button" onClick={handleSaveCategory}>
+                          Salvar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => {
+                            setIsCreatingCategory(false);
+                            setNewCategoryName('');
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </Field>
                   </div>
                 )}
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Marca</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Dell"
-                    value={eqBrand}
-                    onChange={(e) => setEqBrand(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
+                <Input
+                  label="Marca"
+                  placeholder="Ex: Dell"
+                  value={eqBrand}
+                  onChange={(e) => setEqBrand(e.target.value)}
+                />
+                <Input
+                  label="Modelo"
+                  placeholder="Ex: Latitude 3420"
+                  value={eqModel}
+                  onChange={(e) => setEqModel(e.target.value)}
+                />
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Modelo</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Latitude 3420"
-                    value={eqModel}
-                    onChange={(e) => setEqModel(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Nº de Série / Tag</label>
+                <Field label="Nº de Série / Tag" className="md:col-span-2">
                   <div className="relative">
-                    <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle" />
-                    <input
-                      type="text"
+                    <QrCode
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle pointer-events-none"
+                      aria-hidden
+                    />
+                    <Input
+                      aria-label="Número de série"
                       placeholder="Ex: PE091728"
                       value={eqSerial}
                       onChange={(e) => setEqSerial(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-3 pr-10 text-xs text-text focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="pr-10"
                     />
                   </div>
-                </div>
+                </Field>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 {editingEqId && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setEditingEqId(null);
-                      setEqName('');
-                      setEqBrand('');
-                      setEqModel('');
-                      setEqSerial('');
-                      setEqCategoryId('');
-                    }}
-                  >
+                  <Button type="button" variant="secondary" size="sm" onClick={cancelEquipmentEdit}>
                     Cancelar Edição
                   </Button>
                 )}
@@ -883,214 +875,307 @@ export default function ClientDetailPage() {
                   type="submit"
                   size="sm"
                   loading={addingEq}
-                  disabled={eqSuccess}
-                  icon={editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                  icon={
+                    editingEqId ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />
+                  }
                 >
                   {editingEqId ? 'Atualizar Equipamento' : 'Adicionar Equipamento'}
                 </Button>
               </div>
             </form>
-          </div>
+          </Card>
 
-          {/* Histórico de Ordens de Serviço */}
-          <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-center mb-6 border-b border-border pb-3">
-                <div>
-                  <h3 className="text-h3 text-text flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-blue-500" /> Ordens de Serviço
-                  </h3>
-                  <p className="text-xs text-text-subtle mt-0.5">Chamados técnicos abertos para este cliente.</p>
-                </div>
-                <Link href={`/dashboard/orders?new=true&clientId=${client.id}`} className={buttonClasses({ variant: 'secondary', size: 'sm' })}>
-                  <Plus className="w-3.5 h-3.5" /> Abrir OS
-                </Link>
+          {/* ─── Histórico de OS ─── */}
+          <Card>
+            <div className="flex justify-between items-start gap-4 mb-6 border-b border-border pb-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="w-5 h-5 text-text-subtle" aria-hidden /> Ordens de Serviço
+                </CardTitle>
+                <p className="text-caption text-text-subtle mt-0.5">
+                  Chamados técnicos abertos para este cliente.
+                </p>
               </div>
-
-              {orders.length === 0 ? (
-                <EmptyState
-                  icon={<ClipboardList />}
-                  title="Nenhuma Ordem de Serviço"
-                  description="Não há chamados associados a este cliente no momento."
-                />
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <thead>
-                      <tr className="border-b border-border text-text-subtle font-semibold text-[10px] uppercase tracking-wider bg-surface-sunken/20">
-                        <th className="py-3 px-4">OS ID</th>
-                        <th className="py-3 px-4">Equipamento</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-center">Data</th>
-                        <th className="py-3 px-4 text-right">Valor</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40">
-                      {orders.map((order) => (
-                        <tr 
-                          key={order.id} 
-                          onClick={() => router.push(`/dashboard/orders/${order.id}`)}
-                          className="hover:bg-slate-800/20 transition-colors cursor-pointer"
-                        >
-                          <td className="py-3 px-4 font-semibold text-text-muted font-mono text-xs">
-                            #{order.codigo_os || order.id.slice(0, 8)}
-                          </td>
-                          <td className="py-3 px-4 text-slate-200 font-medium truncate max-w-[180px]">
-                            {order.equipment_details}
-                          </td>
-                          <td className="py-3 px-4">
-                            <StatusBadge status={order.status} className="text-[10px]" />
-                          </td>
-                          <td className="py-3 px-4 text-center text-text-muted text-xs">
-                            {new Date(order.created_at).toLocaleDateString('pt-BR')}
-                          </td>
-                          <td className="py-3 px-4 text-right font-bold text-slate-200">
-                            R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <Link
+                href={`/dashboard/orders?new=true&clientId=${client.id}`}
+                className={buttonClasses({ variant: 'secondary', size: 'sm' })}
+              >
+                <Plus className="w-3.5 h-3.5" aria-hidden /> Abrir OS
+              </Link>
             </div>
-          </div>
 
+            {orders.length === 0 ? (
+              <EmptyState
+                icon={<ClipboardList />}
+                title="Nenhuma Ordem de Serviço"
+                description="Não há chamados associados a este cliente no momento."
+                action={
+                  <Link
+                    href={`/dashboard/orders?new=true&clientId=${client.id}`}
+                    className={buttonClasses({ size: 'sm' })}
+                  >
+                    <Plus className="w-3.5 h-3.5" aria-hidden /> Abrir primeira OS
+                  </Link>
+                }
+              />
+            ) : (
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>OS</TH>
+                    <TH>Equipamento</TH>
+                    <TH>Status</TH>
+                    <TH align="center">Data</TH>
+                    <TH align="right">Valor</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {orders.map((order) => (
+                    <TR
+                      key={order.id}
+                      interactive
+                      onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                    >
+                      <TD numeric className="text-text-muted">
+                        #{order.codigo_os || order.id.slice(0, 8)}
+                      </TD>
+                      <TD className="font-medium truncate max-w-[180px]">
+                        {order.equipment_details}
+                      </TD>
+                      <TD>
+                        <StatusBadge status={order.status} />
+                      </TD>
+                      <TD align="center" numeric className="text-text-muted">
+                        {new Date(order.created_at).toLocaleDateString('pt-BR')}
+                      </TD>
+                      <TD align="right" numeric className="font-semibold">
+                        R${' '}
+                        {Number(order.total_value).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                        })}
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            )}
+          </Card>
         </div>
       </div>
 
-      {/* SLIDE-OVER: Histórico de Checklists (Histórico Clínico) */}
-      {selectedEqForHistory && (
-        <div className="fixed inset-0 z-[100] flex justify-end p-0 bg-surface-sunken/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border-l border-border h-screen w-full max-w-lg p-6 shadow-2xl overflow-y-auto flex flex-col relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-4 top-4 px-1.5"
-              onClick={() => setSelectedEqForHistory(null)}
-              aria-label="Fechar"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-
-            <div className="mb-6">
-              <Badge tone="success" className="uppercase tracking-widest">Histórico Clínico</Badge>
-              <h3 className="text-h2 text-text mt-2 flex items-center gap-2">
-                <Wrench className="w-5 h-5 text-emerald-500" />
-                {selectedEqForHistory.name}
-              </h3>
-              <p className="text-xs text-text-subtle mt-1">
-                Ref: {selectedEqForHistory.brand} {selectedEqForHistory.model} {selectedEqForHistory.serial_number ? `• S/N: ${selectedEqForHistory.serial_number}` : ''}
-              </p>
-            </div>
-
-            <div className="flex-1 space-y-6">
-              {loadingHistory ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-                  <p className="text-sm text-text-muted">Carregando histórico clínico...</p>
-                </div>
-              ) : eqChecklistHistory.length === 0 ? (
-                <div className="text-center py-16 text-text-subtle text-xs border border-dashed border-border rounded-xl p-6">
-                  Nenhum checklist registrado para este equipamento em ordens de serviço anteriores.
-                </div>
-              ) : (
-                <div className="relative border-l border-border ml-3 space-y-8 pb-4">
-                  {eqChecklistHistory.map((historyItem) => {
-                    const entry = historyItem.entry_checklist;
-                    const exit = historyItem.exit_checklist;
-                    
-                    const formatChecklistItems = (checklistObj: any) => {
-                      if (!checklistObj) return null;
-                      
-                      const itemsList = Object.entries(checklistObj).filter(([key]) => !['password_pin', 'general_notes'].includes(key));
-                      
-                      if (itemsList.length === 0) return <span className="text-[10px] text-slate-600 italic block mt-1">Nenhum item preenchido</span>;
-                      
-                      return (
-                        <div className="grid grid-cols-2 gap-2 mt-2 bg-surface-sunken/40 p-3 rounded-xl border border-slate-900">
-                          {itemsList.map(([key, val]: [string, any]) => {
-                            const isChecked = typeof val === 'object' ? val.checked : !!val;
-                            const note = typeof val === 'object' ? val.observation : '';
-                            return (
-                              <div key={key} className="text-[11px] flex flex-col">
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${isChecked ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                                  <span className="text-text capitalize truncate max-w-[150px]">{key.replace(/_/g, ' ')}</span>
-                                </div>
-                                {note && <span className="text-[9px] text-text-subtle italic pl-3 truncate" title={note}>Obs: {note}</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    };
-
-                    return (
-                      <div key={historyItem.id} className="relative pl-6">
-                        <span className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        </span>
-                        
-                        <div className="bg-slate-900/50 border border-border p-4 rounded-xl space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span 
-                              onClick={() => {
-                                setSelectedEqForHistory(null);
-                                router.push(`/dashboard/orders/${historyItem.id}`);
-                              }}
-                              className="text-xs font-bold text-white hover:text-emerald-400 cursor-pointer font-mono"
-                            >
-                              O.S. #{historyItem.service_number || historyItem.id.slice(0, 8)}
-                            </span>
-                            <span className="text-[10px] text-text-subtle font-semibold font-mono">
-                              {new Date(historyItem.created_at).toLocaleDateString('pt-BR')}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-text-subtle">Status:</span>
-                            <StatusBadge status={historyItem.status} className="text-[9px]" />
-                          </div>
-
-                          {entry && (
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">📋 Checklist de Entrada</span>
-                              {formatChecklistItems(entry)}
-                              {entry.password_pin?.has_password && (
-                                <p className="text-[10px] text-text-subtle bg-surface-sunken px-2 py-1 rounded inline-block border border-slate-900 mt-1">
-                                  Senha/PIN: <span className="text-white font-mono">{entry.password_pin.password_value || 'Sim'}</span>
-                                </p>
-                              )}
-                              {entry.general_notes && (
-                                <p className="text-[10px] text-text-subtle italic mt-1 bg-surface-sunken/20 p-2 rounded border border-slate-900">
-                                  Nota: &quot;{entry.general_notes}&quot;
-                                </p>
-                              )}
-                            </div>
-                          )}
-
-                          {exit && (
-                            <div className="space-y-1 pt-2 border-t border-border/50">
-                              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">🚪 Checklist de Saída</span>
-                              {formatChecklistItems(exit)}
-                              {exit.general_notes && (
-                                <p className="text-[10px] text-text-subtle italic mt-1 bg-surface-sunken/20 p-2 rounded border border-slate-900">
-                                  Nota: &quot;{exit.general_notes}&quot;
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+      {/* ─── Histórico clínico ─── */}
+      <Modal
+        open={selectedEqForHistory !== null}
+        onClose={() => setSelectedEqForHistory(null)}
+        title={`Histórico clínico — ${selectedEqForHistory?.name ?? ''}`}
+        description={
+          selectedEqForHistory
+            ? [
+                selectedEqForHistory.brand,
+                selectedEqForHistory.model,
+                selectedEqForHistory.serial_number
+                  ? `S/N: ${selectedEqForHistory.serial_number}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' • ')
+            : undefined
+        }
+        size="xl"
+      >
+        {loadingHistory ? (
+          <div className="space-y-4" aria-busy="true" aria-label="Carregando histórico clínico">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-24 w-full" style={{ animationDelay: `${i * 80}ms` }} />
+            ))}
           </div>
+        ) : eqChecklistHistory.length === 0 ? (
+          <EmptyState
+            icon={<Wrench />}
+            title="Nenhum checklist registrado"
+            description="Este equipamento ainda não passou por uma ordem de serviço com checklist preenchido."
+          />
+        ) : (
+          <div className="relative border-l border-border ml-3 space-y-8 pb-4">
+            {eqChecklistHistory.map((historyItem) => (
+              <ChecklistTimelineItem
+                key={historyItem.id}
+                item={historyItem}
+                onOpenOrder={(orderId) => {
+                  setSelectedEqForHistory(null);
+                  router.push(`/dashboard/orders/${orderId}`);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Subcomponentes locais
+   ───────────────────────────────────────────────────────────── */
+
+function FichaLinha({
+  icon,
+  label,
+  value,
+  mono = false,
+  highlight = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  mono?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={cn(
+          'p-2.5 rounded-2xl border border-glass-border shrink-0',
+          highlight ? 'bg-brand/15 text-brand' : 'bg-surface-sunken text-text-muted',
+        )}
+        aria-hidden
+      >
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <dt className="text-caption text-text-subtle uppercase tracking-wider">{label}</dt>
+        <dd
+          className={cn(
+            'text-small font-semibold text-text truncate',
+            mono && 'font-mono tabular-nums',
+          )}
+        >
+          {value}
+        </dd>
+      </div>
+    </div>
+  );
+}
+
+function ChecklistItems({ checklist }: { checklist: any }) {
+  if (!checklist) return null;
+
+  const itemsList = Object.entries(checklist).filter(
+    ([key]) => !['password_pin', 'general_notes'].includes(key),
+  );
+
+  if (itemsList.length === 0) {
+    return (
+      <span className="text-caption text-text-subtle italic block mt-1">
+        Nenhum item preenchido
+      </span>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 bg-surface-sunken p-3 rounded-xl border border-border">
+      {itemsList.map(([key, val]: [string, any]) => {
+        const isChecked = typeof val === 'object' ? val.checked : !!val;
+        const note = typeof val === 'object' ? val.observation : '';
+        return (
+          <div key={key} className="text-caption flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'w-1.5 h-1.5 rounded-full shrink-0',
+                  isChecked ? 'bg-success' : 'bg-danger',
+                )}
+                aria-hidden
+              />
+              <span className="text-text capitalize truncate">{key.replace(/_/g, ' ')}</span>
+            </div>
+            {note && (
+              <span className="text-caption text-text-subtle italic pl-3 truncate" title={note}>
+                Obs: {note}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ChecklistTimelineItem({
+  item,
+  onOpenOrder,
+}: {
+  item: any;
+  onOpenOrder: (orderId: string) => void;
+}) {
+  const entry = item.entry_checklist;
+  const exit = item.exit_checklist;
+
+  return (
+    <div className="relative pl-6">
+      <span
+        className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-surface-raised border border-border flex items-center justify-center"
+        aria-hidden
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-brand" />
+      </span>
+
+      <div className="bg-surface-sunken border border-border p-4 rounded-xl space-y-3">
+        <div className="flex justify-between items-center gap-2">
+          {/* Era um <span> com onClick: inalcançável por teclado. */}
+          <button
+            type="button"
+            onClick={() => onOpenOrder(item.id)}
+            className="text-small font-semibold text-text hover:text-brand transition-colors font-mono tabular-nums cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            O.S. #{item.service_number || item.id.slice(0, 8)}
+          </button>
+          <span className="text-caption text-text-subtle font-mono tabular-nums shrink-0">
+            {new Date(item.created_at).toLocaleDateString('pt-BR')}
+          </span>
         </div>
-      )}
+
+        <div className="flex items-center gap-2">
+          <span className="text-caption text-text-subtle">Status:</span>
+          <StatusBadge status={item.status} />
+        </div>
+
+        {entry && (
+          <div className="space-y-1">
+            <span className="text-caption font-semibold text-text-muted uppercase tracking-wider block">
+              Checklist de entrada
+            </span>
+            <ChecklistItems checklist={entry} />
+            {entry.password_pin?.has_password && (
+              <p className="text-caption text-text-subtle bg-surface-raised px-2 py-1 rounded-lg inline-block border border-border mt-1">
+                Senha/PIN:{' '}
+                <span className="text-text font-mono">
+                  {entry.password_pin.password_value || 'Sim'}
+                </span>
+              </p>
+            )}
+            {entry.general_notes && (
+              <p className="text-caption text-text-subtle italic mt-1 bg-surface-raised p-2 rounded-lg border border-border">
+                Nota: &quot;{entry.general_notes}&quot;
+              </p>
+            )}
+          </div>
+        )}
+
+        {exit && (
+          <div className="space-y-1 pt-2 border-t border-border">
+            <span className="text-caption font-semibold text-text-muted uppercase tracking-wider block">
+              Checklist de saída
+            </span>
+            <ChecklistItems checklist={exit} />
+            {exit.general_notes && (
+              <p className="text-caption text-text-subtle italic mt-1 bg-surface-raised p-2 rounded-lg border border-border">
+                Nota: &quot;{exit.general_notes}&quot;
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

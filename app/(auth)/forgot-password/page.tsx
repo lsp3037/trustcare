@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+      <div className="bg-surface-raised border border-border rounded-2xl shadow-2xl p-8 relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full"></div>
@@ -45,13 +45,13 @@ export default function ForgotPasswordPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-center text-white mb-2">Recuperar Senha</h2>
-          <p className="text-slate-400 text-center mb-8 text-sm">
+          <p className="text-text-muted text-center mb-8 text-sm">
             Digite seu e-mail cadastrado e enviaremos um link para você redefinir sua senha.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-text mb-1">
                 E-mail
               </label>
               <input
@@ -60,14 +60,14 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder:text-slate-600"
+                className="w-full bg-surface-sunken border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder:text-text-subtle"
                 required
               />
             </div>
 
             {message && (
               <div className={`p-4 rounded-lg text-sm border ${
-                message.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                message.type === 'success' ? 'bg-brand/10 text-brand border-brand/25' : 'bg-red-500/10 text-red-500 border-red-500/20'
               }`}>
                 {message.text}
               </div>
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/login"
-              className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors"
+              className="inline-flex items-center text-sm text-text-muted hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar para o Login

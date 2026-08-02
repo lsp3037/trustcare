@@ -1,43 +1,69 @@
 'use client';
-import { QrCode, Building, User, FileText, Phone, Mail, Laptop, Trash2, FolderPlus, MoreHorizontal, Users, Plus, CheckCircle2, Search, AlertCircle, X } from 'lucide-react';
+import {
+  QrCode,
+  Building,
+  User,
+  Phone,
+  Mail,
+  Laptop,
+  Users,
+  Plus,
+  AlertCircle,
+} from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge, EmptyState } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  DropdownMenu,
+  DropdownMenuItem,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  SkeletonTable,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  Toolbar,
+  ToolbarSearch,
+  TR,
+  useConfirm,
+  useToast,
+} from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
-import { useUser } from '@/lib/context/UserContext';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
+import { cn } from '@/lib/utils';
+
+const OFFLINE_HINT = 'Sem conexão com o servidor. A alteração ficou só neste dispositivo.';
 
 export default function ClientsPage() {
   const router = useRouter();
-  const [clients, setClients] = useState<any[]>([]);
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
-  useEffect(() => {
-    const handleOutsideClick = () => setActiveDropdownId(null);
-    window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
-  }, []);
+  const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const { user, role, loading: userLoading } = useUser();
   const [loading, setLoading] = useState(true);
-  
-  // Estados para formulário de Novo Cliente
+
+  // Formulário de novo cliente
   const [isCreating, setIsCreating] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState('PF');
   const [document, setDocument] = useState('');
+  const [documentError, setDocumentError] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState(false);
 
-  // Estados adicionais para fluxo de Equipamento integrado
+  // Fluxo de equipamento encadeado ao cadastro
   const [createdClient, setCreatedClient] = useState<any | null>(null);
   const [addedEquipments, setAddedEquipments] = useState<any[]>([]);
   const [eqName, setEqName] = useState('');
@@ -45,29 +71,26 @@ export default function ClientsPage() {
   const [eqModel, setEqModel] = useState('');
   const [eqSerial, setEqSerial] = useState('');
   const [addingEq, setAddingEq] = useState(false);
-  const [eqError, setEqError] = useState('');
-  const [eqSuccess, setEqSuccess] = useState(false);
 
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name');
+      const { data, error } = await supabase.from('clients').select('*').order('name');
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      const processed = (data || []).map((c: any, index: number) => ({
-        ...c,
-        client_number: c.client_number || (1001 + index)
-      }));
-      setClients(processed);
+      setClients(
+        (data || []).map((c: any, index: number) => ({
+          ...c,
+          client_number: c.client_number || 1001 + index,
+        })),
+      );
     } catch (err) {
       console.warn('Erro ao carregar clientes do Supabase, usando fallback local:', err);
       loadLocalClients();
+      toast.warning('Exibindo dados salvos neste dispositivo', {
+        description: 'Não foi possível falar com o servidor. A lista pode estar desatualizada.',
+      });
     } finally {
       setLoading(false);
     }
@@ -76,12 +99,12 @@ export default function ClientsPage() {
   const loadLocalClients = () => {
     const localClients = localStorage.getItem('mock-clients');
     if (localClients) {
-      const parsed = JSON.parse(localClients);
-      const processed = parsed.map((c: any, index: number) => ({
-        ...c,
-        client_number: c.client_number || (1001 + index)
-      }));
-      setClients(processed);
+      setClients(
+        JSON.parse(localClients).map((c: any, index: number) => ({
+          ...c,
+          client_number: c.client_number || 1001 + index,
+        })),
+      );
     } else {
       const initialMock = [
         { id: 'c1', client_number: 1001, type: 'PJ', name: 'Tech Solutions Ltda', document: '12.345.678/0001-90', phone: '(11) 98765-4321', email: 'contato@techsolutions.com' },
@@ -100,38 +123,34 @@ export default function ClientsPage() {
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validação de documento fica no próprio campo, não num banner no topo:
+    // o erro precisa estar onde se corrige.
     if (document && !validateDocument(document)) {
-      setFormError('CPF ou CNPJ inválido. Por favor, verifique os dígitos.');
+      setDocumentError(
+        `${type === 'PF' ? 'CPF' : 'CNPJ'} inválido. Confira os dígitos.`,
+      );
       return;
     }
+    setDocumentError('');
     setSubmitting(true);
-    setFormError('');
-    setFormSuccess(false);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let companyId = 'mock-tenant-id';
-      
+
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('company_id')
           .eq('user_id', user.id)
           .single();
-
-        if (profile?.company_id) {
-          companyId = profile.company_id;
-        }
+        if (profile?.company_id) companyId = profile.company_id;
       }
 
-      const newClientData = {
-        company_id: companyId,
-        type,
-        name,
-        document,
-        phone,
-        email,
-      };
+      const newClientData = { company_id: companyId, type, name, document, phone, email };
 
       const { data: insertedClient, error } = await supabase
         .from('clients')
@@ -143,26 +162,29 @@ export default function ClientsPage() {
 
       if (error) {
         console.warn('Falha Supabase, salvando mock local:', error.message);
-        
-        // Salva mock com número sequencial
+
         const currentMock = [...clients];
-        const nextNumber = Math.max(...currentMock.map(c => c.client_number || 1000), 1000) + 1;
-        const mockId = `mock-client-${Date.now()}`;
+        const nextNumber =
+          Math.max(...currentMock.map((c) => c.client_number || 1000), 1000) + 1;
         finalClient = {
-          id: mockId,
+          id: `mock-client-${Date.now()}`,
           client_number: nextNumber,
-          ...newClientData
+          ...newClientData,
         };
         currentMock.push(finalClient);
         localStorage.setItem('mock-clients', JSON.stringify(currentMock));
+
+        toast.warning('Cliente salvo apenas neste dispositivo', { description: OFFLINE_HINT });
+      } else {
+        toast.success(`Cliente "${name}" cadastrado`);
       }
 
       setCreatedClient(finalClient);
-      setFormSuccess(true);
       fetchClients();
-
     } catch (err: any) {
-      setFormError(err.message || 'Falha ao salvar cliente.');
+      toast.error('Não foi possível salvar o cliente', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -173,14 +195,18 @@ export default function ClientsPage() {
     if (!createdClient) return;
 
     setAddingEq(true);
-    setEqError('');
-    setEqSuccess(false);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let companyId = 'mock-tenant-id';
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single();
         if (profile?.company_id) companyId = profile.company_id;
       }
 
@@ -203,381 +229,317 @@ export default function ClientsPage() {
 
       if (error) {
         console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
-        
+
         const mockEqs = localStorage.getItem('mock-equipments');
-        const allEqs = mockEqs ? JSON.parse(mockEqs) : [
-          { id: 'eq1', client_id: 'c1', name: 'Notebook Dell Latitude 3420', brand: 'Dell', model: 'Latitude 3420', serial_number: 'PE091728' },
-          { id: 'eq2', client_id: 'c2', name: 'Desktop Gamer Custom', brand: 'Custom', model: 'Custom Intel i7', serial_number: 'N/A' },
-          { id: 'eq3', client_id: 'c3', name: 'Servidor HP ProLiant DL360 Gen10', brand: 'HP', model: 'ProLiant DL360 Gen10', serial_number: 'SGH817A29B' },
-          { id: 'eq4', client_id: 'c4', name: 'MacBook Air M1', brand: 'Apple', model: 'MacBook Air M1 2020', serial_number: 'FVFDR899Q6L5' },
-        ];
-        
-        finalEq = {
-          id: `mock-eq-${Date.now()}`,
-          ...newEq
-        };
+        const allEqs = mockEqs ? JSON.parse(mockEqs) : [];
+
+        finalEq = { id: `mock-eq-${Date.now()}`, ...newEq };
         allEqs.push(finalEq);
         localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
+
+        toast.warning('Equipamento salvo apenas neste dispositivo', { description: OFFLINE_HINT });
+      } else {
+        toast.success(`"${eqName}" adicionado`);
       }
 
       setAddedEquipments((prev) => [...prev, finalEq || newEq]);
-      setEqSuccess(true);
       setEqName('');
       setEqBrand('');
       setEqModel('');
       setEqSerial('');
-      
-      setTimeout(() => {
-        setEqSuccess(false);
-      }, 3000);
-
     } catch (err: any) {
-      setEqError(err.message || 'Erro ao adicionar equipamento.');
+      toast.error('Não foi possível adicionar o equipamento', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setAddingEq(false);
     }
   };
 
-  const handleCloseModal = () => {
+  const resetCreateFlow = () => {
     setIsCreating(false);
     setCreatedClient(null);
     setAddedEquipments([]);
     setName('');
     setDocument('');
+    setDocumentError('');
     setPhone('');
     setEmail('');
     setType('PF');
-    setFormSuccess(false);
-    setFormError('');
     setEqName('');
     setEqBrand('');
     setEqModel('');
     setEqSerial('');
-    setEqSuccess(false);
-    setEqError('');
     fetchClients();
   };
 
-  const handleDeleteClient = async (id: string) => {
-    const confirmDelete = window.confirm('Deseja realmente excluir este cliente? Esta ação não pode ser desfeita.');
-    if (!confirmDelete) return;
+  const handleDeleteClient = async (client: any) => {
+    const confirmed = await confirm({
+      title: `Excluir o cliente "${client.name}"?`,
+      description:
+        'O cadastro, os equipamentos e o histórico de contato somem. Clientes com ordens de serviço vinculadas não podem ser excluídos.',
+      confirmLabel: 'Excluir cliente',
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('clients').delete().eq('id', client.id);
       if (error) throw error;
 
-      setClients(prev => prev.filter(c => c.id !== id));
-      alert('Cliente excluído com sucesso!');
+      setClients((prev) => prev.filter((c) => c.id !== client.id));
+      toast.success(`Cliente "${client.name}" excluído`);
     } catch (err: any) {
-      if (err.code === '23503' || err.message?.includes('foreign key constraint') || err.message?.includes('violates foreign key')) {
-        alert('Não é possível excluir este cliente porque ele possui histórico de Ordens de Serviço vinculadas.');
+      const isForeignKey =
+        err.code === '23503' ||
+        err.message?.includes('foreign key constraint') ||
+        err.message?.includes('violates foreign key');
+
+      if (isForeignKey) {
+        // Não é falha de conexão: é uma regra de negócio. Explica a saída.
+        toast.error('Este cliente não pode ser excluído', {
+          description:
+            'Ele tem ordens de serviço vinculadas. Exclua ou transfira as OS antes de remover o cadastro.',
+        });
         return;
       }
 
       console.warn('Erro ao excluir cliente no Supabase, tentando excluir localmente:', err.message);
-      
+
       const localClients = localStorage.getItem('mock-clients');
       if (localClients) {
-        const parsed = JSON.parse(localClients);
-        const filtered = parsed.filter((c: any) => c.id !== id);
+        const filtered = JSON.parse(localClients).filter((c: any) => c.id !== client.id);
         localStorage.setItem('mock-clients', JSON.stringify(filtered));
-        setClients(prev => prev.filter(c => c.id !== id));
-        alert('Cliente excluído com sucesso (local)!');
+        setClients((prev) => prev.filter((c) => c.id !== client.id));
+        toast.warning('Exclusão aplicada apenas neste dispositivo', { description: OFFLINE_HINT });
       } else {
-        alert(`Erro ao excluir cliente: ${err.message || 'Erro desconhecido'}`);
+        toast.error('Não foi possível excluir o cliente', {
+          description: err.message || 'Erro desconhecido.',
+        });
       }
     }
   };
 
-  const filteredClients = clients.filter((client) => {
-    return (
+  const filteredClients = clients.filter(
+    (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (client.document && client.document.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  });
+      (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())),
+  );
+
+  const camposBloqueados = submitting || createdClient !== null;
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-text flex items-center gap-2.5">
-            <Users className="w-8 h-8 text-blue-500" /> Clientes
-          </h1>
-          <p className="text-small text-text-muted mt-1">Gerencie a base de contatos e clientes da sua empresa.</p>
-        </div>
-        {!isCreating && (
-          <Button icon={<Plus className="w-4 h-4" />} onClick={() => setIsCreating(true)}>
-            Novo Cliente
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        icon={<Users />}
+        title="Clientes"
+        description="Gerencie a base de contatos e clientes da sua empresa."
+        actions={
+          !isCreating && (
+            <Button icon={<Plus className="w-4 h-4" />} onClick={() => setIsCreating(true)}>
+              Novo Cliente
+            </Button>
+          )
+        }
+      />
 
       {isCreating ? (
-        <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 md:p-8 max-w-2xl mx-auto shadow-2xl">
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
+        <Card padding="lg" className="max-w-2xl mx-auto">
+          <div className="flex justify-between items-start gap-4 mb-6 pb-4 border-b border-border">
             <div>
               <h2 className="text-h2 text-text">Adicionar Novo Cliente</h2>
-              <p className="text-xs text-text-muted mt-0.5">Cadastre uma pessoa física ou jurídica.</p>
+              <p className="text-small text-text-muted mt-0.5">
+                Cadastre uma pessoa física ou jurídica.
+              </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleCloseModal}>
+            <Button variant="ghost" size="sm" onClick={resetCreateFlow}>
               Cancelar
             </Button>
           </div>
 
           <form onSubmit={handleCreateClient} className="space-y-5">
-            {formSuccess && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5" />
-                <p className="font-semibold text-sm">Cliente cadastrado com sucesso!</p>
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Tipo">
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { value: 'PF', label: 'Pessoa Física' },
+                    { value: 'PJ', label: 'Pessoa Jurídica' },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className={cn(
+                        'flex items-center gap-2 text-small text-text cursor-pointer',
+                        camposBloqueados && 'opacity-50 cursor-not-allowed',
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="client-type"
+                        checked={type === option.value}
+                        onChange={() => setType(option.value)}
+                        disabled={camposBloqueados}
+                        className="accent-brand h-4 w-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
+              </Field>
 
-            {formError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
-                {formError}
-              </div>
-            )}
+              <Input
+                label={type === 'PF' ? 'CPF' : 'CNPJ'}
+                placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
+                value={document}
+                onChange={(e) => {
+                  setDocument(formatDocument(e.target.value));
+                  if (documentError) setDocumentError('');
+                }}
+                maxLength={18}
+                disabled={camposBloqueados}
+                error={documentError}
+                className="font-mono"
+              />
+            </div>
+
+            <Input
+              label={type === 'PF' ? 'Nome Completo' : 'Razão Social'}
+              required
+              placeholder={
+                type === 'PF' ? 'Ex: Carlos Henrique de Souza' : 'Ex: Tech Solutions Ltda'
+              }
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={camposBloqueados}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tipo de Cliente */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Tipo</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
-                    <input
-                      type="radio"
-                      name="client-type"
-                      checked={type === 'PF'}
-                      onChange={() => setType('PF')}
-                      disabled={submitting || createdClient !== null}
-                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border disabled:opacity-50"
-                    />
-                    Pessoa Física (PF)
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
-                    <input
-                      type="radio"
-                      name="client-type"
-                      checked={type === 'PJ'}
-                      onChange={() => setType('PJ')}
-                      disabled={submitting || createdClient !== null}
-                      className="accent-blue-500 h-4 w-4 bg-surface-sunken border border-border disabled:opacity-50"
-                    />
-                    Pessoa Jurídica (PJ)
-                  </label>
-                </div>
-              </div>
-
-              {/* Documento (CPF/CNPJ) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                  {type === 'PF' ? 'CPF' : 'CNPJ'}
-                </label>
-                <div className="relative">
-                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                  <input
-                    type="text"
-                    placeholder={type === 'PF' ? 'Ex: 123.456.789-00' : 'Ex: 12.345.678/0001-90'}
-                    value={document}
-                    onChange={(e) => setDocument(formatDocument(e.target.value))}
-                    maxLength={18}
-                    disabled={submitting || createdClient !== null}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Telefone"
+                placeholder="Ex: (11) 98765-4321"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={camposBloqueados}
+              />
+              <Input
+                label="Email"
+                type="email"
+                placeholder="Ex: cliente@empresa.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={camposBloqueados}
+              />
             </div>
 
-            {/* Nome / Razão Social */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                {type === 'PF' ? 'Nome Completo' : 'Razão Social'}
-              </label>
-              <div className="relative">
-                {type === 'PF' ? (
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                ) : (
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                )}
-                <input
-                  type="text"
-                  placeholder={type === 'PF' ? 'Ex: Carlos Henrique de Souza' : 'Ex: Tech Solutions Ltda'}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={submitting || createdClient !== null}
-                  className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Telefone */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Telefone</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                  <input
-                    type="text"
-                    placeholder="Ex: (11) 98765-4321"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={submitting || createdClient !== null}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wider">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-                  <input
-                    type="email"
-                    placeholder="Ex: cliente@empresa.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={submitting || createdClient !== null}
-                    className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Ações */}
             {!createdClient && (
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button type="submit" loading={submitting} disabled={formSuccess}>
+                <Button type="submit" loading={submitting}>
                   Salvar Cliente
                 </Button>
               </div>
             )}
           </form>
 
-          {/* Seção de Equipamentos (exibida após o cliente ser salvo com sucesso) */}
+          {/* Equipamentos — aparece depois que o cliente existe */}
           {createdClient && (
             <div className="mt-8 pt-8 border-t border-border space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <h3 className="text-h3 text-text flex items-center gap-2">
-                  <Laptop className="w-5 h-5 text-indigo-400" /> Equipamentos do Cliente
+                  <Laptop className="w-5 h-5 text-text-subtle" aria-hidden /> Equipamentos do
+                  Cliente
                 </h3>
-                <Badge tone="info">
-                  {addedEquipments.length} {addedEquipments.length === 1 ? 'equipamento adicionado' : 'equipamentos adicionados'}
+                <Badge tone="info" className="shrink-0">
+                  {addedEquipments.length}{' '}
+                  {addedEquipments.length === 1 ? 'adicionado' : 'adicionados'}
                 </Badge>
               </div>
 
-              {/* Lista de equipamentos adicionados na sessão */}
               {addedEquipments.length > 0 && (
-                <div className="bg-surface-overlay rounded-xl border border-border/80 overflow-hidden shadow-md">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-border text-text-muted font-semibold uppercase tracking-wider bg-surface-sunken/30">
-                        <th className="py-2.5 px-3">Equipamento</th>
-                        <th className="py-2.5 px-3">Marca</th>
-                        <th className="py-2.5 px-3">Modelo</th>
-                        <th className="py-2.5 px-3 text-right">Serial</th>
-                        <th className="py-2.5 px-3 text-center">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                <Card padding="none">
+                  <Table density="compact">
+                    <THead>
+                      <TR>
+                        <TH>Equipamento</TH>
+                        <TH>Marca</TH>
+                        <TH>Modelo</TH>
+                        <TH align="right">Serial</TH>
+                        <TH align="center">Ações</TH>
+                      </TR>
+                    </THead>
+                    <TBody>
                       {addedEquipments.map((eq, idx) => (
-                        <tr key={eq.id || idx} className="hover:bg-slate-800/10 transition-colors">
-                          <td className="py-2.5 px-3 font-semibold text-slate-200">{eq.name}</td>
-                          <td className="py-2.5 px-3 text-text-muted">{eq.brand || '—'}</td>
-                          <td className="py-2.5 px-3 text-text-muted">{eq.model || '—'}</td>
-                          <td className="py-2.5 px-3 text-right font-mono text-text">{eq.serial_number || '—'}</td>
-                          <td className="py-2.5 px-3 text-center">
+                        <TR key={eq.id || idx}>
+                          <TD className="font-semibold">{eq.name}</TD>
+                          <TD className="text-text-muted">{eq.brand || '—'}</TD>
+                          <TD className="text-text-muted">{eq.model || '—'}</TD>
+                          <TD align="right" numeric>
+                            {eq.serial_number || '—'}
+                          </TD>
+                          <TD align="center">
                             <Button
-                              type="button"
                               variant="secondary"
                               size="sm"
-                              className="h-auto py-1 px-2 text-[10px]"
                               icon={<Plus className="w-3 h-3" />}
                               onClick={() => {
                                 setIsCreating(false);
-                                router.push(`/dashboard/orders?new=true&client_id=${createdClient?.id}&equipment_id=${eq.id}`);
+                                router.push(
+                                  `/dashboard/orders?new=true&client_id=${createdClient?.id}&equipment_id=${eq.id}`,
+                                );
                               }}
                             >
                               Abrir O.S.
                             </Button>
-                          </td>
-                        </tr>
+                          </TD>
+                        </TR>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </TBody>
+                  </Table>
+                </Card>
               )}
 
-              {/* Formulário de novo equipamento */}
-              <form onSubmit={handleCreateEquipment} className="space-y-4 bg-surface-overlay p-5 rounded-xl border border-border/80">
-                <h4 className="text-xs font-bold text-text uppercase tracking-wider">Novo Equipamento</h4>
-
-                {eqSuccess && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> Equipamento adicionado com sucesso!
-                  </div>
-                )}
-                {eqError && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500">
-                    {eqError}
-                  </div>
-                )}
+              <form
+                onSubmit={handleCreateEquipment}
+                className="space-y-4 bg-surface-sunken p-5 rounded-xl border border-border"
+              >
+                <h4 className="text-caption font-semibold text-text uppercase tracking-wider">
+                  Novo Equipamento
+                </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Identificação / Nome</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Notebook do Cliente"
-                      value={eqName}
-                      onChange={(e) => setEqName(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Marca</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Lenovo"
-                      value={eqBrand}
-                      onChange={(e) => setEqBrand(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Modelo</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: ThinkPad E14"
-                      value={eqModel}
-                      onChange={(e) => setEqModel(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded-xl py-2 px-3 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Nº de Série / Tag</label>
+                  <Input
+                    label="Identificação / Nome"
+                    required
+                    placeholder="Ex: Notebook do Cliente"
+                    value={eqName}
+                    onChange={(e) => setEqName(e.target.value)}
+                  />
+                  <Input
+                    label="Marca"
+                    placeholder="Ex: Lenovo"
+                    value={eqBrand}
+                    onChange={(e) => setEqBrand(e.target.value)}
+                  />
+                  <Input
+                    label="Modelo"
+                    placeholder="Ex: ThinkPad E14"
+                    value={eqModel}
+                    onChange={(e) => setEqModel(e.target.value)}
+                  />
+                  <Field label="Nº de Série / Tag">
                     <div className="relative">
-                      <QrCode className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle" />
-                      <input
-                        type="text"
+                      <QrCode
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle pointer-events-none"
+                        aria-hidden
+                      />
+                      <Input
+                        aria-label="Número de série"
                         placeholder="Ex: PF1A2B3C"
                         value={eqSerial}
                         onChange={(e) => setEqSerial(e.target.value)}
-                        className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-3 pr-10 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
+                        className="pr-10"
                       />
                     </div>
-                  </div>
+                  </Field>
                 </div>
 
                 <div className="flex justify-end pt-2">
@@ -593,18 +555,20 @@ export default function ClientsPage() {
               </form>
 
               <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-border">
-                <Button type="button" variant="secondary" size="sm" onClick={handleCloseModal}>
+                <Button variant="secondary" onClick={resetCreateFlow}>
                   Concluir Cadastro
                 </Button>
                 <Button
-                  type="button"
-                  size="sm"
-                  className="flex-1"
                   icon={<Plus className="w-4 h-4" />}
                   onClick={() => {
-                    const lastEqId = addedEquipments.length > 0 ? addedEquipments[addedEquipments.length - 1].id : '';
+                    const lastEqId =
+                      addedEquipments.length > 0
+                        ? addedEquipments[addedEquipments.length - 1].id
+                        : '';
                     setIsCreating(false);
-                    router.push(`/dashboard/orders?new=true&client_id=${createdClient?.id}${lastEqId ? `&equipment_id=${lastEqId}` : ''}`);
+                    router.push(
+                      `/dashboard/orders?new=true&client_id=${createdClient?.id}${lastEqId ? `&equipment_id=${lastEqId}` : ''}`,
+                    );
                   }}
                 >
                   Concluir e Criar O.S.
@@ -612,131 +576,136 @@ export default function ClientsPage() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       ) : (
         <>
-          {/* Campo de Busca */}
-          <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-            <input
-              type="text"
+          <Toolbar>
+            <ToolbarSearch
+              aria-label="Buscar clientes"
               placeholder="Buscar por nome, documento ou email..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              onValueChange={setSearchTerm}
             />
-          </div>
+          </Toolbar>
 
-          {/* Listagem de Clientes */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-              <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-sm text-text-muted">Carregando clientes...</p>
-            </div>
+            <Card padding="none">
+              <SkeletonTable rows={6} columns={5} />
+            </Card>
           ) : filteredClients.length === 0 ? (
-            <div className="bg-surface-raised border border-border rounded-2xl">
+            <Card>
               <EmptyState
                 icon={<AlertCircle />}
-                title="Nenhum cliente encontrado"
-                description="Tente ajustar seus termos de pesquisa."
+                title={searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+                description={
+                  searchTerm
+                    ? 'Tente ajustar seus termos de pesquisa.'
+                    : 'Cadastre seus clientes para vincular equipamentos e ordens de serviço a eles.'
+                }
+                action={
+                  searchTerm ? (
+                    <Button variant="secondary" onClick={() => setSearchTerm('')}>
+                      Limpar busca
+                    </Button>
+                  ) : (
+                    <Button
+                      icon={<Plus className="w-4 h-4" />}
+                      onClick={() => setIsCreating(true)}
+                    >
+                      Cadastrar primeiro cliente
+                    </Button>
+                  )
+                }
               />
-            </div>
+            </Card>
           ) : (
-            <div className="bg-surface-raised border border-border rounded-2xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
-                      <th className="py-4 px-6 text-center">ID</th>
-                      <th className="py-4 px-6">Nome</th>
-                      <th className="py-4 px-6">Tipo</th>
-                      <th className="py-4 px-6">Documento</th>
-                      <th className="py-4 px-6">Contato</th>
-                      <th className="py-4 px-6 text-center">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/40">
-                    {filteredClients.map((client) => (
-                      <tr key={client.id} className="hover:bg-slate-800/20 transition-colors">
-                        <td className="py-4 px-6 text-center font-semibold text-text-muted text-xs font-mono">
-                          #{client.client_number || client.id.toString().slice(0, 4)}
-                        </td>
-                        <td className="py-4 px-6 font-bold text-slate-200">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 ${client.type === 'PJ' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-blue-500/10 text-blue-400'}`}>
-                              {client.type === 'PJ' ? <Building className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                            </div>
-                            <Link href={`/dashboard/clients/${client.id}`} className="truncate max-w-[200px] md:max-w-xs hover:text-blue-400 hover:underline transition-colors">
-                              {client.name}
-                            </Link>
+            <Card padding="none">
+              <Table>
+                <THead>
+                  <TR>
+                    <TH align="center">ID</TH>
+                    <TH>Nome</TH>
+                    <TH>Tipo</TH>
+                    <TH>Documento</TH>
+                    <TH>Contato</TH>
+                    <TH align="center" className="w-12">
+                      <span className="sr-only">Ações</span>
+                    </TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {filteredClients.map((client) => (
+                    <TR key={client.id}>
+                      <TD align="center" numeric className="text-text-muted">
+                        #{client.client_number || client.id.toString().slice(0, 4)}
+                      </TD>
+                      <TD className="font-semibold">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              'p-1.5 rounded-2xl border border-glass-border shrink-0',
+                              client.type === 'PJ'
+                                ? 'bg-brand/10 text-brand'
+                                : 'bg-info/10 text-info',
+                            )}
+                            aria-hidden
+                          >
+                            {client.type === 'PJ' ? (
+                              <Building className="w-4 h-4" />
+                            ) : (
+                              <User className="w-4 h-4" />
+                            )}
                           </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge tone={client.type === 'PJ' ? 'brand' : 'info'} className="tracking-wide">
-                            {client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-6 text-text font-mono text-xs">{client.document || '—'}</td>
-                        <td className="py-4 px-6 space-y-1 text-text-muted text-xs">
+                          <Link
+                            href={`/dashboard/clients/${client.id}`}
+                            className="truncate max-w-[200px] md:max-w-xs hover:text-brand hover:underline transition-colors rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          >
+                            {client.name}
+                          </Link>
+                        </div>
+                      </TD>
+                      <TD>
+                        <Badge tone={client.type === 'PJ' ? 'brand' : 'info'}>
+                          {client.type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
+                        </Badge>
+                      </TD>
+                      <TD numeric>{client.document || '—'}</TD>
+                      <TD className="text-text-muted">
+                        <div className="space-y-1">
                           {client.phone && (
                             <div className="flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-text-subtle" />
-                              <span>{client.phone}</span>
-                              <WhatsAppButton 
-                                phone={client.phone} 
-                                className="p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
-                              />
+                              <Phone className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
+                              <span className="font-mono tabular-nums">{client.phone}</span>
+                              <WhatsAppButton phone={client.phone} />
                             </div>
                           )}
                           {client.email && (
                             <div className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-text-subtle" />
-                              <span className="hover:text-blue-400 cursor-pointer">{client.email}</span>
+                              <Mail className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
+                              <span className="truncate max-w-[200px]">{client.email}</span>
                             </div>
                           )}
-                        </td>
-                        <td className="py-4 px-6 text-center relative">
-                          <button
-                            type="button"
-                            aria-label={`Ações do cliente ${client.name}`}
-                            aria-expanded={activeDropdownId === client.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDropdownId(activeDropdownId === client.id ? null : client.id);
-                            }}
-                            className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          {!client.phone && !client.email && '—'}
+                        </div>
+                      </TD>
+                      <TD align="center">
+                        <DropdownMenu label={`Ações do cliente ${client.name}`}>
+                          <DropdownMenuItem href={`/dashboard/clients/${client.id}`}>
+                            Ver detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            destructive
+                            onSelect={() => handleDeleteClient(client)}
                           >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-
-                          {activeDropdownId === client.id && (
-                            <div className="absolute right-8 top-1/2 -translate-y-1/2 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
-                              <Link
-                                href={`/dashboard/clients/${client.id}`}
-                                className="block w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
-                              >
-                                Ver Detalhes
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveDropdownId(null);
-                                  handleDeleteClient(client.id);
-                                }}
-                                className="w-full text-left px-3 py-2 text-small font-medium text-danger hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                              >
-                                Excluir Cliente
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                            Excluir cliente
+                          </DropdownMenuItem>
+                        </DropdownMenu>
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            </Card>
           )}
         </>
       )}

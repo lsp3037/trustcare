@@ -7,7 +7,7 @@ import { useUser } from '@/lib/context/UserContext';
 import { supabase } from '@/lib/supabase/client';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge, useConfirm, useToast } from '@/components/ui';
 
 type Profile = {
   id: string;
@@ -30,6 +30,8 @@ type Invite = {
 export default function TeamSettingsPage() {
   const router = useRouter();
   const { role, loading: userLoading } = useUser();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -142,28 +144,41 @@ export default function TeamSettingsPage() {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedLink);
-    alert('Link copiado para a área de transferência!');
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedLink);
+      toast.success('Link copiado');
+    } catch {
+      toast.error('Não foi possível copiar', {
+        description: 'Selecione o link e copie manualmente.',
+      });
+    }
   };
 
-  const handleDeleteInvite = async (id: string) => {
-    if (!confirm('Tem certeza que deseja cancelar este convite?')) return;
-    
+  const handleDeleteInvite = async (invite: any) => {
+    const confirmed = await confirm({
+      title: 'Cancelar este convite?',
+      description: `O link enviado para ${invite.email} deixa de funcionar imediatamente. Você pode gerar um novo depois.`,
+      confirmLabel: 'Cancelar convite',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
     try {
-      const { error } = await supabase.from('invites').delete().eq('id', id);
+      const { error } = await supabase.from('invites').delete().eq('id', invite.id);
       if (error) throw error;
-      setInvites(invites.filter(i => i.id !== id));
+      setInvites(invites.filter((i) => i.id !== invite.id));
+      toast.success('Convite cancelado');
     } catch (err) {
       console.error('Erro ao excluir convite:', err);
-      alert('Falha ao excluir o convite.');
+      toast.error('Não foi possível cancelar o convite');
     }
   };
 
   if (userLoading || role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 border border-slate-900 rounded-xl">
-        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
+      <div className="flex flex-col items-center justify-center py-20 bg-surface-sunken border border-border rounded-xl">
+        <LoadingSpinner className="w-8 h-8 text-brand animate-spin mb-4" />
         <p className="text-sm text-text-muted">Verificando permissões...</p>
       </div>
     );
@@ -174,13 +189,13 @@ export default function TeamSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-h2 text-text flex items-center gap-2">
-            <Users className="w-6 h-6 text-emerald-500" /> Equipe e Acessos
+            <Users className="w-6 h-6 text-brand" /> Equipe e Acessos
           </h1>
           <p className="text-small text-text-muted mt-1">Gerencie os técnicos e recepcionistas com acesso ao sistema.</p>
         </div>
         
         <Button
-          className="px-6 py-2.5 h-auto text-black uppercase tracking-wider border-b-4 border-emerald-800 hover:border-emerald-600 active:border-b-0 active:translate-y-1"
+          className="px-6 py-2.5 h-auto text-black uppercase tracking-wider border-b-4 border-brand/25 hover:border-brand/40 active:border-b-0 active:translate-y-1"
           icon={<UserPlus className="w-4 h-4 shrink-0" />}
           onClick={() => {
             setIsInviteModalOpen(true);
@@ -193,14 +208,14 @@ export default function TeamSettingsPage() {
         </Button>
       </div>
 
-      <div className="bg-slate-900 border-2 border-border shadow-2xl shadow-black/50 overflow-hidden rounded-xl">
+      <div className="bg-surface-raised border-2 border-border shadow-2xl shadow-black/50 overflow-hidden rounded-xl">
         {/* Tab Header */}
         <div className="border-b-2 border-border bg-surface-sunken/80 px-6 py-4 flex items-center justify-between">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-indigo-500" />
             Membros Ativos
           </h2>
-          <span className="text-[10px] text-text-subtle font-mono uppercase tracking-wider bg-slate-900 px-2 py-1 border border-border">{profiles.length} Usuários</span>
+          <span className="text-caption text-text-subtle font-mono uppercase tracking-wider bg-surface-raised px-2 py-1 border border-border">{profiles.length} Usuários</span>
         </div>
 
         {/* Data Table */}
@@ -208,18 +223,18 @@ export default function TeamSettingsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-sunken/50 border-b border-border">
-                <th className="py-3 px-6 text-[10px] font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">Usuário</th>
-                <th className="py-3 px-6 text-[10px] font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">Cargo/Nível</th>
-                <th className="py-3 px-6 text-[10px] font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">E-mail</th>
-                <th className="py-3 px-6 text-[10px] font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">Cadastro</th>
+                <th className="py-3 px-6 text-caption font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">Usuário</th>
+                <th className="py-3 px-6 text-caption font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">Cargo/Nível</th>
+                <th className="py-3 px-6 text-caption font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">E-mail</th>
+                <th className="py-3 px-6 text-caption font-bold text-text-subtle uppercase tracking-widest whitespace-nowrap">Cadastro</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
                   <td colSpan={4} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <LoadingSpinner className="w-6 h-6 text-emerald-500 animate-spin mb-2" />
+                      <LoadingSpinner className="w-6 h-6 text-brand animate-spin mb-2" />
                       <span className="text-xs text-text-subtle font-mono">Carregando perfis...</span>
                     </div>
                   </td>
@@ -232,13 +247,13 @@ export default function TeamSettingsPage() {
                 </tr>
               ) : (
                 profiles.map((profile) => (
-                  <tr key={profile.id} className="hover:bg-slate-800/20 transition-colors">
+                  <tr key={profile.id} className="hover:bg-surface-overlay transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-slate-800 border border-slate-700 flex items-center justify-center text-text font-bold uppercase text-xs">
+                        <div className="w-8 h-8 bg-surface-overlay border border-border-strong flex items-center justify-center text-text font-bold uppercase text-xs">
                           {profile.full_name?.charAt(0) || 'U'}
                         </div>
-                        <span className="font-semibold text-sm text-slate-200">{profile.full_name || 'Usuário Sem Nome'}</span>
+                        <span className="font-semibold text-sm text-text">{profile.full_name || 'Usuário Sem Nome'}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -265,7 +280,7 @@ export default function TeamSettingsPage() {
 
       {/* Convites Pendentes */}
       {invites.length > 0 && (
-        <div className="bg-slate-900 border-2 border-border shadow-xl overflow-hidden rounded-xl opacity-80 hover:opacity-100 transition-opacity">
+        <div className="bg-surface-raised border-2 border-border shadow-xl overflow-hidden rounded-xl opacity-80 hover:opacity-100 transition-opacity">
           <div className="border-b-2 border-border bg-surface-sunken/80 px-6 py-3 flex items-center justify-between">
             <h2 className="text-sm font-bold text-text flex items-center gap-2">
               <Mail className="w-4 h-4 text-amber-500" />
@@ -274,9 +289,9 @@ export default function TeamSettingsPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-border">
                 {invites.map((invite) => (
-                  <tr key={invite.id} className="hover:bg-slate-800/20">
+                  <tr key={invite.id} className="hover:bg-surface-overlay">
                     <td className="py-3 px-6">
                       <span className="text-xs text-amber-400/80 font-mono">{invite.email}</span>
                     </td>
@@ -290,7 +305,7 @@ export default function TeamSettingsPage() {
                         variant="ghost"
                         size="sm"
                         className="px-1.5 text-danger hover:text-danger"
-                        onClick={() => handleDeleteInvite(invite.id)}
+                        onClick={() => handleDeleteInvite(invite)}
                         title="Cancelar Convite"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -309,7 +324,7 @@ export default function TeamSettingsPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-surface-sunken/80 backdrop-blur-sm" onClick={() => !inviting && setIsInviteModalOpen(false)}></div>
           
-          <div className="relative bg-slate-900 border-2 border-emerald-500/30 w-full max-w-md shadow-2xl shadow-emerald-900/20 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative bg-surface-raised border-2 border-brand/25 w-full max-w-md shadow-2xl rounded-xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b-2 border-border bg-surface-sunken">
               <h3 className="text-h3 text-text uppercase tracking-tight">Novo Convite</h3>
               <Button
@@ -333,8 +348,8 @@ export default function TeamSettingsPage() {
               )}
               
               {inviteSuccess && (
-                <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/50 flex flex-col gap-3">
-                  <div className="flex items-start gap-2 text-emerald-400 text-sm font-bold">
+                <div className="p-4 bg-brand/10 border-2 border-brand/40 flex flex-col gap-3">
+                  <div className="flex items-start gap-2 text-brand text-sm font-bold">
                     <CheckCircle2 className="w-5 h-5 shrink-0" />
                     <span>{inviteSuccess}</span>
                   </div>
@@ -343,7 +358,7 @@ export default function TeamSettingsPage() {
                     <input 
                       readOnly 
                       value={generatedLink} 
-                      className="flex-1 bg-surface-sunken border border-border text-xs font-mono text-emerald-300 p-2 outline-none"
+                      className="flex-1 bg-surface-sunken border border-border text-xs font-mono text-brand p-2 outline-none"
                     />
                     <Button
                       type="button"
@@ -360,30 +375,30 @@ export default function TeamSettingsPage() {
               {!inviteSuccess && (
                 <>
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                    <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                       E-mail do Membro
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                       <input
                         type="email"
                         required
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                         placeholder="tecnico@exemplo.com"
-                        className="w-full pl-10 pr-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 focus:ring-0 transition-all font-mono"
+                        className="w-full pl-10 pr-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand focus:ring-0 transition-all font-mono"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                    <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                       Nível de Acesso (Role)
                     </label>
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-emerald-500 font-mono appearance-none"
+                      className="w-full px-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-mono appearance-none"
                     >
                       <option value="technician">TÉCNICO (Cria O.S., edita, vê clientes)</option>
                       <option value="viewer">RECEPÇÃO (Visualiza O.S., não edita financeiro)</option>

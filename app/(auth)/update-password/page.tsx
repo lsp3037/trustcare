@@ -45,26 +45,26 @@ export default function UpdatePasswordPage() {
 
   return (
     <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+      <div className="bg-surface-raised border border-border rounded-2xl shadow-2xl p-8 relative overflow-hidden">
         {/* Glow effect */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-brand/10 blur-3xl rounded-full"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-brand/10 blur-3xl rounded-full"></div>
 
         <div className="relative z-10">
           <div className="flex justify-center mb-6">
-            <div className="p-3 bg-emerald-500/10 rounded-xl">
-              <KeyRound className="w-8 h-8 text-emerald-500" />
+            <div className="p-3 bg-brand/10 rounded-xl">
+              <KeyRound className="w-8 h-8 text-brand" />
             </div>
           </div>
 
           <h2 className="text-2xl font-bold text-center text-white mb-2">Criar Nova Senha</h2>
-          <p className="text-slate-400 text-center mb-8 text-sm">
+          <p className="text-text-muted text-center mb-8 text-sm">
             Digite sua nova senha abaixo para recuperar o acesso à sua conta.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="pass" className="block text-sm font-medium text-slate-300 mb-1">
+              <label htmlFor="pass" className="block text-sm font-medium text-text mb-1">
                 Nova Senha
               </label>
               <input
@@ -73,13 +73,13 @@ export default function UpdatePasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder:text-slate-600"
+                className="w-full bg-surface-sunken border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all placeholder:text-text-subtle"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-slate-300 mb-1">
+              <label htmlFor="confirm" className="block text-sm font-medium text-text mb-1">
                 Confirmar Nova Senha
               </label>
               <input
@@ -88,14 +88,14 @@ export default function UpdatePasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all placeholder:text-slate-600"
+                className="w-full bg-surface-sunken border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all placeholder:text-text-subtle"
                 required
               />
             </div>
 
             {message && (
               <div className={`p-4 rounded-lg text-sm border ${
-                message.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                message.type === 'success' ? 'bg-brand/10 text-brand border-brand/25' : 'bg-red-500/10 text-red-500 border-red-500/20'
               }`}>
                 {message.text}
               </div>
@@ -104,7 +104,7 @@ export default function UpdatePasswordPage() {
             <button
               type="submit"
               disabled={loading || message?.type === 'success'}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-brand-hover hover:bg-brand-hover text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand/50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Salvando...' : 'Salvar Nova Senha'}
             </button>

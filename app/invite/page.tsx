@@ -128,21 +128,21 @@ function InviteContent() {
 
   if (validating) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin mb-4" />
-        <p className="text-slate-400 font-mono text-sm">Validando convite seguro...</p>
+      <div className="min-h-screen bg-surface-sunken flex flex-col items-center justify-center p-4">
+        <LoadingSpinner className="w-8 h-8 text-brand animate-spin mb-4" />
+        <p className="text-text-muted font-mono text-sm">Validando convite seguro...</p>
       </div>
     );
   }
 
   if (errorMsg && !inviteData && !email) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border-2 border-rose-500/30 p-8 flex flex-col items-center text-center">
-          <ShieldAlert className="w-12 h-12 text-rose-500 mb-4" />
+      <div className="min-h-screen bg-surface-sunken flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-surface-raised border-2 border-rose-500/30 p-8 flex flex-col items-center text-center">
+          <ShieldAlert className="w-12 h-12 text-danger mb-4" />
           <h1 className="text-xl font-bold text-white mb-2">Convite Inválido</h1>
-          <p className="text-sm text-slate-400 mb-6">{errorMsg}</p>
-          <Link href="/login" className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold uppercase tracking-wider text-xs transition-colors border-b-2 border-slate-700">
+          <p className="text-sm text-text-muted mb-6">{errorMsg}</p>
+          <Link href="/login" className="px-6 py-2.5 bg-surface-overlay hover:bg-surface-overlay text-white font-bold uppercase tracking-wider text-xs transition-colors border-b-2 border-border-strong">
             Ir para Login
           </Link>
         </div>
@@ -151,70 +151,70 @@ function InviteContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 bg-[url('/noise.png')] bg-repeat">
+    <div className="min-h-screen bg-surface-sunken flex flex-col items-center justify-center p-4 bg-[url('/noise.png')] bg-repeat">
       <div className="max-w-md w-full animate-in slide-in-from-bottom-4 duration-500">
-        <div className="bg-slate-900 border-2 border-slate-800 shadow-2xl shadow-black/50 p-8 rounded-xl">
+        <div className="bg-surface-raised border-2 border-border shadow-2xl shadow-black/50 p-8 rounded-xl">
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center rotate-3">
-              <Building className="w-6 h-6 text-emerald-400 -rotate-3" />
+            <div className="w-12 h-12 bg-brand/10 border border-brand/30 flex items-center justify-center rotate-3">
+              <Building className="w-6 h-6 text-brand -rotate-3" />
             </div>
           </div>
           
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white tracking-tight uppercase">Aceitar Convite</h1>
             {companyName ? (
-              <p className="text-sm text-slate-400 mt-2">Você foi convidado para ingressar na equipe da empresa <strong className="text-emerald-400">{companyName}</strong>.</p>
+              <p className="text-sm text-text-muted mt-2">Você foi convidado para ingressar na equipe da empresa <strong className="text-brand">{companyName}</strong>.</p>
             ) : (
-              <p className="text-sm text-slate-400 mt-2">Você recebeu um convite seguro. Complete seu cadastro para acessar o painel.</p>
+              <p className="text-sm text-text-muted mt-2">Você recebeu um convite seguro. Complete seu cadastro para acessar o painel.</p>
             )}
           </div>
 
           <form onSubmit={handleAcceptInvite} className="space-y-5">
             {errorMsg && (
-              <div className="p-3 bg-rose-500/10 border-l-4 border-rose-500 text-rose-400 text-xs flex items-start gap-2">
+              <div className="p-3 bg-danger/10 border-l-4 border-rose-500 text-danger text-xs flex items-start gap-2">
                 <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{errorMsg}</span>
               </div>
             )}
             
             {successMsg && (
-              <div className="p-3 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 text-xs flex items-start gap-2">
+              <div className="p-3 bg-brand/10 border-l-4 border-brand text-brand text-xs flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{successMsg}</span>
               </div>
             )}
 
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">E-mail do Convite</label>
+              <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">E-mail do Convite</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!!inviteData?.email}
-                className="w-full px-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono disabled:opacity-50"
+                className="w-full px-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-mono disabled:opacity-50"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nome Completo</label>
+              <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">Nome Completo</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                 <input
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full pl-10 pr-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-mono"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Criar Senha</label>
+              <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">Criar Senha</label>
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                 <input
                   type="password"
                   required
@@ -222,7 +222,7 @@ function InviteContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full pl-10 pr-4 py-3 bg-slate-950 border-2 border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full pl-10 pr-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-mono"
                 />
               </div>
             </div>
@@ -245,8 +245,8 @@ function InviteContent() {
 export default function InvitePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <LoadingSpinner className="w-8 h-8 text-emerald-500 animate-spin" />
+      <div className="min-h-screen bg-surface-sunken flex flex-col items-center justify-center p-4">
+        <LoadingSpinner className="w-8 h-8 text-brand animate-spin" />
       </div>
     }>
       <InviteContent />

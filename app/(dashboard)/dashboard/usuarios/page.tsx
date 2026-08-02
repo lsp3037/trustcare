@@ -1,82 +1,146 @@
 'use client';
-import { Settings, Eye, Wrench, Users, UserPlus, Search, AlertCircle, User, Phone, Pencil, Trash2, X, CheckCircle2, Copy, Mail, Shield, Layers } from 'lucide-react';
+import {
+  Settings,
+  Eye,
+  Wrench,
+  Users,
+  UserPlus,
+  AlertCircle,
+  User,
+  Phone,
+  Pencil,
+  Trash2,
+  Copy,
+  Shield,
+  Layers,
+} from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge, EmptyState } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  Input,
+  Modal,
+  PageHeader,
+  Select,
+  SkeletonTable,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  Toolbar,
+  ToolbarSearch,
+  TR,
+  useConfirm,
+  useToast,
+} from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
+import { cn } from '@/lib/utils';
 
-// Static permissions definition to display inside the registration modal
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: [
     'Gerenciar membros da equipe',
     'Visualizar lucros & faturamento',
     'Acesso às configurações globais',
-    'Editar ordens de serviço'
+    'Editar ordens de serviço',
   ],
   technician: [
     'Atualizar status das OSs',
     'Escrever laudos técnicos',
     'Vincular peças e insumos',
-    'Visualizar fila de bancada'
+    'Visualizar fila de bancada',
   ],
   viewer: [
     'Cadastrar clientes',
     'Abrir novas Ordens de Serviço',
     'Consultar ordens e prazos',
-    'Acesso restrito a painel financeiro'
-  ]
+    'Acesso restrito a painel financeiro',
+  ],
 };
 
+const ROLE_LABEL: Record<string, string> = {
+  admin: 'Administrador',
+  technician: 'Técnico',
+  viewer: 'Recepcionista',
+};
 
+const ROLE_TONE: Record<string, 'danger' | 'info' | 'warning' | 'neutral'> = {
+  admin: 'danger',
+  technician: 'info',
+  viewer: 'warning',
+};
+
+const getRoleLabel = (role: string) => ROLE_LABEL[role] ?? 'Colaborador';
+const getRoleBadgeTone = (role: string) => ROLE_TONE[role] ?? 'neutral';
+
+const ROLE_DETAILS: Record<
+  string,
+  { title: string; description: string; icon: React.ReactNode; toneClass: string }
+> = {
+  admin: {
+    title: 'Administrador',
+    description: 'Acesso completo a todas as seções e relatórios do painel administrativo.',
+    icon: <Settings className="w-6 h-6" />,
+    toneClass: 'border-danger/25 text-danger bg-danger/10',
+  },
+  viewer: {
+    title: 'Recepcionista',
+    description: 'Acesso focado na triagem inicial, cadastro de clientes e consulta de andamento.',
+    icon: <Eye className="w-6 h-6" />,
+    toneClass: 'border-warning/25 text-warning bg-warning/10',
+  },
+  technician: {
+    title: 'Técnico',
+    description: 'Perfil especializado no fluxo de reparo das ordens de serviço no laboratório.',
+    icon: <Wrench className="w-6 h-6" />,
+    toneClass: 'border-info/25 text-info bg-info/10',
+  },
+};
 
 export default function UserManagementPage() {
   const { user, role, loading: userLoading } = useUser();
   const router = useRouter();
   const { maxTechnicians, isReadOnly } = useCompany();
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const [loading, setLoading] = useState(true);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [isMock, setIsMock] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modal State
   const [isCreating, setIsCreating] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
 
-  // Form States
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedRole, setSelectedRole] = useState('technician');
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
-  
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState(false);
 
   useEffect(() => {
     if (userLoading) return;
 
-    const verifyAdminAccess = () => {
-      setCheckingAccess(true);
-      
-      if (role !== 'admin') {
-        router.push('/dashboard');
-      } else {
-        const usingMock = !user;
-        setIsMock(usingMock);
-        setCheckingAccess(false);
-        fetchUsers(usingMock);
-      }
-    };
-
-    verifyAdminAccess();
+    setCheckingAccess(true);
+    if (role !== 'admin') {
+      router.push('/dashboard');
+    } else {
+      const usingMock = !user;
+      setIsMock(usingMock);
+      setCheckingAccess(false);
+      fetchUsers(usingMock);
+    }
   }, [router, role, user, userLoading]);
 
   async function fetchUsers(forceMock?: boolean) {
@@ -88,25 +152,26 @@ export default function UserManagementPage() {
         loadLocalUsers();
         return;
       }
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
 
+      const { data, error } = await supabase.from('profiles').select('*');
       if (error) throw error;
 
-      const processed = (data || []).map(p => ({
-        id: p.id,
-        name: p.full_name || 'Membro da Equipe',
-        email: p.email || 'usuario@empresa.com',
-        phone: p.phone || '',
-        role: p.role || 'technician',
-        status: 'Ativo'
-      }));
-      setUsers(processed);
+      setUsers(
+        (data || []).map((p) => ({
+          id: p.id,
+          name: p.full_name || 'Membro da Equipe',
+          email: p.email || 'usuario@empresa.com',
+          phone: p.phone || '',
+          role: p.role || 'technician',
+          status: 'Ativo',
+        })),
+      );
     } catch (err) {
       console.warn('Erro ao carregar usuários do Supabase, usando mock local:', err);
       loadLocalUsers();
+      toast.warning('Exibindo dados salvos neste dispositivo', {
+        description: 'Não foi possível falar com o servidor.',
+      });
     } finally {
       setLoading(false);
     }
@@ -120,30 +185,34 @@ export default function UserManagementPage() {
       const initialMocks = [
         { id: 'p1', name: 'Luan Sabino Paixão', email: 'luan@techassist.com.br', phone: '(66) 99999-1111', role: 'admin', status: 'Ativo' },
         { id: 'p2', name: 'Samira Paniago', email: 'samira@techassist.com.br', phone: '(66) 99233-8238', role: 'technician', status: 'Ativo' },
-        { id: 'p3', name: 'Carlos Oliveira', email: 'carlos@techassist.com.br', phone: '(66) 99999-3333', role: 'viewer', status: 'Ativo' }
+        { id: 'p3', name: 'Carlos Oliveira', email: 'carlos@techassist.com.br', phone: '(66) 99999-3333', role: 'viewer', status: 'Ativo' },
       ];
       localStorage.setItem('mock-profiles', JSON.stringify(initialMocks));
       setUsers(initialMocks);
     }
   };
 
-  // Invite flow: generates a secure token, inserts into `invites` table, and produces a copyable link.
+  const activeTechs = users.filter((u) => u.role === 'admin' || u.role === 'technician').length;
+  const limiteTecnicosAtingido = selectedRole !== 'viewer' && activeTechs >= maxTechnicians;
+
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setFormError('');
-    setFormSuccess(false);
     setGeneratedInviteLink('');
 
     if (isReadOnly) {
-      setFormError('A conta está em modo apenas-leitura devido a atraso no pagamento. Não é possível gerar novos convites.');
+      toast.error('Convites bloqueados', {
+        description:
+          'A conta está em modo apenas-leitura por atraso no pagamento. Regularize o faturamento para convidar membros.',
+      });
       setSubmitting(false);
       return;
     }
 
-    const activeTechs = users.filter(u => u.role === 'admin' || u.role === 'technician').length;
-    if (selectedRole !== 'viewer' && activeTechs >= maxTechnicians) {
-      setFormError(`Limite de técnicos ativos atingido (${activeTechs} de ${maxTechnicians} permitidos no seu plano). Atualize seu plano para convidar mais técnicos.`);
+    if (limiteTecnicosAtingido) {
+      toast.error('Limite de técnicos atingido', {
+        description: `Você tem ${activeTechs} de ${maxTechnicians} permitidos no seu plano. Atualize o plano para convidar mais.`,
+      });
       setSubmitting(false);
       return;
     }
@@ -162,8 +231,7 @@ export default function UserManagementPage() {
       if (!profileData?.company_id) throw new Error('Empresa não encontrada no perfil.');
 
       const token =
-        Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15);
+        Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -178,38 +246,35 @@ export default function UserManagementPage() {
 
       if (error) throw error;
 
-      const link = `${window.location.origin}/invite?token=${token}`;
-      setGeneratedInviteLink(link);
-      setFormSuccess(true);
+      setGeneratedInviteLink(`${window.location.origin}/invite?token=${token}`);
+      toast.success('Convite gerado', { description: 'Copie o link e envie ao novo membro.' });
     } catch (err: any) {
       console.error('Erro ao gerar convite:', err);
-      setFormError(err.message || 'Ocorreu um erro ao gerar o convite.');
+      toast.error('Não foi possível gerar o convite', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Edit flow: updates profile data in the `profiles` table.
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
     setSubmitting(true);
-    setFormError('');
-    setFormSuccess(false);
 
     try {
       if (isMock) {
-        const localProfiles = localStorage.getItem('mock-profiles') || '[]';
-        const currentList = JSON.parse(localProfiles);
+        const currentList = JSON.parse(localStorage.getItem('mock-profiles') || '[]');
         const updatedList = currentList.map((u: any) =>
-          u.id === editingUser.id
-            ? { ...u, name: fullName, email, phone, role: selectedRole }
-            : u
+          u.id === editingUser.id ? { ...u, name: fullName, email, phone, role: selectedRole } : u,
         );
         localStorage.setItem('mock-profiles', JSON.stringify(updatedList));
         setUsers(updatedList);
-        setFormSuccess(true);
-        setTimeout(() => closeModal(), 1500);
+        toast.warning('Alteração salva apenas neste dispositivo', {
+          description: 'Sem conexão com o servidor.',
+        });
+        closeModal();
         return;
       }
 
@@ -220,14 +285,14 @@ export default function UserManagementPage() {
 
       if (error) throw error;
 
-      setFormSuccess(true);
-      setTimeout(() => {
-        closeModal();
-        fetchUsers();
-      }, 1500);
+      toast.success(`"${fullName}" atualizado`);
+      closeModal();
+      fetchUsers();
     } catch (err: any) {
       console.error('Erro ao atualizar usuário:', err);
-      setFormError(err.message || 'Ocorreu um erro ao salvar as alterações.');
+      toast.error('Não foi possível salvar as alterações', {
+        description: err.message || 'Erro inesperado.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -239,33 +304,37 @@ export default function UserManagementPage() {
     setEmail(colaborador.email);
     setPhone(colaborador.phone || '');
     setSelectedRole(colaborador.role);
-    setFormError('');
-    setFormSuccess(false);
     setIsCreating(true);
   };
 
-  const handleDeleteUser = async (id: string, name: string) => {
-    if (confirm(`Deseja realmente remover o usuário "${name}" do sistema?`)) {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', id);
+  const handleDeleteUser = async (colaborador: any) => {
+    const confirmed = await confirm({
+      title: `Remover "${colaborador.name}" da equipe?`,
+      description:
+        'A pessoa perde o acesso ao sistema imediatamente. As ordens de serviço e laudos que ela registrou continuam no histórico.',
+      confirmLabel: 'Remover acesso',
+      destructive: true,
+    });
+    if (!confirmed) return;
 
-        if (error) throw error;
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', colaborador.id);
+      if (error) throw error;
 
-        alert('Usuário removido com sucesso!');
-        fetchUsers();
-      } catch (err) {
-        console.warn('Erro Supabase, excluindo usuário mock local:', err);
-        const localProfiles = localStorage.getItem('mock-profiles');
-        if (localProfiles) {
-          const parsed = JSON.parse(localProfiles);
-          const filtered = parsed.filter((p: any) => p.id !== id);
-          localStorage.setItem('mock-profiles', JSON.stringify(filtered));
-          setUsers(filtered);
-          alert('[Local] Usuário removido com sucesso!');
-        }
+      toast.success(`"${colaborador.name}" removido da equipe`);
+      fetchUsers();
+    } catch (err) {
+      console.warn('Erro Supabase, excluindo usuário mock local:', err);
+      const localProfiles = localStorage.getItem('mock-profiles');
+      if (localProfiles) {
+        const filtered = JSON.parse(localProfiles).filter((p: any) => p.id !== colaborador.id);
+        localStorage.setItem('mock-profiles', JSON.stringify(filtered));
+        setUsers(filtered);
+        toast.warning('Remoção aplicada apenas neste dispositivo', {
+          description: 'A pessoa continua com acesso até a próxima sincronização.',
+        });
+      } else {
+        toast.error('Não foi possível remover o usuário');
       }
     }
   };
@@ -278,517 +347,334 @@ export default function UserManagementPage() {
     setPhone('');
     setSelectedRole('technician');
     setGeneratedInviteLink('');
-    setFormError('');
-    setFormSuccess(false);
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Administrador';
-      case 'technician': return 'Técnico';
-      case 'viewer': return 'Recepcionista';
-      default: return 'Colaborador';
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedInviteLink);
+      // Copiar sem retorno visual deixa a dúvida de se funcionou.
+      toast.success('Link copiado');
+    } catch {
+      toast.error('Não foi possível copiar', {
+        description: 'Selecione o link e copie manualmente.',
+      });
     }
   };
 
-  const getRoleBadgeTone = (role: string): 'danger' | 'info' | 'warning' | 'neutral' => {
-    switch (role) {
-      case 'admin': return 'danger';
-      case 'technician': return 'info';
-      case 'viewer': return 'warning';
-      default: return 'neutral';
-    }
-  };
-
-  const getRoleDetails = (roleKey: string) => {
-    switch (roleKey) {
-      case 'admin':
-        return {
-          title: 'Administrador',
-          description: 'Acesso completo a todas as seções e relatórios do painel administrativo.',
-          icon: <Settings className="w-8 h-8 text-rose-500" />,
-          colorClass: 'border-rose-500/30 text-rose-400 bg-rose-500/10',
-          permissions: ROLE_PERMISSIONS.admin
-        };
-      case 'viewer':
-        return {
-          title: 'Recepcionista',
-          description: 'Acesso focado na triagem inicial, cadastro de clientes e consulta de andamento.',
-          icon: <Eye className="w-8 h-8 text-amber-500" />,
-          colorClass: 'border-amber-500/30 text-amber-400 bg-amber-500/10',
-          permissions: ROLE_PERMISSIONS.viewer
-        };
-      case 'technician':
-      default:
-        return {
-          title: 'Técnico',
-          description: 'Perfil especializado no fluxo de reparo das ordens de serviço no laboratório.',
-          icon: <Wrench className="w-8 h-8 text-blue-500" />,
-          colorClass: 'border-blue-500/30 text-blue-400 bg-blue-500/10',
-          permissions: ROLE_PERMISSIONS.technician
-        };
-    }
-  };
-
-  const roleDetails = getRoleDetails(selectedRole);
-
-  const filteredUsers = users.filter((user) => {
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getRoleLabel(user.role).toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getRoleLabel(u.role).toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   if (checkingAccess) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-        <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-sm text-text-muted">Verificando permissões de acesso...</p>
-      </div>
+      <Card padding="none" aria-busy="true" aria-label="Verificando permissões de acesso">
+        <SkeletonTable rows={4} columns={5} />
+      </Card>
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-text flex items-center gap-2.5">
-            <Users className="w-8 h-8 text-blue-500" /> Usuários
-          </h1>
-          <p className="text-small text-text-muted mt-1">Gerencie os membros da sua equipe e atribua permissões de acesso.</p>
-        </div>
-        {!isCreating && (
+      <PageHeader
+        icon={<Users />}
+        title="Usuários"
+        description="Gerencie os membros da sua equipe e atribua permissões de acesso."
+        badges={
+          <Badge tone={activeTechs >= maxTechnicians ? 'warning' : 'neutral'}>
+            {activeTechs} de {maxTechnicians} técnicos do plano
+          </Badge>
+        }
+        actions={
           <Button icon={<UserPlus className="w-4 h-4" />} onClick={() => setIsCreating(true)}>
             Convidar Membro
           </Button>
-        )}
-      </div>
+        }
+      />
 
-      {/* Campo de Busca (Identical to Clients search) */}
-      {!isCreating && (
-        <div className="relative w-full md:max-w-md bg-surface-raised p-1 rounded-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
-          <input
-            type="text"
-            placeholder="Buscar por nome, perfil ou email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-surface-sunken border border-border rounded-xl py-2 pl-11 pr-4 text-sm text-text placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+      <Toolbar>
+        <ToolbarSearch
+          aria-label="Buscar membros da equipe"
+          placeholder="Buscar por nome, perfil ou email..."
+          value={searchTerm}
+          onValueChange={setSearchTerm}
+        />
+      </Toolbar>
+
+      {loading ? (
+        <Card padding="none">
+          <SkeletonTable rows={4} columns={5} />
+        </Card>
+      ) : filteredUsers.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<AlertCircle />}
+            title="Nenhum colaborador encontrado"
+            description={
+              searchTerm
+                ? 'Tente ajustar seus termos de pesquisa.'
+                : 'Convide técnicos e recepcionistas para trabalhar junto com você.'
+            }
+            action={
+              searchTerm ? (
+                <Button variant="secondary" onClick={() => setSearchTerm('')}>
+                  Limpar busca
+                </Button>
+              ) : (
+                <Button
+                  icon={<UserPlus className="w-4 h-4" />}
+                  onClick={() => setIsCreating(true)}
+                >
+                  Convidar primeiro membro
+                </Button>
+              )
+            }
           />
-        </div>
-      )}
-
-      {/* Listagem da Equipe (Identical to Clients Table format) */}
-      {!isCreating && (
-        loading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-surface-raised border border-border rounded-2xl">
-            <LoadingSpinner className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-            <p className="text-sm text-text-muted">Carregando dados da equipe...</p>
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="bg-surface-raised border border-border rounded-2xl">
-            <EmptyState
-              icon={<AlertCircle />}
-              title="Nenhum colaborador encontrado"
-              description="Tente ajustar seus termos de pesquisa."
-            />
-          </div>
-        ) : (
-          <div className="bg-surface-raised border border-border rounded-2xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-border text-text-muted font-semibold text-xs uppercase tracking-wider bg-surface-overlay">
-                    <th className="py-4 px-6 text-center">ID</th>
-                    <th className="py-4 px-6">Nome</th>
-                    <th className="py-4 px-6">Perfil</th>
-                    <th className="py-4 px-6">Email</th>
-                    <th className="py-4 px-6">Telefone</th>
-                    <th className="py-4 px-6 text-center">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/40">
-                  {filteredUsers.map((colaborador, index) => (
-                    <tr key={colaborador.id} className="hover:bg-slate-800/20 transition-colors">
-                      {/* Column 1: Sequential ID */}
-                      <td className="py-4 px-6 text-center font-semibold text-text-muted text-xs font-mono">
-                        #{index + 1}
-                      </td>
-                      {/* Column 2: User Name with Square Profile Icon */}
-                      <td className="py-4 px-6 font-bold text-slate-200">
-                        <div className="flex items-center gap-3">
-                          <div className="p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-blue-500/10 text-blue-400">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <span className="truncate max-w-[200px] md:max-w-xs">{colaborador.name}</span>
-                        </div>
-                      </td>
-                      {/* Column 3: Custom Role Badge */}
-                      <td className="py-4 px-6">
-                        <Badge tone={getRoleBadgeTone(colaborador.role)} className="tracking-wide uppercase">
-                          {getRoleLabel(colaborador.role)}
-                        </Badge>
-                      </td>
-                      {/* Column 4: Email */}
-                      <td className="py-4 px-6 text-text font-mono text-xs">
-                        {colaborador.email}
-                      </td>
-                      {/* Column 5: Telefone with WhatsApp green link */}
-                      <td className="py-4 px-6 text-text-muted text-xs font-mono">
-                        {colaborador.phone ? (
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-text-subtle shrink-0" />
-                            <span>{colaborador.phone}</span>
-                            <WhatsAppButton 
-                              phone={colaborador.phone} 
-                              className="p-1.5 rounded-full backdrop-blur-md border border-white/5 shrink-0 bg-emerald-500/10 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition-colors"
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-text-subtle">—</span>
-                        )}
-                      </td>
-                      {/* Column 6: Actions */}
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="px-1.5 text-info hover:text-info"
-                            onClick={() => handleEditClick(colaborador)}
-                            title="Editar Colaborador"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="px-1.5 text-danger hover:text-danger"
-                            onClick={() => handleDeleteUser(colaborador.id, colaborador.name)}
-                            title="Remover Colaborador"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )
-      )}
-
-      {/* Modal — Convidar Novo Membro (fluxo de convite seguro via `invites` table) */}
-      {isCreating && !editingUser && (
-        <div className="fixed inset-0 bg-surface-sunken/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0b0f19] border border-border rounded-xl w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-4 top-4 px-1 z-10"
-              onClick={closeModal}
-              aria-label="Fechar"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-
-            {/* Left side: Invite Form */}
-            <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-border">
-              <div>
-                <h3 className="text-h2 text-text flex items-center gap-2.5">
-                  <UserPlus className="w-5 h-5 text-blue-500" /> Convidar Novo Membro
-                </h3>
-                <p className="text-xs text-text-muted mt-1">
-                  Um link de convite será gerado. O membro convidado define sua própria senha ao aceitar.
-                </p>
-              </div>
-
-              {formError && (
-                <div className="p-3 rounded bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
-                  {formError}
-                </div>
-              )}
-
-              {!formSuccess && (
-                <>
-                  {isReadOnly ? (
-                    <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                      Sua conta está em modo apenas-leitura. Regularize o faturamento para poder convidar novos membros.
-                    </div>
-                  ) : (selectedRole !== 'viewer' && users.filter(u => u.role === 'admin' || u.role === 'technician').length >= maxTechnicians) ? (
-                    <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                      Limite de técnicos atingido ({users.filter(u => u.role === 'admin' || u.role === 'technician').length} de {maxTechnicians} permitidos no seu plano). Atualize o plano para poder adicionar mais técnicos.
-                    </div>
-                  ) : null}
-                </>
-              )}
-
-              {formSuccess && generatedInviteLink ? (
-                <div className="space-y-4">
-                  <div className="p-4 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5">
-                    <CheckCircle2 className="w-5 h-5 shrink-0" />
-                    <p className="font-semibold text-sm">Convite gerado com sucesso! Copie o link e envie ao membro.</p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Link de Convite (válido por 7 dias)</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        readOnly
-                        value={generatedInviteLink}
-                        className="flex-1 bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-emerald-300 font-mono focus:outline-none"
-                      />
-                      <Button
-                        type="button"
-                        className="shrink-0"
-                        onClick={() => {
-                          navigator.clipboard.writeText(generatedInviteLink);
-                        }}
-                        title="Copiar link"
+        </Card>
+      ) : (
+        <Card padding="none">
+          <Table>
+            <THead>
+              <TR>
+                <TH align="center">ID</TH>
+                <TH>Nome</TH>
+                <TH>Perfil</TH>
+                <TH>Email</TH>
+                <TH>Telefone</TH>
+                <TH align="center">Ações</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {filteredUsers.map((colaborador, index) => (
+                <TR key={colaborador.id}>
+                  <TD align="center" numeric className="text-text-muted">
+                    #{index + 1}
+                  </TD>
+                  <TD className="font-semibold">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="p-1.5 rounded-2xl border border-glass-border shrink-0 bg-info/10 text-info"
+                        aria-hidden
                       >
-                        <Copy className="w-3.5 h-3.5" />
+                        <User className="w-4 h-4" />
+                      </div>
+                      <span className="truncate max-w-[200px] md:max-w-xs">
+                        {colaborador.name}
+                      </span>
+                    </div>
+                  </TD>
+                  <TD>
+                    <Badge tone={getRoleBadgeTone(colaborador.role)}>
+                      {getRoleLabel(colaborador.role)}
+                    </Badge>
+                  </TD>
+                  <TD className="text-text-muted truncate max-w-[220px]">{colaborador.email}</TD>
+                  <TD className="text-text-muted">
+                    {colaborador.phone ? (
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-text-subtle shrink-0" aria-hidden />
+                        <span className="font-mono tabular-nums">{colaborador.phone}</span>
+                        <WhatsAppButton phone={colaborador.phone} />
+                      </div>
+                    ) : (
+                      <span className="text-text-subtle">—</span>
+                    )}
+                  </TD>
+                  <TD align="center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="px-1.5"
+                        onClick={() => handleEditClick(colaborador)}
+                        title="Editar colaborador"
+                        aria-label={`Editar ${colaborador.name}`}
+                      >
+                        <Pencil className="w-4 h-4" aria-hidden />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="px-1.5 hover:text-danger"
+                        onClick={() => handleDeleteUser(colaborador)}
+                        title="Remover colaborador"
+                        aria-label={`Remover ${colaborador.name}`}
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden />
                       </Button>
                     </div>
-                  </div>
-                  <Button type="button" variant="secondary" fullWidth className="mt-2" onClick={closeModal}>
-                    Fechar
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleCreateInvite} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-blue-500" /> E-mail do Membro
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="Ex: carlos.tecnico@empresa.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5 text-blue-500" /> Perfil de Acesso
-                    </label>
-                    <select
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
-                    >
-                      <option value="technician">Técnico</option>
-                      <option value="viewer">Recepcionista</option>
-                      <option value="admin">Administrador</option>
-                    </select>
-                  </div>
-
-                  <div className="flex gap-3 pt-4 border-t border-border">
-                    <Button
-                      type="submit"
-                      className="flex-1"
-                      loading={submitting}
-                      disabled={isReadOnly || (selectedRole !== 'viewer' && users.filter(u => u.role === 'admin' || u.role === 'technician').length >= maxTechnicians)}
-                      icon={<UserPlus className="w-3.5 h-3.5" />}
-                    >
-                      Gerar Convite
-                    </Button>
-                    <Button type="button" variant="secondary" className="flex-1" onClick={closeModal}>
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </div>
-
-            {/* Right side: Permission preview (role driven) */}
-            <div className="p-6 md:p-8 md:col-span-4 bg-[#0a0d16] flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="text-[10px] font-bold text-text-subtle uppercase tracking-widest flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5" /> Preview de Permissões
-                </div>
-                <div className={`p-4 border rounded-xl transition-all duration-300 ${roleDetails.colorClass}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-surface-sunken/80 rounded border border-border">
-                      {roleDetails.icon}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{roleDetails.title}</h4>
-                      <p className="text-[10px] text-text-muted uppercase font-mono">Nível de Acesso</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-text mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Ações Autorizadas:</p>
-                  <ul className="space-y-1.5">
-                    {roleDetails.permissions.map((perm, idx) => (
-                      <li key={idx} className="text-xs text-text-muted flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <span>{perm}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <div className="pt-4 border-t border-border text-center md:text-left">
-                <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest block">Trust Care Corp</span>
-                <span className="text-[9px] text-text-subtle font-mono">Controle de Segurança de Acesso</span>
-              </div>
-            </div>
-          </div>
-        </div>
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+        </Card>
       )}
 
-      {/* Modal — Editar Usuário Existente */}
-      {isCreating && editingUser && (
-        <div className="fixed inset-0 bg-surface-sunken/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0b0f19] border border-border rounded-xl w-full max-w-4xl shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 grid grid-cols-1 md:grid-cols-10">
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-4 top-4 px-1 z-10"
-              onClick={closeModal}
-              aria-label="Fechar"
-            >
-              <X className="w-4 h-4" />
+      {/* Convite e edição compartilham o mesmo diálogo: antes eram dois blocos
+          quase idênticos, com o painel de permissões duplicado inteiro. */}
+      <Modal
+        open={isCreating}
+        onClose={closeModal}
+        title={editingUser ? 'Editar Usuário' : 'Convidar Novo Membro'}
+        description={
+          editingUser
+            ? 'Atualize as informações do membro da sua equipe.'
+            : 'Um link de convite será gerado. O membro define a própria senha ao aceitar.'
+        }
+        size="xl"
+        footer={
+          generatedInviteLink ? (
+            <Button variant="secondary" onClick={closeModal}>
+              Fechar
             </Button>
+          ) : (
+            <>
+              <Button variant="secondary" onClick={closeModal}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                form={editingUser ? 'form-editar-usuario' : 'form-convite'}
+                loading={submitting}
+                disabled={!editingUser && (isReadOnly || limiteTecnicosAtingido)}
+                icon={editingUser ? undefined : <UserPlus className="w-3.5 h-3.5" />}
+              >
+                {editingUser ? 'Salvar Alterações' : 'Gerar Convite'}
+              </Button>
+            </>
+          )
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          <div className="md:col-span-3 space-y-4">
+            {!editingUser && isReadOnly && (
+              <p className="p-3 rounded-xl bg-warning/10 border border-warning/25 text-small text-warning">
+                Conta em modo apenas-leitura. Regularize o faturamento para convidar novos membros.
+              </p>
+            )}
 
-            {/* Left side: Edit Form */}
-            <div className="p-6 md:p-8 md:col-span-6 space-y-6 border-b md:border-b-0 md:border-r border-border">
-              <div>
-                <h3 className="text-h2 text-text flex items-center gap-2.5">
-                  <Shield className="w-5 h-5 text-blue-500" /> Editar Usuário
-                </h3>
-                <p className="text-xs text-text-muted mt-1">Atualize as informações do membro da sua equipe.</p>
-              </div>
+            {!editingUser && !isReadOnly && limiteTecnicosAtingido && (
+              <p className="p-3 rounded-xl bg-warning/10 border border-warning/25 text-small text-warning">
+                Limite de técnicos atingido ({activeTechs} de {maxTechnicians} do seu plano).
+                Atualize o plano ou convide como Recepcionista.
+              </p>
+            )}
 
-              <form onSubmit={handleUpdateUser} className="space-y-4">
-                {formSuccess && (
-                  <div className="p-4 rounded bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <p className="font-semibold text-sm">Usuário atualizado com sucesso!</p>
-                  </div>
-                )}
-                {formError && (
-                  <div className="p-3 rounded bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
-                    {formError}
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-blue-500" /> Nome Completo
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Carlos Henrique de Souza"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
+            {generatedInviteLink ? (
+              <Field
+                label="Link de convite"
+                hint="Válido por 7 dias. Envie por WhatsApp ou e-mail."
+              >
+                <div className="flex items-center gap-2">
+                  <Input
+                    aria-label="Link de convite gerado"
+                    readOnly
+                    value={generatedInviteLink}
+                    wrapperClassName="flex-1"
+                    className="font-mono text-caption"
+                  />
+                  <Button type="button" className="shrink-0" onClick={copyInviteLink}>
+                    <Copy className="w-3.5 h-3.5" aria-hidden /> Copiar
+                  </Button>
+                </div>
+              </Field>
+            ) : editingUser ? (
+              <form id="form-editar-usuario" onSubmit={handleUpdateUser} className="space-y-4">
+                <Input
+                  label="Nome Completo"
+                  required
+                  placeholder="Ex: Carlos Henrique de Souza"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="E-mail"
+                    type="email"
                     required
+                    placeholder="Ex: carlos@empresa.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <Input
+                    label="Celular (WhatsApp)"
+                    placeholder="Ex: (66) 99233-8238"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-blue-500" /> E-mail
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="Ex: carlos.tecnico@empresa.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-blue-500" /> Celular (WhatsApp)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: (66) 99233-8238"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text placeholder:text-slate-700 focus:outline-none focus:border-blue-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-blue-500" /> Perfil de Acesso
-                  </label>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full bg-surface-sunken border border-border rounded py-2.5 px-3 text-xs text-text focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
-                  >
-                    <option value="technician">Técnico</option>
-                    <option value="viewer">Recepcionista</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button type="submit" className="flex-1" loading={submitting} disabled={formSuccess}>
-                    Salvar Alterações
-                  </Button>
-                  <Button type="button" variant="secondary" className="flex-1" onClick={closeModal}>
-                    Cancelar
-                  </Button>
-                </div>
+                <Select
+                  label="Perfil de Acesso"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                >
+                  <option value="technician">Técnico</option>
+                  <option value="viewer">Recepcionista</option>
+                  <option value="admin">Administrador</option>
+                </Select>
               </form>
-            </div>
-
-            {/* Right side: Permission preview */}
-            <div className="p-6 md:p-8 md:col-span-4 bg-[#0a0d16] flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="text-[10px] font-bold text-text-subtle uppercase tracking-widest flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5" /> Preview de Permissões
-                </div>
-                <div className={`p-4 border rounded-xl transition-all duration-300 ${roleDetails.colorClass}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-surface-sunken/80 rounded border border-border">
-                      {roleDetails.icon}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{roleDetails.title}</h4>
-                      <p className="text-[10px] text-text-muted uppercase font-mono">Nível de Acesso</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-text mt-4 leading-relaxed font-sans">{roleDetails.description}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">Ações Autorizadas:</p>
-                  <ul className="space-y-1.5">
-                    {roleDetails.permissions.map((perm, idx) => (
-                      <li key={idx} className="text-xs text-text-muted flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <span>{perm}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <div className="pt-4 border-t border-border text-center md:text-left">
-                <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest block">Trust Care Corp</span>
-                <span className="text-[9px] text-text-subtle font-mono">Controle de Segurança de Acesso</span>
-              </div>
-            </div>
+            ) : (
+              <form id="form-convite" onSubmit={handleCreateInvite} className="space-y-4">
+                <Input
+                  label="E-mail do Membro"
+                  type="email"
+                  required
+                  placeholder="Ex: carlos.tecnico@empresa.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Select
+                  label="Perfil de Acesso"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                >
+                  <option value="technician">Técnico</option>
+                  <option value="viewer">Recepcionista</option>
+                  <option value="admin">Administrador</option>
+                </Select>
+              </form>
+            )}
           </div>
+
+          <RolePreview role={selectedRole} />
         </div>
-      )}
+      </Modal>
     </div>
+  );
+}
+
+/** Painel que traduz o perfil escolhido no que a pessoa vai poder fazer. */
+function RolePreview({ role }: { role: string }) {
+  const details = ROLE_DETAILS[role] ?? ROLE_DETAILS.technician;
+  const permissions = ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.technician;
+
+  return (
+    <aside className="md:col-span-2 space-y-4">
+      <p className="text-caption font-semibold text-text-subtle uppercase tracking-wider flex items-center gap-1.5">
+        <Layers className="w-3.5 h-3.5" aria-hidden /> O que este perfil pode fazer
+      </p>
+
+      <div className={cn('p-4 border rounded-xl transition-colors', details.toneClass)}>
+        <div className="flex items-center gap-3">
+          <div className="shrink-0" aria-hidden>
+            {details.icon}
+          </div>
+          <h3 className="text-small font-semibold text-text">{details.title}</h3>
+        </div>
+        <p className="text-caption text-text-muted mt-3 leading-relaxed">{details.description}</p>
+      </div>
+
+      <ul className="space-y-1.5">
+        {permissions.map((perm) => (
+          <li key={perm} className="text-small text-text-muted flex items-start gap-2">
+            <Shield className="w-3.5 h-3.5 text-text-subtle shrink-0 mt-0.5" aria-hidden />
+            <span>{perm}</span>
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
 }
