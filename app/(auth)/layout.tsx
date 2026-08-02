@@ -6,7 +6,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-sunken text-text p-4 relative overflow-hidden">
+    /* `theme-dark`: as telas de autenticação não têm alternador de tema. Sem
+       o escopo, a preferência clara salva no dashboard vazava para cá. */
+    <div className="theme-dark min-h-screen flex items-center justify-center bg-surface-sunken text-text p-4 relative overflow-hidden">
       {/* Background ambient glow/gradients */}
       <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-info/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-brand/5 blur-[120px] pointer-events-none" />

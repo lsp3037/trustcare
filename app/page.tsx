@@ -175,7 +175,10 @@ const whatsappTextLink =
 export default function LandingPage() {
   return (
     <ReactLenis root options={{ lerp: 0.1, anchors: true }}>
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30">
+    {/* `theme-dark`: a landing tem visual próprio e fixo, sem alternador. Sem
+        o escopo, a preferência clara salva no dashboard invertia as escalas
+        `slate-*` que esta página usa e a landing aparecia às avessas. */}
+    <div className="theme-dark min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30">
 
       {/* ── Navigation ── */}
       <nav className="fixed top-0 w-full z-50 border-b border-slate-900 bg-slate-950/90 backdrop-blur-md">

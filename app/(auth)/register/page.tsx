@@ -107,7 +107,7 @@ export default function RegisterPage() {
       </div>
 
       {/* ── Painel Direito: Formulário de Cadastro (Fixo Claro) ── */}
-      <div className="flex-1 bg-surface p-8 flex flex-col justify-center transition-colors duration-200">
+      <div className="theme-light flex-1 bg-surface p-8 flex flex-col justify-center">
         <div className="w-full max-w-sm mx-auto space-y-5">
 
           {/* Header Mobile / Info */}

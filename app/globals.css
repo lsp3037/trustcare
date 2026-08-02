@@ -208,8 +208,67 @@ h1, h2 {
    híbrido não intencional. Campos fora do `Field` herdam o foco do navegador,
    que é o comportamento correto até serem migrados. */
 
+/* ─────────────────────────────────────────────────────────────
+   Escopos de tema fixo
+   ─────────────────────────────────────────────────────────────
+   A landing e as telas de autenticação não têm alternador de tema —
+   têm aparência própria e fixa. Mas a classe `.light` fica salva no
+   localStorage pelo dashboard e vale para o documento inteiro: sem um
+   escopo, quem deixasse o painel no claro veria a landing invertida
+   e o login trocar de cor.
+
+   `.theme-dark` e `.theme-light` recolocam os tokens no valor desejado
+   para a sua subárvore. Como custom properties cascateiam por
+   proximidade, um `.theme-light` dentro de um `.theme-dark` funciona —
+   é exatamente o caso do card dividido do login. */
+
+.theme-dark {
+  /* Escala legada (a landing ainda usa `slate-*` literal) */
+  --color-slate-950: #16181c;
+  --color-slate-900: #1d2024;
+  --color-slate-850: #202327;
+  --color-slate-800: #2a2e34;
+  --color-slate-700: #3a3f47;
+  --color-slate-600: #475569;
+  --color-slate-500: #64748b;
+  --color-slate-400: #94a3b8;
+  --color-slate-300: #cbd5e1;
+  --color-slate-200: #e2e8f0;
+  --color-slate-100: #f1f5f9;
+  --color-slate-50: #f8fafc;
+
+  --color-surface: #16181c;
+  --color-surface-raised: #1d2024;
+  --color-surface-sunken: #101215;
+  --color-surface-overlay: #23262b;
+
+  --color-border: #2a2e34;
+  --color-border-strong: #3a3f47;
+
+  --color-text: #e8e9eb;
+  --color-text-muted: #9ba1a9;
+  --color-text-subtle: #6b7280;
+
+  --color-brand: #10b981;
+  --color-brand-hover: #34d399;
+  --color-brand-contrast: #04120c;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-info: #3b82f6;
+
+  --color-glass: rgb(255 255 255 / 0.04);
+  --color-glass-border: rgb(255 255 255 / 0.08);
+  --color-glass-border-strong: rgb(255 255 255 / 0.12);
+  --color-glass-divider: rgb(255 255 255 / 0.06);
+
+  color-scheme: dark;
+}
+
 /* Light Theme Variables Override */
-html.light {
+html.light,
+.theme-light {
   /* ── Tokens semânticos (tema claro) ──
      Camada nova. À medida que as telas migram para os tokens,
      a inversão de escalas abaixo vai sendo removida. */
@@ -324,6 +383,14 @@ html.light {
   ) {
     color: var(--color-slate-100) !important;
   }
+}
+
+/* A inversão de `text-white` acima é uma regra CSS, não uma variável — o
+   escopo `.theme-dark` não a desfaz sozinho. Dentro dele o branco continua
+   branco, que é o que a landing e o painel esquerdo do login esperam. */
+html.light .theme-dark .text-white,
+html.light .theme-dark .hover\:text-white:hover {
+  color: #ffffff !important;
 }
 
 @media print {

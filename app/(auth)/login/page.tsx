@@ -128,7 +128,7 @@ export default function LoginPage() {
       </div>
 
       {/* ── Painel Direito: Formulário de Autenticação (Fixo Claro) ── */}
-      <div className="flex-1 bg-surface p-8 flex flex-col justify-center transition-colors duration-200">
+      <div className="theme-light flex-1 bg-surface p-8 flex flex-col justify-center">
         <div className="w-full max-w-sm mx-auto space-y-6">
           
           {/* Header Mobile / Info */}
