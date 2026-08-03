@@ -47,6 +47,7 @@ import {
 } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { formatPhone } from '@/lib/utils/phone';
 
 const OFFLINE_HINT = 'Sem conexão com o servidor. A alteração ficou só neste dispositivo.';
 
@@ -650,7 +651,7 @@ export default function ClientDetailPage() {
               <FichaLinha
                 icon={<Phone className="w-5 h-5" />}
                 label="Telefone"
-                value={client.phone || '—'}
+                value={client.phone ? formatPhone(client.phone) : '—'}
                 mono
               />
               <FichaLinha

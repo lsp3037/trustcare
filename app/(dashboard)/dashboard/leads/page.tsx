@@ -35,6 +35,7 @@ import {
 import { getStatusDot, LEAD_STATUS_FLOW } from '@/lib/design/status';
 import { getOriginClasses, LEAD_ORIGINS } from '@/lib/design/lead-origin';
 import { cn } from '@/lib/utils';
+import { formatPhone } from '@/lib/utils/phone';
 
 function createUniqueId(prefix: string): string {
   const timestamp = new Date().getTime();
@@ -718,7 +719,7 @@ export default function LeadsFunnelPage() {
                           {lead.phone && (
                             <span className="text-caption text-text-subtle flex items-center gap-1 shrink-0">
                               <Phone className="w-3 h-3" aria-hidden />
-                              {lead.phone}
+                              {formatPhone(lead.phone)}
                             </span>
                           )}
                         </div>
@@ -1081,7 +1082,7 @@ export default function LeadsFunnelPage() {
               {duplicateClient.phone && (
                 <div className="flex gap-2">
                   <dt className="text-text-muted">Telefone:</dt>
-                  <dd className="text-text font-mono tabular-nums">{duplicateClient.phone}</dd>
+                  <dd className="text-text font-mono tabular-nums">{formatPhone(duplicateClient.phone)}</dd>
                 </div>
               )}
               {duplicateClient.email && (

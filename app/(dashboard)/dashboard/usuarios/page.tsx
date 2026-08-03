@@ -44,6 +44,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useUser } from '@/lib/context/UserContext';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
+import { formatPhone } from '@/lib/utils/phone';
 import { cn } from '@/lib/utils';
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -471,16 +472,26 @@ export default function UserManagementPage() {
                     </Badge>
                   </TD>
                   <TD className="text-text-muted truncate max-w-[220px]">{colaborador.email}</TD>
+                  {/* Mesma grade fixa da listagem de clientes (ícone · valor ·
+                      ação), para que a coluna de contato tenha o mesmo
+                      alinhamento nas duas telas. */}
                   <TD className="text-text-muted">
-                    {colaborador.phone ? (
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-text-subtle shrink-0" aria-hidden />
-                        <span className="font-mono tabular-nums">{colaborador.phone}</span>
-                        <WhatsAppButton phone={colaborador.phone} />
-                      </div>
-                    ) : (
-                      <span className="text-text-subtle">—</span>
-                    )}
+                    <div className="grid grid-cols-[1rem_1fr_1.75rem] items-center gap-2 min-w-[11rem]">
+                      <Phone className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
+                      {colaborador.phone ? (
+                        <>
+                          <span className="font-mono tabular-nums truncate">
+                            {formatPhone(colaborador.phone)}
+                          </span>
+                          <WhatsAppButton phone={colaborador.phone} />
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-text-subtle">—</span>
+                          <span />
+                        </>
+                      )}
+                    </div>
                   </TD>
                   <TD align="center">
                     <div className="flex items-center justify-center gap-1">

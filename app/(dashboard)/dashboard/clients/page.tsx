@@ -40,6 +40,7 @@ import {
 import { supabase } from '@/lib/supabase/client';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
+import { formatPhone } from '@/lib/utils/phone';
 import { cn } from '@/lib/utils';
 
 const OFFLINE_HINT = 'Sem conexão com o servidor. A alteração ficou só neste dispositivo.';
@@ -670,22 +671,41 @@ export default function ClientsPage() {
                         </Badge>
                       </TD>
                       <TD numeric>{client.document || '—'}</TD>
+                      {/* Grade de 3 colunas fixas (ícone · valor · ação) repetida
+                          nas duas linhas: mantém ícone, texto e botão do
+                          WhatsApp na mesma vertical em todas as linhas da
+                          tabela, independentemente do tamanho do número. */}
                       <TD className="text-text-muted">
-                        <div className="space-y-1">
-                          {client.phone && (
-                            <div className="flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
-                              <span className="font-mono tabular-nums">{client.phone}</span>
-                              <WhatsAppButton phone={client.phone} />
-                            </div>
-                          )}
-                          {client.email && (
-                            <div className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
-                              <span className="truncate max-w-[200px]">{client.email}</span>
-                            </div>
-                          )}
-                          {!client.phone && !client.email && '—'}
+                        {/* `min-w` só garante folga para o número não truncar;
+                            o alinhamento vem da grade, não dele. */}
+                        <div className="grid gap-1 min-w-[12rem]">
+                          <div className="grid grid-cols-[1rem_1fr_1.75rem] items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
+                            {client.phone ? (
+                              <>
+                                <span className="font-mono tabular-nums truncate">
+                                  {formatPhone(client.phone)}
+                                </span>
+                                <WhatsAppButton phone={client.phone} />
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-text-subtle">—</span>
+                                <span />
+                              </>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-[1rem_1fr_1.75rem] items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-text-subtle" aria-hidden />
+                            <span
+                              className={cn('truncate', !client.email && 'text-text-subtle')}
+                              title={client.email || undefined}
+                            >
+                              {client.email || '—'}
+                            </span>
+                            <span />
+                          </div>
                         </div>
                       </TD>
                       <TD align="center">
