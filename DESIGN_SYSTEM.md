@@ -56,6 +56,10 @@ A regra de ouro da plataforma é a remoção completa de cantos secos (`rounded-
   - **Shape**: Cantos arredondados contínuos (`rounded-2xl`) em vez de círculos perfeitos.
   - **Estética**: Fundo semi-transparente da cor semântica do contexto (ex: `bg-brand/15 text-brand`, `bg-emerald-500/10 text-emerald-400`) com `backdrop-blur-md` e borda translúcida ultrafina (`border border-white/5`).
 
+### 7. Micro-Animações (Estilo macOS / Apple HIG)
+- **Navegação Lateral**: Pílula de seleção contínua (`rounded-2xl bg-brand/15 text-brand border border-brand/30 shadow-[0_0_16px_rgba(16,185,129,0.14)]`) com transição fluida de 250ms e resposta tátil de clique no ícone (`active:scale-[0.96]`, `group-hover:scale-110`).
+- **Alternância de Tema (Sol ↔ Lua)**: Rotação de 180° com morph de escala e opacidade (`rotate-0 scale-100 opacity-100` ↔ `rotate-90 scale-50 opacity-0`) e transição suave no canvas (`transition-colors duration-300`).
+
 ---
 
 ## 🛠️ Regras de Implementação para IA / Desenvolvedores

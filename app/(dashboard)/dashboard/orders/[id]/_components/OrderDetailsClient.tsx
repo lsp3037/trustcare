@@ -330,8 +330,11 @@ export function OrderDetailsClient({
         media: mediaFiles.map(m => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type }))
       };
       
-      const { data: updatedOs, error: updateErr } = await supabase.from('service_orders').update(updatedOsData).eq('id', id).select().single();
+      const { data: updatedOs, error: updateErr } = await supabase.from('service_orders').update(updatedOsData).eq('id', id).select();
       if (updateErr) throw updateErr;
+      if (!updatedOs || updatedOs.length === 0) {
+        throw new Error('As alterações não foram salvas. Sua conta pode estar bloqueada por pendência financeira ou atraso na assinatura. Verifique o status do seu plano.');
+      }
 
       await supabase.from('service_order_items').delete().eq('service_order_id', id);
 
@@ -365,6 +368,7 @@ export function OrderDetailsClient({
       }
       
       setSuccessMsg('Ordem de Serviço atualizada com sucesso no banco de dados!');
+      router.refresh();
       setTimeout(() => { router.push('/dashboard/orders'); }, 1200);
 
     } catch (err: any) {
@@ -398,6 +402,7 @@ export function OrderDetailsClient({
       const { error: deleteErr } = await supabase.from('service_orders').delete().eq('id', id);
       if (deleteErr) throw deleteErr;
       setSuccessMsg('Ordem de Serviço excluída com sucesso!');
+      router.refresh();
       setTimeout(() => { router.push('/dashboard/orders'); }, 1200);
     } catch (err: any) {
       console.warn('Erro ao excluir:', err.message);
@@ -416,8 +421,11 @@ export function OrderDetailsClient({
     setStatus(newStatus);
     setUpdatingStatus(true);
     try {
-      const { error: updateErr } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', id);
+      const { data: updatedSt, error: updateErr } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', id).select();
       if (updateErr) throw updateErr;
+      if (!updatedSt || updatedSt.length === 0) {
+        throw new Error('Status não alterado. Sua conta pode estar bloqueada por pendência financeira. Verifique o status da sua assinatura.');
+      }
       setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
       if (newStatus === 'Cancelado') {
         setSelectedProducts([]);
@@ -438,14 +446,17 @@ export function OrderDetailsClient({
     setStatus(pendingStatusUpdate);
     setUpdatingStatus(true);
     try {
-      const { error: updateErr } = await supabase.from('service_orders').update({
+      const { data: updatedPay, error: updateErr } = await supabase.from('service_orders').update({
         status: pendingStatusUpdate,
         payment_date: new Date(paymentDate).toISOString(),
         payment_method: paymentMethod,
         pago: true,
         payment_status: 'pago'
-      }).eq('id', id);
+      }).eq('id', id).select();
       if (updateErr) throw updateErr;
+      if (!updatedPay || updatedPay.length === 0) {
+        throw new Error('Atualização não concluída. Sua conta pode estar bloqueada por pendência financeira. Verifique o status da sua assinatura.');
+      }
       setPago(true);
       setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod, pago: true } : null);
       setSuccessMsg('Status e fluxo de caixa atualizados em tempo real!');

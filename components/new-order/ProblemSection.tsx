@@ -2,13 +2,14 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Field, Input, Select } from '@/components/ui';
+import { Card, CardTitle, Field, Input, Select } from '@/components/ui';
 import { OS_STATUS_FLOW } from '@/lib/design/status';
+import { Sliders, FileText } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
-  loading: () => <div className="h-32 w-full animate-pulse bg-surface-sunken border border-border" />,
+  loading: () => <div className="h-32 w-full animate-pulse bg-surface-sunken border border-border rounded-xl" />,
 });
 
 const modules = {
@@ -38,13 +39,10 @@ interface ProblemSectionProps {
   setDiscount: (val: string) => void;
   reportedProblem: string;
   setReportedProblem: (val: string) => void;
-}
-
-/** Título de bloco do formulário. Eram 3 cópias da mesma classe. */
-function BlockTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-h3 text-text border-b border-border pb-2">{children}</h3>
-  );
+  /** When true, only renders the Status/Assignment card (hides the Quill editor card) */
+  hideQuill?: boolean;
+  /** When true, only renders the Quill editor card (hides the Status/Assignment card) */
+  quillOnly?: boolean;
 }
 
 export function ProblemSection({
@@ -56,14 +54,19 @@ export function ProblemSection({
   serviceValue, setServiceValue,
   discount, setDiscount,
   reportedProblem, setReportedProblem,
+  hideQuill = false,
+  quillOnly = false,
 }: ProblemSectionProps) {
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Status e Prioridade */}
-        <div className="space-y-4">
-          <BlockTitle>Status &amp; Prioridade</BlockTitle>
-          <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-6">
+      {/* Bloco de Status, Atribuição e Prazo */}
+      {!quillOnly && (
+        <Card padding="md" className="space-y-4">
+          <CardTitle className="flex items-center gap-2 border-b border-border pb-2">
+            <Sliders className="w-4 h-4 text-brand" aria-hidden /> Status, Atribuição e Prazo
+          </CardTitle>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
               {OS_STATUS_FLOW.map((s) => (
                 <option key={s} value={s}>{s}</option>
@@ -75,33 +78,26 @@ export function ProblemSection({
               <option value="Média">Média</option>
               <option value="Alta">Alta</option>
             </Select>
-          </div>
-        </div>
 
-        {/* Técnico, Previsão e Valores */}
-        <div className="space-y-4">
-          <BlockTitle>Atribuição e Prazo</BlockTitle>
+            <Select
+              label="Técnico Responsável"
+              value={technicianId}
+              onChange={(e) => setTechnicianId(e.target.value)}
+            >
+              <option value="">Não atribuído</option>
+              {technicians.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </Select>
 
-          <Select
-            label="Técnico Responsável"
-            value={technicianId}
-            onChange={(e) => setTechnicianId(e.target.value)}
-          >
-            <option value="">Não atribuído</option>
-            {technicians.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </Select>
+            <Input
+              label="Previsão de Entrega"
+              type="date"
+              value={deliveryPrediction}
+              onChange={(e) => setDeliveryPrediction(e.target.value)}
+              className="font-mono"
+            />
 
-          <Input
-            label="Previsão de Entrega"
-            type="date"
-            value={deliveryPrediction}
-            onChange={(e) => setDeliveryPrediction(e.target.value)}
-            className="font-mono"
-          />
-
-          <div className="grid grid-cols-2 gap-4">
             <Input
               label="Mão de Obra (R$)"
               type="number"
@@ -111,6 +107,7 @@ export function ProblemSection({
               onChange={(e) => setServiceValue(e.target.value)}
               className="font-mono tabular-nums"
             />
+
             <Input
               label="Desconto (R$)"
               type="number"
@@ -121,20 +118,28 @@ export function ProblemSection({
               className="font-mono tabular-nums"
             />
           </div>
-        </div>
-      </div>
+        </Card>
+      )}
 
-      {/* Problema Relatado */}
-      <Field label="Problema Relatado / Sintomas">
-        <ReactQuill
-          theme="snow"
-          modules={modules}
-          formats={formats}
-          value={reportedProblem}
-          onChange={setReportedProblem}
-          placeholder="Descreva o problema relatado..."
-        />
-      </Field>
-    </>
+      {/* Bloco do Problema Relatado — renderizado à parte para ter largura total */}
+      {!hideQuill && (
+        <Card padding="md" className="space-y-4">
+          <CardTitle className="flex items-center gap-2 border-b border-border pb-2">
+            <FileText className="w-4 h-4 text-brand" aria-hidden /> Problema Relatado / Sintomas
+          </CardTitle>
+
+          <Field>
+            <ReactQuill
+              theme="snow"
+              modules={modules}
+              formats={formats}
+              value={reportedProblem}
+              onChange={setReportedProblem}
+              placeholder="Descreva o problema relatado..."
+            />
+          </Field>
+        </Card>
+      )}
+    </div>
   );
 }

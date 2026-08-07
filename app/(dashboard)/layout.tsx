@@ -59,13 +59,13 @@ function navItemClasses({
   collapsed?: boolean;
 }) {
   return cn(
-    'flex items-center transition-colors duration-150 rounded-xl',
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
-    collapsed ? 'justify-center px-0' : 'gap-3 px-3',
+    'relative flex items-center transition-all duration-250 ease-out rounded-2xl group cursor-pointer select-none',
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand active:scale-[0.96]',
+    collapsed ? 'justify-center w-11 h-11 p-0 mx-auto' : 'gap-3 px-3.5',
     nested ? 'py-2 text-small font-medium' : 'py-2.5 text-body font-medium',
     active
-      ? 'bg-brand/15 text-brand font-semibold backdrop-blur-sm border border-brand/20'
-      : 'text-text-muted hover:text-text hover:bg-surface-overlay',
+      ? 'bg-brand/15 text-brand font-semibold backdrop-blur-md border border-brand/30 shadow-[0_0_16px_rgba(16,185,129,0.14)]'
+      : 'text-text-muted hover:text-text hover:bg-surface-overlay border border-transparent',
   );
 }
 
@@ -308,13 +308,13 @@ function DashboardLayoutContent({
                   )}
                 >
                   <span className={cn("flex items-center min-w-0", sidebarOpen ? "gap-3" : "justify-center w-full")}>
-                    <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                    <Icon className={cn("w-5 h-5 shrink-0 transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-90", isSubActive && "scale-105")} aria-hidden />
                     {sidebarOpen && <span className="truncate">{item.name}</span>}
                   </span>
                   {sidebarOpen && (
                     settingsOpen
-                      ? <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
-                      : <ChevronRight className="w-4 h-4 shrink-0" aria-hidden />
+                      ? <ChevronDown className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden />
+                      : <ChevronRight className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden />
                   )}
                 </button>
               );
@@ -341,7 +341,7 @@ function DashboardLayoutContent({
                             onClick={closeSidebarOnMobile}
                             className={navItemClasses({ active: isActive, nested: true })}
                           >
-                            <SubIcon className="w-4 h-4 shrink-0" aria-hidden />
+                            <SubIcon className={cn("w-4 h-4 shrink-0 transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-90", isActive && "scale-105")} aria-hidden />
                             <span className="truncate">{sub.name}</span>
                           </Link>
                         );
@@ -366,7 +366,7 @@ function DashboardLayoutContent({
                 }}
                 className={navItemClasses({ active: isActive, collapsed: !sidebarOpen })}
               >
-                <Icon className="w-5 h-5 shrink-0" aria-hidden />
+                <Icon className={cn("w-5 h-5 shrink-0 transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-90", isActive && "scale-105")} aria-hidden />
                 {sidebarOpen ? (
                   <span className="truncate">{item.name}</span>
                 ) : (
@@ -421,15 +421,32 @@ function DashboardLayoutContent({
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            {/* Theme Toggle Button */}
+            {/* Theme Toggle Button (macOS Morphing Rotation) */}
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
               title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-              className="p-2 shrink-0 flex items-center justify-center text-text-muted hover:text-text border border-border bg-surface-raised hover:border-border-strong transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-lg"
+              className="relative w-9 h-9 shrink-0 flex items-center justify-center text-text-muted hover:text-text border border-border bg-surface-raised hover:border-border-strong transition-all duration-200 active:scale-90 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-xl overflow-hidden group"
             >
-              {theme === 'light' ? <Moon className="w-4 h-4" aria-hidden /> : <Sun className="w-4 h-4" aria-hidden />}
+              <Moon
+                className={cn(
+                  "w-4 h-4 absolute transition-all duration-300 ease-out",
+                  theme === 'light'
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "rotate-90 scale-50 opacity-0"
+                )}
+                aria-hidden
+              />
+              <Sun
+                className={cn(
+                  "w-4 h-4 absolute transition-all duration-300 ease-out",
+                  theme === 'dark'
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "-rotate-90 scale-50 opacity-0"
+                )}
+                aria-hidden
+              />
             </button>
 
             {/* User Profile Menu */}

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, User } from 'lucide-react';
+import { Card, CardTitle } from '@/components/ui';
 import { useOrderForm } from '@/components/hooks/useOrderForm';
 import { ClientSection } from '@/components/new-order/ClientSection';
 import { EquipmentSection } from '@/components/new-order/EquipmentSection';
@@ -23,24 +24,24 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
     <>
       <form onSubmit={orderForm.handleSubmit} className="space-y-6">
         {orderForm.success && (
-          <div role="status" className="p-4 bg-success/10 border border-success/25 text-success flex items-center gap-2.5">
+          <div role="status" className="p-4 bg-success/10 border border-success/25 text-success flex items-center gap-2.5 rounded-xl">
             <CheckCircle2 className="w-5 h-5 shrink-0" aria-hidden />
             <p className="text-small font-semibold">Ordem de Serviço aberta com sucesso!</p>
           </div>
         )}
 
         {orderForm.errorMsg && (
-          <div role="alert" className="p-4 bg-danger/10 border border-danger/25 text-danger flex items-center gap-2.5">
+          <div role="alert" className="p-4 bg-danger/10 border border-danger/25 text-danger flex items-center gap-2.5 rounded-xl">
             <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden />
             <p className="text-small font-semibold">{orderForm.errorMsg}</p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-h3 text-text border-b border-border pb-2">
-              Informações Iniciais
-            </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <Card padding="md" className="space-y-4">
+            <CardTitle className="flex items-center gap-2 border-b border-border pb-2">
+              <User className="w-4 h-4 text-brand" aria-hidden /> Informações do Atendimento
+            </CardTitle>
 
             <ClientSection
               clientId={orderForm.clientId}
@@ -60,7 +61,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               equipmentDetails={orderForm.equipmentDetails}
               setEquipmentDetails={orderForm.setEquipmentDetails}
             />
-          </div>
+          </Card>
 
           <ProblemSection
             status={orderForm.status}
@@ -78,8 +79,28 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
             setDiscount={orderForm.setDiscount}
             reportedProblem={orderForm.reportedProblem}
             setReportedProblem={orderForm.setReportedProblem}
+            hideQuill
           />
         </div>
+
+        <ProblemSection
+          status={orderForm.status}
+          setStatus={orderForm.setStatus}
+          priority={orderForm.priority}
+          setPriority={orderForm.setPriority}
+          technicianId={orderForm.technicianId}
+          setTechnicianId={orderForm.setTechnicianId}
+          technicians={orderForm.technicians}
+          deliveryPrediction={orderForm.deliveryPrediction}
+          setDeliveryPrediction={orderForm.setDeliveryPrediction}
+          serviceValue={orderForm.serviceValue}
+          setServiceValue={orderForm.setServiceValue}
+          discount={orderForm.discount}
+          setDiscount={orderForm.setDiscount}
+          reportedProblem={orderForm.reportedProblem}
+          setReportedProblem={orderForm.setReportedProblem}
+          quillOnly
+        />
 
         <ItemsSection
           inventory={orderForm.inventory}

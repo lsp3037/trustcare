@@ -5,7 +5,7 @@ import { FileQuestion } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { LoadingSpinner, EmptyState, buttonClasses } from '@/components/ui';
 import { OrderDetailsClient } from './OrderDetailsClient';
-import { DEFAULT_TEMPLATE_ITEMS } from './constants';
+import { DEFAULT_TEMPLATE_ITEMS, getDefaultItemsForCategory } from './constants';
 
 export function OrderDetailsDataFetcher({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
@@ -31,11 +31,28 @@ export function OrderDetailsDataFetcher({ id }: { id: string }) {
         let checklistTemplateItems = DEFAULT_TEMPLATE_ITEMS;
 
         if (osData.equipment_id) {
-          const { data: eqData } = await supabase.from('client_equipments').select('category_id').eq('id', osData.equipment_id).single();
+          const { data: eqData } = await supabase
+            .from('client_equipments')
+            .select('category_id, equipment_categories(name)')
+            .eq('id', osData.equipment_id)
+            .single();
+
           if (eqData && eqData.category_id) {
-            const { data: templateData } = await supabase.from('checklist_templates').select('schema').eq('category_id', eqData.category_id).maybeSingle();
+            const { data: templateData } = await supabase
+              .from('checklist_templates')
+              .select('schema')
+              .eq('category_id', eqData.category_id)
+              .maybeSingle();
+
             if (templateData && templateData.schema && Array.isArray(templateData.schema.items)) {
+              // Template customizado salvo no banco — usa como está
               checklistTemplateItems = templateData.schema.items;
+            } else {
+              // Sem template: usa o default inteligente por nome de categoria
+              const categoryName = (eqData as any).equipment_categories?.name ?? '';
+              checklistTemplateItems = categoryName
+                ? getDefaultItemsForCategory(categoryName)
+                : DEFAULT_TEMPLATE_ITEMS;
             }
           }
         }

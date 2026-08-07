@@ -35,7 +35,7 @@ interface ToggleProps {
   label: string;
 }
 
-/** Interruptor. Era markup duplicado em três lugares deste arquivo. */
+/** Toggle pill com cantos arredondados — segue DESIGN_SYSTEM (rounded-full para controles). */
 function Toggle({ checked, onChange, disabled = false, phase, label }: ToggleProps) {
   const tone = PHASE[phase];
   return (
@@ -47,7 +47,8 @@ function Toggle({ checked, onChange, disabled = false, phase, label }: TogglePro
       disabled={disabled}
       onClick={onChange}
       className={cn(
-        'relative inline-flex h-5 w-10 shrink-0 cursor-pointer border p-0.5 transition-colors duration-150',
+        'relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border p-0.5',
+        'transition-colors duration-200 ease-in-out',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         checked ? tone.toggleOn : 'bg-surface-sunken border-border hover:border-border-strong',
@@ -55,7 +56,7 @@ function Toggle({ checked, onChange, disabled = false, phase, label }: TogglePro
     >
       <span
         className={cn(
-          'pointer-events-none inline-block h-full w-4 transform transition-transform duration-150',
+          'pointer-events-none inline-block h-full w-4 rounded-full transform transition-transform duration-200 ease-in-out',
           checked ? `translate-x-5 ${tone.knobOn}` : 'translate-x-0 bg-border-strong',
         )}
       />
@@ -85,7 +86,13 @@ function ChecklistItemRow({
   const item = (checklist[field] || EMPTY_ITEM) as ChecklistItem;
 
   return (
-    <div className="border-b border-border pb-3 last:border-0">
+    <div
+      className={cn(
+        'rounded-xl px-3 py-3 -mx-3 transition-colors duration-150',
+        'hover:bg-surface-sunken',
+        item.checked && 'bg-surface-sunken',
+      )}
+    >
       <div className="grid grid-cols-[1fr_auto] gap-4 items-center">
         <span className="text-small text-text-muted pr-2 break-words">{label}</span>
         <Toggle
@@ -147,7 +154,7 @@ function ChecklistPanel({
 
   return (
     <Card className="flex flex-col h-fit">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border mb-4">
         <button
           type="button"
           onClick={onToggleOpen}
@@ -158,17 +165,20 @@ function ChecklistPanel({
             {eyebrow}
           </span>
           <span className={cn('text-h3 flex items-center gap-2', tone.accent)}>
-            <span className={cn('w-1.5 h-1.5', tone.dot)} aria-hidden />
+            <span className={cn('w-1.5 h-1.5 rounded-full', tone.dot)} aria-hidden />
             {title}
           </span>
         </button>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {headerActions}
-          <span className="text-caption uppercase tracking-wider bg-surface-sunken border border-border text-text-muted px-2 py-1">
+          <span className="text-caption uppercase tracking-wider bg-surface-sunken border border-border text-text-muted px-2.5 py-1 rounded-full">
             {badge}
           </span>
           <ChevronDown
-            className={cn('w-4 h-4 text-text-subtle transition-transform duration-150', open && 'rotate-180')}
+            className={cn(
+              'w-4 h-4 text-text-subtle transition-transform duration-250 ease-in-out',
+              open && 'rotate-180',
+            )}
             aria-hidden
           />
         </div>
@@ -176,7 +186,7 @@ function ChecklistPanel({
 
       {open && (
         <>
-          <div className="flex-1 space-y-4">{children}</div>
+          <div className="flex-1 space-y-1">{children}</div>
           <div className="mt-6 pt-6 border-t border-border">
             <Button
               fullWidth
@@ -246,8 +256,15 @@ export function ChecklistSection({
             />
           ))}
 
-          <div className="pt-4 border-t border-border">
-            <div className="grid grid-cols-[1fr_auto] gap-4 items-center mb-2">
+          {/* Senha / PIN — separada dos itens dinâmicos por divisória */}
+          <div className="pt-4 mt-2 border-t border-border">
+            <div
+              className={cn(
+                'rounded-xl px-3 py-3 -mx-3 grid grid-cols-[1fr_auto] gap-4 items-center',
+                'transition-colors duration-150 hover:bg-surface-sunken',
+                entryChecklist.password_pin.has_password && 'bg-surface-sunken',
+              )}
+            >
               <span className="text-small text-text-muted">Possui Senha / PIN?</span>
               <Toggle
                 phase="entry"
@@ -269,7 +286,7 @@ export function ChecklistSection({
                   ...prev,
                   password_pin: { ...prev.password_pin, password_value: e.target.value }
                 }))}
-                className="w-full bg-transparent border-b border-border focus:border-brand px-1 py-1.5 text-small font-mono text-text placeholder:text-text-subtle focus:outline-none transition-colors"
+                className="w-full mt-2 bg-transparent border-b border-border focus:border-brand px-1 py-1.5 text-small font-mono text-text placeholder:text-text-subtle focus:outline-none transition-colors"
               />
             )}
           </div>

@@ -448,9 +448,14 @@ html.light .theme-dark .hover\:text-white:hover {
   color: var(--color-text) !important;
   font-family: inherit !important;
   font-size: var(--text-small) !important;
+  border-bottom-left-radius: 0.75rem !important;
+  border-bottom-right-radius: 0.75rem !important;
+  box-sizing: border-box !important;
 }
 .ql-editor {
-  min-height: 100px;
+  min-height: 120px;
+  max-height: 220px;
+  overflow-y: auto;
 }
 .ql-editor.ql-blank::before {
   color: var(--color-text-subtle) !important;
@@ -460,6 +465,8 @@ html.light .theme-dark .hover\:text-white:hover {
   border: 1px solid var(--color-border) !important;
   border-bottom: 0 !important;
   background-color: var(--color-surface-raised) !important;
+  border-top-left-radius: 0.75rem !important;
+  border-top-right-radius: 0.75rem !important;
 }
 .ql-snow .ql-stroke {
   stroke: var(--color-text-muted) !important;

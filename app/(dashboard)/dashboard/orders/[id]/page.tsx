@@ -1,4 +1,5 @@
 import React from 'react';
+export const dynamic = 'force-dynamic';
 import { OrderDetailsDataFetcher } from './_components/OrderDetailsDataFetcher';
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {

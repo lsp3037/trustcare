@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +28,8 @@ export interface ModalProps {
 
 /**
  * Diálogo modal com foco preso, fechamento por Esc e por clique no backdrop.
- * Antes cada tela trazia seu próprio modal, nenhum deles acessível.
+ * Renderizado no document.body via createPortal para evitar bugs de z-index
+ * e posicionamento causados por containers pai com transform/overflow.
  */
 export function Modal({
   open,
@@ -42,6 +44,11 @@ export function Modal({
   const panelRef = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
   const descId = React.useId();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Esc fecha; Tab circula dentro do painel.
   React.useEffect(() => {
@@ -99,15 +106,15 @@ export function Modal({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
       role="presentation"
     >
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xl transition-opacity"
         onClick={onClose}
         aria-hidden
       />
@@ -118,16 +125,14 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          'relative w-full bg-surface-raised/90 backdrop-blur-2xl border border-glass-border-strong rounded-[20px] shadow-2xl',
-          'max-h-[calc(100vh-2rem)] flex flex-col',
+          'relative w-full bg-surface-raised border border-glass-border-strong rounded-[20px] shadow-2xl my-auto z-10',
+          'max-h-[calc(100vh-3rem)] flex flex-col',
           SIZES[size],
           className,
         )}
       >
         <header className="flex items-start justify-between gap-4 p-5 border-b border-glass-divider shrink-0">
           <div className="min-w-0">
-            {/* Sem `truncate`: título de diálogo é frase, não rótulo de linha —
-                cortar a pergunta esconde justamente o que se está decidindo. */}
             <h2 id={titleId} className="text-base font-semibold text-text">
               {title}
             </h2>
@@ -141,7 +146,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="shrink-0 p-1 text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="shrink-0 p-1 text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -157,6 +162,7 @@ export function Modal({
           </footer>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
