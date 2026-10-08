@@ -1,8 +1,22 @@
+import { randomInt } from 'crypto';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-// Validador simples de UUID para segurança
+// Formatos aceitos para o código digitado. Qualquer outra coisa é rejeitada
+// antes de chegar ao PostgREST — o valor nunca é interpolado em filtros.
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_PREFIX_REGEX = /^[0-9a-f]{8}$/i;
+const CODIGO_OS_REGEX = /^TC-\d{4}-\d{4}$/i;
+const SUBDOMAIN_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function maskEmail(email: string): string {
   if (!email) return 'E-mail não cadastrado';
@@ -27,10 +41,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Muitas tentativas. Aguarde um instante e tente novamente.' }, { status: 429 });
     }
 
-    const { searchId, subdomain } = await req.json();
-    const cleanId = searchId.trim().replace(/^#/, '');
+    const body = await req.json().catch(() => null);
+    const cleanId = typeof body?.searchId === 'string' ? body.searchId.trim().replace(/^#/, '') : '';
+    const subdomain = typeof body?.subdomain === 'string' ? body.subdomain.trim().toLowerCase() : '';
 
-    if (!cleanId || cleanId.length < 8) {
+    const isFullUuid = UUID_REGEX.test(cleanId);
+    const isUuidPrefix = UUID_PREFIX_REGEX.test(cleanId);
+    const isCodigoOs = CODIGO_OS_REGEX.test(cleanId);
+
+    if (!isFullUuid && !isUuidPrefix && !isCodigoOs) {
       return NextResponse.json({ error: 'Código de OS inválido.' }, { status: 400 });
     }
 
@@ -38,14 +57,32 @@ export async function POST(req: Request) {
     let query = supabaseAdmin
       .from('service_orders')
       .select('id, codigo_os, company_id, clients(name, email)')
-      .or(`codigo_os.eq.${cleanId},id.eq.${cleanId}`);
+      .limit(2);
 
-    // Se o UUID for de 8 caracteres, tentamos buscar por correspondência parcial
-    if (cleanId.length >= 8 && cleanId.length < 36 && !UUID_REGEX.test(cleanId)) {
-      query = supabaseAdmin
-        .from('service_orders')
-        .select('id, codigo_os, company_id, clients(name, email)')
-        .or(`codigo_os.ilike.%${cleanId}%,id.cast.ilike.%${cleanId}%`);
+    if (isFullUuid) {
+      query = query.eq('id', cleanId.toLowerCase());
+    } else if (isUuidPrefix) {
+      // Prefixo de UUID como intervalo: a comparação de uuid no Postgres é por bytes.
+      const prefix = cleanId.toLowerCase();
+      query = query
+        .gte('id', `${prefix}-0000-0000-0000-000000000000`)
+        .lte('id', `${prefix}-ffff-ffff-ffff-ffffffffffff`);
+    } else {
+      query = query.eq('codigo_os', cleanId.toUpperCase());
+    }
+
+    // `codigo_os` é sequencial por empresa (repete entre tenants): no subdomínio
+    // do tenant, a busca fica restrita a ele.
+    if (subdomain && SUBDOMAIN_REGEX.test(subdomain)) {
+      const { data: company } = await supabaseAdmin
+        .from('companies')
+        .select('id')
+        .eq('subdomain', subdomain)
+        .maybeSingle();
+      if (!company) {
+        return NextResponse.json({ error: 'Ordem de serviço não encontrada.' }, { status: 404 });
+      }
+      query = query.eq('company_id', company.id);
     }
 
     const { data: orders, error: dbError } = await query;
@@ -54,7 +91,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ordem de serviço não encontrada.' }, { status: 404 });
     }
 
-    // Usar o primeiro resultado encontrado
+    // Mais de uma OS com o mesmo código (empresas diferentes ou prefixo repetido):
+    // não escolhemos uma ao acaso para não enviar o código ao cliente errado.
+    if (orders.length > 1) {
+      return NextResponse.json({
+        error: 'Código ambíguo. Use o link de rastreio recebido por e-mail ou o código completo da OS.',
+      }, { status: 409 });
+    }
+
     const order = orders[0];
     const client = order.clients as any;
 
@@ -65,7 +109,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Gerar o token de 6 dígitos
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutos
 
     // 3. Salvar o token na tabela os_verifications
@@ -88,6 +132,7 @@ export async function POST(req: Request) {
 
     // 4. Enviar o e-mail via Resend
     const resendApiKey = process.env.RESEND_API_KEY;
+    const isDev = process.env.NODE_ENV === 'development';
     let emailSent = false;
 
     if (resendApiKey) {
@@ -104,7 +149,7 @@ export async function POST(req: Request) {
             subject: `Código de Acesso - OS ${order.codigo_os || order.id.slice(0, 8)}`,
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #0f172a; margin-top: 0;">Olá, ${client.name}!</h2>
+                <h2 style="color: #0f172a; margin-top: 0;">Olá, ${escapeHtml(client.name || 'Cliente')}!</h2>
                 <p style="color: #475569; font-size: 14px; line-height: 1.5;">
                   Você solicitou o rastreamento da sua Ordem de Serviço <strong>${order.codigo_os || order.id.slice(0, 8)}</strong>.
                   Para prosseguir com segurança, utilize o código de verificação abaixo:
@@ -129,10 +174,13 @@ export async function POST(req: Request) {
       } catch (emailErr) {
         console.error('[Request Token] Falha ao disparar e-mail:', emailErr);
       }
+    } else if (!isDev) {
+      // Sem provedor de e-mail em produção: nunca prosseguir (o código não pode vazar).
+      await supabaseAdmin.from('os_verifications').delete().eq('id', verification.id);
+      console.error('[Request Token] RESEND_API_KEY ausente em produção.');
+      return NextResponse.json({ error: 'Serviço de verificação indisponível no momento.' }, { status: 503 });
     } else {
-      console.log(`\n======================================================`);
-      console.log(`[DEV MODE] Token para OS ${order.codigo_os || order.id.slice(0, 8)} (${client.email}): ${code}`);
-      console.log(`======================================================\n`);
+      console.log(`[DEV MODE] Token para OS ${order.codigo_os || order.id.slice(0, 8)}: ${code}`);
     }
 
     // Retorna resposta para o frontend
@@ -142,14 +190,14 @@ export async function POST(req: Request) {
       tempTokenId: verification.id
     };
 
-    // Facilita desenvolvimento local sem chaves API configuradas
-    if (!resendApiKey) {
+    // Facilita desenvolvimento local sem chaves API configuradas (nunca em produção)
+    if (!resendApiKey && isDev) {
       responsePayload.devToken = code;
     }
 
     return NextResponse.json(responsePayload);
   } catch (err: any) {
     console.error('[Request Token] Erro interno:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno ao gerar código de verificação.' }, { status: 500 });
   }
 }

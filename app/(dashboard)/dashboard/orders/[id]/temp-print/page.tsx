@@ -133,7 +133,7 @@ export default function TempPrintPreviewPage() {
           if (osData.company_id) {
             const { data: compData } = await supabase
               .from('companies')
-              .select('*')
+              .select('name, phone, email, logo_url')
               .eq('id', osData.company_id)
               .single();
 

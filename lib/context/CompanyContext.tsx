@@ -48,9 +48,10 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
       }
       // Busca a empresa associada ao usuário autenticado (a política RLS de select_company cuida do filtro automático por tenant)
+      // Colunas explícitas: `api_key` e ids do Asaas não são legíveis pelo front.
       const { data, error } = await supabase
         .from('companies')
-        .select('*')
+        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, subdomain')
         .single();
 
       if (error) throw error;
@@ -132,18 +133,23 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Determina se a empresa está em modo apenas-leitura (atraso de mais de 5 dias ou cancelado)
+  // Espelha `public.is_company_read_only` — se divergir, a tela libera ações
+  // que a RLS recusa (ex.: trial vencido abria o formulário de OS e o insert falhava).
   const isReadOnly = React.useMemo(() => {
-    if (!company.subscription_status) return false;
+    // Sem `id` o objeto é o placeholder local (offline/carregando), não dado real.
+    if (!company.id || !company.subscription_status) return false;
+    const expiresAt = company.subscription_expires_at ? new Date(company.subscription_expires_at) : null;
+    const now = new Date();
     if (company.subscription_status === 'canceled') return true;
     if (company.subscription_status === 'past_due') {
-      if (!company.subscription_expires_at) return false;
-      const expiresDate = new Date(company.subscription_expires_at);
-      const gracePeriodEnd = new Date(expiresDate.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 dias
-      return new Date() > gracePeriodEnd;
+      if (!expiresAt) return true;
+      return now > new Date(expiresAt.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 dias de carência
+    }
+    if (company.subscription_status === 'trialing') {
+      return !expiresAt || now > expiresAt;
     }
     return false;
-  }, [company.subscription_status, company.subscription_expires_at]);
+  }, [company.id, company.subscription_status, company.subscription_expires_at]);
 
   // Cotas operacionais baseadas no plano
   const maxTechnicians = React.useMemo(() => {
