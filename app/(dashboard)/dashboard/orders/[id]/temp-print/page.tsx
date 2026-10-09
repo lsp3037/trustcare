@@ -414,20 +414,31 @@ function PrintDocumentContent({
 
   const stripHtml = (html: string) => {
     if (!html) return '';
-    return String(html)
+    let text = String(html);
+    
+    text = text.replace(/&amp;/g, '&');
+    
+    text = text
       .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
+      .replace(/✅/g, '[OK] ')
+      .replace(/❌/g, '[X] ')
+      .replace(/✔️/g, '[OK] ')
+      .replace(/✖️/g, '[X] ')
       .replace(/<\/(p|div|h[1-6])>/gi, '\n')
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<li>/gi, '• ')
       .replace(/<\/li>/gi, '\n')
       .replace(/<[^>]*>?/gm, '')
+      .replace(/[\u2700-\u27BF]/g, '')
+      .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
       .replace(/\n\s*\n/g, '\n')
       .trim();
+      
+    return text;
   };
 
   return (
