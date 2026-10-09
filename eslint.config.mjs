@@ -61,6 +61,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "scripts/**",
+    // Edge Functions rodam em Deno, fora do build do Next.
+    "supabase/functions/**",
   ]),
   {
     rules: {
