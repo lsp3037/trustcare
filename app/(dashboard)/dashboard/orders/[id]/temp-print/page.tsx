@@ -412,6 +412,24 @@ function PrintDocumentContent({
 }: any) {
   const currentDate = new Date().toLocaleDateString('pt-BR');
 
+  const stripHtml = (html: string) => {
+    if (!html) return '';
+    return String(html)
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<li>/gi, '• ')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/\n\s*\n/g, '\n')
+      .trim();
+  };
+
   return (
     <div className="space-y-6 flex flex-col justify-between h-full bg-white text-black p-1 font-sans">
       <div className="space-y-6">
@@ -480,12 +498,12 @@ function PrintDocumentContent({
             </div>
             <div className="border-t border-slate-200 pt-2">
               <span className="text-[9px] font-bold text-text-subtle uppercase block">Defeito Relatado pelo Cliente</span>
-              <p className="text-xs text-black italic mt-0.5">&quot;{order.reported_problem}&quot;</p>
+              <p className="text-xs text-black italic mt-0.5 whitespace-pre-wrap">{stripHtml(order.reported_problem || '')}</p>
             </div>
             {order.technical_report && (
               <div className="border-t border-slate-200 pt-2">
                 <span className="text-[9px] font-bold text-text-subtle uppercase block">Parecer / Laudo Técnico do Serviço</span>
-                <p className="text-xs text-black font-medium mt-0.5 whitespace-pre-wrap">{order.technical_report}</p>
+                <p className="text-xs text-black font-medium mt-0.5 whitespace-pre-wrap">{stripHtml(order.technical_report)}</p>
               </div>
             )}
           </div>

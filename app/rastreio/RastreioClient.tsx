@@ -325,7 +325,7 @@ function TrackingContent() {
                 </div>
               </div>
 
-              {devToken && (
+              {process.env.NODE_ENV === 'development' && devToken && (
                 <div className="p-3 bg-info/10 border border-info/25 rounded-xl text-center">
                   <button
                     type="button"

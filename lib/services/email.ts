@@ -46,7 +46,39 @@ export async function sendTransactionalEmail(params: SendEmailParams) {
   }
 }
 
-function generateEmailHtml(p: SendEmailParams): string {
+export function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Só aceita http(s); qualquer outra coisa (javascript:, data:) vira '#'. */
+function safeUrl(value: unknown): string {
+  try {
+    const url = new URL(String(value ?? ''));
+    return url.protocol === 'https:' || url.protocol === 'http:' ? escapeHtml(url.toString()) : '#';
+  } catch {
+    return '#';
+  }
+}
+
+function generateEmailHtml(raw: SendEmailParams): string {
+  // Todo valor interpolado no template passa por escape — nada aqui é confiável.
+  const p = {
+    ...raw,
+    subject: escapeHtml(raw.subject),
+    clientName: escapeHtml(raw.clientName),
+    orderCode: escapeHtml(raw.orderCode),
+    equipment: escapeHtml(raw.equipment),
+    status: raw.status ? escapeHtml(raw.status) : raw.status,
+    totalValue: raw.totalValue ? escapeHtml(raw.totalValue) : raw.totalValue,
+    trackingUrl: safeUrl(raw.trackingUrl),
+    budgetUrl: raw.budgetUrl ? safeUrl(raw.budgetUrl) : raw.budgetUrl,
+  };
+
   const actionButton = p.type === 'budget_ready' && p.budgetUrl ? `
     <div style="margin-top: 24px; text-align: center;">
       <a href="${p.budgetUrl}" style="background-color: #10b981; color: #000000; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 4px; display: inline-block; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">

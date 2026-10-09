@@ -421,9 +421,16 @@ export default function PublicOrderBudgetPage() {
             {/* Laudo */}
             <section className="border border-border p-4 space-y-2 bg-surface-sunken rounded-xl">
               <DocLabel>Laudo técnico & parecer do diagnóstico</DocLabel>
-              <p className="text-small text-text leading-relaxed break-words whitespace-pre-line">
-                {order.technical_report || 'Aguardando parecer técnico detalhado...'}
-              </p>
+              {order.technical_report ? (
+                <div 
+                  className="text-small text-text leading-relaxed break-words prose dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
+                  dangerouslySetInnerHTML={{ __html: order.technical_report }}
+                />
+              ) : (
+                <p className="text-small text-text leading-relaxed break-words whitespace-pre-line">
+                  Aguardando parecer técnico detalhado...
+                </p>
+              )}
             </section>
 
             {/* Valores */}
