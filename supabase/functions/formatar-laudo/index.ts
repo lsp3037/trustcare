@@ -160,31 +160,48 @@ Não use travessões (—). Não inclua o total; ele é calculado pelo sistema.`
 async function chamarGemini(prompt: string): Promise<SaidaIA> {
   const key = Deno.env.get("GEMINI_API_KEY");
   if (!key) throw new Error("GEMINI_API_KEY não configurada no Supabase.");
-  const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+  // O Google aposenta modelos com frequência. Tenta em ordem e pula os que
+  // voltarem 404 (modelo indisponível). GEMINI_MODEL no Supabase força um.
+  const modelos = [
+    Deno.env.get("GEMINI_MODEL"),
+    "gemini-3.8-flash",
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+  ].filter((m, i, arr): m is string => !!m && arr.indexOf(m) === i);
 
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: "application/json",
-          responseSchema: SCHEMA,
-        },
-      }),
-    },
-  );
-
-  if (!resp.ok) {
-    const txt = await resp.text();
-    if (resp.status === 429) {
+  let resp: Response | null = null;
+  let ultimoErro = "";
+  for (const model of modelos) {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+            responseSchema: SCHEMA,
+          },
+        }),
+      },
+    );
+    if (r.ok) {
+      resp = r;
+      break;
+    }
+    const txt = await r.text();
+    if (r.status === 404) {
+      ultimoErro = `${model}: ${txt.slice(0, 200)}`;
+      continue;
+    }
+    if (r.status === 429) {
       throw new Error("Limite gratuito do Gemini atingido. Tente de novo em alguns minutos.");
     }
-    throw new Error(`Gemini respondeu ${resp.status}: ${txt.slice(0, 300)}`);
+    throw new Error(`Gemini (${model}) respondeu ${r.status}: ${txt.slice(0, 300)}`);
   }
+  if (!resp) throw new Error(`Nenhum modelo do Gemini disponível. Último erro: ${ultimoErro}`);
 
   const data = await resp.json();
   const texto = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
