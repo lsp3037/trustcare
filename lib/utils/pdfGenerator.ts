@@ -82,32 +82,38 @@ export function generateOrderPdf({ order, company, client, items = [], services 
   
   const stripHtml = (html: string) => {
     if (!html) return '';
-    return String(html)
-      // Primeiro decodifica entidades HTML que podem estar mascarando as tags
+    let text = String(html);
+    
+    // Desfaz o escape duplo se houver (ex: &amp;nbsp; -> &nbsp;)
+    text = text.replace(/&amp;/g, '&');
+    
+    // Decodifica entidades HTML que mascaram tags
+    text = text
       .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
-      // Substitui emojis de checklist (causam erro de NaN no width do jsPDF e truncam a linha)
+      // Substitui emojis de checklist
       .replace(/✅/g, '[OK] ')
       .replace(/❌/g, '[X] ')
       .replace(/✔️/g, '[OK] ')
       .replace(/✖️/g, '[X] ')
-      // Depois transforma quebras de linha e listas
+      // Transforma quebras e listas
       .replace(/<\/(p|div|h[1-6])>/gi, '\n')
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<li>/gi, '• ')
       .replace(/<\/li>/gi, '\n')
-      // E finalmente remove as tags
+      // Remove tags HTML remanescentes
       .replace(/<[^>]*>?/gm, '')
-      // Remove Dingbats e Emojis em surrogate pairs que quebram o jsPDF splitTextToSize
+      // Remove Dingbats e Emojis 
       .replace(/[\u2700-\u27BF]/g, '')
       .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
-      // Limpa espaços extras
+      // Limpa espaços extras e linhas duplas
       .replace(/\n\s*\n/g, '\n')
       .trim();
+      
+    return text;
   };
 
   // Limpa tags HTML do problema se houver
