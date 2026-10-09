@@ -1,27 +1,18 @@
 -- ============================================================
--- FASE 1 — Storage, segredos de `companies` e rate limit
--- Pré-requisito: 20261005120000_phase0_hardening.sql (cobrança).
--- NÃO aplicar direto em produção: rodar antes em dev/staging.
+-- FASE 1 — Storage (buckets os-media e company-logos)
+-- Pré-requisitos:
+--   * 20261005120000_phase0_hardening.sql
+--   * 20261008130000_fix_company_storage_bytes.sql — APLICAR ANTES DESTA.
+--     Sem ela, can_upload_to_os_media falha (coluna `size` inexistente) e,
+--     removida a política permissiva abaixo, o upload de mídia nas OS quebra.
+-- Compatível com o código anterior ao PR #2 (não depende do front novo).
+-- A parte de `companies` e rate limit está em
+-- 20261009120000_phase1b_secrets_and_rate_limit.sql (exige o front novo).
 -- Reversão no fim do arquivo.
 -- ============================================================
 
 -- ------------------------------------------------------------
--- 1. `companies`: api_key e ids do Asaas deixam de ser legíveis pelo front.
--- Antes qualquer membro (técnico, recepcionista) lia a api_key via select('*').
--- O front passou a selecionar colunas explícitas (CompanyContext, temp-print).
--- Service role (API v1, webhook, checkout, backoffice) mantém acesso total.
--- ------------------------------------------------------------
-REVOKE SELECT ON public.companies FROM anon, authenticated;
-GRANT  SELECT (id, name, created_at, phone, email, logo_url, whatsapp,
-               subscription_plan, subscription_status, subscription_expires_at,
-               subdomain, document)
-  ON public.companies TO anon, authenticated;
-
--- INSERT/DELETE nunca são feitos pelo front (empresa nasce no trigger handle_new_user).
-REVOKE INSERT, DELETE, TRUNCATE ON public.companies FROM anon, authenticated;
-
--- ------------------------------------------------------------
--- 2. Bucket `os-media`
+-- 1. Bucket `os-media`
 -- * As políticas de SELECT públicas permitiam LISTAR os arquivos de todas as
 --   empresas pela API. O bucket continua público: as URLs /object/public/ já
 --   salvas nas OS seguem funcionando (download público não passa pela RLS).
@@ -32,7 +23,7 @@ REVOKE INSERT, DELETE, TRUNCATE ON public.companies FROM anon, authenticated;
 DROP POLICY IF EXISTS "Permitir leitura publica de midias os-media" ON storage.objects;
 DROP POLICY IF EXISTS "public_read_os_media"                         ON storage.objects;
 DROP POLICY IF EXISTS "upload_own_company_os_media"                  ON storage.objects;
-DROP POLICY IF EXISTS "delete_own_company_os_media"                  ON storage.objects; -- duplicata da política abaixo
+DROP POLICY IF EXISTS "delete_own_company_os_media"                  ON storage.objects; -- duplicata de "Permitir exclusao de midias os-media"
 
 CREATE POLICY "os_media_select_own_company" ON storage.objects
   FOR SELECT TO authenticated
@@ -42,7 +33,7 @@ CREATE POLICY "os_media_select_own_company" ON storage.objects
   );
 
 -- ------------------------------------------------------------
--- 3. Bucket `company-logos`
+-- 2. Bucket `company-logos`
 -- Antes qualquer usuário autenticado podia sobrescrever/apagar o logo de
 -- qualquer empresa. Uploads usam o caminho `{company_id}/logo_*.ext` com
 -- upsert (INSERT + UPDATE). Só admin da própria empresa escreve.
@@ -87,22 +78,9 @@ CREATE POLICY "company_logos_delete_admin" ON storage.objects
     AND public.get_my_role() = 'admin'
   );
 
--- ------------------------------------------------------------
--- 4. Rate limit
--- `check_and_clean_rate_limit` é SECURITY DEFINER: a política aberta de INSERT
--- não é necessária e deixava qualquer um gravar hits falsos. A RPC também era
--- executável por anon com IP arbitrário (dava para esgotar o limite de outro IP);
--- agora só o servidor (service role, /api/*) chama.
--- ------------------------------------------------------------
-DROP POLICY IF EXISTS "insert_hits" ON public.rate_limit_hits;
-REVOKE EXECUTE ON FUNCTION public.check_and_clean_rate_limit(text, text) FROM PUBLIC, anon, authenticated;
-
 -- ============================================================
 -- REVERSÃO (executar manualmente se necessário)
 -- ============================================================
--- GRANT SELECT, INSERT, DELETE ON public.companies TO anon, authenticated;
--- GRANT EXECUTE ON FUNCTION public.check_and_clean_rate_limit(text, text) TO anon, authenticated;
--- CREATE POLICY "insert_hits" ON public.rate_limit_hits FOR INSERT WITH CHECK (true);
 -- DROP POLICY "os_media_select_own_company" ON storage.objects;
 -- CREATE POLICY "public_read_os_media" ON storage.objects FOR SELECT USING (bucket_id = 'os-media');
 -- CREATE POLICY "upload_own_company_os_media" ON storage.objects FOR INSERT
