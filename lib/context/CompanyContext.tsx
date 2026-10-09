@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { isSubscriptionReadOnly } from '@/lib/utils/subscription';
 
 export type SubscriptionPlan = 'starter' | 'pro' | 'premium';
 export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'trialing';
@@ -137,19 +138,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   // que a RLS recusa (ex.: trial vencido abria o formulário de OS e o insert falhava).
   const isReadOnly = React.useMemo(() => {
     // Sem `id` o objeto é o placeholder local (offline/carregando), não dado real.
-    if (!company.id || !company.subscription_status) return false;
-    const expiresAt = company.subscription_expires_at ? new Date(company.subscription_expires_at) : null;
-    const now = new Date();
-    if (company.subscription_status === 'canceled') return true;
-    if (company.subscription_status === 'past_due') {
-      if (!expiresAt) return true;
-      return now > new Date(expiresAt.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 dias de carência
-    }
-    if (company.subscription_status === 'trialing') {
-      return !expiresAt || now > expiresAt;
-    }
-    return false;
-  }, [company.id, company.subscription_status, company.subscription_expires_at]);
+    if (!company.id) return false;
+    return isSubscriptionReadOnly(company);
+  }, [company]);
 
   // Cotas operacionais baseadas no plano
   const maxTechnicians = React.useMemo(() => {
