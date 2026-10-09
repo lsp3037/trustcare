@@ -60,8 +60,16 @@ export async function POST(req: Request) {
 
     const asaasApiKey = process.env.ASAAS_API_KEY;
 
-    // MODO SIMULAÇÃO
+    // MODO SIMULAÇÃO — só em desenvolvimento e com flag explícita. Em produção,
+    // a ausência da chave nunca pode ativar um plano sem pagamento (falha fechada).
     if (!asaasApiKey) {
+      const simulationAllowed =
+        process.env.NODE_ENV !== 'production' && process.env.ENABLE_BILLING_SIMULATION === '1';
+      if (!simulationAllowed) {
+        console.error('[Checkout] ASAAS_API_KEY ausente e simulação desabilitada.');
+        return NextResponse.json({ error: 'Cobrança indisponível no momento.' }, { status: 503 });
+      }
+
       console.log(`[Checkout Simulado] Criando assinatura simulada para empresa ${companyId}, plano ${planId}`);
       
       // Simula ativação imediata para testes
