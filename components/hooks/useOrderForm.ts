@@ -18,6 +18,17 @@ export interface UseOrderFormProps {
   onSuccess?: () => void;
 }
 
+/**
+ * Traduz o erro do PostgREST. `42501` é bloqueio de RLS — na prática, conta em
+ * modo somente leitura (assinatura/trial) ou papel sem permissão de escrita.
+ */
+function describeDbError(error: { code?: string; message?: string } | null, fallback: string): string {
+  if (error?.code === '42501') {
+    return 'Seu usuário não tem permissão para esta ação ou a conta está em modo somente leitura. Verifique a assinatura em Configurações > Assinatura.';
+  }
+  return error?.message ? `${fallback} (${error.message})` : fallback;
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
@@ -46,7 +57,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [equipments, setEquipments] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [isManualEquipment, setIsManualEquipment] = useState(false);
-  const [companyId, setCompanyId] = useState('mock-tenant-id');
+  const [companyId, setCompanyId] = useState('');
   const [clientsList, setClientsList] = useState<Client[]>(clients);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [availableServices, setAvailableServices] = useState<any[]>([]);
@@ -321,28 +332,17 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         email: newClientEmail || '',
       };
 
-      let newClient: Client | null = null;
-      let newEquipment: any = null;
+      if (!companyId) throw new Error('Empresa do usuário ainda não carregada. Tente novamente.');
 
-      const { data: insertedClient, error: clientErr } = await supabase
+      const { data: newClient, error: clientErr } = await supabase
         .from('clients')
         .insert(clientData)
         .select()
         .single();
 
-      if (clientErr) {
-        const mockClientsStr = localStorage.getItem('mock-clients') || '[]';
-        const parsedClients = JSON.parse(mockClientsStr);
-        const nextNumber = Math.max(...parsedClients.map((c: any) => c.client_number || 1000), 1000) + 1;
-        const mockClientId = `mock-client-${Date.now()}`;
-        newClient = { id: mockClientId, ...clientData };
-        parsedClients.push({ ...newClient, client_number: nextNumber });
-        localStorage.setItem('mock-clients', JSON.stringify(parsedClients));
-      } else {
-        newClient = insertedClient;
+      if (clientErr || !newClient) {
+        throw new Error(describeDbError(clientErr, 'Falha ao registrar novo cliente.'));
       }
-
-      if (!newClient) throw new Error('Falha ao registrar novo cliente.');
 
       const eqData = {
         company_id: companyId,
@@ -353,25 +353,19 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         serial_number: newEqSerial || '',
       };
 
-      const { data: insertedEq, error: eqErr } = await supabase
+      const { data: newEquipment, error: eqErr } = await supabase
         .from('client_equipments')
         .insert(eqData)
         .select()
         .single();
 
-      if (eqErr) {
-        const mockEqsStr = localStorage.getItem('mock-equipments') || '[]';
-        const parsedEqs = JSON.parse(mockEqsStr);
-        newEquipment = { id: `mock-eq-${Date.now()}`, ...eqData };
-        parsedEqs.push(newEquipment);
-        localStorage.setItem('mock-equipments', JSON.stringify(parsedEqs));
-      } else {
-        newEquipment = insertedEq;
-      }
-
-      setClientsList((prev) => [...prev, newClient!]);
+      // O cliente já foi salvo: falha no equipamento não desfaz o cliente. O modal
+      // fecha mesmo assim (reenviar duplicaria o cliente) e o aviso vai para o form.
+      setClientsList((prev) => [...prev, newClient]);
       setClientId(newClient.id);
-      if (newEquipment) {
+      if (eqErr || !newEquipment) {
+        setErrorMsg(describeDbError(eqErr, 'Cliente salvo, mas o equipamento não foi registrado. Informe-o manualmente.'));
+      } else {
         setEquipments((prev) => [...prev, newEquipment]);
         setEquipmentId(newEquipment.id);
         setIsManualEquipment(false);
@@ -427,24 +421,17 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         min_stock_alert: 1,
       };
 
-      let newProduct: any = null;
-      const { data: insertedProd, error: prodErr } = await supabase
+      if (!companyId) throw new Error('Empresa do usuário ainda não carregada. Tente novamente.');
+
+      const { data: newProduct, error: prodErr } = await supabase
         .from('products_inventory')
         .insert(productData)
         .select()
         .single();
 
-      if (prodErr) {
-        const mockInvStr = localStorage.getItem('mock-inventory') || '[]';
-        const parsedInv = JSON.parse(mockInvStr);
-        newProduct = { id: `mock-prod-${Date.now()}`, ...productData };
-        parsedInv.push(newProduct);
-        localStorage.setItem('mock-inventory', JSON.stringify(parsedInv));
-      } else {
-        newProduct = insertedProd;
+      if (prodErr || !newProduct) {
+        throw new Error(describeDbError(prodErr, 'Falha ao registrar novo produto.'));
       }
-
-      if (!newProduct) throw new Error('Falha ao registrar novo produto.');
 
       setInventory((prev) => [...prev, newProduct]);
       setCurrentProductId(newProduct.id);
@@ -527,6 +514,35 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     setSelectedServices(selectedServices.filter((s) => s.service_id !== serviceId));
   };
 
+  const insertOrderChildren = async (osId: string, osCompanyId: string) => {
+    if (selectedProducts.length > 0) {
+      const { error } = await supabase.from('service_order_items').insert(
+        selectedProducts.map((item) => ({
+          company_id: osCompanyId,
+          service_order_id: osId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        })),
+      );
+      if (error) return error;
+    }
+    if (selectedServices.length > 0) {
+      const { error } = await supabase.from('order_services').insert(
+        selectedServices.map((item) => ({
+          company_id: osCompanyId,
+          os_id: osId,
+          service_id: item.service_id,
+          quantidade: item.quantity,
+          preco_unitario: item.unit_price,
+          subtotal: item.quantity * item.unit_price,
+        })),
+      );
+      if (error) return error;
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -547,15 +563,15 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let resolvedCompanyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single();
-        if (profile?.company_id) resolvedCompanyId = profile.company_id;
-      }
+      if (!user) throw new Error('Sua sessão expirou. Entre novamente para abrir a OS.');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      if (!profile?.company_id) throw new Error('Seu usuário não está vinculado a uma empresa.');
+      const resolvedCompanyId: string = profile.company_id;
 
       const osData = {
         company_id: resolvedCompanyId,
@@ -578,84 +594,24 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         .select()
         .single();
 
-      if (error) {
-        // Fallback mock local
-        const mockOrders = localStorage.getItem('mock-orders') || '[]';
-        const parsed = JSON.parse(mockOrders);
-        const newOsId = `mock-os-${Date.now()}`;
-        parsed.push({
-          id: newOsId,
-          ...osData,
-          clients: { name: clients.find(c => c.id === clientId)?.name || 'Cliente' },
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('mock-orders', JSON.stringify(parsed));
+      // Sem fallback local: um erro aqui é real (RLS, sessão, validação) e
+      // precisa aparecer — antes a OS era "criada" só no localStorage.
+      if (error || !insertedOs) throw new Error(describeDbError(error, 'Não foi possível abrir a OS.'));
 
-        if (selectedProducts.length > 0) {
-          const localItems = localStorage.getItem('mock-order-items') || '[]';
-          const parsedItems = JSON.parse(localItems);
-          selectedProducts.forEach((item, index) => {
-            parsedItems.push({
-              id: `mock-item-${Date.now()}-${index}`,
-              service_order_id: newOsId,
-              product_id: item.product_id,
-              name: item.name,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-            });
-          });
-          localStorage.setItem('mock-order-items', JSON.stringify(parsedItems));
-
-          const localInv = localStorage.getItem('mock-inventory');
-          if (localInv) {
-            const parsedInv = JSON.parse(localInv);
-            localStorage.setItem('mock-inventory', JSON.stringify(
-              parsedInv.map((p: any) => {
-                const matched = selectedProducts.find(sp => sp.product_id === p.id);
-                return matched ? { ...p, quantity: Math.max(0, p.quantity - matched.quantity) } : p;
-              })
-            ));
-          }
-        }
-      } else if (insertedOs) {
-        for (const item of selectedProducts) {
-          await supabase.from('service_order_items').insert({
-            company_id: resolvedCompanyId,
-            service_order_id: insertedOs.id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-          });
-        }
-        for (const item of selectedServices) {
-          await supabase.from('order_services').insert({
-            company_id: resolvedCompanyId,
-            os_id: insertedOs.id,
-            service_id: item.service_id,
-            quantidade: item.quantity,
-            preco_unitario: item.unit_price,
-            subtotal: item.quantity * item.unit_price,
-          });
-        }
+      // Itens e serviços em lote. Se falharem, a OS é desfeita: o ON DELETE
+      // CASCADE remove o que entrou e o trigger de estoque devolve as peças.
+      const itemsError = await insertOrderChildren(insertedOs.id, resolvedCompanyId);
+      if (itemsError) {
+        await supabase.from('service_orders').delete().eq('id', insertedOs.id);
+        throw new Error(describeDbError(itemsError, 'Não foi possível salvar as peças/serviços da OS.'));
       }
 
-      const selClient = clientsList.find(c => c.id === clientId);
-      if (selClient) {
-        try {
-          fetch('/api/notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              status: 'Abertura',
-              order_id: insertedOs.id,
-              equipment: equipmentDetails || 'Equipamento',
-              client_name: selClient.name,
-              client_email: (selClient as any).email || '',
-              tracking_url: `${typeof window !== 'undefined' ? window.location.origin : ''}/rastreio?id=${insertedOs.id}`,
-            }),
-          }).catch(() => {});
-        } catch (_) {}
-      }
+      // A API busca cliente, e-mail e equipamento no banco — só envia id e status.
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Abertura', order_id: insertedOs.id }),
+      }).catch(() => {});
 
       setSuccess(true);
       setTimeout(() => { onSuccess?.(); }, 1000);

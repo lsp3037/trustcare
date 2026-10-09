@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PRIORITIES = ['Baixa', 'Média', 'Alta'];
+
 // Autentica a requisição via cabeçalho x-api-key
 async function authenticateRequest(req: Request) {
   const apiKey = req.headers.get('x-api-key');
@@ -45,7 +48,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ orders: orders || [] });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+    console.error('[API Orders] Erro interno:', err);
+    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
 
@@ -60,14 +64,35 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const { client_id, equipment_details, reported_problem, priority, status } = body;
+    const body = await req.json().catch(() => null);
+    const client_id = typeof body?.client_id === 'string' ? body.client_id : '';
+    const reported_problem = typeof body?.reported_problem === 'string' ? body.reported_problem.trim() : '';
+    const equipment_details = typeof body?.equipment_details === 'string' ? body.equipment_details.trim() : '';
+    const priority = PRIORITIES.includes(body?.priority) ? body.priority : 'Média';
 
-    if (!client_id || !reported_problem) {
+    if (!UUID_REGEX.test(client_id) || !reported_problem) {
       return NextResponse.json(
-        { error: 'Parâmetros obrigatórios ausentes: client_id e reported_problem são necessários.' },
+        { error: 'Parâmetros obrigatórios ausentes: client_id (UUID) e reported_problem são necessários.' },
         { status: 400 }
       );
+    }
+
+    // O service role ignora a RLS: as regras de tenant e de assinatura precisam
+    // ser checadas aqui explicitamente.
+    const { data: readOnly } = await supabaseAdmin.rpc('is_company_read_only', { comp_id: companyId });
+    if (readOnly === true) {
+      return NextResponse.json({ error: 'Conta em modo somente leitura por pendência na assinatura.' }, { status: 403 });
+    }
+
+    const { data: client } = await supabaseAdmin
+      .from('clients')
+      .select('id')
+      .eq('id', client_id)
+      .eq('company_id', companyId)
+      .maybeSingle();
+
+    if (!client) {
+      return NextResponse.json({ error: 'Cliente não encontrado para esta empresa.' }, { status: 404 });
     }
 
     const osData = {
@@ -75,8 +100,9 @@ export async function POST(req: Request) {
       client_id,
       equipment_details: equipment_details || 'Não especificado',
       reported_problem,
-      priority: priority || 'Média',
-      status: status || 'Em Análise',
+      priority,
+      // Status inicial fixo: o fluxo de status é responsabilidade do painel.
+      status: 'Em Análise',
       service_value: 0,
       discount: 0,
       total_value: 0
@@ -95,6 +121,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, order: insertedOs }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+    console.error('[API Orders] Erro interno:', err);
+    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }

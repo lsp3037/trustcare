@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 /**
  * Rate Limit API — usada pelas rotas públicas (/rastreio, /orcamento)
@@ -16,7 +16,9 @@ export async function POST(req: Request) {
     const forwarded = req.headers.get('x-forwarded-for');
     const clientIp = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
 
-    const { data, error } = await supabase.rpc('check_and_clean_rate_limit', {
+    // Service role: a RPC não é executável por anon (o navegador poderia
+    // passar um IP arbitrário e esgotar o limite de outra pessoa).
+    const { data, error } = await supabaseAdmin.rpc('check_and_clean_rate_limit', {
       client_ip: clientIp,
       target_path: path ?? '/',
     });

@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const MAX_ATTEMPTS = 5;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: Request) {
   try {
-    const { tempTokenId, code } = await req.json();
+    const body = await req.json().catch(() => null);
+    const tempTokenId = typeof body?.tempTokenId === 'string' ? body.tempTokenId : '';
+    const code = typeof body?.code === 'string' ? body.code : '';
 
-    if (!tempTokenId || !code) {
+    if (!UUID_REGEX.test(tempTokenId) || !/^\d{6}$/.test(code.trim())) {
       return NextResponse.json({ error: 'Parâmetros inválidos.' }, { status: 400 });
     }
 
@@ -105,6 +108,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, order: formattedOrder });
   } catch (err: any) {
     console.error('[Verify Token] Erro interno:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno ao validar o código.' }, { status: 500 });
   }
 }
