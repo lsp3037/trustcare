@@ -1,8 +1,8 @@
 'use client';
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { FileSignature } from 'lucide-react';
-import { Card, CardTitle } from '@/components/ui';
+import { FileSignature, Sparkles } from 'lucide-react';
+import { Button, Card, CardTitle } from '@/components/ui';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
@@ -26,11 +26,16 @@ interface TechnicalReportSectionProps {
   setReportedProblem: (v: string) => void;
   technicalReport: string;
   setTechnicalReport: (v: string) => void;
+  /** Formata as anotações do laudo no padrão Trust Care (via IA). */
+  onFormatReport?: () => void;
+  formattingReport?: boolean;
+  formatDisabled?: boolean;
 }
 
 export function TechnicalReportSection({
   reportedProblem, setReportedProblem,
-  technicalReport, setTechnicalReport
+  technicalReport, setTechnicalReport,
+  onFormatReport, formattingReport = false, formatDisabled = false
 }: TechnicalReportSectionProps) {
   return (
     <Card className="space-y-6">
@@ -51,14 +56,29 @@ export function TechnicalReportSection({
       </div>
 
       <div>
-        <p className="text-sm font-medium text-text-muted mb-1.5">Laudo Técnico / Serviço Realizado</p>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <p className="text-sm font-medium text-text-muted">Laudo Técnico / Serviço Realizado</p>
+          {onFormatReport && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Sparkles className="w-4 h-4" aria-hidden />}
+              loading={formattingReport}
+              disabled={formatDisabled}
+              onClick={onFormatReport}
+              title="Transforma suas anotações no laudo padrão (Diagnóstico, Serviços orçados, Total, Garantia, Prazo e Privacidade)"
+            >
+              {formattingReport ? 'Formatando...' : 'Formatar laudo'}
+            </Button>
+          )}
+        </div>
         <ReactQuill
           theme="snow"
           modules={modules}
           formats={formats}
           value={technicalReport}
           onChange={setTechnicalReport}
-          placeholder="Insira as observações técnicas detalhadas, testes executados e solução encontrada..."
+          placeholder="Anote do seu jeito (ex.: tela quebrada, dobradiça solta, bateria 1h no YouTube, placa e vídeo ok no HDMI) e clique em Formatar laudo..."
           className="prose prose-invert max-w-none text-sm"
         />
       </div>
