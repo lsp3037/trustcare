@@ -424,7 +424,7 @@ export default function PublicOrderBudgetPage() {
               {order.technical_report ? (
                 <div 
                   className="text-small text-text leading-relaxed break-words prose dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
-                  dangerouslySetInnerHTML={{ __html: order.technical_report }}
+                  dangerouslySetInnerHTML={{ __html: String(order.technical_report).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") }}
                 />
               ) : (
                 <p className="text-small text-text leading-relaxed break-words whitespace-pre-line">
