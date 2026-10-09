@@ -67,13 +67,21 @@ export async function proxy(request: NextRequest) {
 
   const isPortalAuthenticated = request.cookies.get('portal-session-mock')?.value === 'true';
 
+  const redirectWithCookies = (url: URL) => {
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
+  };
+
   // Backoffice (God Mode) protection
   if (pathname.startsWith('/backoffice')) {
     const godModeEmail = 'lsp3037@gmail.com';
     if (!user || user.email !== godModeEmail) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
-      return NextResponse.redirect(url);
+      return redirectWithCookies(url);
     }
   }
 
@@ -82,26 +90,26 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   if ((pathname === '/login' || pathname === '/register') && isAdminAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   // 3. Customer Portal route protection
   if (pathname.startsWith('/portal/dashboard') && !isPortalAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = '/portal';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   if (pathname === '/portal' && isPortalAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = '/portal/dashboard';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   return supabaseResponse;

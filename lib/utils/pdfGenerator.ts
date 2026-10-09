@@ -80,8 +80,38 @@ export function generateOrderPdf({ order, company, client, items = [], services 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(51, 65, 85);
   
+  const stripHtml = (html: string) => {
+    if (!html) return '';
+    return String(html)
+      // Primeiro decodifica entidades HTML que podem estar mascarando as tags
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Substitui emojis de checklist (causam erro de NaN no width do jsPDF e truncam a linha)
+      .replace(/✅/g, '[OK] ')
+      .replace(/❌/g, '[X] ')
+      .replace(/✔️/g, '[OK] ')
+      .replace(/✖️/g, '[X] ')
+      // Depois transforma quebras de linha e listas
+      .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<li>/gi, '• ')
+      .replace(/<\/li>/gi, '\n')
+      // E finalmente remove as tags
+      .replace(/<[^>]*>?/gm, '')
+      // Remove Dingbats e Emojis em surrogate pairs que quebram o jsPDF splitTextToSize
+      .replace(/[\u2700-\u27BF]/g, '')
+      .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
+      // Limpa espaços extras
+      .replace(/\n\s*\n/g, '\n')
+      .trim();
+  };
+
   // Limpa tags HTML do problema se houver
-  const problemClean = (order.reported_problem || 'Problema relatado pelo cliente.').replace(/<[^>]*>?/gm, '');
+  const problemClean = stripHtml(order.reported_problem || 'Problema relatado pelo cliente.');
   const problemLines = doc.splitTextToSize(problemClean, 190);
   doc.text(problemLines, 10, y + 6);
   y += 6 + (problemLines.length * 4);
@@ -90,7 +120,8 @@ export function generateOrderPdf({ order, company, client, items = [], services 
     doc.setFont('helvetica', 'bold');
     doc.text('Parecer Técnico:', 10, y + 2);
     doc.setFont('helvetica', 'normal');
-    const reportLines = doc.splitTextToSize(order.technical_report, 190);
+    const reportClean = stripHtml(order.technical_report);
+    const reportLines = doc.splitTextToSize(reportClean, 190);
     doc.text(reportLines, 10, y + 7);
     y += 8 + (reportLines.length * 4);
   }

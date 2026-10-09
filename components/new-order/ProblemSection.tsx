@@ -21,7 +21,7 @@ const modules = {
   ],
 };
 
-const formats = ['bold', 'italic', 'underline', 'list', 'bullet', 'align'];
+const formats = ['bold', 'italic', 'underline', 'list', 'align'];
 
 interface ProblemSectionProps {
   status: string;
