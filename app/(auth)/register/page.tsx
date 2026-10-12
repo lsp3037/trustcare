@@ -70,7 +70,7 @@ export default function RegisterPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-8">
             <ShieldCheck className="w-5 h-5 text-brand" />
-            <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Trust Care Platform</span>
+            <span className="text-caption font-bold text-text-muted uppercase tracking-widest">Trust Care Platform</span>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default function RegisterPage() {
             </span>
           </h2>
           <div className="w-12 h-1 bg-gradient-to-r from-brand to-blue-500 my-4" />
-          <p className="text-xs text-text-muted leading-relaxed">
+          <p className="text-caption text-text-muted leading-relaxed">
             Cadastre sua empresa e equipe em poucos passos e comece a automatizar seus checklists e controle de faturamento hoje mesmo.
           </p>
         </div>
@@ -120,38 +120,40 @@ export default function RegisterPage() {
               className="object-contain"
             />
             <h1 className="text-xl font-bold text-text">Trust Care</h1>
-            <p className="text-xs text-text-muted">Cadastre seu Tenant/Empresa</p>
+            <p className="text-caption text-text-muted">Cadastre seu Tenant/Empresa</p>
           </div>
 
           <div className="space-y-1">
             <h2 className="text-lg font-bold text-text hidden md:block">Nova Conta</h2>
-            <p className="text-xs text-text-muted">Preencha os dados abaixo para se cadastrar.</p>
+            <p className="text-caption text-text-muted">Preencha os dados abaixo para se cadastrar.</p>
           </div>
 
           {success ? (
             <div className="p-4 rounded-lg bg-brand/10 border border-brand/25 text-center text-brand">
               <p className="font-semibold text-sm">Empresa cadastrada com sucesso!</p>
-              <p className="text-xs text-text-muted mt-1">Redirecionando para a tela de login...</p>
+              <p className="text-caption text-text-muted mt-1">Redirecionando para a tela de login...</p>
             </div>
           ) : (
             <form onSubmit={handleRegister} className="space-y-3.5">
               {errorMsg && (
-                <div className="p-3 rounded-lg bg-danger/10 border border-danger/25 text-xs text-rose-600">
+                <div className="p-3 rounded-lg bg-danger/10 border border-danger/25 text-caption text-rose-600">
                   {errorMsg}
                 </div>
               )}
 
               {/* Nome da Empresa */}
               <div className="space-y-1">
-                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Nome da Empresa (Tenant)</label>
+                <label htmlFor="register-company" className="text-caption font-bold text-text-muted uppercase tracking-wider">Nome da Empresa (Tenant)</label>
                 <div className="relative">
                   <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
+                    id="register-company"
+                    name="companyName"
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Ex: Assistência Express"
-                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-small text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -159,15 +161,17 @@ export default function RegisterPage() {
 
               {/* Seu Nome */}
               <div className="space-y-1">
-                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Seu Nome</label>
+                <label htmlFor="register-user" className="text-caption font-bold text-text-muted uppercase tracking-wider">Seu Nome</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
+                    id="register-user"
+                    name="userName"
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Ex: João Silva"
-                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-small text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -175,15 +179,17 @@ export default function RegisterPage() {
 
               {/* WhatsApp */}
               <div className="space-y-1">
-                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">WhatsApp da Empresa</label>
+                <label htmlFor="register-whatsapp" className="text-caption font-bold text-text-muted uppercase tracking-wider">WhatsApp da Empresa</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
+                    id="register-whatsapp"
+                    name="whatsapp"
                     type="text"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     placeholder="Ex: (66) 99999-9999"
-                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-small text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -191,15 +197,17 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1">
-                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Email Corporativo</label>
+                <label htmlFor="register-email" className="text-caption font-bold text-text-muted uppercase tracking-wider">Email Corporativo</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
+                    id="register-email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seuemail@empresa.com"
-                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-small text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -207,15 +215,17 @@ export default function RegisterPage() {
 
               {/* Senha */}
               <div className="space-y-1">
-                <label className="text-caption font-bold text-text-muted uppercase tracking-wider">Senha</label>
+                <label htmlFor="register-password" className="text-caption font-bold text-text-muted uppercase tracking-wider">Senha</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                   <input
+                    id="register-password"
+                    name="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
-                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
+                    className="w-full bg-surface-raised border border-border rounded-lg py-2 pl-9 pr-4 text-small text-text placeholder:text-text-muted focus:outline-none focus:border-info focus:ring-2 focus:ring-info/20 transition-all"
                     required
                   />
                 </div>
@@ -227,7 +237,7 @@ export default function RegisterPage() {
                 fullWidth
                 loading={loading}
                 icon={<ArrowRight className="w-4 h-4" />}
-                className="rounded-lg bg-info hover:bg-info shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 mt-2 text-xs"
+                className="rounded-lg bg-info hover:bg-info shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 mt-2 text-caption"
               >
                 Cadastrar Empresa
               </Button>
@@ -236,7 +246,7 @@ export default function RegisterPage() {
 
           {/* Login Link */}
           <div className="text-center pt-2 border-t border-border">
-            <p className="text-xs text-text-muted">
+            <p className="text-caption text-text-muted">
               Já possui cadastro?{' '}
               <Link href="/login" className="text-info font-bold hover:underline transition-all">
                 Fazer Login

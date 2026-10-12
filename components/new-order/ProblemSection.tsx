@@ -2,14 +2,14 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardTitle, Field, Input, Select } from '@/components/ui';
+import { Card, CardTitle, Field, Input, Select, Skeleton } from '@/components/ui';
 import { OS_STATUS_FLOW } from '@/lib/design/status';
 import { Sliders, FileText } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
-  loading: () => <div className="h-32 w-full animate-pulse bg-surface-sunken border border-border rounded-xl" />,
+  loading: () => <Skeleton className="h-32 w-full border border-border rounded-xl" />,
 });
 
 const modules = {

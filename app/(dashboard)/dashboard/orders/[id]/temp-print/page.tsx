@@ -461,16 +461,16 @@ function PrintDocumentContent({
             )}
             <div>
               <h2 className="text-lg font-black tracking-tight uppercase">{company.name}</h2>
-              <p className="text-xs text-slate-700 font-semibold">{company.email}</p>
-              <p className="text-xs text-slate-700 font-semibold">{company.phone}</p>
+              <p className="text-caption text-text-muted font-semibold">{company.email}</p>
+              <p className="text-caption text-text-muted font-semibold">{company.phone}</p>
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] font-bold text-text-subtle uppercase tracking-widest block">Ordem de Serviço</span>
+            <span className="text-caption font-bold text-text-subtle uppercase tracking-widest block">Ordem de Serviço</span>
             <span className="text-xl font-black font-mono text-black block mt-0.5">
               #{order.codigo_os || `OS-${order.id.slice(0, 8).toUpperCase()}`}
             </span>
-            <span className="text-[10px] font-medium text-slate-600 block mt-1">
+            <span className="text-caption font-medium text-text-muted block mt-1">
               Data de Abertura: {new Date(order.created_at).toLocaleDateString('pt-BR')}
             </span>
           </div>
@@ -478,20 +478,20 @@ function PrintDocumentContent({
 
         {/* BLOCO 1: CLIENTE */}
         <div className="border border-black p-4">
-          <h3 className="text-xs font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
+          <h3 className="text-caption font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
             Identificação do Cliente
           </h3>
-          <div className="grid grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-3 gap-4 text-small">
             <div>
-              <span className="text-[9px] font-bold text-text-subtle uppercase block">Nome</span>
+              <span className="text-caption font-bold text-text-subtle uppercase block">Nome</span>
               <span className="font-bold text-black text-sm">{client?.name || 'Membro da Equipe'}</span>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-text-subtle uppercase block">Telefone</span>
+              <span className="text-caption font-bold text-text-subtle uppercase block">Telefone</span>
               <span className="font-semibold text-black font-mono">{client?.phone || '—'}</span>
             </div>
             <div>
-              <span className="text-[9px] font-bold text-text-subtle uppercase block">E-mail</span>
+              <span className="text-caption font-bold text-text-subtle uppercase block">E-mail</span>
               <span className="font-semibold text-black font-mono">{client?.email || '—'}</span>
             </div>
           </div>
@@ -499,22 +499,22 @@ function PrintDocumentContent({
 
         {/* BLOCO 2: EQUIPAMENTO & DIAGNÓSTICO */}
         <div className="border border-black p-4">
-          <h3 className="text-xs font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
+          <h3 className="text-caption font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
             Equipamento & Problema Reportado
           </h3>
           <div className="space-y-3">
             <div>
-              <span className="text-[9px] font-bold text-text-subtle uppercase block">Especificação do Equipamento</span>
-              <span className="font-bold text-black text-xs">{order.equipment_details || '—'}</span>
+              <span className="text-caption font-bold text-text-subtle uppercase block">Especificação do Equipamento</span>
+              <span className="font-bold text-black text-small">{order.equipment_details || '—'}</span>
             </div>
-            <div className="border-t border-slate-200 pt-2">
-              <span className="text-[9px] font-bold text-text-subtle uppercase block">Defeito Relatado pelo Cliente</span>
-              <p className="text-xs text-black italic mt-0.5 whitespace-pre-wrap">{stripHtml(order.reported_problem || '')}</p>
+            <div className="border-t border-black/15 pt-2">
+              <span className="text-caption font-bold text-text-subtle uppercase block">Defeito Relatado pelo Cliente</span>
+              <p className="text-small text-black italic mt-0.5 whitespace-pre-wrap">{stripHtml(order.reported_problem || '')}</p>
             </div>
             {order.technical_report && (
-              <div className="border-t border-slate-200 pt-2">
-                <span className="text-[9px] font-bold text-text-subtle uppercase block">Parecer / Laudo Técnico do Serviço</span>
-                <p className="text-xs text-black font-medium mt-0.5 whitespace-pre-wrap">{stripHtml(order.technical_report)}</p>
+              <div className="border-t border-black/15 pt-2">
+                <span className="text-caption font-bold text-text-subtle uppercase block">Parecer / Laudo Técnico do Serviço</span>
+                <p className="text-small text-black font-medium mt-0.5 whitespace-pre-wrap">{stripHtml(order.technical_report)}</p>
               </div>
             )}
           </div>
@@ -523,7 +523,7 @@ function PrintDocumentContent({
         {/* BLOCO 2.5: CONDIÇÕES DE RECEBIMENTO (CHECKLIST DE ENTRADA) */}
         {order.entry_checklist && (
           <div className="border border-black p-4">
-            <h3 className="text-xs font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
+            <h3 className="text-caption font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
               Condições de Recebimento (Checklist)
             </h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2">
@@ -531,7 +531,7 @@ function PrintDocumentContent({
                 const checkData = order.entry_checklist[item.id];
                 if (!checkData?.checked && !checkData?.observation?.trim()) return null;
                 return (
-                  <div key={item.id} className="flex gap-2 text-xs">
+                  <div key={item.id} className="flex gap-2 text-small">
                     <span className="font-bold text-black min-w-[120px] flex-shrink-0">
                       {checkData.checked ? '☑' : '☐'} {item.label}:
                     </span>
@@ -543,14 +543,14 @@ function PrintDocumentContent({
               })}
               
               {order.entry_checklist.password_pin?.has_password && (
-                <div className="flex gap-2 text-xs col-span-2 mt-2 pt-2 border-t border-slate-200">
+                <div className="flex gap-2 text-small col-span-2 mt-2 pt-2 border-t border-black/15">
                   <span className="font-bold text-black flex-shrink-0">☑ Senha / PIN:</span>
                   <span className="text-black font-mono">{order.entry_checklist.password_pin.password_value || 'Registrado'}</span>
                 </div>
               )}
               
               {order.entry_checklist.general_notes?.trim() && (
-                <div className="col-span-2 mt-2 pt-2 border-t border-slate-200 text-xs">
+                <div className="col-span-2 mt-2 pt-2 border-t border-black/15 text-small">
                   <span className="font-bold text-black block mb-1">Observações Gerais (Entrada):</span>
                   <p className="text-black italic whitespace-pre-wrap">{order.entry_checklist.general_notes}</p>
                 </div>
@@ -561,23 +561,23 @@ function PrintDocumentContent({
 
         {/* BLOCO 3: SERVIÇOS E PEÇAS */}
         <div className="border border-black p-4">
-          <h3 className="text-xs font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
+          <h3 className="text-caption font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 inline-block mb-3">
             Itens Adicionados & Serviços Prestados
           </h3>
           
           {selectedProducts.length === 0 && selectedServices.length === 0 && laborValue === 0 ? (
-            <p className="text-xs text-text-subtle italic py-2">Nenhum serviço ou peça vinculados.</p>
+            <p className="text-caption text-text-subtle italic py-2">Nenhum serviço ou peça vinculados.</p>
           ) : (
-            <table className="w-full text-left text-xs border-collapse mt-2">
+            <table className="w-full text-left text-small border-collapse mt-2">
               <thead>
-                <tr className="border-b border-black text-black font-black text-[10px] uppercase tracking-wider bg-slate-100">
+                <tr className="border-b border-black text-black font-black text-caption uppercase tracking-wider bg-black/5">
                   <th className="py-2 px-2">Descrição do Serviço / Peça</th>
                   <th className="py-2 px-2 text-center w-24">Valor Unitário</th>
                   <th className="py-2 px-2 text-center w-16">Qtd.</th>
                   <th className="py-2 px-2 text-right w-24">Subtotal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-black/15">
                 {/* Linha da Mão de Obra Geral */}
                 {laborValue > 0 && (
                   <tr className="font-semibold text-black">
@@ -590,8 +590,8 @@ function PrintDocumentContent({
                 
                 {/* Serviços do Catálogo */}
                 {selectedServices.map((item: any, idx: number) => (
-                  <tr key={`serv-${idx}`} className="text-slate-800">
-                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-text-subtle border border-slate-300 px-1 py-0.2 ml-1 rounded-xl uppercase">Serviço</span></td>
+                  <tr key={`serv-${idx}`} className="text-black">
+                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-caption font-bold text-text-subtle border border-black/20 px-1 py-0.2 ml-1 rounded-md uppercase">Serviço</span></td>
                     <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
                     <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
@@ -600,8 +600,8 @@ function PrintDocumentContent({
 
                 {/* Peças do Estoque */}
                 {selectedProducts.map((item: any, idx: number) => (
-                  <tr key={`prod-${idx}`} className="text-slate-800">
-                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-[10px] font-bold text-text-subtle border border-slate-300 px-1 py-0.2 ml-1 rounded-xl uppercase">Peça</span></td>
+                  <tr key={`prod-${idx}`} className="text-black">
+                    <td className="py-2 px-2 font-medium">{item.name} <span className="text-caption font-bold text-text-subtle border border-black/20 px-1 py-0.2 ml-1 rounded-md uppercase">Peça</span></td>
                     <td className="py-2 px-2 text-center font-mono">R$ {Number(item.unit_price).toFixed(2)}</td>
                     <td className="py-2 px-2 text-center font-bold">{item.quantity}</td>
                     <td className="py-2 px-2 text-right font-mono font-bold text-black">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
@@ -615,29 +615,29 @@ function PrintDocumentContent({
         {/* BLOCO 4: RESUMO FINANCEIRO (COM IMPEDIMENTO DE ORFANATO CSS) */}
         <div className="flex justify-between items-end gap-6 break-inside-avoid print:break-inside-avoid">
           <div className="flex-1 border border-black p-4 min-h-[100px] flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-text-subtle uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
-            <p className="text-[10px] text-slate-700 leading-relaxed mt-1">
+            <span className="text-caption font-bold text-text-subtle uppercase tracking-wider block">Observações do Recebimento / Garantia</span>
+            <p className="text-caption text-text-muted leading-relaxed mt-1">
               Garantia de 90 dias referente aos serviços executados e peças trocadas. O equipamento retirado deve ser conferido no ato da entrega.
             </p>
           </div>
           
-          <div className="w-80 border border-black p-4 space-y-2.5 bg-slate-50">
-            <div className="flex justify-between text-xs text-slate-700 font-semibold">
+          <div className="w-80 border border-black p-4 space-y-2.5 bg-black/[0.03]">
+            <div className="flex justify-between text-small text-text-muted font-semibold">
               <span>Subtotal dos Itens:</span>
               <span className="font-mono">R$ {subtotalValue.toFixed(2)}</span>
             </div>
             {discountValue > 0 && (
-              <div className="flex justify-between text-xs text-rose-600 font-bold">
+              <div className="flex justify-between text-small text-danger font-bold">
                 <span>Desconto Aplicado:</span>
                 <span className="font-mono">- R$ {discountValue.toFixed(2)}</span>
               </div>
             )}
             <div className="h-px bg-black" />
             <div className="flex justify-between items-center">
-              <span className="text-xs font-black uppercase text-black">Total da O.S.:</span>
+              <span className="text-small font-black uppercase text-black">Total da O.S.:</span>
               <div className="flex items-center gap-2">
                 {order.pago && (
-                  <span className="px-1.5 py-0.5 border-2 border-emerald-600 text-emerald-600 text-[9px] font-black uppercase tracking-wider">
+                  <span className="px-1.5 py-0.5 border-2 border-brand text-brand text-caption font-black uppercase tracking-wider">
                     RECEBIDO
                   </span>
                 )}
@@ -654,13 +654,13 @@ function PrintDocumentContent({
       {/* RODAPÉ E ASSINATURA (COM IMPEDIMENTO DE ORFANATO CSS) */}
       <div className="mt-12 pt-6 border-t border-black grid grid-cols-2 gap-8 break-inside-avoid print:break-inside-avoid">
         <div>
-          <p className="text-[10px] font-bold text-text-subtle uppercase">Local e Data</p>
-          <p className="text-xs font-bold text-black mt-2 font-mono">{company.name}, {currentDate}</p>
+          <p className="text-caption font-bold text-text-subtle uppercase">Local e Data</p>
+          <p className="text-small font-bold text-black mt-2 font-mono">{company.name}, {currentDate}</p>
         </div>
         <div className="text-center">
           <div className="border-b border-black w-full h-8" />
-          <p className="text-[9px] font-bold text-text-subtle uppercase mt-1.5">Assinatura do Cliente (Retirada)</p>
-          <p className="text-[9px] text-text-subtle font-medium">Declaro ter recebido o equipamento testado e em perfeito estado.</p>
+          <p className="text-caption font-bold text-text-subtle uppercase mt-1.5">Assinatura do Cliente (Retirada)</p>
+          <p className="text-caption text-text-subtle font-medium">Declaro ter recebido o equipamento testado e em perfeito estado.</p>
         </div>
       </div>
 

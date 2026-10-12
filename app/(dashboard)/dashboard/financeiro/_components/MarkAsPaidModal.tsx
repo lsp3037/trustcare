@@ -110,6 +110,7 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
 
         <Select
           label="Forma de Pagamento"
+          aria-label="Forma de Pagamento"
           value={method}
           onChange={(e) => setMethod(e.target.value)}
         >
@@ -122,6 +123,7 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
 
         <Input
           label="Data do Recebimento"
+          aria-label="Data do Recebimento"
           type="date"
           value={paymentDate}
           onChange={(e) => setPaymentDate(e.target.value)}

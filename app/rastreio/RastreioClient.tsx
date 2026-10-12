@@ -226,7 +226,7 @@ function TrackingContent() {
 
         <Link 
           href="/login" 
-          className="text-xs font-semibold text-text-muted hover:text-white transition-colors bg-surface-raised border border-border px-4 py-2 rounded-xl"
+          className="text-caption font-semibold text-text-muted hover:text-white transition-colors bg-surface-raised border border-border px-4 py-2 rounded-xl"
         >
           Área do Técnico
         </Link>
@@ -257,15 +257,18 @@ function TrackingContent() {
                   <Search className="w-5 h-5 text-text-muted ml-3" />
                   <input
                     type="text"
+                    id="rastreio-search-id"
+                    name="searchId"
+                    aria-label="Código da Ordem de Serviço"
                     required
                     placeholder="Código da OS (Ex: 0e15ff9a)..."
                     value={searchId}
                     onChange={(e) => setSearchId(e.target.value)}
-                    className="flex-1 bg-transparent border-0 text-sm text-text placeholder-slate-500 focus:outline-none focus:ring-0 px-3 py-2"
+                    className="flex-1 bg-transparent border-0 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-0 px-3 py-2"
                   />
                   <button
                     type="submit"
-                    className="bg-info hover:bg-info text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-blue-500/15 cursor-pointer shrink-0"
+                    className="bg-info hover:bg-info text-white font-bold px-6 py-2.5 rounded-xl text-caption transition-all shadow-lg shadow-blue-500/15 cursor-pointer shrink-0"
                   >
                     Buscar
                   </button>
@@ -273,14 +276,14 @@ function TrackingContent() {
               </div>
 
               {errorMsg && (
-                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs flex items-center gap-2.5">
+                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-caption flex items-center gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
             </form>
 
-            <div className="pt-6 border-t border-border flex justify-center items-center gap-2 text-xs text-text-muted font-medium">
+            <div className="pt-6 border-t border-border flex justify-center items-center gap-2 text-caption text-text-muted font-medium">
               <Lock className="w-3.5 h-3.5" />
               <span>Nenhum dado pessoal ou financeiro é exposto publicamente</span>
             </div>
@@ -309,16 +312,19 @@ function TrackingContent() {
                 <div className="relative flex items-center bg-surface-raised border border-border rounded-xl p-2.5">
                   <input
                     type="text"
+                    id="rastreio-otp-code"
+                    name="otpCode"
+                    aria-label="Código de verificação de 6 dígitos"
                     required
                     maxLength={6}
                     placeholder="Código de 6 dígitos"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    className="flex-1 bg-transparent border-0 text-center text-lg font-mono tracking-widest text-text placeholder-slate-600 focus:outline-none focus:ring-0 py-2"
+                    className="flex-1 bg-transparent border-0 text-center text-lg font-mono tracking-widest text-text placeholder:text-text-subtle focus:outline-none focus:ring-0 py-2"
                   />
                   <button
                     type="submit"
-                    className="bg-brand-hover hover:bg-brand text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-lg cursor-pointer shrink-0"
+                    className="bg-brand-hover hover:bg-brand text-white font-bold px-6 py-2.5 rounded-xl text-caption transition-all shadow-lg cursor-pointer shrink-0"
                   >
                     Verificar
                   </button>
@@ -330,7 +336,7 @@ function TrackingContent() {
                   <button
                     type="button"
                     onClick={() => setOtpCode(devToken)}
-                    className="text-xs text-info hover:text-info underline font-mono"
+                    className="text-caption text-info hover:text-info underline font-mono"
                   >
                     [Modo de Testes] Clique aqui para auto-preencher o código: {devToken}
                   </button>
@@ -338,7 +344,7 @@ function TrackingContent() {
               )}
 
               {errorMsg && (
-                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs flex items-center gap-2.5">
+                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-caption flex items-center gap-2.5">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -352,7 +358,7 @@ function TrackingContent() {
                     setErrorMsg('');
                     setOtpCode('');
                   }}
-                  className="text-xs font-semibold text-text-muted hover:text-white transition-colors flex items-center gap-1"
+                  className="text-caption font-semibold text-text-muted hover:text-white transition-colors flex items-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Voltar para busca
                 </button>
@@ -360,7 +366,7 @@ function TrackingContent() {
                 <button
                   type="button"
                   onClick={() => requestToken(searchId)}
-                  className="text-xs font-semibold text-info hover:text-info transition-colors"
+                  className="text-caption font-semibold text-info hover:text-info transition-colors"
                 >
                   Reenviar código
                 </button>
@@ -392,12 +398,12 @@ function TrackingContent() {
                   setDevToken('');
                   router.push('/rastreio');
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-white transition-colors self-start"
+                className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-muted hover:text-white transition-colors self-start"
               >
                 <ArrowLeft className="w-4 h-4" /> Buscar outro equipamento
               </button>
 
-              <div className="flex items-center gap-2 text-xs font-medium text-text-muted bg-surface-raised px-3.5 py-2 rounded-xl border border-border self-start">
+              <div className="flex items-center gap-2 text-caption font-medium text-text-muted bg-surface-raised px-3.5 py-2 rounded-xl border border-border self-start">
                 <Clock className="w-3.5 h-3.5 text-info" />
                 <span>Entrada em: {new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
               </div>
@@ -408,7 +414,7 @@ function TrackingContent() {
               <div className="space-y-4 z-2">
                 <div className="flex items-center gap-3">
                   <StatusBadge status={order.status} className="uppercase tracking-wider" />
-                  <span className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                  <span className="text-caption font-bold text-text-muted uppercase tracking-widest">
                     OS #{order.codigo_os || order.id.slice(0, 8)}
                   </span>
                 </div>
@@ -417,10 +423,10 @@ function TrackingContent() {
                   {order.equipment_name || 'Aparelho'} {order.equipment_brand} {order.equipment_model}
                 </h2>
                 
-                <div className="text-xs text-text-muted space-y-1 mt-2">
+                <div className="text-caption text-text-muted space-y-1 mt-2">
                   <span className="font-semibold text-text">Defeito relatado:</span>
                   <div 
-                    className="prose prose-invert max-w-none text-xs text-text-muted italic font-medium break-words whitespace-pre-wrap"
+                    className="prose prose-invert max-w-none text-caption text-text-muted italic font-medium break-words whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: order.reported_problem }}
                   />
                 </div>
@@ -451,7 +457,7 @@ function TrackingContent() {
                   <AlertCircle className="w-5 h-5 shrink-0 text-danger" />
                   <span>Serviço Cancelado</span>
                 </div>
-                <p className="text-xs text-text-muted leading-relaxed pl-7">
+                <p className="text-caption text-text-muted leading-relaxed pl-7">
                   Esta ordem de serviço foi classificada como cancelada. Para obter informações detalhadas sobre a recusa do orçamento, entrega de peças ou devolução do aparelho físico, por favor, entre em contato diretamente com o nosso suporte via WhatsApp.
                 </p>
               </div>
@@ -485,11 +491,11 @@ function TrackingContent() {
                       <div key={idx} className="flex flex-col items-center text-center space-y-3 z-3">
                         {/* Step badge */}
                         <div 
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-caption font-bold border transition-all duration-300 ${
                             isCompleted 
                               ? 'bg-info text-white border-info shadow-md shadow-blue-500/20' 
                               : isCurrent 
-                              ? 'bg-surface-raised border-info text-info shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10 animate-pulse' 
+                              ? 'bg-surface-raised border-info text-info shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10 animate-[pulse_2.5s_cubic-bezier(0.4,0,0.6,1)_infinite]' 
                               : 'bg-surface-sunken border-border text-text-subtle'
                           }`}
                         >
@@ -498,7 +504,7 @@ function TrackingContent() {
 
                         {/* Step labels */}
                         <div className="space-y-1">
-                          <p className={`text-xs font-extrabold tracking-tight ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
+                          <p className={`text-caption font-extrabold tracking-tight ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
                             {step.label}
                           </p>
                           <p className="text-caption text-text-muted leading-normal max-w-[120px] mx-auto">
@@ -534,7 +540,7 @@ function TrackingContent() {
                             isCompleted 
                               ? 'bg-info border-info text-white' 
                               : isCurrent 
-                              ? 'bg-surface-sunken border-info ring-4 ring-blue-500/15 text-info animate-pulse' 
+                              ? 'bg-surface-sunken border-info ring-4 ring-blue-500/15 text-info animate-[pulse_2.5s_cubic-bezier(0.4,0,0.6,1)_infinite]' 
                               : 'bg-surface-sunken border-border text-text-subtle'
                           }`}
                         >
@@ -543,7 +549,7 @@ function TrackingContent() {
 
                         {/* Labels */}
                         <div className="space-y-0.5">
-                          <p className={`text-xs font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
+                          <p className={`text-caption font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
                             {step.label}
                             {isCurrent && <span className="inline-block h-1.5 w-1.5 rounded-full bg-info animate-ping" />}
                           </p>
@@ -566,7 +572,7 @@ function TrackingContent() {
                   Laudo Técnico / Diagnóstico do Serviço / Serviço Realizado
                 </h3>
                 <div 
-                  className="text-xs text-text prose prose-invert max-w-none leading-relaxed bg-surface/40 p-4 rounded-xl border border-border font-medium"
+                  className="text-caption text-text prose prose-invert max-w-none leading-relaxed bg-surface/40 p-4 rounded-xl border border-border font-medium"
                   dangerouslySetInnerHTML={{ __html: order.technical_report }}
                 />
               </div>
@@ -575,7 +581,7 @@ function TrackingContent() {
             {/* Footer help notice */}
             <div className="p-6 bg-surface-raised/10 border border-border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
-                <p className="text-xs font-bold text-text">Dúvidas sobre o conserto?</p>
+                <p className="text-caption font-bold text-text">Dúvidas sobre o conserto?</p>
                 <p className="text-caption text-text-muted">Estamos à disposição no canal de atendimento direto.</p>
               </div>
 
@@ -583,7 +589,7 @@ function TrackingContent() {
                 href="https://wa.me/5565999620703" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="bg-brand-hover hover:bg-brand text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5"
+                className="bg-brand-hover hover:bg-brand text-white font-bold px-5 py-2.5 rounded-xl text-caption transition-all shadow-md flex items-center gap-1.5"
               >
                 Falar com Suporte no WhatsApp <ChevronRight className="w-4 h-4" />
               </a>

@@ -12,7 +12,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { DashboardStats } from '@/components/hooks/useDashboardData';
-import { Card, Badge } from '@/components/ui';
+import { Card, Badge, SkeletonCards } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface KpiOverviewCardsProps {
@@ -27,6 +27,62 @@ const brl = (value: number) =>
 
 type Tone = 'brand' | 'danger';
 
+export interface SparklineProps {
+  data: number[];
+  tone?: Tone;
+  width?: number;
+  height?: number;
+  className?: string;
+}
+
+export function Sparkline({
+  data,
+  tone = 'brand',
+  width = 60,
+  height = 20,
+  className,
+}: SparklineProps) {
+  if (!data || data.length < 2 || data.every((val) => val === 0)) return null;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const padding = 2;
+  const innerHeight = height - padding * 2;
+  const innerWidth = width - padding * 2;
+
+  const points = data.map((val, idx) => {
+    const x = padding + (idx / (data.length - 1)) * innerWidth;
+    const y = height - padding - ((val - min) / range) * innerHeight;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  const pathD = `M ${points.join(' L ')}`;
+  const strokeColor =
+    tone === 'danger'
+      ? 'var(--color-danger, #ef4444)'
+      : 'var(--color-brand, #10b981)';
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className={cn('shrink-0 overflow-visible', className)}
+      aria-hidden="true"
+    >
+      <path
+        d={pathD}
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 interface KpiCardProps {
   icon: React.ReactNode;
   /** Rótulo do indicador — o que está sendo medido. */
@@ -39,6 +95,7 @@ interface KpiCardProps {
   meta?: string;
   tone?: Tone;
   href?: string;
+  sparklineData?: number[];
 }
 
 const ICON_TONE: Record<Tone, string> = {
@@ -46,17 +103,7 @@ const ICON_TONE: Record<Tone, string> = {
   danger: 'bg-danger/15 text-danger',
 };
 
-interface KpiCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  hint: string;
-  meta?: string;
-  tone?: Tone;
-  href?: string;
-}
-
-function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCardProps) {
+function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href, sparklineData }: KpiCardProps) {
   const router = useRouter();
   const clickable = Boolean(href);
 
@@ -82,12 +129,17 @@ function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCa
         <div className={cn('p-2.5 rounded-2xl backdrop-blur-md border border-white/5', ICON_TONE[tone])} aria-hidden>
           {icon}
         </div>
-        {meta && (
-          <Badge tone={tone === 'danger' ? 'danger' : 'neutral'} className="shrink-0">
-            {meta}
-            {clickable && <ArrowUpRight className="w-3 h-3" aria-hidden />}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {sparklineData && sparklineData.length >= 2 && (
+            <Sparkline data={sparklineData} tone={tone} />
+          )}
+          {meta && (
+            <Badge tone={tone === 'danger' ? 'danger' : 'neutral'} className="shrink-0">
+              {meta}
+              {clickable && <ArrowUpRight className="w-3 h-3" aria-hidden />}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <p className="text-small font-semibold text-text-muted">{label}</p>
@@ -97,24 +149,21 @@ function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCa
   );
 }
 
-export function KpiOverviewCards({ stats, loading, isAdmin, role }: KpiOverviewCardsProps) {
+export function KpiOverviewCards({
+  stats,
+  chartData,
+  loading,
+  isAdmin,
+  role,
+}: KpiOverviewCardsProps & { chartData?: import('@/components/hooks/useDashboardData').ChartDay[] }) {
   if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-9 h-9 rounded-full bg-surface-overlay" />
-              <div className="w-12 h-4 rounded-full bg-surface-overlay" />
-            </div>
-            <div className="h-3 w-28 rounded-md bg-surface-overlay mb-2" />
-            <div className="h-7 w-20 rounded-md bg-surface-overlay mb-2" />
-            <div className="h-2 w-32 rounded-md bg-surface-overlay" />
-          </Card>
-        ))}
-      </div>
-    );
+    return <SkeletonCards count={4} />;
   }
+
+  const hasBillingTrend = chartData && chartData.some((d) => d.faturamento > 0);
+  const billingTrend = hasBillingTrend
+    ? chartData.map((d) => d.faturamento)
+    : undefined;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -126,6 +175,7 @@ export function KpiOverviewCards({ stats, loading, isAdmin, role }: KpiOverviewC
             label="Faturamento Realizado"
             value={brl(stats.billing)}
             hint="Soma de OS concluídas / entregues"
+            sparklineData={billingTrend}
           />
           <KpiCard
             icon={<Clock className="w-5 h-5" />}

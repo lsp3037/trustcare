@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { DollarSign, Users } from 'lucide-react';
+import { DollarSign, Users, BarChart3 } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-surface-raised border border-border rounded-2xl p-3 shadow-md">
-      <p className="text-text-muted text-xs font-semibold mb-1">{label}</p>
+      <p className="text-text-muted text-caption font-semibold mb-1">{label}</p>
       <p className="text-text text-sm font-semibold tabular-nums">
         Faturamento : <span className="text-brand">R$ {Number(payload[0].value).toFixed(2)}</span>
       </p>
@@ -37,6 +37,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function FinancialChartSection({ chartData, paymentDistribution, billingTotal }: FinancialChartSectionProps) {
+  const hasBilling = billingTotal > 0 || chartData.some((d) => d.faturamento > 0);
+
   return (
     <Card className="flex flex-col justify-between">
       <div>
@@ -44,9 +46,13 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
         <p className="text-caption text-text-subtle mt-0.5">Histórico do período selecionado.</p>
 
         <div className="w-full h-56 mt-6">
-          {chartData.length === 0 ? (
-            <div className="w-full h-full flex items-center justify-center text-small text-text-subtle">
-              Sem dados de faturamento para este período.
+          {!hasBilling ? (
+            <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-surface-sunken/40 rounded-2xl border border-dashed border-border">
+              <BarChart3 className="w-8 h-8 text-text-subtle/50 mb-2" aria-hidden="true" />
+              <p className="text-small font-medium text-text-muted">Nenhum faturamento no período</p>
+              <p className="text-caption text-text-subtle mt-0.5 max-w-xs">
+                O gráfico de faturamento diário será exibido assim que as primeiras ordens de serviço forem concluídas.
+              </p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">

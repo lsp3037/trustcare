@@ -93,6 +93,8 @@ export function ToolbarSearch({
       />
       <input
         type="text"
+        name="search"
+        aria-label={placeholder || 'Buscar'}
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
         placeholder={placeholder}
@@ -110,9 +112,9 @@ export function ToolbarSearch({
           type="button"
           onClick={() => onValueChange('')}
           aria-label="Limpar busca"
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-text-subtle hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 sm:p-1 rounded-lg text-text-subtle hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand touch-manipulation"
         >
-          <X className="w-3.5 h-3.5" aria-hidden />
+          <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" aria-hidden />
         </button>
       )}
     </div>
@@ -164,7 +166,8 @@ export function SegmentedControl<T extends string>({
             aria-pressed={active}
             title={option.iconOnly ? option.label : undefined}
             className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-small font-medium',
+              'flex items-center justify-center gap-1.5 px-3 py-2 sm:px-2.5 sm:py-1.5 rounded-lg text-small font-medium',
+              'min-h-[36px] sm:min-h-0 touch-manipulation',
               'transition-colors cursor-pointer',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
               active

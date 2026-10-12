@@ -215,10 +215,12 @@ export default function ProfileSettingsPage() {
             <form onSubmit={handleUpdateProfile} className="p-5 space-y-5">
               <div className="grid grid-cols-1 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-text-subtle mb-1.5">
+                  <label htmlFor="profile-fullName" className="block text-sm font-medium text-text-subtle mb-1.5">
                     Nome Completo
                   </label>
                   <input
+                    id="profile-fullName"
+                    name="fullName"
                     type="text"
                     required
                     value={fullName}
@@ -228,7 +230,7 @@ export default function ProfileSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-subtle mb-1.5">
+                  <label htmlFor="profile-whatsapp" className="block text-sm font-medium text-text-subtle mb-1.5">
                     Telefone / WhatsApp
                   </label>
                   <div className="relative">
@@ -236,6 +238,8 @@ export default function ProfileSettingsPage() {
                       <Smartphone className="h-4 w-4 text-text-muted" />
                     </div>
                     <input
+                      id="profile-whatsapp"
+                      name="whatsapp"
                       type="text"
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value)}
@@ -276,10 +280,12 @@ export default function ProfileSettingsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-text-subtle mb-1.5">
+                  <label htmlFor="profile-newPassword" className="block text-sm font-medium text-text-subtle mb-1.5">
                     Nova Senha
                   </label>
                   <input
+                    id="profile-newPassword"
+                    name="newPassword"
                     type="password"
                     required
                     value={newPassword}
@@ -289,10 +295,12 @@ export default function ProfileSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-subtle mb-1.5">
+                  <label htmlFor="profile-confirmPassword" className="block text-sm font-medium text-text-subtle mb-1.5">
                     Confirmar Nova Senha
                   </label>
                   <input
+                    id="profile-confirmPassword"
+                    name="confirmPassword"
                     type="password"
                     required
                     value={confirmPassword}
@@ -325,28 +333,31 @@ export default function ProfileSettingsPage() {
           <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm p-6 flex flex-col items-center">
             
             <div className="w-full flex justify-center mb-6">
-              <div 
-                className={`relative group w-32 h-32 rounded-full border-2 border-dashed ${isDragActive ? 'border-brand bg-brand/5' : 'border-border bg-surface-raised'} transition-colors overflow-hidden flex flex-col items-center justify-center cursor-pointer`}
+              <input 
+                id="avatar-upload"
+                name="avatar"
+                aria-label="Upload de foto de perfil"
+                type="file" 
+                accept="image/png, image/jpeg, image/webp" 
+                className="hidden" 
+                onChange={handleFileChange}
+              />
+              <button 
+                type="button"
+                aria-label="Alterar foto de perfil"
+                className={`relative group w-32 h-32 rounded-full border-2 border-dashed ${isDragActive ? 'border-brand bg-brand/5' : 'border-border bg-surface-raised'} transition-colors overflow-hidden flex flex-col items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand p-0`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => document.getElementById('avatar-upload')?.click()}
               >
-                <input 
-                  id="avatar-upload"
-                  type="file" 
-                  accept="image/png, image/jpeg, image/webp" 
-                  className="hidden" 
-                  onChange={handleFileChange}
-                />
-                
                 {previewUrl ? (
                   <img src={previewUrl} alt="Preview Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center p-4">
                     <ImageIcon className="w-6 h-6 text-text-muted mx-auto mb-2" />
-                    <span className="text-xs text-text-subtle">Foto</span>
+                    <span className="text-caption text-text-subtle">Foto</span>
                   </div>
                 )}
                 
@@ -355,14 +366,14 @@ export default function ProfileSettingsPage() {
                   <Upload className="w-5 h-5 text-text mb-1" />
                   <span className="text-caption font-medium text-text">Trocar foto</span>
                 </div>
-              </div>
+              </button>
             </div>
 
             {file && (
               <button 
                 type="button" 
                 onClick={handleRemovePreview}
-                className="text-xs text-danger hover:text-danger/80 flex items-center gap-1 mb-4"
+                className="text-caption text-danger hover:text-danger/80 flex items-center gap-1 mb-4"
               >
                 <Trash2 className="w-3 h-3" />
                 Remover nova foto
@@ -370,7 +381,7 @@ export default function ProfileSettingsPage() {
             )}
 
             <h3 className="text-xl font-bold text-text text-center truncate w-full">{user?.full_name || 'Usuário'}</h3>
-            <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-surface-raised border border-border rounded-full text-xs font-semibold text-text-muted uppercase tracking-widest mt-3">
+            <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-surface-raised border border-border rounded-full text-caption font-semibold text-text-muted uppercase tracking-widest mt-3">
               <Shield className="w-3.5 h-3.5 text-brand" />
               {user?.role === 'admin' ? 'Administrador' : user?.role === 'technician' ? 'Técnico' : 'Visualizador'}
             </span>
@@ -378,7 +389,7 @@ export default function ProfileSettingsPage() {
 
           <div className="bg-surface border border-border rounded-2xl p-5 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 flex items-center gap-2">
+              <label className="block text-caption font-semibold text-text-muted uppercase tracking-wider mb-2 flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5" />
                 E-mail de Acesso
               </label>

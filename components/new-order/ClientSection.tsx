@@ -30,6 +30,7 @@ export function ClientSection({
       <div className="flex-1">
         <Select
           label="Cliente *"
+          aria-label="Selecionar cliente"
           value={clientId}
           onChange={(e) => {
             const val = e.target.value;

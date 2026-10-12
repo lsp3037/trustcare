@@ -114,7 +114,7 @@ export default function PortalLoginPage() {
 
         <form onSubmit={handlePortalLogin} className="space-y-5">
           <div>
-            <label htmlFor="document" className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
+            <label htmlFor="document" className="block text-caption font-semibold uppercase tracking-wider text-text-muted mb-2">
               CPF ou CNPJ *
             </label>
             <div className="relative">
@@ -136,7 +136,7 @@ export default function PortalLoginPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
+            <label htmlFor="email" className="block text-caption font-semibold uppercase tracking-wider text-text-muted mb-2">
               E-mail *
             </label>
             <div className="relative">

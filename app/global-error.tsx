@@ -19,7 +19,13 @@ export default function GlobalError({
   return (
     <html lang="pt-BR">
       <body>
-        <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-white p-4 font-sans">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-brand focus:text-brand-contrast focus:rounded-lg focus:shadow-xl focus:outline-none font-medium text-small"
+        >
+          Pular para o conteúdo principal
+        </a>
+        <main id="main-content" className="flex flex-col items-center justify-center min-h-screen bg-surface text-white p-4 font-sans">
           <div className="bg-surface-raised border border-border p-8 rounded-2xl max-w-md w-full text-center shadow-2xl relative overflow-hidden">
             {/* Efeito visual */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-danger/10 blur-3xl rounded-full"></div>
@@ -52,7 +58,7 @@ export default function GlobalError({
               </div>
             </div>
           </div>
-        </div>
+        </main>
       </body>
     </html>
   );

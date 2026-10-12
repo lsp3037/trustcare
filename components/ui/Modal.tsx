@@ -113,10 +113,11 @@ export function Modal({
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
       role="presentation"
     >
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xl transition-opacity"
+      <button
+        type="button"
+        aria-label="Fechar modal"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xl transition-opacity border-none cursor-default"
         onClick={onClose}
-        aria-hidden
       />
       <div
         ref={panelRef}
@@ -146,7 +147,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="shrink-0 p-1 text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-lg"
+            className="shrink-0 p-2 sm:p-1 min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand rounded-lg touch-manipulation"
           >
             <X className="w-5 h-5" />
           </button>

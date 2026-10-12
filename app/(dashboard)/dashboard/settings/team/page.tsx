@@ -235,14 +235,14 @@ export default function TeamSettingsPage() {
                   <td colSpan={4} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <LoadingSpinner className="w-6 h-6 text-brand animate-spin mb-2" />
-                      <span className="text-xs text-text-subtle font-mono">Carregando perfis...</span>
+                      <span className="text-caption text-text-subtle font-mono">Carregando perfis...</span>
                     </div>
                   </td>
                 </tr>
               ) : profiles.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="py-12 text-center">
-                    <span className="text-xs text-text-subtle font-mono">Nenhum membro encontrado.</span>
+                    <span className="text-caption text-text-subtle font-mono">Nenhum membro encontrado.</span>
                   </td>
                 </tr>
               ) : (
@@ -250,7 +250,7 @@ export default function TeamSettingsPage() {
                   <tr key={profile.id} className="hover:bg-surface-overlay transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-surface-overlay border border-border-strong flex items-center justify-center text-text font-bold uppercase text-xs">
+                        <div className="w-8 h-8 bg-surface-overlay border border-border-strong flex items-center justify-center text-text font-bold uppercase text-caption">
                           {profile.full_name?.charAt(0) || 'U'}
                         </div>
                         <span className="font-semibold text-sm text-text">{profile.full_name || 'Usuário Sem Nome'}</span>
@@ -265,10 +265,10 @@ export default function TeamSettingsPage() {
                       </Badge>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-xs text-text-muted font-mono">{profile.email}</span>
+                      <span className="text-caption text-text-muted font-mono">{profile.email}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-xs text-text-subtle font-mono">{new Date(profile.created_at).toLocaleDateString('pt-BR')}</span>
+                      <span className="text-caption text-text-subtle font-mono">{new Date(profile.created_at).toLocaleDateString('pt-BR')}</span>
                     </td>
                   </tr>
                 ))
@@ -293,7 +293,7 @@ export default function TeamSettingsPage() {
                 {invites.map((invite) => (
                   <tr key={invite.id} className="hover:bg-surface-overlay">
                     <td className="py-3 px-6">
-                      <span className="text-xs text-amber-400/80 font-mono">{invite.email}</span>
+                      <span className="text-caption text-amber-400/80 font-mono">{invite.email}</span>
                     </td>
                     <td className="py-3 px-6">
                       <Badge tone="warning" className="font-mono uppercase tracking-wider opacity-80">
@@ -322,7 +322,12 @@ export default function TeamSettingsPage() {
       {/* Modal Deslizante (Slide-over ou Centered Modal para o Convite) */}
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-surface-sunken/80 backdrop-blur-sm" onClick={() => !inviting && setIsInviteModalOpen(false)}></div>
+          <button
+            type="button"
+            aria-label="Fechar modal de convite"
+            className="absolute inset-0 bg-surface-sunken/80 backdrop-blur-sm border-none cursor-default"
+            onClick={() => !inviting && setIsInviteModalOpen(false)}
+          />
           
           <div className="relative bg-surface-raised border-2 border-brand/25 w-full max-w-md shadow-2xl rounded-xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b-2 border-border bg-surface-sunken">
@@ -341,7 +346,7 @@ export default function TeamSettingsPage() {
             
             <form onSubmit={handleCreateInvite} className="p-6 space-y-5">
               {inviteError && (
-                <div className="p-3 bg-rose-500/10 border-l-2 border-rose-500 text-rose-400 text-xs flex items-start gap-2">
+                <div className="p-3 bg-rose-500/10 border-l-2 border-rose-500 text-rose-400 text-caption flex items-start gap-2">
                   <ShieldAlert className="w-4 h-4 shrink-0" />
                   <span>{inviteError}</span>
                 </div>
@@ -357,8 +362,11 @@ export default function TeamSettingsPage() {
                   <div className="flex items-center gap-2 mt-2">
                     <input 
                       readOnly 
+                      id="generated-invite-link"
+                      name="generatedLink"
+                      aria-label="Link gerado do convite"
                       value={generatedLink} 
-                      className="flex-1 bg-surface-sunken border border-border text-xs font-mono text-brand p-2 outline-none"
+                      className="flex-1 bg-surface-sunken border border-border text-caption font-mono text-brand p-2 outline-none"
                     />
                     <Button
                       type="button"
@@ -375,13 +383,15 @@ export default function TeamSettingsPage() {
               {!inviteSuccess && (
                 <>
                   <div className="space-y-1">
-                    <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">
+                    <label htmlFor="invite-member-email" className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                       E-mail do Membro
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-subtle" />
                       <input
                         type="email"
+                        id="invite-member-email"
+                        name="inviteEmail"
                         required
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
@@ -392,10 +402,12 @@ export default function TeamSettingsPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-caption font-bold text-text-muted uppercase tracking-wider">
+                    <label htmlFor="invite-role" className="block text-caption font-bold text-text-muted uppercase tracking-wider">
                       Nível de Acesso (Role)
                     </label>
                     <select
+                      id="invite-role"
+                      name="inviteRole"
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
                       className="w-full px-4 py-3 bg-surface-sunken border-2 border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-mono appearance-none"

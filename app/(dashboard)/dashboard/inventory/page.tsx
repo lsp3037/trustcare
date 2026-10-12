@@ -24,8 +24,10 @@ import {
   TH,
   THead,
   Toolbar,
+  ToolbarDivider,
   ToolbarGroup,
   ToolbarSearch,
+  SegmentedControl,
   useConfirm,
   useToast,
 } from '@/components/ui';
@@ -106,6 +108,19 @@ export default function InventoryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [deletingBulk, setDeletingBulk] = useState(false);
+  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
+
+  useEffect(() => {
+    const savedDensity = localStorage.getItem('trustcare-table-density') as 'comfortable' | 'compact';
+    if (savedDensity === 'comfortable' || savedDensity === 'compact') {
+      setDensity(savedDensity);
+    }
+  }, []);
+
+  const handleSetDensity = (mode: 'comfortable' | 'compact') => {
+    setDensity(mode);
+    localStorage.setItem('trustcare-table-density', mode);
+  };
 
   // O menu lateral avisa quando "Estoque" é clicado, para sair do formulário.
   useEffect(() => {
@@ -682,6 +697,22 @@ export default function InventoryPage() {
             />
 
             <ToolbarGroup>
+              <SegmentedControl
+                label="Densidade da tabela"
+                value={density}
+                onChange={handleSetDensity}
+                options={[
+                  {
+                    value: 'comfortable',
+                    label: 'Confortável',
+                  },
+                  {
+                    value: 'compact',
+                    label: 'Compacto',
+                  },
+                ]}
+              />
+              <ToolbarDivider />
               {showLowStockOnly && (
                 <Badge tone="danger" className="gap-2">
                   Apenas estoque baixo
@@ -752,7 +783,7 @@ export default function InventoryPage() {
             </Card>
           ) : (
             <Card padding="none">
-              <Table>
+              <Table density={density}>
                 <THead>
                   <tr className="border-b border-border">
                     <TH align="center" className="w-12">

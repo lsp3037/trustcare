@@ -2,12 +2,12 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { FileSignature } from 'lucide-react';
-import { Card, CardTitle } from '@/components/ui';
+import { Card, CardTitle, Skeleton } from '@/components/ui';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
-  loading: () => <div className="h-32 w-full animate-pulse bg-surface-sunken border border-border" />
+  loading: () => <Skeleton className="h-32 w-full border border-border" />
 });
 
 const modules = {

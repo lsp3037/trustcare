@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
  * ao clicar fora — e, dentro do wrapper `overflow-x-auto` da tabela, o menu
  * era cortado na última coluna.
  *
- * Aqui o painel é levado para o `<body>` por portal e posicionado com
+ * Aqui o painel é levado para o document.body por portal e posicionado com
  * `position: fixed` a partir do retângulo do gatilho — nenhum contêiner com
  * overflow consegue recortá-lo.
  *
@@ -133,7 +133,7 @@ export function DropdownMenu({ label, trigger, children, className }: DropdownMe
           e.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center"
       >
         {trigger ?? <MoreHorizontal className="w-4 h-4" aria-hidden />}
       </button>
@@ -142,9 +142,10 @@ export function DropdownMenu({ label, trigger, children, className }: DropdownMe
         createPortal(
           <>
             {/* Captura o clique fora sem escurecer a tela: um menu não é modal. */}
-            <div
-              className="fixed inset-0 z-[90]"
-              aria-hidden
+            <button
+              type="button"
+              aria-label="Fechar menu"
+              className="fixed inset-0 z-[90] cursor-default bg-transparent border-none"
               onClick={(e) => {
                 e.stopPropagation();
                 setOpen(false);
@@ -155,7 +156,6 @@ export function DropdownMenu({ label, trigger, children, className }: DropdownMe
               role="menu"
               aria-label={label}
               onKeyDown={onPanelKeyDown}
-              onClick={(e) => e.stopPropagation()}
               style={{ top: position.top, left: position.left, width: PANEL_WIDTH }}
               className={cn(
                 'fixed z-[91] p-1.5',
@@ -176,8 +176,8 @@ export function DropdownMenu({ label, trigger, children, className }: DropdownMe
 }
 
 const ITEM_CLASSES =
-  'flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-small font-medium ' +
-  'transition-colors cursor-pointer ' +
+  'flex items-center gap-2.5 w-full text-left px-3 py-2.5 min-h-[44px] rounded-lg text-small font-medium ' +
+  'transition-colors cursor-pointer touch-manipulation ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand';
 
 export interface DropdownMenuItemProps {

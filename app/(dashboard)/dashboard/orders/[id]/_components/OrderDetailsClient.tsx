@@ -539,7 +539,12 @@ export function OrderDetailsClient({
                   </button>
                   {isStatusDropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setIsStatusDropdownOpen(false)} />
+                      <button
+                        type="button"
+                        aria-label="Fechar opções de status"
+                        className="fixed inset-0 z-10 cursor-default bg-transparent border-none"
+                        onClick={() => setIsStatusDropdownOpen(false)}
+                      />
                       <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface-overlay border border-border shadow-2xl z-20 p-1 max-h-[300px] overflow-y-auto">
                         {OS_STATUS_FLOW.map((statusKey) => (
                           <button

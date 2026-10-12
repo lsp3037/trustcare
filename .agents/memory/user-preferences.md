@@ -6,4 +6,4 @@ updated: 2026-07-18
 
 # User Preferences
 
-No durable user preferences have been recorded yet.
+- **Shortcuts & Command Palette**: Prioritize keyboard shortcuts and power-user actions (like `⌘K` expansions, quick OS actions, direct navigation) in subsequent frontend phases.

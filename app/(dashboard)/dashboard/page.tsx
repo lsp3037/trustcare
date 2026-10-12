@@ -60,6 +60,7 @@ export default function DashboardOverviewPage() {
       {/* Grid de Cards Estatísticos (KPIs) */}
       <KpiOverviewCards
         stats={stats}
+        chartData={chartData}
         loading={loading}
         isAdmin={isAdmin}
         role={role}

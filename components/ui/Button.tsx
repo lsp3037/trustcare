@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'sm' | 'md' | 'lg' | 'icon';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
@@ -17,14 +17,15 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: 'h-8 px-3 text-sm gap-1.5',
-  md: 'h-10 px-4 text-sm gap-2',
-  lg: 'h-12 px-6 text-base gap-2',
+  sm: 'h-8 px-3 text-sm gap-1.5 touch-manipulation',
+  md: 'h-10 px-4 text-sm gap-2 touch-manipulation',
+  lg: 'h-12 px-6 text-base gap-2 touch-manipulation',
+  icon: 'w-11 h-11 p-0 text-sm shrink-0 touch-manipulation',
 };
 
 const BASE =
   'inline-flex items-center justify-center font-semibold whitespace-nowrap rounded-full ' +
-  'transition-all duration-200 cursor-pointer ' +
+  'transition-all duration-200 cursor-pointer touch-manipulation ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ' +
   'disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97]';
 

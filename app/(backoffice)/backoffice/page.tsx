@@ -81,7 +81,7 @@ export default async function BackofficePage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-text">
-            <thead className="bg-surface/50 text-text-muted text-xs uppercase font-medium">
+            <thead className="bg-surface/50 text-text-muted text-caption uppercase font-medium">
               <tr>
                 <th className="px-6 py-4">Empresa</th>
                 <th className="px-6 py-4">Subdomínio</th>
@@ -115,7 +115,7 @@ export default async function BackofficePage() {
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3 text-xs">
+                    <div className="flex items-center space-x-3 text-caption">
                       <span className="flex items-center text-text-muted" title="Ordens de Serviço">
                         <Activity className="w-3 h-3 mr-1" />
                         {company.service_orders?.[0]?.count || 0}

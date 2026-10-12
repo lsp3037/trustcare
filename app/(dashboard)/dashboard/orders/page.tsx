@@ -111,17 +111,27 @@ function OrdersContent() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'Todos');
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
 
   useEffect(() => {
     const saved = localStorage.getItem('orders-view-mode') as 'grid' | 'table';
     if (saved === 'grid' || saved === 'table') {
       setViewMode(saved);
     }
+    const savedDensity = localStorage.getItem('trustcare-table-density') as 'comfortable' | 'compact';
+    if (savedDensity === 'comfortable' || savedDensity === 'compact') {
+      setDensity(savedDensity);
+    }
   }, []);
 
   const handleSetViewMode = (mode: 'grid' | 'table') => {
     setViewMode(mode);
     localStorage.setItem('orders-view-mode', mode);
+  };
+
+  const handleSetDensity = (mode: 'comfortable' | 'compact') => {
+    setDensity(mode);
+    localStorage.setItem('trustcare-table-density', mode);
   };
 
   const fetchOrdersAndClients = async () => {
@@ -454,6 +464,27 @@ function OrdersContent() {
 
               <ToolbarDivider />
 
+              {viewMode === 'table' && (
+                <>
+                  <SegmentedControl
+                    label="Densidade da tabela"
+                    value={density}
+                    onChange={handleSetDensity}
+                    options={[
+                      {
+                        value: 'comfortable',
+                        label: 'Confortável',
+                      },
+                      {
+                        value: 'compact',
+                        label: 'Compacto',
+                      },
+                    ]}
+                  />
+                  <ToolbarDivider />
+                </>
+              )}
+
               <SegmentedControl
                 label="Modo de visualização"
                 value={viewMode}
@@ -591,7 +622,7 @@ function OrdersContent() {
             </div>
           ) : (
             <Card padding="none">
-              <Table>
+              <Table density={density}>
                 <THead>
                   <TR>
                     <TH className="w-8">

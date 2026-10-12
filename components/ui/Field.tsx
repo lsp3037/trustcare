@@ -12,7 +12,7 @@ function useSanitizedId() {
 
 const CONTROL =
   'w-full bg-surface-sunken border border-border text-text placeholder:text-text-subtle rounded-xl ' +
-  'px-3 py-2 text-sm transition-all duration-200 ' +
+  'px-3 py-2 text-sm transition-all duration-200 min-h-[42px] sm:min-h-[38px] touch-manipulation ' +
   'hover:border-border-strong hover:shadow-sm ' +
   'focus:border-brand focus:outline-2 focus:outline-offset-0 focus:outline-brand/40 focus:shadow-md ' +
   'disabled:opacity-50 disabled:cursor-not-allowed';
@@ -49,9 +49,9 @@ export function Field({
       )}
       {children}
       {error ? (
-        <p className="text-xs text-danger">{error}</p>
+        <p className="text-caption text-danger">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-text-subtle">{hint}</p>
+        <p className="text-caption text-text-subtle">{hint}</p>
       ) : null}
     </div>
   );

@@ -15,7 +15,7 @@ import {
   Legend,
 } from 'recharts';
 import { EmptyState } from '@/components/ui';
-import { PieChart as PieIcon } from 'lucide-react';
+import { PieChart as PieIcon, BarChart3 as BarIcon } from 'lucide-react';
 
 /**
  * Recharts pinta atributos SVG, não classes do Tailwind — então as cores
@@ -79,6 +79,18 @@ const CustomTooltipBar = ({ active, payload, label }: any) => {
 };
 
 export function FinanceiroBarChart({ data }: { data: BarEntry[] }) {
+  const hasData = data.length > 0 && data.some((d) => (d.faturamento || 0) > 0 || (d.custos || 0) > 0);
+
+  if (!hasData) {
+    return (
+      <EmptyState
+        icon={<BarIcon />}
+        title="Sem movimentações no período"
+        description="Nenhum faturamento ou custo registrado no período selecionado."
+      />
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>

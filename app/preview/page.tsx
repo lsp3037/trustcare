@@ -56,8 +56,8 @@ const dores = [
     icon: Wallet,
     title: 'Você está pagando para consertar?',
     desc: 'O dinheiro entra, você repassa para fornecedores de peças, mas sobra quanto? Separe rapidamente o que é custo de hardware do que é o lucro real da sua mão de obra especializada.',
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/10',
+    color: 'text-teal-400',
+    bg: 'bg-teal-500/10',
   },
 ];
 

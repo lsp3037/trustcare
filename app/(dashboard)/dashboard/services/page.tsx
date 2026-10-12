@@ -452,8 +452,11 @@ export default function ServicesPage() {
             label="Status do cadastro"
             hint="Inativo impede a seleção em novas Ordens de Serviço."
           >
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <label htmlFor="service-active" className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
+                id="service-active"
+                name="ativo"
+                aria-label="Serviço ativo no catálogo"
                 type="checkbox"
                 checked={ativo}
                 onChange={(e) => setAtivo(e.target.checked)}

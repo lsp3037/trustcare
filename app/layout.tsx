@@ -74,6 +74,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-surface text-text">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-brand focus:text-brand-contrast focus:rounded-lg focus:shadow-xl focus:outline-none font-medium text-small"
+        >
+          Pular para o conteúdo principal
+        </a>
         {/* Feedback e confirmação valem para a aplicação inteira, não só para
             o dashboard: as telas públicas (orçamento, rastreio) e as de
             autenticação também precisam avisar o usuário do que aconteceu. */}

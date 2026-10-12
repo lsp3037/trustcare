@@ -180,7 +180,7 @@ export default function BillingSettingsPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider font-mono">
+              <span className="text-caption font-bold text-text-muted uppercase tracking-wider font-mono">
                 PLANO ATUAL
               </span>
               <Badge tone={statusTones[currentStatus] || 'neutral'}>
@@ -191,7 +191,7 @@ export default function BillingSettingsPage() {
               Trust Care {planNames[currentPlan]} <span className="text-lg font-medium text-text-subtle">({planPrices[currentPlan]})</span>
             </h2>
             {company.subscription_expires_at && (
-              <p className="text-xs text-text-muted">
+              <p className="text-caption text-text-muted">
                 {currentStatus === 'trialing' ? 'O período de testes de 7 dias expira em: ' : 'Próxima renovação em: '}
                 <strong className="text-text">
                   {new Date(company.subscription_expires_at).toLocaleDateString('pt-BR')}
@@ -203,7 +203,7 @@ export default function BillingSettingsPage() {
 
         {/* Trial Banner */}
         {currentStatus === 'trialing' && (
-          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400 flex items-start gap-2.5">
+          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-caption text-blue-400 flex items-start gap-2.5">
             <CheckCircle2 className="w-4.5 h-4.5 shrink-0 mt-0.5 text-blue-500" />
             <div className="space-y-1">
               <p className="font-bold">Aproveite seus 7 dias de Teste Grátis!</p>
@@ -216,7 +216,7 @@ export default function BillingSettingsPage() {
 
         {/* Warning Banner if past_due */}
         {currentStatus === 'past_due' && (
-          <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2.5">
+          <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-caption text-rose-400 flex items-start gap-2.5">
             <AlertCircle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold">Aviso de Pendência Financeira</p>
@@ -237,7 +237,7 @@ export default function BillingSettingsPage() {
               <Users className="w-4.5 h-4.5 text-blue-500" />
               Técnicos Ativos
             </h3>
-            <span className="text-xs font-mono font-bold text-text-muted">
+            <span className="text-caption font-mono font-bold text-text-muted">
               {loadingStats ? '...' : `${techCount} / ${maxTechnicians > 1000 ? 'Ilimitado' : maxTechnicians}`}
             </span>
           </div>
@@ -260,7 +260,7 @@ export default function BillingSettingsPage() {
               <HardDrive className="w-4.5 h-4.5 text-blue-500" />
               Armazenamento de Mídias
             </h3>
-            <span className="text-xs font-mono font-bold text-text-muted">
+            <span className="text-caption font-mono font-bold text-text-muted">
               {loadingStats ? '...' : `${formatBytes(storageUsed)} / ${formatBytes(maxStorageBytes)}`}
             </span>
           </div>
@@ -295,10 +295,10 @@ export default function BillingSettingsPage() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white">Starter</h4>
-                <p className="text-h2 font-mono tabular-nums text-text">R$ 29,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
+                <p className="text-h2 font-mono tabular-nums text-text">R$ 29,90<span className="text-caption font-normal text-text-subtle"> /mês</span></p>
                 <p className="text-caption text-text-subtle">Menos de 1 real por dia para aposentar sua planilha.</p>
               </div>
-              <ul className="text-xs text-text-muted space-y-2.5">
+              <ul className="text-caption text-text-muted space-y-2.5">
                 <li className="flex items-center gap-2">✓ 1 Usuário</li>
                 <li className="flex items-center gap-2">✓ OS Ilimitadas</li>
                 <li className="flex items-center gap-2">✓ Gestão de Clientes</li>
@@ -329,10 +329,10 @@ export default function BillingSettingsPage() {
                   Pro
                   <Badge tone="info">Recomendado</Badge>
                 </h4>
-                <p className="text-h2 font-mono tabular-nums text-text">R$ 69,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
+                <p className="text-h2 font-mono tabular-nums text-text">R$ 69,90<span className="text-caption font-normal text-text-subtle"> /mês</span></p>
                 <p className="text-caption text-text-subtle">Ideal para o balcão e a bancada.</p>
               </div>
-              <ul className="text-xs text-text space-y-2.5">
+              <ul className="text-caption text-text space-y-2.5">
                 <li className="flex items-center gap-2">✓ Até 3 Usuários</li>
                 <li className="flex items-center gap-2 font-bold text-white">✓ Controle de Estoque</li>
                 <li className="flex items-center gap-2 font-bold text-white">✓ Módulo Financeiro</li>
@@ -356,10 +356,10 @@ export default function BillingSettingsPage() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <h4 className="text-sm font-extrabold text-white">Premium</h4>
-                <p className="text-h2 font-mono tabular-nums text-text">R$ 149,90<span className="text-xs font-normal text-text-subtle"> /mês</span></p>
+                <p className="text-h2 font-mono tabular-nums text-text">R$ 149,90<span className="text-caption font-normal text-text-subtle"> /mês</span></p>
                 <p className="text-caption text-text-subtle">Para operações em grande escala.</p>
               </div>
-              <ul className="text-xs text-text-muted space-y-2.5">
+              <ul className="text-caption text-text-muted space-y-2.5">
                 <li className="flex items-center gap-2">✓ Usuários Ilimitados</li>
                 <li className="flex items-center gap-2">✓ Gestão de Múltiplas Filiais</li>
                 <li className="flex items-center gap-2">✓ Relatórios Avançados (BI)</li>

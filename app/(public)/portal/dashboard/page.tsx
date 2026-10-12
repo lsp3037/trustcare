@@ -108,13 +108,13 @@ export default function PortalDashboard() {
       <header className="border-b border-border bg-[#070a13] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <ShieldCheck className="w-5 h-5 text-brand" />
-          <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Portal do Cliente</span>
+          <span className="text-caption font-bold text-text-muted uppercase tracking-widest">Portal do Cliente</span>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-text font-medium">Olá, {client?.name}</span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-danger transition-colors border border-border hover:border-rose-950 py-1.5 px-3 rounded-xl cursor-pointer"
+            className="flex items-center gap-1.5 text-caption text-text-muted hover:text-danger transition-colors border border-border hover:border-rose-950 py-1.5 px-3 rounded-xl cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sair
           </button>
@@ -131,13 +131,13 @@ export default function PortalDashboard() {
           </div>
 
           {equipments.length === 0 ? (
-            <p className="text-xs text-text-muted italic">Nenhum equipamento cadastrado.</p>
+            <p className="text-caption text-text-muted italic">Nenhum equipamento cadastrado.</p>
           ) : (
             <div className="space-y-4">
               {equipments.map((eq) => (
                 <div key={eq.id} className="p-3 border border-border bg-[#04060b]">
                   <p className="text-sm font-medium text-text">{eq.name}</p>
-                  <p className="text-xs text-text-muted mt-1">
+                  <p className="text-caption text-text-muted mt-1">
                     {eq.brand} {eq.model}
                   </p>
                   {eq.serial_number && (
@@ -159,7 +159,7 @@ export default function PortalDashboard() {
           </div>
 
           {orders.length === 0 ? (
-            <p className="text-xs text-text-muted italic">Nenhuma ordem de serviço registrada.</p>
+            <p className="text-caption text-text-muted italic">Nenhuma ordem de serviço registrada.</p>
           ) : (
             <div className="space-y-5">
               {orders.map((os) => {
@@ -176,7 +176,7 @@ export default function PortalDashboard() {
                     {/* Header da OS */}
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                       <div>
-                        <span className="text-xs font-semibold text-brand font-mono">
+                        <span className="text-caption font-semibold text-brand font-mono">
                           {os.codigo_os || `ID: ${os.id.slice(0, 8)}`}
                         </span>
                         <h3 className="text-sm font-semibold text-text mt-0.5">
@@ -199,13 +199,13 @@ export default function PortalDashboard() {
                     </div>
 
                     {/* Descrição do Problema */}
-                    <div className="text-xs text-text-muted mb-4 border-l border-border pl-3 py-1">
+                    <div className="text-caption text-text-muted mb-4 border-l border-border pl-3 py-1">
                       <p className="font-semibold text-text-muted mb-1">Problema Reportado:</p>
                       <div dangerouslySetInnerHTML={{ __html: os.reported_problem }} />
                     </div>
 
                     {/* Rodapé da OS */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-3 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-3 text-caption">
                       <div className="flex gap-5 text-text-muted">
                         <div>
                           <span>Abertura: </span>
@@ -223,7 +223,7 @@ export default function PortalDashboard() {
                       {isWaitingApproval ? (
                         <a
                           href={`/orcamento/${os.id}`}
-                          className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white font-medium py-1.5 px-3 transition-colors cursor-pointer text-xs"
+                          className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white font-medium py-1.5 px-3 transition-colors cursor-pointer text-caption"
                         >
                           Aprovar Orçamento <ArrowRight className="w-3.5 h-3.5" />
                         </a>

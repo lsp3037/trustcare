@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Banknote,
   CreditCard,
-  Calendar
+  Calendar,
+  Search,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -32,6 +33,7 @@ import Image from 'next/image';
 import SubscriptionBlockedScreen from '@/components/SubscriptionBlockedScreen';
 import { cn } from '@/lib/utils';
 import { Tooltip, Skeleton } from '@/components/ui';
+import { CommandPalette } from '@/components/dashboard/CommandPalette';
 
 /**
  * Fonte única do breakpoint do layout. Antes o mesmo comportamento era
@@ -118,6 +120,41 @@ function DashboardLayoutContent({
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/dashboard/settings'));
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const settingsGroupRef = useRef<HTMLDivElement>(null);
+
+  // Rola o menu lateral suavemente para exibir os subitens ao expandir Configurações
+  useEffect(() => {
+    if (settingsOpen && sidebarOpen) {
+      const timer = setTimeout(() => {
+        if (settingsGroupRef.current && navRef.current) {
+          const groupRect = settingsGroupRef.current.getBoundingClientRect();
+          const navRect = navRef.current.getBoundingClientRect();
+
+          if (groupRect.bottom > navRect.bottom) {
+            navRef.current.scrollBy({
+              top: groupRect.bottom - navRect.bottom + 24,
+              behavior: 'smooth',
+            });
+          }
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [settingsOpen, sidebarOpen]);
+
+  // Atalho global ⌘K / Ctrl+K para abrir busca rápida
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (pathname.startsWith('/dashboard/settings')) {
@@ -285,7 +322,7 @@ function DashboardLayoutContent({
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain thin-scrollbar px-3 space-y-1 py-4">
+        <nav ref={navRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain thin-scrollbar px-3 space-y-1 py-4">
           {navItems.map((item, index) => {
             const Icon = item.icon;
 
@@ -320,7 +357,7 @@ function DashboardLayoutContent({
               );
 
               return (
-                <div key={`sub-group-${index}`} className="space-y-1 relative group">
+                <div ref={settingsGroupRef} key={`sub-group-${index}`} className="space-y-1 relative group">
                   {!sidebarOpen ? (
                     <Tooltip content={item.name}>
                       {groupButton}
@@ -394,10 +431,11 @@ function DashboardLayoutContent({
 
       {/* Overlay Backdrop - Apenas Mobile (Oculto na Impressão) */}
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
           onClick={() => setSidebarOpen(false)}
-          aria-hidden
-          className="fixed inset-0 bg-surface/70 backdrop-blur-sm z-40 lg:hidden print:hidden"
+          aria-label="Fechar navegação lateral"
+          className="fixed inset-0 bg-surface/70 backdrop-blur-sm z-40 lg:hidden print:hidden border-none cursor-pointer"
         />
       )}
 
@@ -421,6 +459,29 @@ function DashboardLayoutContent({
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            {/* Quick Search Trigger (⌘K) */}
+            <button
+              type="button"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-small text-text-subtle bg-surface-sunken hover:bg-surface-overlay border border-border hover:border-border-strong rounded-xl transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              aria-label="Busca global (Atalho Ctrl+K)"
+            >
+              <Search className="w-4 h-4 text-text-subtle" aria-hidden />
+              <span>Buscar OS, clientes, peças...</span>
+              <kbd className="text-caption font-mono bg-surface-raised border border-border px-1.5 py-0.5 rounded text-text-subtle ml-1">
+                ⌘K
+              </kbd>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCommandPaletteOpen(true)}
+              className="sm:hidden w-9 h-9 flex items-center justify-center text-text-muted hover:text-text border border-border bg-surface-raised rounded-xl cursor-pointer"
+              aria-label="Abrir busca global"
+            >
+              <Search className="w-4 h-4" aria-hidden />
+            </button>
+
             {/* Theme Toggle Button (macOS Morphing Rotation) */}
             <button
               type="button"
@@ -471,14 +532,16 @@ function DashboardLayoutContent({
 
               {profileDropdownOpen && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-40" 
+                  <button
+                    type="button"
+                    aria-label="Fechar menu de perfil"
+                    className="fixed inset-0 z-40 cursor-default bg-transparent border-none"
                     onClick={() => setProfileDropdownOpen(false)}
                   />
                   <div className="absolute right-0 mt-2 w-64 bg-surface-sunken border border-border shadow-2xl rounded-2xl overflow-hidden z-50">
                     <div className="p-4 border-b border-border bg-surface">
                       <p className="text-sm font-bold text-text truncate">{userName}</p>
-                      <p className="text-xs text-text-subtle truncate mt-0.5">{user?.email}</p>
+                      <p className="text-caption text-text-subtle truncate mt-0.5">{user?.email}</p>
                     </div>
                     <div className="p-2">
                       <Link 
@@ -517,7 +580,7 @@ function DashboardLayoutContent({
         )}
 
         {/* Page Body */}
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">
+        <main id="main-content" className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">
           {company.subscription_status === 'canceled' || isReadOnly ? (
             <SubscriptionBlockedScreen companyName={company.name} status={company.subscription_status || ''} />
           ) : (
@@ -525,6 +588,11 @@ function DashboardLayoutContent({
           )}
         </main>
       </div>
+
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </div>
   );
 }

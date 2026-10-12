@@ -180,3 +180,22 @@ A Fase 3 foi antecipada para antes da 2: com o lint como portão, cada PR de mig
 As telas públicas somam **169 cores fora dos tokens** e são o que o cliente final vê — orçamento e rastreio. Ficaram fora por decisão de escopo, não por estarem certas. Seria a continuação natural.
 
 A Fase 0 é independente e pode ir para produção sozinha. A Fase 1 não altera nenhuma tela — é aditiva e sem risco. O risco real está concentrado na Fase 2, mitigado por ser uma tela por PR com checklist fixo.
+
+---
+
+## 6. Backlog de Produtividade: Expansão de Atalhos e Command Palette (`⌘K`)
+
+*Observação registrada a pedido do usuário para etapas posteriores:*
+
+1. **Ações Rápidas via `⌘K`**:
+   - Criar Nova Ordem de Serviço diretamente do menu de comando (ex: digitar "nova os" ou atalho direto).
+   - Cadastrar Novo Cliente e Novo Produto no Estoque.
+2. **Ações Contextuais de Entidade**:
+   - Alterar status de uma OS a partir do resultado da busca (ex.: botão de ação rápida "Mover para Pronto para Retirada").
+   - Imprimir via rápida de OS ou gerar PDF sem precisar abrir a página completa de detalhes.
+   - Disparar notificação de WhatsApp com 1 clique para o cliente.
+3. **Atalhos Globais de Navegação (`G + tecla`)**:
+   - `G O`: Navegar para Ordens de Serviço.
+   - `G I`: Navegar para Estoque.
+   - `G C`: Navegar para Clientes.
+   - `G F`: Navegar para Financeiro.

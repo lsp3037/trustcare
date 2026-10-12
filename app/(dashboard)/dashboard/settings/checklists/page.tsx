@@ -308,11 +308,11 @@ export default function ChecklistSettingsPage() {
               </div>
 
               {loading ? (
-                <div className="flex items-center justify-center py-12 text-text-subtle text-xs gap-2">
+                <div className="flex items-center justify-center py-12 text-text-subtle text-caption gap-2">
                   <LoadingSpinner className="w-4 h-4 animate-spin text-indigo-500" /> Carregando template...
                 </div>
               ) : items.length === 0 ? (
-                <div className="text-center py-12 text-text-subtle text-xs">
+                <div className="text-center py-12 text-text-subtle text-caption">
                   Nenhum item configurado para este checklist. Adicione itens abaixo.
                 </div>
               ) : (
@@ -323,7 +323,7 @@ export default function ChecklistSettingsPage() {
                       className="flex items-center justify-between p-3 bg-surface-sunken border border-border hover:border-border rounded-xl transition-all"
                     >
                       <div className="space-y-0.5">
-                        <p className="text-xs font-semibold text-text">{item.label}</p>
+                        <p className="text-small font-semibold text-text">{item.label}</p>
                         <p className="text-caption font-mono text-text-subtle">ID: {item.id}</p>
                       </div>
                       
@@ -359,10 +359,13 @@ export default function ChecklistSettingsPage() {
               <form onSubmit={handleAddItem} className="flex gap-2 pt-2 border-t border-border">
                 <input
                   type="text"
+                  id="new-checklist-item"
+                  name="newItemLabel"
+                  aria-label="Descrição do novo item de checklist"
                   placeholder="Ex: Estado do teclado, Dobradiças..."
                   value={newItemLabel}
                   onChange={(e) => setNewItemLabel(e.target.value)}
-                  className="flex-1 bg-surface-sunken border border-border rounded-xl py-2.5 px-3.5 text-xs text-text focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="flex-1 bg-surface-sunken border border-border rounded-xl py-2.5 px-3.5 text-small text-text focus:outline-none focus:border-brand transition-colors"
                 />
                 <Button type="submit" icon={<Plus className="w-4 h-4" />}>
                   Adicionar
@@ -376,16 +379,16 @@ export default function ChecklistSettingsPage() {
               
               {/* Box de Ação */}
               <div className="bg-surface-raised border border-border shadow-sm rounded-xl p-6 shadow-2xl space-y-4">
-                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">Ações</h4>
+                <h4 className="text-caption font-bold text-text-muted uppercase tracking-wider">Ações</h4>
                 
                 {saveSuccess && (
-                  <div className="p-3 rounded-xl bg-brand/10 border border-brand/25 text-xs text-brand flex items-center gap-2 animate-fade-in">
+                  <div className="p-3 rounded-xl bg-brand/10 border border-brand/25 text-caption text-brand flex items-center gap-2 animate-fade-in">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Configuração salva com sucesso!
                   </div>
                 )}
 
                 {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500 flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-caption text-rose-500 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
                   </div>
                 )}
@@ -421,7 +424,7 @@ export default function ChecklistSettingsPage() {
 
               {/* Informações de Apoio */}
               <div className="bg-surface-sunken border border-border rounded-xl p-6 text-text-muted space-y-3">
-                <h4 className="text-xs font-bold text-text flex items-center gap-1.5">
+                <h4 className="text-caption font-bold text-text flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-indigo-400" /> Boas práticas
                 </h4>
                 <ul className="text-caption list-disc list-inside space-y-2 leading-relaxed">
@@ -435,7 +438,7 @@ export default function ChecklistSettingsPage() {
 
           </div>
         ) : (
-          <div className="border-2 border-dashed border-border rounded-xl p-12 text-center text-text-subtle text-xs">
+          <div className="border-2 border-dashed border-border rounded-xl p-12 text-center text-text-subtle text-caption">
             Selecione uma categoria acima para carregar ou personalizar seu checklist.
           </div>
         )}
