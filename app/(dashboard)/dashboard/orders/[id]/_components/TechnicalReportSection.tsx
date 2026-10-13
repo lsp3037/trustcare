@@ -42,11 +42,16 @@ interface TechnicalReportSectionProps {
   setReportedProblem: (v: string) => void;
   technicalReport: string;
   setTechnicalReport: (v: string) => void;
+  /** Formata as anotações do laudo no padrão Trust Care (via IA). */
+  onFormatReport?: () => void;
+  formattingReport?: boolean;
+  formatDisabled?: boolean;
 }
 
 export function TechnicalReportSection({
   reportedProblem, setReportedProblem,
-  technicalReport, setTechnicalReport
+  technicalReport, setTechnicalReport,
+  onFormatReport, formattingReport = false, formatDisabled = false
 }: TechnicalReportSectionProps) {
   const toast = useToast();
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
@@ -57,6 +62,11 @@ export function TechnicalReportSection({
   }, []);
 
   const handleAutoFormat = () => {
+    if (onFormatReport) {
+      onFormatReport();
+      return;
+    }
+
     const source = technicalReport.trim() ? technicalReport : reportedProblem;
     if (!source.trim()) {
       const defaultContent = templates[0]?.content || '';
@@ -134,11 +144,14 @@ export function TechnicalReportSection({
                 type="button"
                 variant="secondary"
                 size="sm"
-                icon={<Sparkles className="w-4 h-4 text-brand" />}
+                icon={<Sparkles className="w-4 h-4 text-brand" aria-hidden />}
+                loading={formattingReport}
+                disabled={formatDisabled}
                 onClick={handleAutoFormat}
+                title="Transforma anotações no laudo padrão"
                 className="text-xs font-semibold"
               >
-                Formatar Laudo
+                {formattingReport ? 'Formatando...' : 'Formatar Laudo'}
               </Button>
 
               <DropdownMenu
@@ -194,7 +207,7 @@ export function TechnicalReportSection({
             formats={formats}
             value={technicalReport}
             onChange={setTechnicalReport}
-            placeholder="Insira as observações técnicas detalhadas, testes executados e solução encontrada..."
+            placeholder="Anote do seu jeito (ex.: tela quebrada, dobradiça solta, testes executados) e clique em Formatar Laudo..."
             className="prose prose-invert max-w-none text-sm"
           />
         </div>

@@ -13,6 +13,7 @@ import {
   Input,
   Select,
   useConfirm,
+  useToast,
 } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
@@ -54,6 +55,7 @@ export function OrderDetailsClient({
   const router = useRouter();
   const { company, isReadOnly } = useCompany();
   const confirm = useConfirm();
+  const toast = useToast();
 
   const [order, setOrder] = useState<any>(initialOrder);
   const [client, setClient] = useState<any>(initialClient);
@@ -104,6 +106,7 @@ export function OrderDetailsClient({
   const [currentServiceQty, setCurrentServiceQty] = useState('1');
 
   const [saving, setSaving] = useState(false);
+  const [formattingReport, setFormattingReport] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -301,6 +304,57 @@ export function OrderDetailsClient({
       });
     } catch (webhookErr) {
       console.warn('Erro ao disparar fluxo de notificação:', webhookErr);
+    }
+  };
+
+  /**
+   * Transforma as anotações livres do laudo no formato padrão (Diagnóstico,
+   * Serviços orçados, Total, Garantia, Prazo, Privacidade) via Edge Function
+   * `formatar-laudo`. Os valores vêm dos itens da OS na tela; o total é
+   * calculado no servidor. Nada é salvo: o técnico revisa e clica em Salvar.
+   */
+  const handleFormatReport = async () => {
+    const plain = technicalReport.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim();
+    if (plain.length < 5) {
+      toast.warning('Escreva suas anotações no laudo antes de formatar.');
+      return;
+    }
+    setFormattingReport(true);
+    const previous = technicalReport;
+    try {
+      const itens = [...selectedProducts, ...selectedServices].map((i: any) => ({
+        nome: i.name,
+        quantidade: Number(i.quantity) || 1,
+        valor_unitario: Number(i.unit_price) || 0,
+      }));
+      const { data, error } = await supabase.functions.invoke('formatar-laudo', {
+        body: {
+          notas: technicalReport,
+          itens,
+          mao_de_obra: parseFloat(serviceValue) || 0,
+          desconto: parseFloat(discount) || 0,
+          equipamento: order?.equipment_details || '',
+        },
+      });
+      if (error) {
+        let message = error.message;
+        try {
+          const body = await (error as any).context?.json?.();
+          if (body?.error) message = body.error;
+        } catch {}
+        throw new Error(message);
+      }
+      if (!data?.html) throw new Error('A formatação voltou vazia.');
+      setTechnicalReport(data.html);
+      toast.success('Laudo formatado. Revise e clique em Salvar.', {
+        action: { label: 'Desfazer', onClick: () => setTechnicalReport(previous) },
+        duration: 10000,
+      });
+      if (data.aviso) toast.warning('Confira os valores', { description: data.aviso });
+    } catch (err: any) {
+      toast.error('Não foi possível formatar o laudo', { description: err?.message });
+    } finally {
+      setFormattingReport(false);
     }
   };
 
@@ -508,6 +562,9 @@ export function OrderDetailsClient({
             <TechnicalReportSection 
               reportedProblem={reportedProblem} setReportedProblem={setReportedProblem}
               technicalReport={technicalReport} setTechnicalReport={setTechnicalReport}
+              onFormatReport={handleFormatReport}
+              formattingReport={formattingReport}
+              formatDisabled={isReadOnly || saving}
             />
 
             <Card className="space-y-6">
