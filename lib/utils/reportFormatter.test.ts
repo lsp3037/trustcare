@@ -6,6 +6,7 @@ import {
   getStoredTemplates,
   saveStoredTemplates,
   resetStoredTemplates,
+  appendServiceToTechnicalReport,
 } from './reportFormatter';
 
 describe('reportFormatter', () => {
@@ -50,5 +51,21 @@ describe('reportFormatter', () => {
 
     resetStoredTemplates();
     expect(getStoredTemplates()).toEqual(REPORT_TEMPLATES);
+  });
+
+  it('deve incorporar a descrição de um serviço ao laudo técnico', () => {
+    const serviceName = 'Limpeza e Troca de Pasta Térmica';
+    const description = 'O serviço inclui:\n✅ Limpeza Técnica Completa\n✅ Troca de pasta térmica de prata';
+
+    const result = appendServiceToTechnicalReport('', serviceName, description);
+    expect(result.added).toBe(true);
+    expect(result.updatedReport).toContain('Limpeza e Troca de Pasta Térmica');
+    expect(result.updatedReport).toContain('Limpeza Técnica Completa');
+    expect(result.updatedReport).toContain('Troca de pasta térmica de prata');
+
+    // Não deve duplicar se o serviço já estiver no laudo
+    const duplicate = appendServiceToTechnicalReport(result.updatedReport, serviceName, description);
+    expect(duplicate.added).toBe(false);
+    expect(duplicate.updatedReport).toBe(result.updatedReport);
   });
 });

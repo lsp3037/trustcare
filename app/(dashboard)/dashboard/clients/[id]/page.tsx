@@ -16,6 +16,8 @@ import {
   Laptop,
   Trash2,
   FolderPlus,
+  Cpu,
+  HardDrive,
 } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
@@ -76,6 +78,11 @@ export default function ClientDetailPage() {
   const [eqBrand, setEqBrand] = useState('');
   const [eqModel, setEqModel] = useState('');
   const [eqSerial, setEqSerial] = useState('');
+  const [eqProcessor, setEqProcessor] = useState('');
+  const [eqRam, setEqRam] = useState('');
+  const [eqStorage, setEqStorage] = useState('');
+  const [eqGpuType, setEqGpuType] = useState('');
+  const [eqGpuModel, setEqGpuModel] = useState('');
   const [addingEq, setAddingEq] = useState(false);
 
   // Categorias e CRUD de equipamentos
@@ -307,6 +314,11 @@ export default function ClientDetailPage() {
         brand: eqBrand,
         model: eqModel,
         serial_number: eqSerial,
+        processor: eqProcessor.trim() || null,
+        ram: eqRam.trim() || null,
+        storage: eqStorage.trim() || null,
+        gpu_type: eqGpuType.trim() || null,
+        gpu_model: eqGpuModel.trim() || null,
       };
 
       const supabaseEqData = {
@@ -329,10 +341,20 @@ export default function ClientDetailPage() {
           );
           localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
         } else {
-          const { error } = await supabase
+          let { error } = await supabase
             .from('client_equipments')
             .update(supabaseEqData)
             .eq('id', editingEqId);
+
+          if (error && (error.message?.includes('column') || error.code === 'PGRST204')) {
+            const { processor, ram, storage, gpu_type, gpu_model, ...basicEqData } = supabaseEqData;
+            const retry = await supabase
+              .from('client_equipments')
+              .update(basicEqData)
+              .eq('id', editingEqId);
+            if (!retry.error) error = null;
+          }
+
           if (error) {
             console.warn('Falha Supabase ao atualizar, tentando mock local:', error.message);
             const allEqs = readLocalEquipments();
@@ -345,7 +367,14 @@ export default function ClientDetailPage() {
           }
         }
       } else {
-        const { error } = await supabase.from('client_equipments').insert(supabaseEqData);
+        let { error } = await supabase.from('client_equipments').insert(supabaseEqData);
+
+        if (error && (error.message?.includes('column') || error.code === 'PGRST204')) {
+          const { processor, ram, storage, gpu_type, gpu_model, ...basicEqData } = supabaseEqData;
+          const retry = await supabase.from('client_equipments').insert(basicEqData);
+          if (!retry.error) error = null;
+        }
+
         if (error) {
           console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
           const allEqs = readLocalEquipments();
@@ -363,6 +392,11 @@ export default function ClientDetailPage() {
       setEqModel('');
       setEqSerial('');
       setEqCategoryId('');
+      setEqProcessor('');
+      setEqRam('');
+      setEqStorage('');
+      setEqGpuType('');
+      setEqGpuModel('');
       setEditingEqId(null);
 
       if (usedFallback) {
@@ -412,6 +446,11 @@ export default function ClientDetailPage() {
     setEqModel(eq.model || '');
     setEqSerial(eq.serial_number || '');
     setEqCategoryId(eq.category_id || '');
+    setEqProcessor(eq.processor || '');
+    setEqRam(eq.ram || '');
+    setEqStorage(eq.storage || '');
+    setEqGpuType(eq.gpu_type || '');
+    setEqGpuModel(eq.gpu_model || '');
     window.document.getElementById('equipment-form')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -480,6 +519,11 @@ export default function ClientDetailPage() {
     setEqModel('');
     setEqSerial('');
     setEqCategoryId('');
+    setEqProcessor('');
+    setEqRam('');
+    setEqStorage('');
+    setEqGpuType('');
+    setEqGpuModel('');
   };
 
   if (loading) {
@@ -690,7 +734,56 @@ export default function ClientDetailPage() {
                   <TBody>
                     {equipments.map((eq) => (
                       <TR key={eq.id}>
-                        <TD className="font-semibold">{eq.name}</TD>
+                        <TD className="font-semibold">
+                          <div className="text-text font-medium">{eq.name}</div>
+                          {(eq.processor || eq.ram || eq.storage || eq.gpu_type || eq.gpu_model) && (
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5 font-normal">
+                              {eq.processor && (
+                                <span
+                                  className="inline-flex items-center gap-1 text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border"
+                                  title={`Processador: ${eq.processor}`}
+                                >
+                                  <Cpu className="w-3 h-3 text-text-muted shrink-0" aria-hidden />
+                                  <span>{eq.processor}</span>
+                                </span>
+                              )}
+                              {eq.ram && (
+                                <span
+                                  className="inline-flex items-center gap-1 text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border"
+                                  title={`Memória RAM: ${eq.ram}`}
+                                >
+                                  <span>RAM: {eq.ram}</span>
+                                </span>
+                              )}
+                              {eq.storage && (
+                                <span
+                                  className="inline-flex items-center gap-1 text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border"
+                                  title={`Armazenamento: ${eq.storage}`}
+                                >
+                                  <HardDrive className="w-3 h-3 text-text-muted shrink-0" aria-hidden />
+                                  <span>{eq.storage}</span>
+                                </span>
+                              )}
+                              {(eq.gpu_type || eq.gpu_model) && (
+                                <span
+                                  className="inline-flex items-center gap-1 text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border"
+                                  title="Placa de Vídeo"
+                                >
+                                  <span>
+                                    GPU:{' '}
+                                    {eq.gpu_type === 'integrada'
+                                      ? eq.gpu_model
+                                        ? `${eq.gpu_model} (Integrada)`
+                                        : 'Integrada'
+                                      : eq.gpu_model
+                                        ? `${eq.gpu_model} (Dedicada)`
+                                        : 'Dedicada'}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </TD>
                         <TD className="text-text-muted">
                           {eq.equipment_categories?.name ? (
                             <Badge>{eq.equipment_categories.name}</Badge>
@@ -864,6 +957,71 @@ export default function ClientDetailPage() {
                     />
                   </div>
                 </Field>
+              </div>
+
+              {/* Especificações Técnicas / Configuração da Máquina (Opcional) */}
+              <div className="rounded-xl border border-border/80 bg-surface-subtle/50 p-4 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-text-subtle" aria-hidden />
+                    <span className="text-small font-semibold text-text">
+                      Configuração da Máquina
+                    </span>
+                  </div>
+                  <span className="text-caption font-medium text-text-subtle bg-surface px-2.5 py-0.5 rounded-full border border-border">
+                    Opcional
+                  </span>
+                </div>
+                <p className="text-[12px] text-text-subtle">
+                  Especificações de hardware (processador, memória, disco e placa de vídeo) para agilizar diagnósticos e orçamentos.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Input
+                    label="Processador (CPU)"
+                    placeholder="Ex: Core i5-1135G7 / Ryzen 5"
+                    value={eqProcessor}
+                    onChange={(e) => setEqProcessor(e.target.value)}
+                  />
+                  <Input
+                    label="Memória RAM"
+                    placeholder="Ex: 16 GB DDR4"
+                    value={eqRam}
+                    onChange={(e) => setEqRam(e.target.value)}
+                  />
+                  <Input
+                    label="Armazenamento"
+                    placeholder="Ex: SSD 512 GB NVMe"
+                    value={eqStorage}
+                    onChange={(e) => setEqStorage(e.target.value)}
+                  />
+                  <Field label="Placa de Vídeo">
+                    <Select
+                      aria-label="Tipo de placa de vídeo"
+                      value={eqGpuType}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEqGpuType(val);
+                        if (!val) setEqGpuModel('');
+                      }}
+                    >
+                      <option value="">Não informado</option>
+                      <option value="integrada">Integrada (Onboard)</option>
+                      <option value="dedicada">Dedicada (Offboard)</option>
+                    </Select>
+                  </Field>
+                </div>
+
+                {eqGpuType === 'dedicada' && (
+                  <div className="pt-1">
+                    <Input
+                      label="Qual a placa de vídeo dedicada?"
+                      placeholder="Ex: NVIDIA GeForce RTX 3060 6GB / GTX 1650"
+                      value={eqGpuModel}
+                      onChange={(e) => setEqGpuModel(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

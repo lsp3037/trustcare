@@ -92,6 +92,11 @@ CREATE TABLE public.client_equipments (
     brand TEXT,
     model TEXT,
     serial_number TEXT,
+    processor TEXT,
+    ram TEXT,
+    storage TEXT,
+    gpu_type TEXT,
+    gpu_model TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 

@@ -9,6 +9,7 @@ import {
   Users,
   Plus,
   AlertCircle,
+  Cpu,
 } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ import {
   Field,
   Input,
   PageHeader,
+  Select,
   SkeletonTable,
   Table,
   TBody,
@@ -71,6 +73,11 @@ export default function ClientsPage() {
   const [eqBrand, setEqBrand] = useState('');
   const [eqModel, setEqModel] = useState('');
   const [eqSerial, setEqSerial] = useState('');
+  const [eqProcessor, setEqProcessor] = useState('');
+  const [eqRam, setEqRam] = useState('');
+  const [eqStorage, setEqStorage] = useState('');
+  const [eqGpuType, setEqGpuType] = useState('');
+  const [eqGpuModel, setEqGpuModel] = useState('');
   const [addingEq, setAddingEq] = useState(false);
 
   const fetchClients = async () => {
@@ -218,13 +225,27 @@ export default function ClientsPage() {
         brand: eqBrand,
         model: eqModel,
         serial_number: eqSerial,
+        processor: eqProcessor.trim() || null,
+        ram: eqRam.trim() || null,
+        storage: eqStorage.trim() || null,
+        gpu_type: eqGpuType.trim() || null,
+        gpu_model: eqGpuModel.trim() || null,
       };
 
-      const { data: insertedEq, error } = await supabase
+      let { data: insertedEq, error } = await supabase
         .from('client_equipments')
         .insert(newEq)
         .select()
         .single();
+
+      if (error && (error.message?.includes('column') || error.code === 'PGRST204')) {
+        const { processor, ram, storage, gpu_type, gpu_model, ...basicEq } = newEq;
+        const retry = await supabase.from('client_equipments').insert(basicEq).select().single();
+        if (!retry.error) {
+          insertedEq = retry.data;
+          error = null;
+        }
+      }
 
       let finalEq = insertedEq;
 
@@ -248,6 +269,11 @@ export default function ClientsPage() {
       setEqBrand('');
       setEqModel('');
       setEqSerial('');
+      setEqProcessor('');
+      setEqRam('');
+      setEqStorage('');
+      setEqGpuType('');
+      setEqGpuModel('');
     } catch (err: any) {
       toast.error('Não foi possível adicionar o equipamento', {
         description: err.message || 'Erro inesperado.',
@@ -470,7 +496,33 @@ export default function ClientsPage() {
                     <TBody>
                       {addedEquipments.map((eq, idx) => (
                         <TR key={eq.id || idx}>
-                          <TD className="font-semibold">{eq.name}</TD>
+                          <TD className="font-semibold">
+                            <div>{eq.name}</div>
+                            {(eq.processor || eq.ram || eq.storage || eq.gpu_type || eq.gpu_model) && (
+                              <div className="flex flex-wrap items-center gap-1 mt-1 font-normal">
+                                {eq.processor && (
+                                  <span className="text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border">
+                                    {eq.processor}
+                                  </span>
+                                )}
+                                {eq.ram && (
+                                  <span className="text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border">
+                                    {eq.ram}
+                                  </span>
+                                )}
+                                {eq.storage && (
+                                  <span className="text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border">
+                                    {eq.storage}
+                                  </span>
+                                )}
+                                {(eq.gpu_type || eq.gpu_model) && (
+                                  <span className="text-caption px-1.5 py-0.5 rounded bg-surface-subtle text-text-subtle border border-border">
+                                    {eq.gpu_type === 'integrada' ? 'GPU Integrada' : eq.gpu_model || 'GPU Dedicada'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </TD>
                           <TD className="text-text-muted">{eq.brand || '—'}</TD>
                           <TD className="text-text-muted">{eq.model || '—'}</TD>
                           <TD align="right" numeric>
@@ -542,6 +594,71 @@ export default function ClientsPage() {
                     </div>
                   </Field>
                 </div>
+
+                {/* Configuração de Hardware (Opcional) */}
+                <details className="group rounded-xl border border-border/80 bg-surface-subtle/40 p-3.5">
+                  <summary className="flex items-center justify-between cursor-pointer list-none select-none">
+                    <div className="flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-text-subtle" aria-hidden />
+                      <span className="text-small font-medium text-text">
+                        Configuração da Máquina (Opcional)
+                      </span>
+                    </div>
+                    <span className="text-caption text-brand group-open:hidden">
+                      + Preencher
+                    </span>
+                    <span className="text-caption text-text-subtle hidden group-open:inline">
+                      Recolher
+                    </span>
+                  </summary>
+
+                  <div className="pt-3 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Input
+                        label="Processador (CPU)"
+                        placeholder="Ex: Core i5 / Ryzen 5"
+                        value={eqProcessor}
+                        onChange={(e) => setEqProcessor(e.target.value)}
+                      />
+                      <Input
+                        label="Memória RAM"
+                        placeholder="Ex: 16 GB DDR4"
+                        value={eqRam}
+                        onChange={(e) => setEqRam(e.target.value)}
+                      />
+                      <Input
+                        label="Armazenamento"
+                        placeholder="Ex: SSD 512 GB NVMe"
+                        value={eqStorage}
+                        onChange={(e) => setEqStorage(e.target.value)}
+                      />
+                      <Field label="Placa de Vídeo">
+                        <Select
+                          aria-label="Tipo de placa de vídeo"
+                          value={eqGpuType}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setEqGpuType(val);
+                            if (!val) setEqGpuModel('');
+                          }}
+                        >
+                          <option value="">Não informado</option>
+                          <option value="integrada">Integrada (Onboard)</option>
+                          <option value="dedicada">Dedicada (Offboard)</option>
+                        </Select>
+                      </Field>
+                    </div>
+
+                    {eqGpuType === 'dedicada' && (
+                      <Input
+                        label="Qual a placa de vídeo dedicada?"
+                        placeholder="Ex: NVIDIA GeForce RTX 3060 6GB / GTX 1650"
+                        value={eqGpuModel}
+                        onChange={(e) => setEqGpuModel(e.target.value)}
+                      />
+                    )}
+                  </div>
+                </details>
 
                 <div className="flex justify-end pt-2">
                   <Button

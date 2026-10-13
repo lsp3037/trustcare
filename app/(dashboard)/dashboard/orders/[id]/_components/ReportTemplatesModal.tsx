@@ -68,19 +68,6 @@ export function ReportTemplatesModal({
   const [editingContent, setEditingContent] = useState<string>('');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  // Carrega templates ao abrir o modal
-  useEffect(() => {
-    if (open) {
-      const loaded = getStoredTemplates();
-      setTemplates(loaded);
-      if (loaded.length > 0) {
-        selectTemplate(loaded[0]);
-      } else {
-        startNewTemplate();
-      }
-    }
-  }, [open]);
-
   const selectTemplate = (tpl: ReportTemplate) => {
     setSelectedId(tpl.id);
     setEditingLabel(tpl.label);
@@ -96,6 +83,19 @@ export function ReportTemplatesModal({
     setEditingContent('<p><strong>1. DIAGNÓSTICO:</strong></p><p>Insira os detalhes do diagnóstico...</p>');
     setIsCreatingNew(true);
   };
+
+  // Carrega templates ao abrir o modal
+  useEffect(() => {
+    if (open) {
+      const loaded = getStoredTemplates();
+      setTemplates(loaded);
+      if (loaded.length > 0) {
+        selectTemplate(loaded[0]);
+      } else {
+        startNewTemplate();
+      }
+    }
+  }, [open]);
 
   const handleSave = () => {
     if (!editingLabel.trim()) {
@@ -225,7 +225,7 @@ export function ReportTemplatesModal({
         {/* Painel Esquerdo: Lista de Modelos */}
         <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-border pb-4 md:pb-0 md:pr-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-text-subtle uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-caption font-bold text-text-subtle uppercase tracking-wider flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5" /> Seus Modelos ({templates.length})
             </span>
             <Button
@@ -234,7 +234,7 @@ export function ReportTemplatesModal({
               size="sm"
               icon={<Plus className="w-3.5 h-3.5 text-brand" />}
               onClick={startNewTemplate}
-              className="text-xs h-7 px-2"
+              className="text-caption h-7 px-2"
             >
               Novo
             </Button>
@@ -265,7 +265,7 @@ export function ReportTemplatesModal({
                     {tpl.label}
                   </span>
                   {tpl.description && (
-                    <span className="text-xs text-text-subtle line-clamp-1">
+                    <span className="text-caption text-text-subtle line-clamp-1">
                       {tpl.description}
                     </span>
                   )}
@@ -305,7 +305,7 @@ export function ReportTemplatesModal({
                 size="sm"
                 icon={<Check className="w-4 h-4 text-brand" />}
                 onClick={handleSave}
-                className="h-8 text-xs font-semibold"
+                className="h-8 text-caption font-semibold"
               >
                 Salvar Modelo
               </Button>

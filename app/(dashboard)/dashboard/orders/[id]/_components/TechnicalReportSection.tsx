@@ -120,7 +120,7 @@ export function TechnicalReportSection({
               size="sm"
               icon={<Wand2 className="w-3.5 h-3.5 text-text-subtle" />}
               onClick={handleFormatProblem}
-              className="text-xs h-8 px-2.5 text-text-muted hover:text-text"
+              className="text-caption h-8 px-2.5 text-text-muted hover:text-text"
             >
               Formatar
             </Button>
@@ -149,7 +149,7 @@ export function TechnicalReportSection({
                 disabled={formatDisabled}
                 onClick={handleAutoFormat}
                 title="Transforma anotações no laudo padrão"
-                className="text-xs font-semibold"
+                className="text-caption font-semibold"
               >
                 {formattingReport ? 'Formatando...' : 'Formatar Laudo'}
               </Button>
@@ -157,7 +157,7 @@ export function TechnicalReportSection({
               <DropdownMenu
                 label="Modelos de Laudo Técnico"
                 trigger={
-                  <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border bg-surface-sunken hover:bg-surface-overlay text-text-muted transition-colors cursor-pointer">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-caption font-medium rounded-lg border border-border bg-surface-sunken hover:bg-surface-overlay text-text-muted transition-colors cursor-pointer">
                     <Layers className="w-3.5 h-3.5 text-text-subtle" />
                     Modelos
                   </span>

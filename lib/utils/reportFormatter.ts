@@ -260,3 +260,50 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+/**
+ * Converte a descrição textual de um serviço em blocos HTML bem formatados.
+ */
+export function formatServiceDescriptionHtml(serviceName: string, description?: string): string {
+  const cleanDesc = description ? description.trim() : '';
+  if (!cleanDesc) {
+    return `<p><strong>${escapeHtml(serviceName)}:</strong> Serviço realizado conforme especificação técnica.</p>`;
+  }
+
+  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(cleanDesc);
+  let bodyHtml = '';
+  if (hasHtml) {
+    bodyHtml = cleanDesc;
+  } else {
+    const lines = cleanDesc.split('\n').map(l => l.trim()).filter(Boolean);
+    bodyHtml = lines.map(line => `<p>${escapeHtml(line)}</p>`).join('');
+  }
+
+  return `<p><strong>${escapeHtml(serviceName)}:</strong></p>${bodyHtml}`;
+}
+
+/**
+ * Incorpora o nome e a descrição do serviço no Laudo Técnico sem duplicar caso já esteja presente.
+ */
+export function appendServiceToTechnicalReport(
+  currentReport: string,
+  serviceName: string,
+  serviceDescription?: string
+): { updatedReport: string; added: boolean } {
+  const normalizedName = serviceName.trim().toLowerCase();
+  const currentLower = (currentReport || '').toLowerCase();
+
+  // Evita duplicar se o serviço já estiver citado no laudo
+  if (normalizedName && currentLower.includes(normalizedName)) {
+    return { updatedReport: currentReport, added: false };
+  }
+
+  const snippet = formatServiceDescriptionHtml(serviceName, serviceDescription);
+  const isReportEmpty = !currentReport || currentReport === '<p><br></p>' || currentReport.trim() === '';
+
+  if (isReportEmpty) {
+    return { updatedReport: snippet, added: true };
+  }
+
+  return { updatedReport: `${currentReport}<br>${snippet}`, added: true };
+}

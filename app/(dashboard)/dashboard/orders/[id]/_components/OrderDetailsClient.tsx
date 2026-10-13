@@ -40,6 +40,7 @@ import { TechnicalReportSection } from './TechnicalReportSection';
 import { FinancialSection } from './FinancialSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { OrderActions } from './OrderActions';
+import { appendServiceToTechnicalReport } from '@/lib/utils/reportFormatter';
 
 export function OrderDetailsClient({
   id,
@@ -200,6 +201,18 @@ export function OrderDetailsClient({
         }
       ]);
     }
+
+    // Incorpora automaticamente a descrição do serviço no Laudo Técnico / Serviço Realizado
+    const { updatedReport, added } = appendServiceToTechnicalReport(
+      technicalReport,
+      serv.nome,
+      serv.descricao
+    );
+    if (added) {
+      setTechnicalReport(updatedReport);
+      toast.success(`Serviço "${serv.nome}" adicionado e incorporado ao laudo.`);
+    }
+
     setCurrentServiceId('');
     setCurrentServicePrice('0.00');
     setCurrentServiceQty('1');
