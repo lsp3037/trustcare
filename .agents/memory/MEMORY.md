@@ -5,4 +5,3 @@
 
 ## User
 - [user] Prioritize shortcuts and Command Palette power-user capabilities in next steps → user-preferences.md
-

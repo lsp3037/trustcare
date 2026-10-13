@@ -45,3 +45,5 @@ next-env.d.ts
 # agents and backups
 .agents/scratch/
 .ag-kit-backups/
+__pycache__/
+*.pyc
