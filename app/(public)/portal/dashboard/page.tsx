@@ -6,75 +6,58 @@ import {
   ShieldCheck, 
   LogOut, 
   Wrench, 
-  Clock, 
-  CheckCircle2, 
-  FileText, 
+  Laptop, 
+  ExternalLink, 
   ArrowRight,
-  ExternalLink,
-  Laptop,
   AlertCircle
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function PortalDashboard() {
   const router = useRouter();
-  const [client, setClient] = useState<any | null>(null);
+  const [client, setClient] = useState<{ name: string; email: string } | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [equipments, setEquipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    // 1. Obtém dados do cliente autenticado
-    const storedClient = localStorage.getItem('portal-client');
-    if (!storedClient) {
-      document.cookie = "portal-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "portal-client-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      router.push('/portal');
-      return;
-    }
-    const parsedClient = JSON.parse(storedClient);
-    setClient(parsedClient);
+  const fetchPortalData = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg('');
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setErrorMsg('');
+      const res = await fetch('/api/portal/data');
 
-        // 2. Busca OSs e Equipamentos do cliente (Online)
-        const { data: osData, error: osErr } = await supabase
-          .from('service_orders')
-          .select('*')
-          .eq('client_id', parsedClient.id)
-          .order('created_at', { ascending: false });
-
-        const { data: eqData, error: eqErr } = await supabase
-          .from('client_equipments')
-          .select('*')
-          .eq('client_id', parsedClient.id)
-          .order('name');
-
-        if (osErr || eqErr) {
-          throw new Error('Falha ao carregar registros do portal.');
-        }
-
-        setOrders(osData || []);
-        setEquipments(eqData || []);
-      } catch (err: any) {
-        setErrorMsg('Erro ao carregar dados do portal.');
-      } finally {
-        setLoading(false);
+      if (res.status === 401) {
+        router.push('/portal');
+        return;
       }
-    };
 
-    fetchData();
-  }, [router]);
+      if (!res.ok) {
+        throw new Error('Falha ao carregar registros do portal.');
+      }
 
-  const handleLogout = () => {
-    document.cookie = "portal-session-mock=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "portal-client-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    localStorage.removeItem('portal-client');
+      const data = await res.json();
+      setClient(data.client);
+      setOrders(data.orders || []);
+      setEquipments(data.equipments || []);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Erro ao carregar dados do portal.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPortalData();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/portal/logout', { method: 'POST' });
+    } catch {
+      // Falha silenciosa no logout
+    }
     router.push('/portal');
   };
 
@@ -98,7 +81,7 @@ export default function PortalDashboard() {
           <span className="text-sm text-text font-medium">Olá, {client?.name}</span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-caption text-text-muted hover:text-danger transition-colors border border-border hover:border-rose-950 py-1.5 px-3 rounded-xl cursor-pointer"
+            className="flex items-center gap-1.5 text-caption text-text-muted hover:text-danger transition-colors border border-border hover:border-danger/30 py-1.5 px-3 rounded-xl cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sair
           </button>
@@ -108,7 +91,7 @@ export default function PortalDashboard() {
       {/* Grid Principal */}
       <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Painel Esquerdo - Equipamentos */}
-        <section className="lg:col-span-1 border border-border bg-[#070a13] p-5">
+        <section className="lg:col-span-1 border border-border bg-[#070a13] p-5 rounded-xl">
           <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
             <Laptop className="w-4 h-4 text-brand" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-text">Meus Equipamentos</h2>
@@ -119,7 +102,7 @@ export default function PortalDashboard() {
           ) : (
             <div className="space-y-4">
               {equipments.map((eq) => (
-                <div key={eq.id} className="p-3 border border-border bg-[#04060b]">
+                <div key={eq.id} className="p-3 border border-border bg-[#04060b] rounded-lg">
                   <p className="text-sm font-medium text-text">{eq.name}</p>
                   <p className="text-caption text-text-muted mt-1">
                     {eq.brand} {eq.model}
@@ -136,11 +119,18 @@ export default function PortalDashboard() {
         </section>
 
         {/* Painel Central/Direito - Ordens de Serviço */}
-        <section className="lg:col-span-2 border border-border bg-[#070a13] p-5">
+        <section className="lg:col-span-2 border border-border bg-[#070a13] p-5 rounded-xl">
           <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
             <Wrench className="w-4 h-4 text-brand" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-text">Minhas Ordens de Serviço</h2>
           </div>
+
+          {errorMsg && (
+            <div className="p-3 mb-4 bg-danger/10 border border-danger/25 text-danger flex items-start gap-2.5 text-sm rounded-lg">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>{errorMsg}</p>
+            </div>
+          )}
 
           {orders.length === 0 ? (
             <p className="text-caption text-text-muted italic">Nenhuma ordem de serviço registrada.</p>
@@ -151,9 +141,9 @@ export default function PortalDashboard() {
                 return (
                   <div 
                     key={os.id} 
-                    className={`border p-4 transition-colors ${
+                    className={`border p-4 rounded-xl transition-colors ${
                       isWaitingApproval 
-                        ? 'border-amber-950 bg-amber-500/[0.02]' 
+                        ? 'border-amber-950/80 bg-amber-500/[0.03]' 
                         : 'border-border bg-[#04060b]'
                     }`}
                   >
@@ -164,12 +154,12 @@ export default function PortalDashboard() {
                           {os.codigo_os || `ID: ${os.id.slice(0, 8)}`}
                         </span>
                         <h3 className="text-sm font-semibold text-text mt-0.5">
-                          {os.equipment_details || 'Equipamento'}
+                          {os.equipment_name || os.equipment_details || 'Equipamento'}
                         </h3>
                       </div>
                       
                       {/* Status Tag */}
-                      <span className={`text-caption font-semibold uppercase tracking-widest px-2.5 py-1 ${
+                      <span className={`text-caption font-semibold uppercase tracking-widest px-2.5 py-1 rounded-md ${
                         os.status === 'Finalizado' || os.status === 'Pronto para Retirada'
                           ? 'bg-brand/10 text-brand border border-brand/25'
                           : os.status === 'Aguardando Aprovação'
@@ -183,9 +173,11 @@ export default function PortalDashboard() {
                     </div>
 
                     {/* Descrição do Problema */}
-                    <div className="text-caption text-text-muted mb-4 border-l border-border pl-3 py-1">
+                    <div className="text-caption text-text-muted mb-4 border-l-2 border-border pl-3 py-1">
                       <p className="font-semibold text-text-muted mb-1">Problema Reportado:</p>
-                      <div dangerouslySetInnerHTML={{ __html: os.reported_problem }} />
+                      <p className="text-text-muted whitespace-pre-line leading-relaxed">
+                        {os.reported_problem?.replace(/<[^>]*>/g, '') || 'Não informado.'}
+                      </p>
                     </div>
 
                     {/* Rodapé da OS */}
@@ -201,13 +193,19 @@ export default function PortalDashboard() {
                             <span className="text-text">{new Date(os.delivery_prediction).toLocaleDateString('pt-BR')}</span>
                           </div>
                         )}
+                        {os.company_name && (
+                          <div>
+                            <span>Assistência: </span>
+                            <span className="text-text">{os.company_name}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Ações baseadas no Status */}
                       {isWaitingApproval ? (
                         <a
                           href={`/orcamento/${os.id}`}
-                          className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white font-medium py-1.5 px-3 transition-colors cursor-pointer text-caption"
+                          className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white font-medium py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-caption"
                         >
                           Aprovar Orçamento <ArrowRight className="w-3.5 h-3.5" />
                         </a>

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { verifyPortalToken } from '@/lib/utils/portalSession';
 
 /**
  * Proxy Router — Trust Care (Next.js 16)
@@ -66,7 +67,8 @@ export async function proxy(request: NextRequest) {
   // Permitir mock apenas em ambiente local de desenvolvimento
   const isAdminAuthenticated = !!user || (isDev && isMockAuthenticated);
 
-  const isPortalAuthenticated = request.cookies.get('portal-session-mock')?.value === 'true';
+  const portalSessionToken = request.cookies.get('portal-session')?.value;
+  const isPortalAuthenticated = !!verifyPortalToken(portalSessionToken);
 
   const redirectWithCookies = (url: URL) => {
     const redirectResponse = NextResponse.redirect(url);
