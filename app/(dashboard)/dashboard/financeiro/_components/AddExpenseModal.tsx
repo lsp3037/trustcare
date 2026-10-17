@@ -18,13 +18,7 @@ const EXPENSE_CATEGORIES = [
 
 const RECURRENCES = ['Única', 'Diária', 'Semanal', 'Mensal', 'Anual'];
 
-/** YYYY-MM-DD no fuso local — `toISOString()` empurraria a data um dia atrás. */
-function toDateInput(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { toLocalYMD } from '@/lib/utils/dates';
 
 interface Expense {
   id: string;
@@ -50,13 +44,11 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
   const [amount, setAmount] = useState(expenseToEdit?.amount ? String(expenseToEdit.amount) : '');
   const [category, setCategory] = useState(expenseToEdit?.category || 'Marketing');
   const [expenseDate, setExpenseDate] = useState(
-    expenseToEdit?.expense_date
-      ? toDateInput(new Date(expenseToEdit.expense_date))
-      : toDateInput(new Date()),
+    toLocalYMD(expenseToEdit?.expense_date)
   );
   const [recurrence, setRecurrence] = useState(expenseToEdit?.recurrence || 'Única');
   const [endDate, setEndDate] = useState(
-    expenseToEdit?.end_date ? toDateInput(new Date(expenseToEdit.end_date)) : '',
+    expenseToEdit?.end_date ? toLocalYMD(expenseToEdit.end_date) : ''
   );
   const [loading, setLoading] = useState(false);
   const [amountError, setAmountError] = useState('');
@@ -81,9 +73,9 @@ export function AddExpenseModal({ onClose, onSuccess, expenseToEdit }: AddExpens
         description: description.trim(),
         amount: val,
         category,
-        expense_date: new Date(expenseDate).toISOString(),
+        expense_date: expenseDate,
         recurrence,
-        end_date: recurrence !== 'Única' && endDate ? new Date(endDate).toISOString() : null,
+        end_date: recurrence !== 'Única' && endDate ? endDate : null,
       };
 
       if (expenseToEdit) {

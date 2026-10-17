@@ -13,6 +13,7 @@ import {
   THead,
   TR,
 } from '@/components/ui';
+import { toBrazilianDate } from '@/lib/utils/dates';
 import { MarkAsPaidModal } from './MarkAsPaidModal';
 
 interface Order {
@@ -39,7 +40,7 @@ export function PaymentTable({ orders, mode, onPaymentSuccess }: PaymentTablePro
   const formatCurrency = (v: number) =>
     `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-  const formatDate = (d?: string) => (d ? new Date(d).toLocaleDateString('pt-BR') : '—');
+  const formatDate = (d?: string) => (d ? toBrazilianDate(d) : '—');
 
   if (orders.length === 0) {
     return (

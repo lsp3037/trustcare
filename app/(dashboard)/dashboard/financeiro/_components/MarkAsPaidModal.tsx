@@ -15,13 +15,7 @@ const PAYMENT_METHODS = [
   'Outro',
 ];
 
-/** YYYY-MM-DD no fuso local — `toISOString()` empurraria a data um dia atrás. */
-function toDateInput(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { toLocalYMD } from '@/lib/utils/dates';
 
 interface MarkAsPaidModalProps {
   order: {
@@ -40,24 +34,21 @@ export function MarkAsPaidModal({ order, onClose, onSuccess }: MarkAsPaidModalPr
   const toast = useToast();
   const [method, setMethod] = useState(order.payment_method || 'Pix');
   const [paymentDate, setPaymentDate] = useState(
-    order.payment_date ? toDateInput(new Date(order.payment_date)) : toDateInput(new Date()),
+    toLocalYMD(order.payment_date)
   );
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      const { error: updateError } = await supabase
-        .from('service_orders')
-        .update({
-          pago: true,
-          payment_status: 'pago',
-          payment_method: method,
-          payment_date: new Date(paymentDate).toISOString(),
-        })
-        .eq('id', order.id);
+      const { error: rpcError } = await supabase.rpc('record_order_payment', {
+        p_order_id: order.id,
+        p_amount: Number(order.total_value) || 0,
+        p_payment_method: method,
+        p_payment_date: paymentDate,
+      });
 
-      if (updateError) throw updateError;
+      if (rpcError) throw rpcError;
 
       toast.success('Pagamento registrado', {
         description: `OS ${order.codigo_os ?? order.id.slice(0, 8)} — ${method}`,

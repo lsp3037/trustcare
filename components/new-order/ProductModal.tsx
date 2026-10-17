@@ -31,6 +31,8 @@ interface ProductModalProps {
   setNewProdRamGb: (gb: string) => void;
   newProdSalePrice: string;
   setNewProdSalePrice: (price: string) => void;
+  newProdCostPrice: string;
+  setNewProdCostPrice: (price: string) => void;
   newProdQty: string;
   setNewProdQty: (qty: string) => void;
   savingProduct: boolean;
@@ -89,6 +91,7 @@ export function ProductModal({
   newProdRamSpeed, setNewProdRamSpeed,
   newProdRamGb, setNewProdRamGb,
   newProdSalePrice, setNewProdSalePrice,
+  newProdCostPrice, setNewProdCostPrice,
   newProdQty, setNewProdQty,
   savingProduct,
   handleSaveProduct,
@@ -252,7 +255,17 @@ export function ProductModal({
           </AttributeGroup>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Input
+            label="Preço de Custo (R$)"
+            type="number"
+            step="0.01"
+            min="0"
+            value={newProdCostPrice}
+            onChange={(e) => setNewProdCostPrice(e.target.value)}
+            placeholder="0.00"
+            className="font-mono tabular-nums"
+          />
           <Input
             label="Preço de Venda (R$)"
             required

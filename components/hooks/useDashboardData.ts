@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { useUser } from '@/lib/context/UserContext';
 import { useToast } from '@/components/ui';
+import { toLocalYMD, toBrazilianDate } from '@/lib/utils/dates';
 
 export interface DateRange {
   from: Date;
@@ -66,18 +67,18 @@ export function useDashboardData(dateRange: DateRange | null) {
       const days = Array.from({ length: daysCount }, (_, i) => {
         const d = new Date(from);
         d.setDate(d.getDate() + i);
+        const rawDate = toLocalYMD(d);
         return {
-          dia: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-          rawDate: d.toISOString().split('T')[0],
+          dia: toBrazilianDate(rawDate).slice(0, 5),
+          rawDate,
           faturamento: 0
         };
       });
 
       ordersList.forEach(order => {
-        const dateToUse = order.payment_date || order.created_at;
+        const dateToUse = order.payment_date ? toLocalYMD(order.payment_date) : toLocalYMD(order.created_at);
         if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
-          const orderDate = dateToUse.split('T')[0];
-          const dayObj = days.find(d => d.rawDate === orderDate);
+          const dayObj = days.find(d => d.rawDate === dateToUse);
           if (dayObj) {
             dayObj.faturamento += Number(order.total_value || 0);
           }
@@ -94,99 +95,26 @@ export function useDashboardData(dateRange: DateRange | null) {
         const actualEnd = next > to ? to : next;
         
         weeks.push({
-          dia: `${current.toLocaleDateString('pt-BR', { day: '2-digit' })}/${current.toLocaleDateString('pt-BR', { month: '2-digit' })}`,
-          start: new Date(current),
-          end: new Date(actualEnd),
+          dia: `${toBrazilianDate(current).slice(0, 5)}`,
+          start: toLocalYMD(current),
+          end: toLocalYMD(actualEnd),
           faturamento: 0
         });
         current.setDate(current.getDate() + 7);
       }
 
       ordersList.forEach(order => {
-        const dateToUse = order.payment_date || order.created_at;
+        const dateToUse = order.payment_date ? toLocalYMD(order.payment_date) : toLocalYMD(order.created_at);
         if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
-          const orderDate = new Date(dateToUse);
-          const weekObj = weeks.find(w => orderDate >= w.start && orderDate <= w.end);
+          const weekObj = weeks.find(w => dateToUse >= w.start && dateToUse <= w.end);
           if (weekObj) {
             weekObj.faturamento += Number(order.total_value || 0);
           }
         }
       });
 
-      const totalBilling = weeks.reduce((sum, w) => sum + w.faturamento, 0);
-      if (totalBilling === 0) {
-        weeks.forEach((w, idx) => {
-          w.faturamento = (idx + 1) * 200;
-        });
-      }
-
       return weeks;
     }
-  };
-
-  const loadLocalDashboardMock = (from: Date, to: Date) => {
-    const mockOrders = localStorage.getItem('mock-orders');
-    let ordersList = [];
-    if (mockOrders) {
-      ordersList = JSON.parse(mockOrders);
-    } else {
-      ordersList = [
-        { id: '1', clients: { name: 'Tech Solutions Ltda' }, equipment_details: 'Notebook Dell Latitude 3420', status: 'Em Análise', total_value: 450.00, created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-        { id: '2', clients: { name: 'Carlos Henrique Souza' }, equipment_details: 'Desktop Gamer Custom', status: 'Aguardando Peças', total_value: 1250.00, created_at: new Date(Date.now() - 3600000 * 8).toISOString() },
-        { id: '3', clients: { name: 'Clínica Sorriso Perfeito' }, equipment_details: 'Servidor de Arquivos HP ProLiant', status: 'Pronto para Retirada', total_value: 2800.00, created_at: new Date(Date.now() - 3600000 * 24).toISOString() },
-        { id: '4', clients: { name: 'Juliana Mendes' }, equipment_details: 'MacBook Air M1', status: 'Em Análise', total_value: 350.00, created_at: new Date(Date.now() - 3600000 * 28).toISOString() },
-      ];
-    }
-
-    const filteredByDate = ordersList.filter((o: any) => {
-      if (!o.created_at) return false;
-      const orderDate = new Date(o.created_at);
-      return orderDate >= from && orderDate <= to;
-    });
-
-    setRecentOrders(filteredByDate.slice(0, 5));
-    setChartData(processChartDataForRange(ordersList, from, to));
-
-    const paidOrders = ordersList.filter((o: any) => {
-      const dateToUse = o.payment_date || o.created_at;
-      if (!dateToUse) return false;
-      const orderDate = new Date(dateToUse);
-      return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado') && orderDate >= from && orderDate <= to;
-    });
-
-    const billingTotal = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_value || 0), 0);
-    const ticketMedio = paidOrders.length > 0 ? (billingTotal / paidOrders.length) : 0;
-    
-    const dist = paidOrders.reduce((acc: any, order: any) => {
-      const method = order.payment_method || 'Não Informado';
-      acc[method] = (acc[method] || 0) + Number(order.total_value || 0);
-      return acc;
-    }, {} as Record<string, number>);
-    setPaymentDistribution(dist);
-    
-    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Cancelado'].includes(o.status)).length;
-    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
-
-    const localClients = localStorage.getItem('mock-clients');
-    const parsedClients = localClients ? JSON.parse(localClients) : [];
-    const clientsCount = parsedClients.length || 4;
-    const pj = parsedClients.filter((c: any) => c.type === 'PJ').length || 28;
-    const pf = parsedClients.filter((c: any) => c.type === 'PF').length || 14;
-
-    const localProducts = localStorage.getItem('mock-inventory');
-    const productsList = localProducts ? JSON.parse(localProducts) : [];
-    const lowStockCount = productsList.filter((p: any) => p.quantity < p.min_stock_alert).length;
-
-    setStats({
-      billing: billingTotal,
-      ticketMedio: ticketMedio,
-      openOrders: open,
-      completedOrders: completed,
-      totalClients: clientsCount,
-      lowStockCount: lowStockCount || 3,
-      pjCount: pj,
-      pfCount: pf
-    });
   };
 
   const fetchDashboardData = async (from: Date, to: Date) => {
@@ -199,8 +127,8 @@ export function useDashboardData(dateRange: DateRange | null) {
       const toDate = new Date(to);
       toDate.setHours(23, 59, 59, 999);
 
-      const fromDateStr = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-${String(fromDate.getDate()).padStart(2, '0')}`;
-      const toDateStr = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, '0')}-${String(toDate.getDate()).padStart(2, '0')}`;
+      const fromDateStr = toLocalYMD(fromDate);
+      const toDateStr = toLocalYMD(toDate);
 
       let queryCreated = supabase.from('service_orders').select('*, clients(name)')
         .gte('created_at', fromDate.toISOString())
@@ -217,10 +145,14 @@ export function useDashboardData(dateRange: DateRange | null) {
 
       const [
         { data: createdOrders, error: errCreated },
-        { data: paidOrders, error: errPaid }
+        { data: paidOrders, error: errPaid },
+        { data: allClients },
+        { data: allProducts }
       ] = await Promise.all([
         queryCreated.order('created_at', { ascending: false }),
-        queryPaid.order('created_at', { ascending: false })
+        queryPaid.order('created_at', { ascending: false }),
+        supabase.from('clients').select('type'),
+        supabase.from('products_inventory').select('quantity, min_stock_alert')
       ]);
 
       if (errCreated) throw errCreated;
@@ -241,23 +173,22 @@ export function useDashboardData(dateRange: DateRange | null) {
       if (orders && orders.length > 0) {
         const filteredByDate = orders.filter(o => {
           if (!o.created_at) return false;
-          const orderDate = new Date(o.created_at);
-          return orderDate >= fromDate && orderDate <= toDate;
+          const dStr = toLocalYMD(o.created_at);
+          return dStr >= fromDateStr && dStr <= toDateStr;
         });
 
         setRecentOrders(filteredByDate.slice(0, 5));
         
-        const paidOrders = orders.filter(o => {
-          const dateToUse = o.payment_date || o.created_at;
+        const actuallyPaidOrders = orders.filter(o => {
+          const dateToUse = o.payment_date ? toLocalYMD(o.payment_date) : toLocalYMD(o.created_at);
           if (!dateToUse) return false;
-          const pDate = new Date(dateToUse);
-          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado') && pDate >= fromDate && pDate <= toDate;
+          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado') && dateToUse >= fromDateStr && dateToUse <= toDateStr;
         });
 
-        const billingTotal = paidOrders.reduce((sum, o) => sum + Number(o.total_value || 0), 0);
-        const ticketMedio = paidOrders.length > 0 ? (billingTotal / paidOrders.length) : 0;
+        const billingTotal = actuallyPaidOrders.reduce((sum, o) => sum + Number(o.total_value || 0), 0);
+        const ticketMedio = actuallyPaidOrders.length > 0 ? (billingTotal / actuallyPaidOrders.length) : 0;
 
-        const dist = paidOrders.reduce((acc, order) => {
+        const dist = actuallyPaidOrders.reduce((acc, order) => {
           const method = order.payment_method || 'Não Informado';
           acc[method] = (acc[method] || 0) + Number(order.total_value || 0);
           return acc;
@@ -267,12 +198,11 @@ export function useDashboardData(dateRange: DateRange | null) {
         const open = filteredByDate.filter(o => !['Finalizado', 'Cancelado'].includes(o.status)).length;
         const completed = filteredByDate.filter(o => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
 
-        const { data: allClients } = await supabase.from('clients').select('type');
         const clientsCount = allClients?.length || 0;
         const pj = allClients?.filter(c => c.type === 'PJ').length || 0;
         const pf = allClients?.filter(c => c.type === 'PF').length || 0;
         
-        const { data: lowStock } = await supabase.from('products_inventory').select('id').lt('quantity', 'min_stock_alert');
+        const lowStockCount = allProducts?.filter(p => Number(p.min_stock_alert) > 0 && Number(p.quantity) <= Number(p.min_stock_alert)).length || 0;
         
         setStats({
           billing: billingTotal,
@@ -280,36 +210,13 @@ export function useDashboardData(dateRange: DateRange | null) {
           openOrders: open,
           completedOrders: completed,
           totalClients: clientsCount,
-          lowStockCount: lowStock?.length || 0,
+          lowStockCount,
           pjCount: pj,
           pfCount: pf
         });
 
         setChartData(processChartDataForRange(orders, fromDate, toDate));
       } else {
-        const isCustomCompany = company && company.name !== 'Trust Care T.I.';
-        if (isCustomCompany) {
-          setRecentOrders([]);
-          setChartData([]);
-          setStats({
-            billing: 0,
-            ticketMedio: 0,
-            openOrders: 0,
-            completedOrders: 0,
-            totalClients: 0,
-            lowStockCount: 0,
-            pjCount: 0,
-            pfCount: 0
-          });
-          setPaymentDistribution({});
-        } else {
-          loadLocalDashboardMock(from, to);
-        }
-      }
-    } catch (error) {
-      console.warn('Erro ao buscar dados do dashboard do Supabase, usando fallback local:', error);
-      const isCustomCompany = company && company.name !== 'Trust Care T.I.';
-      if (isCustomCompany) {
         setRecentOrders([]);
         setChartData([]);
         setStats({
@@ -317,15 +224,31 @@ export function useDashboardData(dateRange: DateRange | null) {
           ticketMedio: 0,
           openOrders: 0,
           completedOrders: 0,
-          totalClients: 0,
-          lowStockCount: 0,
-          pjCount: 0,
-          pfCount: 0
+          totalClients: allClients?.length || 0,
+          lowStockCount: allProducts?.filter(p => Number(p.min_stock_alert) > 0 && Number(p.quantity) <= Number(p.min_stock_alert)).length || 0,
+          pjCount: allClients?.filter(c => c.type === 'PJ').length || 0,
+          pfCount: allClients?.filter(c => c.type === 'PF').length || 0
         });
         setPaymentDistribution({});
-      } else {
-        loadLocalDashboardMock(from, to);
       }
+    } catch (error: any) {
+      console.warn('Erro ao carregar dados do dashboard do Supabase:', error);
+      toast.error('Erro ao atualizar painel', {
+        description: error?.message || 'Falha na comunicação com o banco de dados.'
+      });
+      setRecentOrders([]);
+      setChartData([]);
+      setStats({
+        billing: 0,
+        ticketMedio: 0,
+        openOrders: 0,
+        completedOrders: 0,
+        totalClients: 0,
+        lowStockCount: 0,
+        pjCount: 0,
+        pfCount: 0
+      });
+      setPaymentDistribution({});
     } finally {
       setLoading(false);
     }

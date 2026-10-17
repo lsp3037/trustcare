@@ -18,6 +18,7 @@ import {
 import { supabase } from '@/lib/supabase/client';
 import { useCompany } from '@/lib/context/CompanyContext';
 import { cn } from '@/lib/utils';
+import { toLocalYMD } from '@/lib/utils/dates';
 
 /** Formas de pagamento — estava duplicado nos dois seletores deste arquivo. */
 const PAYMENT_METHODS = [
@@ -70,9 +71,7 @@ export function OrderDetailsClient({
   
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentDate, setPaymentDate] = useState<string>(
-    order?.payment_date
-      ? new Date(order.payment_date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0]
+    toLocalYMD(order?.payment_date)
   );
   const [paymentMethod, setPaymentMethod] = useState<string>(order?.payment_method || 'Pix');
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState<string>('');
@@ -408,7 +407,7 @@ export function OrderDetailsClient({
         pago,
         payment_status: pago ? 'pago' : 'pendente',
         payment_method: pago ? paymentMethod : null,
-        payment_date: pago ? new Date(paymentDate).toISOString() : null,
+        payment_date: pago ? toLocalYMD(paymentDate) : null,
         media: mediaFiles.map((m) => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type })),
         entry_checklist: entryChecklist,
         exit_checklist: exitChecklist,
@@ -521,7 +520,7 @@ export function OrderDetailsClient({
           pago: true,
           payment_status: 'pago',
           payment_method: paymentMethod,
-          payment_date: paymentDate,
+          payment_date: toLocalYMD(paymentDate),
         },
       });
       if (updateErr) throw updateErr;

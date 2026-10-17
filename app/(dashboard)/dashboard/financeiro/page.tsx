@@ -41,11 +41,13 @@ import { PaymentTable } from './_components/PaymentTable';
 import { FinanceiroBarChart, FinanceiroPieChart } from './_components/FinanceiroChart';
 import { exportFinancialToCsv, exportToCsv } from '@/lib/utils/csvExport';
 import { AddExpenseModal } from './_components/AddExpenseModal';
+import { toLocalYMD, toBrazilianDate, addMonthsPreservingDay } from '@/lib/utils/dates';
 
 interface DateRange { from: Date; to: Date; }
 
 interface OrderItem {
   quantity: number;
+  unit_cost?: number | null;
   products_inventory: {
     cost_price: number;
   } | {
@@ -87,32 +89,37 @@ const PAID_STATUSES = ['Finalizado', 'Pronto para Retirada'];
 
 function projectExpenses(expenses: Expense[], from: Date, to: Date): Expense[] {
   const projected: Expense[] = [];
+  const fromYmd = toLocalYMD(from);
+  const toYmd = toLocalYMD(to);
 
   expenses.forEach((e) => {
-    const start = new Date(e.expense_date);
-    if (start > to) return;
+    const startYmd = toLocalYMD(e.expense_date);
+    if (startYmd > toYmd) return;
 
     const recurrence = e.recurrence || 'Única';
-    const end = e.end_date ? new Date(e.end_date) : null;
-    const limit = end && end < to ? end : to;
+    const endYmd = e.end_date ? toLocalYMD(e.end_date) : null;
+    const limitYmd = endYmd && endYmd < toYmd ? endYmd : toYmd;
 
     if (recurrence === 'Única') {
-      if (start >= from && start <= to) {
+      if (startYmd >= fromYmd && startYmd <= toYmd) {
         projected.push(e);
       }
       return;
     }
 
-    const current = new Date(start);
-    // Para evitar loops infinitos caso a data inicial seja inválida
+    const [year, month, day] = startYmd.split('-').map(Number);
+    let current = new Date(year, month - 1, day);
     if (isNaN(current.getTime())) return;
 
-    while (current <= limit) {
-      if (current >= from) {
+    while (true) {
+      const curYmd = toLocalYMD(current);
+      if (curYmd > limitYmd) break;
+
+      if (curYmd >= fromYmd) {
         projected.push({
           ...e,
-          id: `${e.id}-proj-${current.toISOString().split('T')[0]}`,
-          expense_date: current.toISOString(),
+          id: `${e.id}-proj-${curYmd}`,
+          expense_date: curYmd,
         });
       }
 
@@ -121,7 +128,7 @@ function projectExpenses(expenses: Expense[], from: Date, to: Date): Expense[] {
       } else if (recurrence === 'Semanal') {
         current.setDate(current.getDate() + 7);
       } else if (recurrence === 'Mensal') {
-        current.setMonth(current.getMonth() + 1);
+        current = addMonthsPreservingDay(current, 1);
       } else if (recurrence === 'Anual') {
         current.setFullYear(current.getFullYear() + 1);
       } else {
@@ -130,21 +137,30 @@ function projectExpenses(expenses: Expense[], from: Date, to: Date): Expense[] {
     }
   });
 
-  return projected.sort((a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime());
+  return projected.sort((a, b) => b.expense_date.localeCompare(a.expense_date));
 }
 
 function calculateOrderPartsCost(order: Order): number {
   if (!order.service_order_items) return 0;
   return order.service_order_items.reduce((sum, item) => {
+    if (typeof item.unit_cost === 'number' && !isNaN(item.unit_cost)) {
+      return sum + (item.quantity * item.unit_cost);
+    }
     const rawCost = item.products_inventory;
     const cost = Array.isArray(rawCost)
       ? (rawCost[0]?.cost_price || 0)
       : (rawCost?.cost_price || 0);
-    return sum + (item.quantity * cost);
+    return sum + (item.quantity * (cost || 0));
   }, 0);
 }
 
-function buildBarData(orders: Order[], expenses: Expense[], from: Date, to: Date) {
+function buildBarData(
+  orders: Order[],
+  expenses: Expense[],
+  from: Date,
+  to: Date,
+  dailyRevenueRpc?: { date: string; revenue: number }[]
+) {
   const daysCount = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const showByDay = daysCount <= 35;
 
@@ -152,27 +168,44 @@ function buildBarData(orders: Order[], expenses: Expense[], from: Date, to: Date
     const days = Array.from({ length: daysCount }, (_, i) => {
       const d = new Date(from);
       d.setDate(d.getDate() + i);
+      const rawDate = toLocalYMD(d);
       return {
-        dia: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-        rawDate: d.toISOString().split('T')[0],
+        dia: toBrazilianDate(rawDate).slice(0, 5),
+        rawDate,
         faturamento: 0,
         custos: 0,
       };
     });
 
-    // Soma faturamento e custo de peças das OS pagas
-    orders.forEach((o) => {
-      const d = (o.payment_date || o.created_at)?.split('T')[0];
-      const slot = days.find((x) => x.rawDate === d);
-      if (slot && PAID_STATUSES.includes(o.status)) {
-        slot.faturamento += Number(o.total_value || 0);
-        slot.custos += calculateOrderPartsCost(o);
-      }
-    });
+    if (dailyRevenueRpc && dailyRevenueRpc.length > 0) {
+      dailyRevenueRpc.forEach((r) => {
+        const slot = days.find((x) => x.rawDate === r.date);
+        if (slot) {
+          slot.faturamento = Number(r.revenue || 0);
+        }
+      });
+      orders.forEach((o) => {
+        const d = toLocalYMD(o.payment_date || o.created_at);
+        const slot = days.find((x) => x.rawDate === d);
+        if (slot && PAID_STATUSES.includes(o.status)) {
+          slot.custos += calculateOrderPartsCost(o);
+        }
+      });
+    } else {
+      // Soma faturamento e custo de peças das OS pagas
+      orders.forEach((o) => {
+        const d = toLocalYMD(o.payment_date || o.created_at);
+        const slot = days.find((x) => x.rawDate === d);
+        if (slot && PAID_STATUSES.includes(o.status)) {
+          slot.faturamento += Number(o.total_value || 0);
+          slot.custos += calculateOrderPartsCost(o);
+        }
+      });
+    }
 
     // Soma despesas gerais
     expenses.forEach((e) => {
-      const d = e.expense_date?.split('T')[0];
+      const d = toLocalYMD(e.expense_date);
       const slot = days.find((x) => x.rawDate === d);
       if (slot) {
         slot.custos += Number(e.amount || 0);
@@ -189,7 +222,7 @@ function buildBarData(orders: Order[], expenses: Expense[], from: Date, to: Date
     const end = new Date(cur);
     end.setDate(end.getDate() + 6);
     weeks.push({
-      dia: `${cur.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`,
+      dia: `${toBrazilianDate(cur).slice(0, 5)}`,
       from: new Date(cur),
       to: end > to ? to : end,
       faturamento: 0,
@@ -201,8 +234,8 @@ function buildBarData(orders: Order[], expenses: Expense[], from: Date, to: Date
   // Soma faturamento e custo de peças das OS pagas
   orders.forEach((o) => {
     if (!PAID_STATUSES.includes(o.status)) return;
-    const d = new Date(o.payment_date || o.created_at);
-    const slot = weeks.find((w) => d >= w.from && d <= w.to);
+    const dStr = toLocalYMD(o.payment_date || o.created_at);
+    const slot = weeks.find((w) => dStr >= toLocalYMD(w.from) && dStr <= toLocalYMD(w.to));
     if (slot) {
       slot.faturamento += Number(o.total_value || 0);
       slot.custos += calculateOrderPartsCost(o);
@@ -211,8 +244,8 @@ function buildBarData(orders: Order[], expenses: Expense[], from: Date, to: Date
 
   // Soma despesas gerais
   expenses.forEach((e) => {
-    const d = new Date(e.expense_date);
-    const slot = weeks.find((w) => d >= w.from && d <= w.to);
+    const dStr = toLocalYMD(e.expense_date);
+    const slot = weeks.find((w) => dStr >= toLocalYMD(w.from) && dStr <= toLocalYMD(w.to));
     if (slot) {
       slot.custos += Number(e.amount || 0);
     }
@@ -232,6 +265,23 @@ function buildPieData(orders: Order[]) {
 
 // ──────────────────────────────────────────────────────────────────────────────
 
+interface FinancialSummary {
+  total_revenue: number;
+  total_labor: number;
+  total_parts_sold: number;
+  total_parts_cost: number;
+  gross_profit: number;
+  net_profit: number;
+  ticket_medio: number;
+  paid_orders_count: number;
+  open_orders_count: number;
+  completed_orders_count: number;
+  total_expenses: number;
+  low_stock_count: number;
+  payment_distribution: Record<string, number>;
+  daily_revenue: { date: string; revenue: number }[];
+}
+
 export default function FinanceiroPage() {
   const router = useRouter();
   const { isAdmin, loading: userLoading } = useUser();
@@ -243,6 +293,7 @@ export default function FinanceiroPage() {
   const defaultTo = new Date();
 
   const [dateRange, setDateRange] = useState<DateRange>({ from: defaultFrom, to: defaultTo });
+  const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,33 +311,43 @@ export default function FinanceiroPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Busca Ordens de Serviço com itens de ordem de serviço e custo do produto associado
-      const { data: osData, error: osError } = await supabase
-        .from('service_orders')
-        .select(`
-          id, codigo_os, total_value, status, created_at, payment_date, payment_method, pago,
-          clients(name),
-          service_order_items(quantity, products_inventory(cost_price))
-        `)
-        .order('created_at', { ascending: false });
+      const fromStr = toLocalYMD(dateRange.from);
+      const toStr = toLocalYMD(dateRange.to);
 
-      if (osError) throw osError;
+      // 1. Agregação nativa consolidada no banco (F-17)
+      // 2. Busca Ordens de Serviço detalhadas para tabela e itens
+      // 3. Busca Despesas Gerais
+      const [summaryRes, osRes, expensesRes] = await Promise.all([
+        supabase.rpc('get_financial_summary', { p_start_date: fromStr, p_end_date: toStr }),
+        supabase
+          .from('service_orders')
+          .select(`
+            id, codigo_os, total_value, status, created_at, payment_date, payment_method, pago,
+            clients(name),
+            service_order_items(quantity, unit_cost, products_inventory(cost_price))
+          `)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('company_expenses')
+          .select('*')
+          .order('expense_date', { ascending: false }),
+      ]);
+
+      if (summaryRes.data) {
+        setSummary(summaryRes.data as FinancialSummary);
+      }
+
+      if (osRes.error) throw osRes.error;
 
       // Supabase returns joined tables as arrays; normalize to object
-      const normalizedOrders = ((osData as RawOrder[]) ?? []).map((o) => ({
+      const normalizedOrders = ((osRes.data as RawOrder[]) ?? []).map((o) => ({
         ...o,
         clients: Array.isArray(o.clients) ? o.clients[0] : (o.clients ?? undefined),
       })) as Order[];
       setAllOrders(normalizedOrders);
 
-      // 2. Busca Despesas Gerais
-      const { data: expensesData, error: expError } = await supabase
-        .from('company_expenses')
-        .select('*')
-        .order('expense_date', { ascending: false });
-
-      if (expError) throw expError;
-      setExpenses((expensesData as Expense[]) ?? []);
+      if (expensesRes.error) throw expensesRes.error;
+      setExpenses((expensesRes.data as Expense[]) ?? []);
 
     } catch (err) {
       console.warn('Financeiro: erro ao carregar dados', err);
@@ -295,7 +356,7 @@ export default function FinanceiroPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dateRange]);
 
   useEffect(() => {
     fetchData();
@@ -345,7 +406,7 @@ export default function FinanceiroPage() {
     try {
       const { error } = await supabase
         .from('company_expenses')
-        .update({ end_date: new Date().toISOString() })
+        .update({ end_date: toLocalYMD(new Date()) })
         .eq('id', rootExpenseId(expense.id));
 
       if (error) throw error;
@@ -375,8 +436,10 @@ export default function FinanceiroPage() {
   const inRange = useCallback(
     (dateStr?: string) => {
       if (!dateStr) return false;
-      const d = new Date(dateStr);
-      return d >= dateRange.from && d <= dateRange.to;
+      const ymd = toLocalYMD(dateStr);
+      const fromYmd = toLocalYMD(dateRange.from);
+      const toYmd = toLocalYMD(dateRange.to);
+      return ymd >= fromYmd && ymd <= toYmd;
     },
     [dateRange]
   );
@@ -396,12 +459,12 @@ export default function FinanceiroPage() {
   // Projeta e filtra despesas gerais no período selecionado
   const periodExpenses = projectExpenses(expenses, dateRange.from, dateRange.to);
 
-  // Cálculos Financeiros
-  const receitaRecebida = paidOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
+  // Cálculos Financeiros (Consolidados via RPC no banco, com fallback seguro)
+  const receitaRecebida = summary ? Number(summary.total_revenue || 0) : paidOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
   const aReceber = pendingOrders.reduce((s, o) => s + Number(o.total_value || 0), 0);
 
   // Custo de peças das OS pagas
-  const totalPartsCost = paidOrders.reduce((s, o) => s + calculateOrderPartsCost(o), 0);
+  const totalPartsCost = summary ? Number(summary.total_parts_cost || 0) : paidOrders.reduce((s, o) => s + calculateOrderPartsCost(o), 0);
 
   // Despesas gerais do período
   const totalGeneralExpenses = periodExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -412,8 +475,10 @@ export default function FinanceiroPage() {
   // Lucro líquido real (Receita Recebida - Custos)
   const lucroLiquido = receitaRecebida - totalCustos;
 
-  const barData = buildBarData(paidOrders, periodExpenses, dateRange.from, dateRange.to);
-  const pieData = buildPieData(paidOrders);
+  const barData = buildBarData(paidOrders, periodExpenses, dateRange.from, dateRange.to, summary?.daily_revenue);
+  const pieData = summary?.payment_distribution && Object.keys(summary.payment_distribution).length > 0
+    ? Object.entries(summary.payment_distribution).map(([name, value]) => ({ name, value }))
+    : buildPieData(paidOrders);
 
   const fmtCurrency = (v: number) =>
     `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -425,7 +490,7 @@ export default function FinanceiroPage() {
         Cliente: o.clients?.name ?? '',
         Valor: Number(o.total_value).toFixed(2).replace('.', ','),
         Status: o.status,
-        'Criada em': o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '',
+        'Criada em': o.created_at ? toBrazilianDate(o.created_at) : '',
       })),
       'trustcare_recebiveis_pendentes'
     );
@@ -438,7 +503,7 @@ export default function FinanceiroPage() {
         Cliente: o.clients?.name ?? '',
         Valor: Number(o.total_value).toFixed(2).replace('.', ','),
         'Forma de Pagamento': o.payment_method ?? '',
-        'Pago em': o.payment_date ? new Date(o.payment_date).toLocaleDateString('pt-BR') : '',
+        'Pago em': o.payment_date ? toBrazilianDate(o.payment_date) : '',
       })),
       'trustcare_faturamento_recebido'
     );
@@ -450,7 +515,7 @@ export default function FinanceiroPage() {
         Descrição: e.description,
         Valor: Number(e.amount).toFixed(2).replace('.', ','),
         Categoria: e.category,
-        Data: e.expense_date ? new Date(e.expense_date).toLocaleDateString('pt-BR') : '',
+        Data: e.expense_date ? toBrazilianDate(e.expense_date) : '',
       })),
       'trustcare_despesas'
     );
@@ -658,7 +723,7 @@ export default function FinanceiroPage() {
                     <TR key={exp.id}>
                       <TD numeric className="text-text-muted">
                         {exp.expense_date
-                          ? new Date(exp.expense_date).toLocaleDateString('pt-BR')
+                          ? toBrazilianDate(exp.expense_date)
                           : '—'}
                       </TD>
                       <TD className="font-semibold max-w-[240px]">
@@ -668,7 +733,7 @@ export default function FinanceiroPage() {
                             <Badge tone="info" className="w-fit">
                               ⟳ {exp.recurrence}
                               {exp.end_date &&
-                                ` até ${new Date(exp.end_date).toLocaleDateString('pt-BR')}`}
+                                ` até ${toBrazilianDate(exp.end_date)}`}
                             </Badge>
                           )}
                         </div>

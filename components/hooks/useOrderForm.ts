@@ -87,6 +87,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [newProdCapacity, setNewProdCapacity] = useState('');
   const [newProdQty, setNewProdQty] = useState('10');
   const [newProdSalePrice, setNewProdSalePrice] = useState('');
+  const [newProdCostPrice, setNewProdCostPrice] = useState('');
   const [newProdSsdTech, setNewProdSsdTech] = useState('');
   const [newProdSsdGb, setNewProdSsdGb] = useState('');
   const [newProdRamApp, setNewProdRamApp] = useState('');
@@ -408,6 +409,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       const finalSku = `${prefix}${String(nextNum).padStart(3, '0')}`;
 
       const salePriceNum = parseFloat(newProdSalePrice) || 0;
+      const costPriceNum = parseFloat(newProdCostPrice) || 0;
       const productData = {
         company_id: companyId,
         name: newProdName,
@@ -416,7 +418,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         brand: newProdBrand || '',
         capacity: newProdCapacity || '',
         quantity: parseInt(newProdQty) || 0,
-        cost_price: salePriceNum * 0.6,
+        cost_price: costPriceNum,
         sale_price: salePriceNum,
         min_stock_alert: 1,
       };
@@ -438,6 +440,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       setIsNewProductModalOpen(false);
       setNewProdName(''); setNewProdCategory(''); setNewProdBrand('');
       setNewProdCapacity(''); setNewProdQty('10'); setNewProdSalePrice('');
+      setNewProdCostPrice('');
       setNewProdSsdTech(''); setNewProdSsdGb('');
       setNewProdRamApp(''); setNewProdRamTech(''); setNewProdRamSpeed(''); setNewProdRamGb('');
     } catch (err: any) {
@@ -639,6 +642,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     newProdCapacity, setNewProdCapacity,
     newProdQty, setNewProdQty,
     newProdSalePrice, setNewProdSalePrice,
+    newProdCostPrice, setNewProdCostPrice,
     newProdSsdTech, setNewProdSsdTech,
     newProdSsdGb, setNewProdSsdGb,
     newProdRamApp, setNewProdRamApp,

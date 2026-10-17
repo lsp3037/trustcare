@@ -190,6 +190,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         setNewProdRamGb={orderForm.setNewProdRamGb}
         newProdSalePrice={orderForm.newProdSalePrice}
         setNewProdSalePrice={orderForm.setNewProdSalePrice}
+        newProdCostPrice={orderForm.newProdCostPrice}
+        setNewProdCostPrice={orderForm.setNewProdCostPrice}
         newProdQty={orderForm.newProdQty}
         setNewProdQty={orderForm.setNewProdQty}
         savingProduct={orderForm.savingProduct}
