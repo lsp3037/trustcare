@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 // antes de chegar ao PostgREST — o valor nunca é interpolado em filtros.
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UUID_PREFIX_REGEX = /^[0-9a-f]{8}$/i;
-const CODIGO_OS_REGEX = /^TC-\d{4}-\d{4}$/i;
+const CODIGO_OS_REGEX = /^[A-Z0-9]{2,6}-\d{4}-\d{4,}$/i;
 const SUBDOMAIN_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
 function escapeHtml(value: string): string {
