@@ -24,6 +24,7 @@ import {
   CreditCard,
   Calendar,
   Search,
+  Key,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -278,6 +279,7 @@ function DashboardLayoutContent({
           { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building },
           { name: 'Equipe e Acessos', href: '/dashboard/settings/team', icon: Users },
           { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList },
+          { name: 'Chaves de API', href: '/dashboard/settings/api', icon: Key },
           { name: 'Assinatura e Faturamento', href: '/dashboard/settings/billing', icon: CreditCard }
         ]
       }
