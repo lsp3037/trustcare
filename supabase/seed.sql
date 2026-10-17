@@ -1,0 +1,2 @@
+-- Seed data for local Supabase development (TrustCare)
+-- This file runs after all migrations are applied during `supabase db reset`.
