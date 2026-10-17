@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { isSubscriptionReadOnly } from '@/lib/utils/subscription';
+import { isSubscriptionReadOnly, getTrialDaysRemaining } from '@/lib/utils/subscription';
 
 export type SubscriptionPlan = 'starter' | 'pro' | 'premium';
 export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'trialing';
@@ -17,6 +17,7 @@ export interface Company {
   subscription_plan?: SubscriptionPlan;
   subscription_status?: SubscriptionStatus;
   subscription_expires_at?: string;
+  trial_ends_at?: string;
   subdomain?: string;
 }
 
@@ -24,6 +25,7 @@ export interface CompanyContextType {
   company: Company;
   loading: boolean;
   isReadOnly: boolean;
+  trialDaysRemaining: number | null;
   maxTechnicians: number;
   maxStorageBytes: bigint;
   refreshCompany: () => Promise<void>;
@@ -52,7 +54,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       // Colunas explícitas: `api_key` e ids do Asaas não são legíveis pelo front.
       const { data, error } = await supabase
         .from('companies')
-        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, subdomain')
+        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, trial_ends_at, subdomain')
         .single();
 
       if (error) throw error;
@@ -68,19 +70,13 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
           subscription_plan: (data.subscription_plan || 'starter') as SubscriptionPlan,
           subscription_status: (data.subscription_status || 'trialing') as SubscriptionStatus,
           subscription_expires_at: data.subscription_expires_at || '',
+          trial_ends_at: data.trial_ends_at || '',
           subdomain: data.subdomain || ''
         };
         setCompany(companyObj);
-        // Salva localmente para uso offline também
-        localStorage.setItem('mock-company-settings', JSON.stringify(companyObj));
       }
     } catch (err) {
-      console.warn('Erro ao carregar dados da empresa do Supabase, carregando local:', err);
-      // Carrega localmente
-      const localCompany = localStorage.getItem('mock-company-settings');
-      if (localCompany) {
-        setCompany(JSON.parse(localCompany));
-      } else {
+      console.warn('Erro ao carregar dados da empresa do Supabase:', err);
         // Inicializa com dados padrão
         const defaultCompany = {
           name: 'Trust Care T.I.',
@@ -142,6 +138,11 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     return isSubscriptionReadOnly(company);
   }, [company]);
 
+  const trialDaysRemaining = React.useMemo(() => {
+    if (!company.id) return null;
+    return getTrialDaysRemaining(company);
+  }, [company]);
+
   // Cotas operacionais baseadas no plano
   const maxTechnicians = React.useMemo(() => {
     const plan = company.subscription_plan || 'starter';
@@ -162,6 +163,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       company, 
       loading, 
       isReadOnly, 
+      trialDaysRemaining,
       maxTechnicians, 
       maxStorageBytes, 
       refreshCompany: () => fetchCompanyData(true) 

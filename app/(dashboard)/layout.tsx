@@ -109,7 +109,7 @@ function DashboardLayoutContent({
     return 'Painel de Controle';
   };
   const router = useRouter();
-  const { company, isReadOnly } = useCompany();
+  const { company, isReadOnly, trialDaysRemaining } = useCompany();
   const { user, role, isAdmin, loading: userLoading } = useUser();
   
   // Começa fechada: no mobile o drawer é sobreposto e abrir por padrão
@@ -576,14 +576,36 @@ function DashboardLayoutContent({
             role="alert"
             className="bg-danger/10 border-b border-danger/25 text-danger px-6 py-2.5 text-center text-small font-medium flex items-center justify-center gap-2 print:hidden"
           >
-            <span className="w-2 h-2 bg-danger shrink-0" aria-hidden />
-            <span>Assinatura atrasada: A conta entrou em modo de apenas-leitura. Regularize o faturamento para reabilitar novas OS e cadastros.</span>
+            <span className="w-2 h-2 bg-danger rounded-full shrink-0" aria-hidden />
+            <span>
+              {company.subscription_status === 'trialing'
+                ? 'Seu período de teste encerrou. A conta está em modo de apenas-leitura. Regularize seu plano para voltar a criar e editar ordens.'
+                : 'Assinatura atrasada: A conta entrou em modo de apenas-leitura. Regularize o faturamento para reabilitar novas OS e cadastros.'}
+            </span>
+            <Link href="/dashboard/settings/billing" className="underline font-bold hover:text-danger/80 ml-1">
+              Ver planos
+            </Link>
           </div>
         )}
 
-        {/* Page Body */}
+        {!isReadOnly && company.subscription_status === 'trialing' && trialDaysRemaining !== null && (
+          <div
+            role="status"
+            className="bg-brand/10 border-b border-brand/25 text-brand px-6 py-2 text-center text-caption font-medium flex items-center justify-center gap-2 print:hidden"
+          >
+            <span className="w-2 h-2 bg-brand rounded-full shrink-0" aria-hidden />
+            <span>
+              Você está no período de avaliação gratuita: <strong>{trialDaysRemaining > 0 ? `${trialDaysRemaining} dia(s) restante(s)` : 'expira hoje'}</strong>.
+            </span>
+            <Link href="/dashboard/settings/billing" className="underline font-bold hover:text-brand/80 ml-1">
+              Fazer upgrade
+            </Link>
+          </div>
+        )}
+
+        {/* Page Body: modo somente-leitura preserva acesso aos dados para leitura/exportação (F-35). Tela bloqueada apenas para assinatura cancelada. */}
         <main id="main-content" className="flex-1 p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 print:p-0">
-          {company.subscription_status === 'canceled' || isReadOnly ? (
+          {company.subscription_status === 'canceled' ? (
             <SubscriptionBlockedScreen companyName={company.name} status={company.subscription_status || ''} />
           ) : (
             children
