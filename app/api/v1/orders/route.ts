@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PRIORITIES = ['Baixa', 'Média', 'Alta'];
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
     const client_id = typeof body?.client_id === 'string' ? body.client_id : '';
-    const reported_problem = typeof body?.reported_problem === 'string' ? body.reported_problem.trim() : '';
+    const reported_problem = typeof body?.reported_problem === 'string' ? sanitizeHtml(body.reported_problem.trim()) : '';
     const equipment_details = typeof body?.equipment_details === 'string' ? body.equipment_details.trim() : '';
     const priority = PRIORITIES.includes(body?.priority) ? body.priority : 'Média';
 

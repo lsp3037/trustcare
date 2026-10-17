@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Badge, StatusBadge } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { getSubdomain } from '@/lib/utils/subdomain';
+import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 
 // Define public service order structure
 interface PublicOrder {
@@ -381,7 +382,7 @@ function TrackingContent() {
                   <span className="font-semibold text-text">Defeito relatado:</span>
                   <div 
                     className="prose prose-invert max-w-none text-caption text-text-muted italic font-medium break-words whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: order.reported_problem }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.reported_problem) }}
                   />
                 </div>
               </div>
@@ -527,7 +528,7 @@ function TrackingContent() {
                 </h3>
                 <div 
                   className="text-caption text-text prose prose-invert max-w-none leading-relaxed bg-surface/40 p-4 rounded-xl border border-border font-medium"
-                  dangerouslySetInnerHTML={{ __html: order.technical_report }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.technical_report) }}
                 />
               </div>
             )}

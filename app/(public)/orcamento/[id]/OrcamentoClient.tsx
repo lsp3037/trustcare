@@ -8,6 +8,7 @@ import { Button, Field, Input, LoadingSpinner } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { getSubdomain } from '@/lib/utils/subdomain';
 import { cn } from '@/lib/utils';
+import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 
 const brl = (value: number | string) => `R$ ${parseFloat(String(value)).toFixed(2)}`;
 
@@ -440,7 +441,7 @@ export default function PublicOrderBudgetPage() {
               {order.technical_report ? (
                 <div 
                   className="text-small text-text leading-relaxed break-words prose dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0"
-                  dangerouslySetInnerHTML={{ __html: String(order.technical_report).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.technical_report) }}
                 />
               ) : (
                 <p className="text-small text-text leading-relaxed break-words whitespace-pre-line">
