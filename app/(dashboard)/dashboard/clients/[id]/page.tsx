@@ -110,14 +110,8 @@ export default function ClientDetailPage() {
       if (error) throw error;
       setEqChecklistHistory(data || []);
     } catch (err) {
-      console.warn('Erro ao carregar histórico no Supabase, buscando local:', err);
-      const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
-      const localOrders = JSON.parse(localOrdersStr);
-      const filtered = localOrders.filter(
-        (o: any) =>
-          o.equipment_id === eq.id || (o.equipment_details && o.equipment_details.includes(eq.name)),
-      );
-      setEqChecklistHistory(filtered);
+      console.warn('Erro ao carregar histórico no Supabase:', err);
+      setEqChecklistHistory([]);
     } finally {
       setLoadingHistory(false);
     }
@@ -178,60 +172,12 @@ export default function ClientDetailPage() {
 
         if (eqData) setEquipments(eqData);
       }
-    } catch (err) {
-      console.warn('Erro ao carregar do Supabase, buscando mock local:', err);
-
-      const localClients = localStorage.getItem('mock-clients');
-      if (localClients) {
-        const parsedClients = JSON.parse(localClients);
-        const index = parsedClients.findIndex((c: any) => c.id === id);
-        const foundClient = parsedClients[index];
-
-        if (foundClient) {
-          const processedClient = {
-            ...foundClient,
-            client_number: foundClient.client_number || 1001 + (index >= 0 ? index : 0),
-          };
-
-          setClient(processedClient);
-          setName(processedClient.name);
-          setType(processedClient.type);
-          setDocument(processedClient.document || '');
-          setPhone(processedClient.phone || '');
-          setEmail(processedClient.email || '');
-
-          const mockOrders = localStorage.getItem('mock-orders');
-          const allOrders = mockOrders ? JSON.parse(mockOrders) : [];
-          setOrders(allOrders.filter((o: any) => o.client_id === id));
-
-          const mockCats = localStorage.getItem('mock-equipment-categories');
-          const allCats = mockCats
-            ? JSON.parse(mockCats)
-            : [
-                { id: 'cat1', name: 'Notebook' },
-                { id: 'cat2', name: 'Desktop' },
-              ];
-          setCategories(allCats);
-
-          const mockEqs = localStorage.getItem('mock-equipments');
-          const allEqs = mockEqs ? JSON.parse(mockEqs) : [];
-          const enrichedEqs = allEqs
-            .filter((e: any) => e.client_id === id)
-            .map((e: any) => {
-              const cat = allCats.find((c: any) => c.id === e.category_id);
-              return { ...e, equipment_categories: cat ? { name: cat.name } : null };
-            });
-          setEquipments(enrichedEqs);
-
-          toast.warning('Exibindo dados salvos neste dispositivo', {
-            description: 'Não foi possível falar com o servidor. Os dados podem estar desatualizados.',
-          });
-        } else {
-          setClient(null);
-        }
-      } else {
-        setClient(null);
-      }
+    } catch (err: any) {
+      console.warn('Erro ao carregar do Supabase:', err);
+      setClient(null);
+      toast.error('Não foi possível carregar o cliente', {
+        description: err?.message || 'Falha de comunicação com o servidor.',
+      });
     } finally {
       setLoading(false);
     }
@@ -250,26 +196,8 @@ export default function ClientDetailPage() {
 
       const { error } = await supabase.from('clients').update(updatedData).eq('id', id);
 
-      if (error) {
-        console.warn('Falha no Supabase, atualizando mock local:', error.message);
-
-        const localClients = localStorage.getItem('mock-clients');
-        if (localClients) {
-          const parsed = JSON.parse(localClients);
-          const updatedList = parsed.map((c: any) =>
-            c.id === id ? { ...c, ...updatedData } : c,
-          );
-          localStorage.setItem('mock-clients', JSON.stringify(updatedList));
-        }
-
-        // Antes esta rota mostrava "Alterações salvas!" igual ao caminho de
-        // sucesso — o usuário achava que os dados tinham ido para o servidor.
-        toast.warning('Cadastro salvo apenas neste dispositivo', {
-          description: OFFLINE_HINT,
-        });
-      } else {
-        toast.success('Cadastro atualizado');
-      }
+      if (error) throw error;
+      toast.success('Cadastro atualizado');
 
       setIsEditing(false);
       fetchClientAndOrders();
@@ -294,22 +222,20 @@ export default function ClientDetailPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single();
-        if (profile?.company_id) companyId = profile.company_id;
-      }
+      if (!user) throw new Error('Usuário não autenticado.');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      if (!profile?.company_id) throw new Error('Empresa do usuário não identificada.');
 
       const isUuid = (val: string) =>
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-      const localEqData = {
-        company_id: companyId,
+      const supabaseEqData = {
+        company_id: profile.company_id,
         client_id: id,
-        category_id: eqCategoryId || null,
+        category_id: isUuid(eqCategoryId) ? eqCategoryId : null,
         name: eqName,
         brand: eqBrand,
         model: eqModel,
@@ -321,67 +247,15 @@ export default function ClientDetailPage() {
         gpu_model: eqGpuModel.trim() || null,
       };
 
-      const supabaseEqData = {
-        ...localEqData,
-        category_id: isUuid(eqCategoryId) ? eqCategoryId : null,
-      };
-
-      const readLocalEquipments = () => {
-        const mockEqs = localStorage.getItem('mock-equipments');
-        return mockEqs ? JSON.parse(mockEqs) : [];
-      };
-
       if (editingEqId) {
-        const isMockId =
-          editingEqId.startsWith('mock-eq-') || ['eq1', 'eq2', 'eq3', 'eq4'].includes(editingEqId);
-
-        if (isMockId) {
-          const updatedEqs = readLocalEquipments().map((eq: any) =>
-            eq.id === editingEqId ? { ...eq, ...localEqData, id: editingEqId } : eq,
-          );
-          localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
-        } else {
-          let { error } = await supabase
-            .from('client_equipments')
-            .update(supabaseEqData)
-            .eq('id', editingEqId);
-
-          if (error && (error.message?.includes('column') || error.code === 'PGRST204')) {
-            const { processor, ram, storage, gpu_type, gpu_model, ...basicEqData } = supabaseEqData;
-            const retry = await supabase
-              .from('client_equipments')
-              .update(basicEqData)
-              .eq('id', editingEqId);
-            if (!retry.error) error = null;
-          }
-
-          if (error) {
-            console.warn('Falha Supabase ao atualizar, tentando mock local:', error.message);
-            const allEqs = readLocalEquipments();
-            if (allEqs.length === 0) throw error;
-            const updatedEqs = allEqs.map((eq: any) =>
-              eq.id === editingEqId ? { ...eq, ...localEqData, id: editingEqId } : eq,
-            );
-            localStorage.setItem('mock-equipments', JSON.stringify(updatedEqs));
-            usedFallback = true;
-          }
-        }
+        const { error } = await supabase
+          .from('client_equipments')
+          .update(supabaseEqData)
+          .eq('id', editingEqId);
+        if (error) throw error;
       } else {
-        let { error } = await supabase.from('client_equipments').insert(supabaseEqData);
-
-        if (error && (error.message?.includes('column') || error.code === 'PGRST204')) {
-          const { processor, ram, storage, gpu_type, gpu_model, ...basicEqData } = supabaseEqData;
-          const retry = await supabase.from('client_equipments').insert(basicEqData);
-          if (!retry.error) error = null;
-        }
-
-        if (error) {
-          console.warn('Falha Supabase, inserindo equipamento mock local:', error.message);
-          const allEqs = readLocalEquipments();
-          allEqs.push({ id: `mock-eq-${Date.now()}`, ...localEqData });
-          localStorage.setItem('mock-equipments', JSON.stringify(allEqs));
-          usedFallback = true;
-        }
+        const { error } = await supabase.from('client_equipments').insert(supabaseEqData);
+        if (error) throw error;
       }
 
       const acao = editingEqId ? 'atualizado' : 'cadastrado';
@@ -466,36 +340,21 @@ export default function ClientDetailPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      let companyId = 'mock-tenant-id';
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single();
-        if (profile?.company_id) companyId = profile.company_id;
-      }
+      if (!user) throw new Error('Usuário não autenticado.');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      if (!profile?.company_id) throw new Error('Empresa do usuário não encontrada.');
 
       const { data, error } = await supabase
         .from('equipment_categories')
-        .insert({ name: catName, company_id: companyId })
+        .insert({ name: catName, company_id: profile.company_id })
         .select()
         .single();
 
-      if (error) {
-        console.warn('Fallback mock categories:', error);
-        const mockCats = localStorage.getItem('mock-equipment-categories');
-        const allCats = mockCats ? JSON.parse(mockCats) : [];
-        const newCat = { id: `mock-cat-${Date.now()}`, name: catName };
-        allCats.push(newCat);
-        localStorage.setItem('mock-equipment-categories', JSON.stringify(allCats));
-        setCategories(allCats);
-        setEqCategoryId(newCat.id);
-        toast.warning(`Categoria "${catName}" criada apenas neste dispositivo`, {
-          description: OFFLINE_HINT,
-        });
-        return;
-      }
+      if (error) throw error;
 
       if (data) {
         setCategories([...categories, data]);

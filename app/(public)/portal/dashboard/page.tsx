@@ -56,27 +56,11 @@ export default function PortalDashboard() {
           .order('name');
 
         if (osErr || eqErr) {
-          console.warn('Erro ao consultar Supabase, tentando local:', osErr?.message || eqErr?.message);
+          throw new Error('Falha ao carregar registros do portal.');
         }
 
-        let finalOrders = osData || [];
-        let finalEquipments = eqData || [];
-
-        // 3. Fallback Local / Offline
-        if (finalOrders.length === 0) {
-          const localOrdersStr = localStorage.getItem('mock-orders') || '[]';
-          const localOrders = JSON.parse(localOrdersStr);
-          finalOrders = localOrders.filter((o: any) => o.client_id === parsedClient.id);
-        }
-
-        if (finalEquipments.length === 0) {
-          const localEqsStr = localStorage.getItem('mock-equipments') || '[]';
-          const localEqs = JSON.parse(localEqsStr);
-          finalEquipments = localEqs.filter((e: any) => e.client_id === parsedClient.id);
-        }
-
-        setOrders(finalOrders);
-        setEquipments(finalEquipments);
+        setOrders(osData || []);
+        setEquipments(eqData || []);
       } catch (err: any) {
         setErrorMsg('Erro ao carregar dados do portal.');
       } finally {

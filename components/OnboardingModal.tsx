@@ -281,7 +281,10 @@ export default function OnboardingModal() {
 
     try {
       let finalLogoUrl = logoUrl;
-      const targetCompanyId = company.id || 'mock-company-id';
+      if (!company.id) {
+        throw new Error('Empresa não carregada. Atualize a página e tente novamente.');
+      }
+      const targetCompanyId = company.id;
 
       if (file) {
         finalLogoUrl = await handleUploadLogo(targetCompanyId);
@@ -296,20 +299,12 @@ export default function OnboardingModal() {
         whatsapp: whatsapp.trim()
       };
 
-      if (company.id && company.id !== 'mock-company-id' && company.id.length === 36) {
-        const { error: updateErr } = await supabase
-          .from('companies')
-          .update(updateData)
-          .eq('id', company.id);
+      const { error: updateErr } = await supabase
+        .from('companies')
+        .update(updateData)
+        .eq('id', company.id);
 
-        if (updateErr) throw updateErr;
-      } else {
-        const localCompany = {
-          ...company,
-          ...updateData
-        };
-        localStorage.setItem('mock-company-settings', JSON.stringify(localCompany));
-      }
+      if (updateErr) throw updateErr;
 
       // Guardar preferências operacionais no localStorage
       localStorage.setItem('company-onboarding-terms', JSON.stringify({

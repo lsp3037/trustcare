@@ -116,7 +116,6 @@ export default function UserManagementPage() {
 
   const [loading, setLoading] = useState(true);
   const [checkingAccess, setCheckingAccess] = useState(true);
-  const [isMock, setIsMock] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -137,24 +136,16 @@ export default function UserManagementPage() {
     if (role !== 'admin') {
       router.push('/dashboard');
     } else {
-      const usingMock = !user;
-      setIsMock(usingMock);
       setCheckingAccess(false);
-      fetchUsers(usingMock);
+      fetchUsers();
     }
   }, [router, role, user, userLoading]);
 
-  async function fetchUsers(forceMock?: boolean) {
-    const activeMock = forceMock !== undefined ? forceMock : isMock;
+  async function fetchUsers() {
     try {
       setLoading(true);
 
-      if (activeMock) {
-        loadLocalUsers();
-        return;
-      }
-
-      const { data, error } = await supabase.from('profiles').select('*');
+      const { data, error } = await supabase.from('profiles').select('*').order('full_name');
       if (error) throw error;
 
       setUsers(
@@ -167,31 +158,16 @@ export default function UserManagementPage() {
           status: 'Ativo',
         })),
       );
-    } catch (err) {
-      console.warn('Erro ao carregar usuários do Supabase, usando mock local:', err);
-      loadLocalUsers();
-      toast.warning('Exibindo dados salvos neste dispositivo', {
-        description: 'Não foi possível falar com o servidor.',
+    } catch (err: any) {
+      console.warn('Erro ao carregar usuários do Supabase:', err);
+      toast.error('Não foi possível carregar a lista de usuários', {
+        description: err?.message || 'Falha de comunicação com o servidor.',
       });
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   }
-
-  const loadLocalUsers = () => {
-    const localProfiles = localStorage.getItem('mock-profiles');
-    if (localProfiles) {
-      setUsers(JSON.parse(localProfiles));
-    } else {
-      const initialMocks = [
-        { id: 'p1', name: 'Luan Sabino Paixão', email: 'luan@techassist.com.br', phone: '(66) 99999-1111', role: 'admin', status: 'Ativo' },
-        { id: 'p2', name: 'Samira Paniago', email: 'samira@techassist.com.br', phone: '(66) 99233-8238', role: 'technician', status: 'Ativo' },
-        { id: 'p3', name: 'Carlos Oliveira', email: 'carlos@techassist.com.br', phone: '(66) 99999-3333', role: 'viewer', status: 'Ativo' },
-      ];
-      localStorage.setItem('mock-profiles', JSON.stringify(initialMocks));
-      setUsers(initialMocks);
-    }
-  };
 
   const activeTechs = users.filter((u) => u.role === 'admin' || u.role === 'technician').length;
   const limiteTecnicosAtingido = selectedRole !== 'viewer' && activeTechs >= maxTechnicians;
@@ -265,20 +241,6 @@ export default function UserManagementPage() {
     setSubmitting(true);
 
     try {
-      if (isMock) {
-        const currentList = JSON.parse(localStorage.getItem('mock-profiles') || '[]');
-        const updatedList = currentList.map((u: any) =>
-          u.id === editingUser.id ? { ...u, name: fullName, email, phone, role: selectedRole } : u,
-        );
-        localStorage.setItem('mock-profiles', JSON.stringify(updatedList));
-        setUsers(updatedList);
-        toast.warning('Alteração salva apenas neste dispositivo', {
-          description: 'Sem conexão com o servidor.',
-        });
-        closeModal();
-        return;
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update({ role: selectedRole, full_name: fullName, email, phone })
@@ -324,19 +286,10 @@ export default function UserManagementPage() {
 
       toast.success(`"${colaborador.name}" removido da equipe`);
       fetchUsers();
-    } catch (err) {
-      console.warn('Erro Supabase, excluindo usuário mock local:', err);
-      const localProfiles = localStorage.getItem('mock-profiles');
-      if (localProfiles) {
-        const filtered = JSON.parse(localProfiles).filter((p: any) => p.id !== colaborador.id);
-        localStorage.setItem('mock-profiles', JSON.stringify(filtered));
-        setUsers(filtered);
-        toast.warning('Remoção aplicada apenas neste dispositivo', {
-          description: 'A pessoa continua com acesso até a próxima sincronização.',
-        });
-      } else {
-        toast.error('Não foi possível remover o usuário');
-      }
+    } catch (err: any) {
+      toast.error('Não foi possível remover o usuário', {
+        description: err.message || 'Erro inesperado.',
+      });
     }
   };
 

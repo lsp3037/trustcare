@@ -166,19 +166,15 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const { data: invData } = await supabase
+        const { data: invData, error } = await supabase
           .from('products_inventory')
           .select('*')
           .order('name');
-        if (invData && invData.length > 0) {
-          setInventory(invData);
-        } else {
-          const localInv = localStorage.getItem('mock-inventory');
-          if (localInv) setInventory(JSON.parse(localInv));
-        }
-      } catch {
-        const localInv = localStorage.getItem('mock-inventory');
-        if (localInv) setInventory(JSON.parse(localInv));
+        if (error) throw error;
+        setInventory(invData || []);
+      } catch (err) {
+        console.warn('Erro ao carregar inventário:', err);
+        setInventory([]);
       }
     };
 
@@ -195,33 +191,24 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       }
     };
 
-    const loadLocalTechnicians = () => {
-      const localProfiles = localStorage.getItem('mock-profiles');
-      if (localProfiles) {
-        const parsed = JSON.parse(localProfiles);
-        const techs = parsed.filter((p: any) => p.role === 'tecnico' || p.role === 'technician');
-        setTechnicians(techs.map((t: any) => ({ id: t.id, name: t.name })));
-      } else {
-        setTechnicians([]);
-      }
-    };
-
     const fetchTechnicians = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
           .eq('role', 'technician');
+        if (error) throw error;
         if (data && data.length > 0) {
           setTechnicians(data.map(t => ({
             id: t.id,
             name: t.full_name || t.email?.split('@')[0] || 'Técnico',
           })));
         } else {
-          loadLocalTechnicians();
+          setTechnicians([]);
         }
-      } catch {
-        loadLocalTechnicians();
+      } catch (err) {
+        console.warn('Erro ao carregar técnicos:', err);
+        setTechnicians([]);
       }
     };
 
@@ -238,23 +225,6 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       return;
     }
 
-    const localEqs = localStorage.getItem('mock-equipments');
-    if (localEqs) {
-      const localFiltered = JSON.parse(localEqs).filter((e: any) => e.client_id === clientId);
-      setEquipments(localFiltered);
-      if (localFiltered.length > 0) {
-        const hasQueryEq = queryEquipmentId && localFiltered.some((e: any) => e.id === queryEquipmentId);
-        setEquipmentId(hasQueryEq ? queryEquipmentId : (queryEquipmentName ? 'manual' : localFiltered[0].id));
-        setIsManualEquipment(hasQueryEq ? false : !!queryEquipmentName);
-      } else {
-        setEquipmentId('manual');
-        setIsManualEquipment(true);
-      }
-    } else {
-      setEquipmentId('manual');
-      setIsManualEquipment(true);
-    }
-
     const fetchOnlineEquipments = async () => {
       try {
         const { data: eqsData, error } = await supabase
@@ -266,9 +236,16 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
           const hasQueryEq = queryEquipmentId && eqsData.some((e: any) => e.id === queryEquipmentId);
           setEquipmentId(hasQueryEq ? queryEquipmentId : (queryEquipmentName ? 'manual' : eqsData[0].id));
           setIsManualEquipment(hasQueryEq ? false : !!queryEquipmentName);
+        } else {
+          setEquipments([]);
+          setEquipmentId('manual');
+          setIsManualEquipment(true);
         }
       } catch (err) {
         console.warn('Erro ao carregar equipamentos do Supabase:', err);
+        setEquipments([]);
+        setEquipmentId('manual');
+        setIsManualEquipment(true);
       }
     };
     fetchOnlineEquipments();

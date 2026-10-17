@@ -143,7 +143,10 @@ export default function CompanySettingsPage() {
 
     try {
       let finalLogoUrl = logoUrl;
-      const targetCompanyId = company.id || 'mock-company-id';
+      if (!company.id) {
+        throw new Error('Empresa não carregada. Atualize a página e tente novamente.');
+      }
+      const targetCompanyId = company.id;
 
       // 1. Upload logo to Supabase Storage if a new file is staged
       if (file) {
@@ -159,22 +162,13 @@ export default function CompanySettingsPage() {
         whatsapp: whatsapp.trim()
       };
 
-      // 2. Save configurations (Supabase or Local Fallback)
-      if (company.id && company.id !== 'mock-company-id' && company.id.length === 36) {
-        const { error: updateErr } = await supabase
-          .from('companies')
-          .update(updateData)
-          .eq('id', company.id);
+      // 2. Save configurations in Supabase
+      const { error: updateErr } = await supabase
+        .from('companies')
+        .update(updateData)
+        .eq('id', company.id);
 
-        if (updateErr) throw updateErr;
-      } else {
-        // Mock fallback sync
-        const localCompany = {
-          ...company,
-          ...updateData
-        };
-        localStorage.setItem('mock-company-settings', JSON.stringify(localCompany));
-      }
+      if (updateErr) throw updateErr;
 
       // 3. Refresh Context state
       await refreshCompany();

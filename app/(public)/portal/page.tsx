@@ -42,28 +42,14 @@ export default function PortalLoginPage() {
         .maybeSingle();
 
       if (error) {
-        console.warn('Erro ao consultar Supabase, tentando local:', error.message);
+        throw new Error('Erro ao validar dados de acesso. Tente novamente.');
       }
 
-      let authenticatedClient = client;
-
-      // 2. Fallback local / offline
-      if (!authenticatedClient) {
-        const localClientsStr = localStorage.getItem('mock-clients') || '[]';
-        const localClients = JSON.parse(localClientsStr);
-        const matchedLocal = localClients.find(
-          (c: any) =>
-            c.document === clientDocument &&
-            c.email?.trim().toLowerCase() === email.trim().toLowerCase()
-        );
-        if (matchedLocal) {
-          authenticatedClient = matchedLocal;
-        }
-      }
-
-      if (!authenticatedClient) {
+      if (!client) {
         throw new Error('Nenhum cliente encontrado com este documento e e-mail.');
       }
+
+      const authenticatedClient = client;
 
       // 3. Salva sessão do portal (Cookie + LocalStorage)
       window.document.cookie = `portal-session-mock=true; path=/; max-age=86400`;
