@@ -80,6 +80,7 @@ export async function POST(req: Request) {
         )
       `)
       .eq('id', verification.os_id)
+      .is('deleted_at', null)
       .single();
 
     if (orderError || !order) {

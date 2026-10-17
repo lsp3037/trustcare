@@ -39,6 +39,7 @@ export async function GET(req: Request) {
       .from('service_orders')
       .select('id, codigo_os, equipment_details, reported_problem, status, priority, total_value, created_at')
       .eq('company_id', companyId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {

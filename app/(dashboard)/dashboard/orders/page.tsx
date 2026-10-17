@@ -265,88 +265,22 @@ function OrdersContent() {
     try {
       setUpdatingBulk(true);
       
-      // 1. Busca peças anteriores para restaurar estoque online
-      const { data: oldItems } = await supabase
-        .from('service_order_items')
-        .select('*')
-        .in('service_order_id', selectedOrderIds);
-
-      if (oldItems && oldItems.length > 0) {
-        for (const oldItem of oldItems) {
-          const { data: prod } = await supabase
-            .from('products_inventory')
-            .select('quantity')
-            .eq('id', oldItem.product_id)
-            .single();
-
-          if (prod) {
-            await supabase
-              .from('products_inventory')
-              .update({ quantity: prod.quantity + oldItem.quantity })
-              .eq('id', oldItem.product_id);
-          }
-        }
-      }
-
-      // 2. Deleta os itens das ordens de serviço
-      await supabase
-        .from('service_order_items')
-        .delete()
-        .in('service_order_id', selectedOrderIds);
-
-      // 3. Deleta as ordens de serviço
-      const { error } = await supabase
-        .from('service_orders')
-        .delete()
-        .in('id', selectedOrderIds);
+      const { error } = await supabase.rpc('delete_service_orders_batch', {
+        order_ids: selectedOrderIds,
+      });
 
       if (error) throw error;
 
       setOrders(prev => prev.filter(o => !selectedOrderIds.includes(o.id)));
       toast.success(
-        count === 1 ? 'Ordem de serviço excluída' : `${count} ordens de serviço excluídas`,
+        count === 1 ? 'Ordem de serviço arquivada' : `${count} ordens de serviço arquivadas`,
         { description: 'As peças alocadas voltaram para o estoque.' },
       );
-    } catch (err) {
-      console.warn('Erro ao excluir online, aplicando localmente:', err);
-      
-      // Fallback local
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsedOrders = JSON.parse(localOrders);
-
-        // A. Carrega itens e estoque locais atuais
-        const localItems = localStorage.getItem('mock-order-items') || '[]';
-        const localInv = localStorage.getItem('mock-inventory') || '[]';
-        
-        let parsedItems = JSON.parse(localItems);
-        let parsedInv = JSON.parse(localInv);
-
-        // B. Filtra itens pertencentes às OSs sendo excluídas para restaurar estoque
-        const itemsToRestore = parsedItems.filter((item: any) => selectedOrderIds.includes(item.service_order_id));
-        itemsToRestore.forEach((oldItem: any) => {
-          parsedInv = parsedInv.map((p: any) => {
-            if (p.id === oldItem.product_id) {
-              return { ...p, quantity: p.quantity + oldItem.quantity };
-            }
-            return p;
-          });
-        });
-
-        // C. Limpa itens e OSs
-        parsedItems = parsedItems.filter((item: any) => !selectedOrderIds.includes(item.service_order_id));
-        const updatedOrders = parsedOrders.filter((o: any) => !selectedOrderIds.includes(o.id));
-
-        localStorage.setItem('mock-orders', JSON.stringify(updatedOrders));
-        localStorage.setItem('mock-order-items', JSON.stringify(parsedItems));
-        localStorage.setItem('mock-inventory', JSON.stringify(parsedInv));
-
-        setOrders(updatedOrders);
-        toast.warning('Exclusão aplicada apenas neste dispositivo', {
-          description:
-            'Sem conexão com o servidor. As OS continuam no servidor até a próxima sincronização.',
-        });
-      }
+    } catch (err: any) {
+      console.warn('Erro ao excluir online:', err);
+      toast.error('Não foi possível excluir a ordem de serviço', {
+        description: err?.message || 'Erro ao processar exclusão no servidor.',
+      });
     } finally {
       setSelectedOrderIds([]);
       setUpdatingBulk(false);

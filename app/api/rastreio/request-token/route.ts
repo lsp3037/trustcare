@@ -57,6 +57,7 @@ export async function POST(req: Request) {
     let query = supabaseAdmin
       .from('service_orders')
       .select('id, codigo_os, company_id, clients(name, email)')
+      .is('deleted_at', null)
       .limit(2);
 
     if (isFullUuid) {

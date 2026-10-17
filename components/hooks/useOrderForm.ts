@@ -514,35 +514,6 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     setSelectedServices(selectedServices.filter((s) => s.service_id !== serviceId));
   };
 
-  const insertOrderChildren = async (osId: string, osCompanyId: string) => {
-    if (selectedProducts.length > 0) {
-      const { error } = await supabase.from('service_order_items').insert(
-        selectedProducts.map((item) => ({
-          company_id: osCompanyId,
-          service_order_id: osId,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-        })),
-      );
-      if (error) return error;
-    }
-    if (selectedServices.length > 0) {
-      const { error } = await supabase.from('order_services').insert(
-        selectedServices.map((item) => ({
-          company_id: osCompanyId,
-          os_id: osId,
-          service_id: item.service_id,
-          quantidade: item.quantity,
-          preco_unitario: item.unit_price,
-          subtotal: item.quantity * item.unit_price,
-        })),
-      );
-      if (error) return error;
-    }
-    return null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -565,18 +536,21 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Sua sessão expirou. Entre novamente para abrir a OS.');
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single();
-      if (!profile?.company_id) throw new Error('Seu usuário não está vinculado a uma empresa.');
-      const resolvedCompanyId: string = profile.company_id;
+      const itemsPayload = selectedProducts.map((item) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+      }));
 
-      const osData = {
-        company_id: resolvedCompanyId,
+      const servicesPayload = selectedServices.map((item) => ({
+        service_id: item.service_id,
+        quantidade: item.quantity,
+        preco_unitario: item.unit_price,
+      }));
+
+      const orderPayload = {
         client_id: clientId,
-        equipment_id: equipmentId === 'manual' ? null : equipmentId,
+        equipment_id: equipmentId === 'manual' ? null : (equipmentId || null),
         equipment_details: equipmentDetails,
         reported_problem: reportedProblem,
         status,
@@ -585,32 +559,25 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
         delivery_prediction: deliveryPrediction || null,
         service_value: parseFloat(serviceValue) || 0,
         discount: parseFloat(discount) || 0,
-        total_value: parseFloat(totalValue) || 0,
       };
 
-      const { data: insertedOs, error } = await supabase
-        .from('service_orders')
-        .insert(osData)
-        .select()
-        .single();
+      const { data: savedOrder, error } = await supabase.rpc('save_order', {
+        order_data: orderPayload,
+        items_data: itemsPayload,
+        services_data: servicesPayload,
+      });
 
-      // Sem fallback local: um erro aqui é real (RLS, sessão, validação) e
-      // precisa aparecer — antes a OS era "criada" só no localStorage.
-      if (error || !insertedOs) throw new Error(describeDbError(error, 'Não foi possível abrir a OS.'));
-
-      // Itens e serviços em lote. Se falharem, a OS é desfeita: o ON DELETE
-      // CASCADE remove o que entrou e o trigger de estoque devolve as peças.
-      const itemsError = await insertOrderChildren(insertedOs.id, resolvedCompanyId);
-      if (itemsError) {
-        await supabase.from('service_orders').delete().eq('id', insertedOs.id);
-        throw new Error(describeDbError(itemsError, 'Não foi possível salvar as peças/serviços da OS.'));
+      if (error || !savedOrder) {
+        throw new Error(describeDbError(error, 'Não foi possível abrir a OS.'));
       }
+
+      const insertedId = (savedOrder as any).id;
 
       // A API busca cliente, e-mail e equipamento no banco — só envia id e status.
       fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Abertura', order_id: insertedOs.id }),
+        body: JSON.stringify({ status: 'Abertura', order_id: insertedId }),
       }).catch(() => {});
 
       setSuccess(true);

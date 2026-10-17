@@ -380,53 +380,49 @@ export function OrderDetailsClient({
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      const updatedOsData = {
+      const itemsPayload = selectedProducts.map((p) => ({
+        product_id: p.product_id,
+        quantity: p.quantity,
+        unit_price: p.unit_price,
+      }));
+
+      const servicesPayload = selectedServices.map((s) => ({
+        service_id: s.service_id,
+        quantidade: s.quantity,
+        preco_unitario: s.unit_price,
+      }));
+
+      const orderPayload = {
+        id,
+        client_id: order?.client_id || client?.id,
+        equipment_id: order?.equipment_id || null,
+        equipment_details: order?.equipment_details || '',
+        reported_problem: reportedProblem,
+        technical_report: technicalReport || null,
         status,
         priority,
         technician_id: technicianId || null,
-        technical_report: technicalReport || null,
-        reported_problem: reportedProblem,
         delivery_prediction: deliveryPrediction || null,
         service_value: parseFloat(serviceValue) || 0,
         discount: parseFloat(discount) || 0,
-        total_value: parseFloat(totalValue) || 0,
         pago,
         payment_status: pago ? 'pago' : 'pendente',
         payment_method: pago ? paymentMethod : null,
         payment_date: pago ? new Date(paymentDate).toISOString() : null,
-        media: mediaFiles.map(m => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type }))
+        media: mediaFiles.map((m) => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type })),
+        entry_checklist: entryChecklist,
+        exit_checklist: exitChecklist,
       };
-      
-      const { data: updatedOs, error: updateErr } = await supabase.from('service_orders').update(updatedOsData).eq('id', id).select();
-      if (updateErr) throw updateErr;
-      if (!updatedOs || updatedOs.length === 0) {
-        throw new Error('As alterações não foram salvas. Sua conta pode estar bloqueada por pendência financeira ou atraso na assinatura. Verifique o status do seu plano.');
-      }
 
-      await supabase.from('service_order_items').delete().eq('service_order_id', id);
+      const { data: updatedOs, error: rpcErr } = await supabase.rpc('save_order', {
+        order_data: orderPayload,
+        items_data: itemsPayload,
+        services_data: servicesPayload,
+      });
 
-      if (status !== 'Cancelado') {
-        for (const item of selectedProducts) {
-          await supabase.from('service_order_items').insert({
-            company_id: order.company_id,
-            service_order_id: id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-          });
-        }
-      }
-
-      await supabase.from('order_services').delete().eq('os_id', id);
-      for (const item of selectedServices) {
-        await supabase.from('order_services').insert({
-          company_id: order.company_id,
-          os_id: id,
-          service_id: item.service_id,
-          quantidade: item.quantity,
-          preco_unitario: item.unit_price,
-          subtotal: item.quantity * item.unit_price
-        });
+      if (rpcErr) throw rpcErr;
+      if (!updatedOs) {
+        throw new Error('As alterações não foram salvas. Verifique as permissões da sua conta.');
       }
 
       const statusChanged = order && order.status !== status;
@@ -457,7 +453,7 @@ export function OrderDetailsClient({
     const confirmed = await confirm({
       title: `Excluir a OS #${order?.codigo_os || id.slice(0, 8)}?`,
       description:
-        'O laudo técnico, o checklist e os anexos são perdidos. As peças alocadas não voltam automaticamente ao estoque. Esta ação não pode ser desfeita.',
+        'A ordem de serviço será arquivada e as peças alocadas retornarão ao estoque. Ordens finalizadas ou pagas não podem ser excluídas.',
       confirmLabel: 'Excluir OS',
       destructive: true,
     });
@@ -466,7 +462,9 @@ export function OrderDetailsClient({
     setSaving(true);
     setErrorMsg('');
     try {
-      const { error: deleteErr } = await supabase.from('service_orders').delete().eq('id', id);
+      const { error: deleteErr } = await supabase.rpc('delete_service_orders_batch', {
+        order_ids: [id],
+      });
       if (deleteErr) throw deleteErr;
       setSuccessMsg('Ordem de Serviço excluída com sucesso!');
       router.refresh();
