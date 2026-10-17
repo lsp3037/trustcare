@@ -75,7 +75,7 @@ export function useDashboardData(dateRange: DateRange | null) {
 
       ordersList.forEach(order => {
         const dateToUse = order.payment_date || order.created_at;
-        if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado' || order.status === 'Entregue')) {
+        if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
           const orderDate = dateToUse.split('T')[0];
           const dayObj = days.find(d => d.rawDate === orderDate);
           if (dayObj) {
@@ -104,7 +104,7 @@ export function useDashboardData(dateRange: DateRange | null) {
 
       ordersList.forEach(order => {
         const dateToUse = order.payment_date || order.created_at;
-        if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado' || order.status === 'Entregue')) {
+        if (dateToUse && (order.status === 'Pronto para Retirada' || order.status === 'Finalizado')) {
           const orderDate = new Date(dateToUse);
           const weekObj = weeks.find(w => orderDate >= w.start && orderDate <= w.end);
           if (weekObj) {
@@ -151,7 +151,7 @@ export function useDashboardData(dateRange: DateRange | null) {
       const dateToUse = o.payment_date || o.created_at;
       if (!dateToUse) return false;
       const orderDate = new Date(dateToUse);
-      return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && orderDate >= from && orderDate <= to;
+      return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado') && orderDate >= from && orderDate <= to;
     });
 
     const billingTotal = paidOrders.reduce((sum: number, o: any) => sum + Number(o.total_value || 0), 0);
@@ -164,8 +164,8 @@ export function useDashboardData(dateRange: DateRange | null) {
     }, {} as Record<string, number>);
     setPaymentDistribution(dist);
     
-    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Entregue', 'Cancelado'].includes(o.status)).length;
-    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado', 'Entregue'].includes(o.status)).length;
+    const open = filteredByDate.filter((o: any) => !['Finalizado', 'Cancelado'].includes(o.status)).length;
+    const completed = filteredByDate.filter((o: any) => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
 
     const localClients = localStorage.getItem('mock-clients');
     const parsedClients = localClients ? JSON.parse(localClients) : [];
@@ -251,7 +251,7 @@ export function useDashboardData(dateRange: DateRange | null) {
           const dateToUse = o.payment_date || o.created_at;
           if (!dateToUse) return false;
           const pDate = new Date(dateToUse);
-          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado' || o.status === 'Entregue') && pDate >= fromDate && pDate <= toDate;
+          return (o.status === 'Pronto para Retirada' || o.status === 'Finalizado') && pDate >= fromDate && pDate <= toDate;
         });
 
         const billingTotal = paidOrders.reduce((sum, o) => sum + Number(o.total_value || 0), 0);
@@ -264,8 +264,8 @@ export function useDashboardData(dateRange: DateRange | null) {
         }, {} as Record<string, number>);
         setPaymentDistribution(dist);
         
-        const open = filteredByDate.filter(o => !['Finalizado', 'Entregue', 'Cancelado'].includes(o.status)).length;
-        const completed = filteredByDate.filter(o => ['Pronto para Retirada', 'Finalizado', 'Entregue'].includes(o.status)).length;
+        const open = filteredByDate.filter(o => !['Finalizado', 'Cancelado'].includes(o.status)).length;
+        const completed = filteredByDate.filter(o => ['Pronto para Retirada', 'Finalizado'].includes(o.status)).length;
 
         const { data: allClients } = await supabase.from('clients').select('type');
         const clientsCount = allClients?.length || 0;
@@ -333,29 +333,21 @@ export function useDashboardData(dateRange: DateRange | null) {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('service_orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+      const { data, error } = await supabase.rpc('change_order_status', {
+        order_id: orderId,
+        new_status: newStatus,
+      });
 
       if (error) throw error;
 
       toast.success(`OS movida para "${newStatus}"`);
       if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
-    } catch (err) {
-      console.warn('Erro ao atualizar online, aplicando localmente:', err);
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsed = JSON.parse(localOrders);
-        const updated = parsed.map((o: any) => (o.id === orderId ? { ...o, status: newStatus } : o));
-        localStorage.setItem('mock-orders', JSON.stringify(updated));
-        toast.warning(`OS movida para "${newStatus}" apenas neste dispositivo`, {
-          description: 'Sem conexão com o servidor. A alteração não foi sincronizada.',
-        });
-        if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
-      } else {
-        toast.error('Não foi possível atualizar o status da OS');
-      }
+    } catch (err: any) {
+      console.warn('Erro ao atualizar status da OS:', err);
+      toast.error('Transição não permitida', {
+        description: err?.message || 'Não foi possível mover a OS para esta coluna.',
+      });
+      if (dateRange) fetchDashboardData(dateRange.from, dateRange.to);
     }
   };
 

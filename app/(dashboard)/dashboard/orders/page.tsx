@@ -209,38 +209,24 @@ function OrdersContent() {
     try {
       setUpdatingBulk(true);
 
-      const { error } = await supabase
-        .from('service_orders')
-        .update({ status: newStatus })
-        .in('id', selectedOrderIds);
-
-      if (error) throw error;
+      for (const orderId of selectedOrderIds) {
+        const { error } = await supabase.rpc('change_order_status', {
+          order_id: orderId,
+          new_status: newStatus,
+        });
+        if (error) throw error;
+      }
 
       setOrders(prev => prev.map(o => selectedOrderIds.includes(o.id) ? { ...o, status: newStatus } : o));
       toast.success(
         `${count} ${count === 1 ? 'OS movida' : 'OS movidas'} para "${newStatus}"`,
       );
-    } catch (err) {
-      console.warn('Erro ao atualizar online, aplicando localmente:', err);
-      const localOrders = localStorage.getItem('mock-orders');
-      if (localOrders) {
-        const parsed = JSON.parse(localOrders);
-        const updated = parsed.map((o: any) => {
-          if (selectedOrderIds.includes(o.id)) {
-            return { ...o, status: newStatus };
-          }
-          return o;
-        });
-        localStorage.setItem('mock-orders', JSON.stringify(updated));
-        setOrders(updated);
-        toast.warning(
-          `${count} ${count === 1 ? 'OS movida' : 'OS movidas'} para "${newStatus}" apenas neste dispositivo`,
-          {
-            description:
-              'Sem conexão com o servidor. A alteração está salva localmente e não foi sincronizada.',
-          },
-        );
-      }
+    } catch (err: any) {
+      console.warn('Erro ao atualizar status:', err);
+      toast.error('Transição não permitida', {
+        description: err?.message || 'Verifique se a transição é permitida para as OSs selecionadas.',
+      });
+      fetchOrdersAndClients();
     } finally {
       setSelectedOrderIds([]);
       setUpdatingBulk(false);

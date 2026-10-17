@@ -81,7 +81,7 @@ interface Expense {
   end_date?: string | null;
 }
 
-const PAID_STATUSES = ['Finalizado', 'Pronto para Retirada', 'Entregue'];
+const PAID_STATUSES = ['Finalizado', 'Pronto para Retirada'];
 
 // ─── Chart Helpers ────────────────────────────────────────────────────────────
 

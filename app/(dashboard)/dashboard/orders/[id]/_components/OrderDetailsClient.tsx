@@ -64,7 +64,7 @@ export function OrderDetailsClient({
   const [technicians, setTechnicians] = useState<any[]>(initialTechnicians);
   const [availableServices, setAvailableServices] = useState<any[]>(initialAvailableServices);
 
-  const [status, setStatus] = useState(order?.status || 'Novo');
+  const [status, setStatus] = useState(order?.status || 'Em Análise');
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   
@@ -478,7 +478,7 @@ export function OrderDetailsClient({
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    if (newStatus === 'Finalizado' || newStatus === 'Entregue') {
+    if (newStatus === 'Finalizado') {
       setPendingStatusUpdate(newStatus);
       setIsPaymentModalOpen(true);
       return;
@@ -486,10 +486,13 @@ export function OrderDetailsClient({
     setStatus(newStatus);
     setUpdatingStatus(true);
     try {
-      const { data: updatedSt, error: updateErr } = await supabase.from('service_orders').update({ status: newStatus }).eq('id', id).select();
+      const { data: updatedSt, error: updateErr } = await supabase.rpc('change_order_status', {
+        order_id: id,
+        new_status: newStatus,
+      });
       if (updateErr) throw updateErr;
-      if (!updatedSt || updatedSt.length === 0) {
-        throw new Error('Status não alterado. Sua conta pode estar bloqueada por pendência financeira. Verifique o status da sua assinatura.');
+      if (!updatedSt) {
+        throw new Error('Status não alterado. Verifique as permissões da sua conta.');
       }
       setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
       if (newStatus === 'Cancelado') {
@@ -511,16 +514,19 @@ export function OrderDetailsClient({
     setStatus(pendingStatusUpdate);
     setUpdatingStatus(true);
     try {
-      const { data: updatedPay, error: updateErr } = await supabase.from('service_orders').update({
-        status: pendingStatusUpdate,
-        payment_date: new Date(paymentDate).toISOString(),
-        payment_method: paymentMethod,
-        pago: true,
-        payment_status: 'pago'
-      }).eq('id', id).select();
+      const { data: updatedPay, error: updateErr } = await supabase.rpc('change_order_status', {
+        order_id: id,
+        new_status: pendingStatusUpdate,
+        payment_data: {
+          pago: true,
+          payment_status: 'pago',
+          payment_method: paymentMethod,
+          payment_date: paymentDate,
+        },
+      });
       if (updateErr) throw updateErr;
-      if (!updatedPay || updatedPay.length === 0) {
-        throw new Error('Atualização não concluída. Sua conta pode estar bloqueada por pendência financeira. Verifique o status da sua assinatura.');
+      if (!updatedPay) {
+        throw new Error('Atualização não concluída. Verifique as permissões da sua conta.');
       }
       setPago(true);
       setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod, pago: true } : null);
@@ -655,7 +661,7 @@ export function OrderDetailsClient({
                 />
               </div>
 
-              {(status === 'Finalizado' || status === 'Entregue' || status === 'Pronto para Retirada') && (
+              {(status === 'Finalizado' || status === 'Pronto para Retirada') && (
                 <div className="space-y-4 p-4 bg-surface-sunken border border-border">
                   <div className="flex items-center gap-3">
                     <input
