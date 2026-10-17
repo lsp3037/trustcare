@@ -19,6 +19,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete('x-tenant-subdomain');
   if (subdomain) {
     requestHeaders.set('x-tenant-subdomain', subdomain);
   }
