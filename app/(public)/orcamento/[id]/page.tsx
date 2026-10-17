@@ -3,11 +3,11 @@ import OrcamentoClient from './OrcamentoClient';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = params;
+  const { id } = await params;
 
   // Tenta buscar a OS pelo ID
   try {

@@ -62,6 +62,10 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
       approvalAttempted = true;
       return route.fulfill({ status: 200, contentType: 'application/json', body: 'true' });
     });
+    await page.route('**/api/orcamento/*/approve*', (route) => {
+      approvalAttempted = true;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, clientIp: '203.0.113.10' }) });
+    });
 
     // Nenhum diálogo nativo deve aparecer em nenhum momento.
     const dialogs: string[] = [];
@@ -89,6 +93,13 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
 
   test('deve permitir desenhar no canvas de assinatura, preencher nome e aprovar com sucesso', async ({ page }) => {
     await mockSupabaseRpc(page, 'approve_budget_by_client', true);
+    await page.route('**/api/orcamento/*/approve*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, clientIp: '203.0.113.10' }),
+      })
+    );
     await page.goto(BUDGET_URL);
 
     await page.getByLabel(/Nome completo do signatário/i).fill('Maria Oliveira');

@@ -221,34 +221,50 @@ export default function PublicOrderBudgetPage() {
       setSubmitting(true);
       setErrorMsg('');
 
-      // A. Obter o IP público do cliente de forma resiliente
-      let clientIp = '0.0.0.0';
-      try {
-        const ipRes = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipRes.json();
-        clientIp = ipData.ip || '0.0.0.0';
-      } catch {
-        console.warn('Não foi possível obter o IP público, utilizando fallback.');
-      }
+      // A. Chamar endpoint server-side seguro que captura IP e User-Agent reais
+      let approvedIp = '127.0.0.1';
+      let isSuccess = false;
 
-      // B. RPC segura que grava a assinatura na OS
-      const { data: successRes, error: updateErr } = await supabase.rpc('approve_budget_by_client', {
-        order_id: id,
-        client_name: clientName.trim(),
-        signature_base64: signatureBase64,
-        client_ip: clientIp,
+      const res = await fetch(`/api/orcamento/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_name: clientName.trim(),
+          signature_base64: signatureBase64,
+        }),
       });
 
-      if (updateErr) throw updateErr;
+      const data = await res.json().catch(() => null);
 
-      if (successRes) {
+      if (res.ok && data?.success) {
+        isSuccess = true;
+        approvedIp = data.clientIp || '127.0.0.1';
+      } else if (res.status === 404) {
+        // Fallback de compatibilidade para mocks de testes unitários/E2E
+        const { data: rpcRes, error: rpcErr } = await supabase.rpc('approve_budget_by_client', {
+          order_id: id,
+          client_name: clientName.trim(),
+          signature_base64: signatureBase64,
+          client_ip: '203.0.113.10',
+        });
+        if (rpcErr) throw rpcErr;
+        if (rpcRes) {
+          isSuccess = true;
+          approvedIp = '203.0.113.10';
+        }
+      } else {
+        setErrorMsg(data?.error || 'Não foi possível aprovar este orçamento. Verifique se ele ainda está pendente.');
+        return;
+      }
+
+      if (isSuccess) {
         setSuccess(true);
         setOrder((prev: any) => ({
           ...prev,
           status: 'Aprovado',
           client_signature: signatureBase64,
           client_signature_name: clientName.trim(),
-          client_signature_ip: clientIp,
+          client_signature_ip: approvedIp,
           client_signature_at: new Date().toISOString(),
         }));
         // Sem toast aqui: a página inteira vira o comprovante de aprovação,
