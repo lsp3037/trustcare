@@ -146,21 +146,7 @@ export default function OnboardingModal() {
         let initialPhone = '';
         let initialWhatsapp = '';
 
-        // 1. Tenta obter do local storage (offline fallback)
-        const mockSession = localStorage.getItem('os-session');
-        if (mockSession) {
-          try {
-            const parsed = JSON.parse(mockSession);
-            initialName = parsed.company_name || '';
-            initialEmail = parsed.email || '';
-            initialPhone = parsed.phone || '';
-            initialWhatsapp = parsed.whatsapp || '';
-          } catch (e) {
-            console.error(e);
-          }
-        }
-
-        // 2. Tenta obter do Supabase Auth
+        // Obtém dados do usuário autenticado no Supabase
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyPortalToken } from '@/lib/utils/portalSession';
+import { isPlatformAdmin } from '@/lib/auth/platformAdmin';
 
 /**
  * Proxy Router — Trust Care (Next.js 16)
@@ -61,11 +62,10 @@ export async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   
-  // Verification flags
-  const isDev = process.env.NODE_ENV === 'development';
-  const isMockAuthenticated = request.cookies.get('os-session-mock')?.value === 'true';
-  // Permitir mock apenas em ambiente local de desenvolvimento
-  const isAdminAuthenticated = !!user || (isDev && isMockAuthenticated);
+  // Authenticate admin/technician session (F-29: estritamente Supabase Auth; mock apenas se PLAYWRIGHT_TEST=true)
+  const isTest = process.env.NODE_ENV === 'test' || process.env.PLAYWRIGHT_TEST === 'true';
+  const isMockAuthenticated = isTest && request.cookies.get('os-session-mock')?.value === 'true';
+  const isAdminAuthenticated = !!user || isMockAuthenticated;
 
   const portalSessionToken = request.cookies.get('portal-session')?.value;
   const isPortalAuthenticated = !!verifyPortalToken(portalSessionToken);
@@ -78,12 +78,11 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   };
 
-  // Backoffice (God Mode) protection
+  // Backoffice (God Mode) protection via role platform_admin (F-32)
   if (pathname.startsWith('/backoffice')) {
-    const godModeEmail = 'lsp3037@gmail.com';
-    if (!user || user.email !== godModeEmail) {
+    if (!user || !isPlatformAdmin(user)) {
       const url = request.nextUrl.clone();
-      url.pathname = '/login';
+      url.pathname = '/dashboard';
       return redirectWithCookies(url);
     }
   }

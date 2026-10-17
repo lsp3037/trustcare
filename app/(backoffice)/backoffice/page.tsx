@@ -1,10 +1,36 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ShieldAlert, Users, CreditCard, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { createServerClient } from '@supabase/ssr';
+import { isPlatformAdmin } from '@/lib/auth/platformAdmin';
 
 export const revalidate = 0; // Disable cache for god mode
 
 export default async function BackofficePage() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {},
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !isPlatformAdmin(user)) {
+    redirect('/dashboard');
+  }
+
   // Fetch all companies using Service Role Key (bypassing RLS)
   const { data: companies, error } = await supabaseAdmin
     .from('companies')

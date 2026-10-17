@@ -77,19 +77,17 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.warn('Erro ao carregar dados da empresa do Supabase:', err);
-        // Inicializa com dados padrão
-        const defaultCompany = {
-          name: 'Trust Care T.I.',
-          phone: '(66) 99999-9999',
-          email: 'contato@trustcare.com.br',
-          logo_url: '',
-          whatsapp: '',
-          subscription_plan: 'starter' as SubscriptionPlan,
-          subscription_status: 'trialing' as SubscriptionStatus
-        };
-        localStorage.setItem('mock-company-settings', JSON.stringify(defaultCompany));
-        setCompany(defaultCompany);
-      }
+      // Inicializa com dados padrão
+      const defaultCompany = {
+        name: 'Trust Care T.I.',
+        phone: '(66) 99999-9999',
+        email: 'contato@trustcare.com.br',
+        logo_url: '',
+        whatsapp: '',
+        subscription_plan: 'starter' as SubscriptionPlan,
+        subscription_status: 'trialing' as SubscriptionStatus,
+      };
+      setCompany(defaultCompany);
     } finally {
       setLoading(false);
     }
