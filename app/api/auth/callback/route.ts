@@ -1,22 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-
-/**
- * Aceita só caminhos internos. `next` é concatenado ao origin, então valores
- * como `@evil.com` ou `.evil.com` trocariam o host do redirecionamento.
- */
-function safeNextPath(raw: string | null): string {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
-    return '/dashboard';
-  }
-  return raw;
-}
+import { safeNextPath } from '@/lib/utils/safeRedirect';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = safeNextPath(searchParams.get('next'));
+  const next = safeNextPath(searchParams.get('next'), '/dashboard');
 
   if (code) {
     const cookieStore = await cookies();
@@ -45,14 +35,15 @@ export async function GET(request: Request) {
     if (!error) {
       // If we are coming from a reset password email, redirect to update password page
       if (next === '/update-password' || request.url.includes('type=recovery')) {
-        return NextResponse.redirect(`${origin}/update-password`);
+        return NextResponse.redirect(new URL('/update-password', origin));
       }
-      
-      return NextResponse.redirect(`${origin}${next}`);
+
+      // Redirecionamento seguro com URL resolvida estritamente sob o origin atual
+      return NextResponse.redirect(new URL(next, origin));
     }
     console.error('Error exchanging code for session:', error.message);
   }
 
   // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=Invalid_Token`);
+  return NextResponse.redirect(new URL('/login?error=Invalid_Token', origin));
 }

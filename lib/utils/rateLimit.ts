@@ -1,9 +1,7 @@
 /**
- * Verifica o rate limit para uma rota pública.
- * Retorna true se a requisição for permitida, false se o IP estiver bloqueado.
- *
- * Falha de forma silenciosa (fail-open) se a chamada de rede falhar,
- * para não prejudicar a UX em caso de erro de infraestrutura.
+ * Verifica o rate limit para uma rota no servidor.
+ * Retorna true se a requisição for permitida, false se o limite foi atingido
+ * ou se houve falha de verificação (fail-closed para segurança - F-33).
  */
 export async function checkRateLimit(path: string): Promise<boolean> {
   try {
@@ -14,9 +12,12 @@ export async function checkRateLimit(path: string): Promise<boolean> {
     });
 
     if (res.status === 429) return false;
-    return true;
+    if (!res.ok) return false;
+
+    const data = await res.json().catch(() => ({ allowed: false }));
+    return data.allowed === true;
   } catch {
-    // Fail-open
-    return true;
+    // Fail-closed: se a infraestrutura falhar ou rede cair, bloqueia
+    return false;
   }
 }
