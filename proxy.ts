@@ -10,8 +10,8 @@ import { isPlatformAdmin } from '@/lib/auth/platformAdmin';
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Bypassa imediatamente rotas isoladas de prévia visual para não travar na chamada do Supabase
-  if (pathname.startsWith('/design-preview') || pathname === '/preview.html') {
+  // Bypassa imediatamente a prévia visual para não travar na chamada do Supabase
+  if (pathname.startsWith('/design-preview')) {
     return NextResponse.next();
   }
 
