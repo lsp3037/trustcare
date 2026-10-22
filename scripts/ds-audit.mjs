@@ -24,11 +24,8 @@ const CHECKS = [
   {
     id: 'native-dialogs',
     label: 'Diálogos nativos (alert/confirm/prompt)',
-    pattern: /(?<![.\w])(?:alert|confirm|prompt)\s*\(|window\.(?:alert|confirm|prompt)\s*\(/g,
+    pattern: /(?<![.\w])(?:alert|prompt)\s*\(|window\.(?:alert|confirm|prompt)\s*\(/g,
     target: 0,
-    // `useConfirm()` cria uma variável local chamada `confirm`; a chamada
-    // dela não é diálogo nativo e não deve contar.
-    ignoreFile: (source) => source.includes('useConfirm()'),
   },
   {
     id: 'color-literals',
