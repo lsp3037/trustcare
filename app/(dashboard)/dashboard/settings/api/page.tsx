@@ -6,7 +6,7 @@ import { Key, Plus, Copy, Check, AlertTriangle, ShieldAlert, Clock, Trash2, Arro
 import Link from 'next/link';
 import { useUser } from '@/lib/context/UserContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button, Badge, useConfirm } from '@/components/ui';
+import { Button, Badge, useConfirm, useToast } from '@/components/ui';
 
 interface ApiKeyItem {
   id: string;
@@ -21,6 +21,7 @@ interface ApiKeyItem {
 export default function ApiKeysSettingsPage() {
   const router = useRouter();
   const confirm = useConfirm();
+  const toast = useToast();
   const { role, loading: userLoading } = useUser();
 
   const [keys, setKeys] = useState<ApiKeyItem[]>([]);
@@ -119,8 +120,9 @@ export default function ApiKeysSettingsPage() {
         throw new Error(data.error || 'Erro ao revogar chave.');
       }
       fetchKeys();
+      toast.success('Chave de API revogada com sucesso');
     } catch (err: any) {
-      alert(err.message || 'Erro ao revogar chave.');
+      toast.error('Erro ao revogar chave', { description: err.message || 'Falha na requisição' });
     }
   };
 
@@ -182,7 +184,7 @@ export default function ApiKeysSettingsPage() {
         <h2 className="text-sm font-semibold text-text flex items-center gap-2">
           <Key className="w-4 h-4 text-brand-primary" /> Como utilizar a API v1
         </h2>
-        <p className="text-xs text-text-muted leading-relaxed">
+        <p className="text-caption text-text-muted leading-relaxed">
           Envie o cabeçalho <code className="px-1.5 py-0.5 rounded bg-surface border border-glass-divider font-mono text-brand-primary">x-api-key: tc_live_...</code> em todas as requisições para os endpoints sob <code className="px-1.5 py-0.5 rounded bg-surface border border-glass-divider font-mono">/api/v1/orders</code>.
         </p>
       </div>
@@ -197,12 +199,12 @@ export default function ApiKeysSettingsPage() {
           <div className="p-12 text-center text-text-muted space-y-3">
             <ShieldAlert className="w-10 h-10 mx-auto text-text-muted/40" />
             <p className="text-sm">Nenhuma chave de API gerada até o momento.</p>
-            <p className="text-xs">Crie uma chave para permitir integrações externas com suas Ordens de Serviço.</p>
+            <p className="text-caption">Crie uma chave para permitir integrações externas com suas Ordens de Serviço.</p>
           </div>
         ) : (
           <div className="divide-y divide-glass-divider overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-surface-raised/70 text-xs text-text-muted uppercase tracking-wider">
+              <thead className="bg-surface-raised/70 text-caption text-text-muted uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-3 font-medium">Nome / Identificador</th>
                   <th className="px-6 py-3 font-medium">Prefixo</th>
@@ -219,20 +221,20 @@ export default function ApiKeysSettingsPage() {
                   return (
                     <tr key={k.id} className="hover:bg-surface-raised/50 transition-colors">
                       <td className="px-6 py-4 font-medium text-text">{k.name}</td>
-                      <td className="px-6 py-4 font-mono text-xs text-text-muted">{k.prefix}</td>
+                      <td className="px-6 py-4 font-mono text-caption text-text-muted">{k.prefix}</td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
                           {k.scopes.map((s) => (
-                            <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-surface border border-glass-divider text-text-muted">
+                            <span key={s} className="px-2 py-0.5 rounded text-caption font-mono bg-surface border border-glass-divider text-text-muted">
                               {s}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-xs text-text-muted">
+                      <td className="px-6 py-4 text-caption text-text-muted">
                         {new Date(k.created_at).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="px-6 py-4 text-xs text-text-muted">
+                      <td className="px-6 py-4 text-caption text-text-muted">
                         {k.last_used_at ? (
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-text-muted/60" />
@@ -255,7 +257,7 @@ export default function ApiKeysSettingsPage() {
                             variant="danger"
                             size="sm"
                             onClick={() => handleRevokeKey(k.id, k.name)}
-                            className="flex items-center gap-1 ml-auto text-xs"
+                            className="flex items-center gap-1 ml-auto"
                           >
                             <Trash2 className="w-3.5 h-3.5" /> Revogar
                           </Button>
@@ -277,17 +279,17 @@ export default function ApiKeysSettingsPage() {
             {!generatedKey ? (
               <form onSubmit={handleCreateKey} className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary">
+                  <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand">
                     <Key className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-text">Gerar Nova Chave de API</h3>
-                    <p className="text-xs text-text-muted">Defina uma identificação amigável e permissões de acesso.</p>
+                    <p className="text-caption text-text-muted">Defina uma identificação amigável e permissões de acesso.</p>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-text">Identificação da Chave</label>
+                  <label className="text-caption font-medium text-text">Identificação da Chave</label>
                   <input
                     type="text"
                     required
@@ -300,9 +302,9 @@ export default function ApiKeysSettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-text">Permissões (Escopos)</label>
+                  <label className="text-caption font-medium text-text">Permissões (Escopos)</label>
                   <div className="space-y-2 pt-1">
-                    <label className="flex items-center gap-2.5 text-xs text-text cursor-pointer">
+                    <label className="flex items-center gap-2.5 text-caption text-text cursor-pointer">
                       <input
                         type="checkbox"
                         checked={canRead}
@@ -311,7 +313,7 @@ export default function ApiKeysSettingsPage() {
                       />
                       <span>Consultar Ordens de Serviço (<code className="font-mono text-text-muted">orders:read</code>)</span>
                     </label>
-                    <label className="flex items-center gap-2.5 text-xs text-text cursor-pointer">
+                    <label className="flex items-center gap-2.5 text-caption text-text cursor-pointer">
                       <input
                         type="checkbox"
                         checked={canWrite}
@@ -345,11 +347,11 @@ export default function ApiKeysSettingsPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-text">Chave Gerada com Sucesso</h3>
-                    <p className="text-xs text-text-muted">Copie a chave abaixo imediatamente.</p>
+                    <p className="text-caption text-text-muted">Copie a chave abaixo imediatamente.</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-status-warning/10 border border-status-warning/20 text-status-warning text-xs space-y-1">
+                <div className="p-3.5 rounded-xl bg-status-warning/10 border border-status-warning/20 text-status-warning text-caption space-y-1">
                   <p className="font-semibold flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" /> Guarde esta chave em local seguro!
                   </p>
@@ -359,13 +361,13 @@ export default function ApiKeysSettingsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-text">Sua Chave de API</label>
+                  <label className="text-caption font-medium text-text">Sua Chave de API</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       readOnly
                       value={generatedKey}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-glass-divider text-text font-mono text-xs select-all focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-glass-divider text-text font-mono text-caption select-all focus:outline-none"
                     />
                     <Button
                       type="button"
