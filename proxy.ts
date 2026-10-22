@@ -8,6 +8,13 @@ import { isPlatformAdmin } from '@/lib/auth/platformAdmin';
  * Handles admin auth, customer portal auth, and dynamic subdomain routing.
  */
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Bypassa imediatamente rotas isoladas de prévia visual para não travar na chamada do Supabase
+  if (pathname.startsWith('/design-preview') || pathname === '/preview.html') {
+    return NextResponse.next();
+  }
+
   // 1. Detect dynamic subdomains
   const host = request.headers.get('host') || '';
   const hostname = host.split(':')[0];
@@ -32,6 +39,18 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  const needsAuth =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/backoffice') ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname.startsWith('/portal/dashboard') ||
+    pathname === '/portal';
+
+  if (!needsAuth) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -55,14 +74,20 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Authenticate admin/technician session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Authenticate admin/technician session (F-29: estritamente Supabase Auth; mock apenas se PLAYWRIGHT_TEST=true).
+  // Timeout de 3s evita que o proxy trave quando o Supabase está inacessível.
+  let user = null;
+  try {
+    const userPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null } }), 3000)
+    );
+    const result = await Promise.race([userPromise, timeoutPromise]);
+    user = result.data?.user ?? null;
+  } catch {
+    user = null;
+  }
 
-  const pathname = request.nextUrl.pathname;
-  
-  // Authenticate admin/technician session (F-29: estritamente Supabase Auth; mock apenas se PLAYWRIGHT_TEST=true)
   const isTest = process.env.NODE_ENV === 'test' || process.env.PLAYWRIGHT_TEST === 'true';
   const isMockAuthenticated = isTest && request.cookies.get('os-session-mock')?.value === 'true';
   const isAdminAuthenticated = !!user || isMockAuthenticated;
