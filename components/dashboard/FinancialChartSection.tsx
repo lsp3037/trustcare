@@ -116,14 +116,14 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
                       </span>
                     </div>
                     <div
-                      className="w-full bg-surface-sunken h-2 border border-border"
+                      className="w-full bg-surface-sunken h-2 rounded-full border border-border overflow-hidden"
                       role="meter"
                       aria-valuenow={Number(percent.toFixed(1))}
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-label={`Participação de ${method}`}
                     >
-                      <div className="h-full bg-brand" style={{ width: `${percent}%` }} />
+                      <div className="h-full bg-brand rounded-full" style={{ width: `${percent}%` }} />
                     </div>
                   </div>
                 );

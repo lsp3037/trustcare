@@ -52,8 +52,13 @@ function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCa
 
   return (
     <Card
+      padding="sm"
       interactive={clickable}
-      className={cn('flex flex-col', clickable && 'group')}
+      className={cn(
+        'flex flex-col justify-between transition-all duration-200',
+        tone === 'danger' && 'bg-danger/5 border-danger/25',
+        clickable && 'group'
+      )}
       onClick={href ? () => router.push(href) : undefined}
       role={clickable ? 'link' : undefined}
       tabIndex={clickable ? 0 : undefined}
@@ -68,21 +73,40 @@ function KpiCard({ icon, label, value, hint, meta, tone = 'brand', href }: KpiCa
           : undefined
       }
     >
-      <div className="flex justify-between items-start gap-3 mb-4">
-        <div className={cn('p-2.5 rounded-2xl backdrop-blur-md border border-white/5', ICON_TONE[tone])} aria-hidden>
+      <div className="flex justify-between items-start gap-2">
+        <span
+          className={cn(
+            'text-caption font-semibold uppercase tracking-wider',
+            tone === 'danger' ? 'text-danger' : 'text-text-muted'
+          )}
+        >
+          {label}
+        </span>
+        <div className={cn('p-1.5 rounded-xl border border-white/5 shrink-0', ICON_TONE[tone])} aria-hidden>
           {icon}
         </div>
-        {meta && (
-          <Badge tone={tone === 'danger' ? 'danger' : 'neutral'} className="shrink-0">
-            {meta}
-            {clickable && <ArrowUpRight className="w-3 h-3" aria-hidden />}
-          </Badge>
-        )}
       </div>
 
-      <p className="text-small font-semibold text-text-muted">{label}</p>
-      <p className="text-h1 font-mono tabular-nums text-text mt-1">{value}</p>
-      <p className="text-caption text-text-subtle mt-2">{hint}</p>
+      <div className="mt-2">
+        <p
+          className={cn(
+            'text-h2 font-mono tabular-nums',
+            tone === 'danger' ? 'text-danger' : 'text-text'
+          )}
+        >
+          {value}
+        </p>
+        <p
+          className={cn(
+            'text-caption mt-0.5',
+            tone === 'danger'
+              ? 'text-danger font-medium'
+              : 'text-text-subtle'
+          )}
+        >
+          {hint}
+        </p>
+      </div>
     </Card>
   );
 }
@@ -98,26 +122,26 @@ export function KpiOverviewCards({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {isAdmin ? (
         <>
           <KpiCard
-            icon={<DollarSign className="w-5 h-5" />}
+            icon={<DollarSign className="w-4 h-4" />}
             meta="No período"
-            label="Faturamento Realizado"
+            label="Faturamento"
             value={brl(stats.billing)}
             hint="Soma de OS concluídas / entregues"
           />
           <KpiCard
-            icon={<Clock className="w-5 h-5" />}
+            icon={<Clock className="w-4 h-4" />}
             meta="Em progresso"
-            label="OS Abertas / Em Análise"
+            label="OS Abertas"
             value={String(stats.openOrders)}
             hint="Aguardando aprovação ou peças"
             href="/dashboard/orders?status=Ativas"
           />
           <KpiCard
-            icon={<TrendingUp className="w-5 h-5" />}
+            icon={<TrendingUp className="w-4 h-4" />}
             meta="Caixa"
             label="Ticket Médio"
             value={brl(stats.ticketMedio)}
@@ -127,23 +151,23 @@ export function KpiOverviewCards({
       ) : (
         <>
           <KpiCard
-            icon={<Clock className="w-5 h-5" />}
+            icon={<Clock className="w-4 h-4" />}
             meta={role === 'technician' ? 'Minha fila' : 'Geral'}
-            label="OS Abertas / Em Execução"
+            label="OS Abertas"
             value={String(stats.openOrders)}
             hint="Aguardando análise ou peças"
             href="/dashboard/orders?status=Ativas"
           />
           <KpiCard
-            icon={<CheckCircle2 className="w-5 h-5" />}
+            icon={<CheckCircle2 className="w-4 h-4" />}
             meta="Concluídas"
-            label="OS Prontas / Entregues"
+            label="OS Concluídas"
             value={String(stats.completedOrders)}
             hint="Finalizadas ou prontas para entrega"
             href="/dashboard/orders?status=Concluidas"
           />
           <KpiCard
-            icon={<Users className="w-5 h-5" />}
+            icon={<Users className="w-4 h-4" />}
             meta="Clientes"
             label="Total de Clientes"
             value={String(stats.totalClients)}
@@ -154,10 +178,10 @@ export function KpiOverviewCards({
       )}
 
       <KpiCard
-        icon={<Package className="w-5 h-5" />}
+        icon={<Package className="w-4 h-4" />}
         meta="Crítico"
         tone="danger"
-        label="Produtos com Estoque Baixo"
+        label="Estoque Baixo"
         value={String(stats.lowStockCount)}
         hint="Itens abaixo do estoque mínimo"
         href="/dashboard/inventory?filter=low_stock"

@@ -96,7 +96,12 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
             <TBody>
               {recentOrders.map((order) => (
                 <TR key={order.id}>
-                  <TD className="pl-0 font-semibold">{order.clients?.name || 'Cliente'}</TD>
+                  <TD
+                    className="pl-0 font-semibold truncate max-w-[160px]"
+                    title={order.clients?.name || 'Cliente'}
+                  >
+                    {order.clients?.name || 'Cliente'}
+                  </TD>
                   <TD
                     className="text-text-muted truncate max-w-[200px]"
                     title={order.equipment_details || ''}
