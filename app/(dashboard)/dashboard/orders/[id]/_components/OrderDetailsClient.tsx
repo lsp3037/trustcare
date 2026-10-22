@@ -41,7 +41,8 @@ import { TechnicalReportSection } from './TechnicalReportSection';
 import { FinancialSection } from './FinancialSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { OrderActions } from './OrderActions';
-import { appendServiceToTechnicalReport, formatReportedProblem } from '@/lib/utils/reportFormatter';
+import { appendServiceToTechnicalReport } from '@/lib/utils/reportFormatter';
+import { useFormatProblem } from '@/components/hooks/useFormatProblem';
 
 export function OrderDetailsClient({
   id,
@@ -107,7 +108,12 @@ export function OrderDetailsClient({
 
   const [saving, setSaving] = useState(false);
   const [formattingReport, setFormattingReport] = useState(false);
-  const [formattingProblem, setFormattingProblem] = useState(false);
+  const { formatProblem: handleFormatProblem, formattingProblem } = useFormatProblem({
+    reportedProblem,
+    setReportedProblem,
+    equipment: order?.equipment_details || '',
+    successMessage: 'Problema relatado formatado. Revise e clique em Salvar.',
+  });
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -368,73 +374,6 @@ export function OrderDetailsClient({
       toast.error('Não foi possível formatar o laudo', { description: err?.message });
     } finally {
       setFormattingReport(false);
-    }
-  };
-
-  /**
-   * Formata o Problema Relatado com a mesma IA do laudo: a Edge Function
-   * `formatar-laudo` ganhou o modo `tipo: "problema"`, que organiza a queixa do
-   * cliente em tópicos no mesmo padrão visual do laudo técnico.
-   *
-   * Se a função publicada ainda for a versão antiga (sem o modo problema), cai
-   * no formatador local — melhor um resultado simples do que um erro na tela.
-   */
-  const handleFormatProblem = async () => {
-    const plain = reportedProblem.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim();
-    if (plain.length < 5) {
-      toast.warning('Escreva o problema relatado antes de formatar.');
-      return;
-    }
-
-    setFormattingProblem(true);
-    const previous = reportedProblem;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('formatar-laudo', {
-        body: {
-          tipo: 'problema',
-          notas: reportedProblem,
-          equipamento: order?.equipment_details || '',
-        },
-      });
-      if (error) throw error;
-      if (data?.tipo !== 'problema' || !data?.html) {
-        throw new Error('Formatação com IA indisponível.');
-      }
-
-      setReportedProblem(data.html);
-      toast.success('Problema relatado formatado. Revise e clique em Salvar.', {
-        action: { label: 'Desfazer', onClick: () => setReportedProblem(previous) },
-        duration: 10000,
-      });
-    } catch (err: any) {
-      // Detalhe técnico só no console: o usuário final não precisa ver isso.
-      let reason = err?.message || 'Erro desconhecido';
-      try {
-        const body = await err?.context?.json?.();
-        if (body?.error) reason = body.error;
-      } catch {}
-      console.error('[formatar-problema] Falha na IA:', reason);
-
-      const formatted = formatReportedProblem(reportedProblem);
-      if (!formatted) {
-        toast.error('Não foi possível formatar o problema', {
-          description: 'Tente novamente em instantes.',
-        });
-        return;
-      }
-      if (formatted === reportedProblem) {
-        toast.info('O problema relatado já está formatado.');
-        return;
-      }
-
-      setReportedProblem(formatted);
-      toast.warning('Formatação básica aplicada', {
-        description: 'A formatação com IA está indisponível no momento.',
-        action: { label: 'Desfazer', onClick: () => setReportedProblem(previous) },
-      });
-    } finally {
-      setFormattingProblem(false);
     }
   };
 

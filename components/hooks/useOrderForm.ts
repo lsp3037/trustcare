@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
+import { useFormatProblem } from '@/components/hooks/useFormatProblem';
 import type { NewEquipmentPayload } from '@/components/new-order/EquipmentModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -120,6 +121,14 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [errorMsg, setErrorMsg] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Formatação do Problema Relatado com IA (mesma Edge Function do laudo).
+  const { formatProblem, formattingProblem } = useFormatProblem({
+    reportedProblem,
+    setReportedProblem,
+    equipment: equipmentDetails,
+    successMessage: 'Problema relatado formatado. Revise antes de abrir a O.S.',
+  });
+
   // ─── Effects ────────────────────────────────────────────────────────────────
 
   // Sincroniza prop clients com listagem interna
@@ -206,10 +215,13 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
           .eq('role', 'technician');
         if (error) throw error;
         if (data && data.length > 0) {
-          setTechnicians(data.map(t => ({
+          const mapped = data.map(t => ({
             id: t.id,
             name: t.full_name || t.email?.split('@')[0] || 'Técnico',
-          })));
+          }));
+          setTechnicians(mapped);
+          // Equipe com um único técnico: já vem atribuído, evitando um passo manual.
+          if (mapped.length === 1) setTechnicianId(mapped[0].id);
         } else {
           setTechnicians([]);
         }
@@ -658,6 +670,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     equipmentId, setEquipmentId,
     equipmentDetails, setEquipmentDetails,
     reportedProblem, setReportedProblem,
+    formatProblem, formattingProblem,
     status, setStatus,
     priority, setPriority,
     technicianId, setTechnicianId,

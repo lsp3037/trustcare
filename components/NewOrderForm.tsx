@@ -101,6 +101,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           setDiscount={orderForm.setDiscount}
           reportedProblem={orderForm.reportedProblem}
           setReportedProblem={orderForm.setReportedProblem}
+          onFormatProblem={orderForm.formatProblem}
+          formattingProblem={orderForm.formattingProblem}
           quillOnly
         />
 
