@@ -9,6 +9,7 @@ import { EquipmentSection } from '@/components/new-order/EquipmentSection';
 import { ProblemSection } from '@/components/new-order/ProblemSection';
 import { ItemsSection } from '@/components/new-order/ItemsSection';
 import { FinancialSection } from '@/components/new-order/FinancialSection';
+import { EquipmentModal } from '@/components/new-order/EquipmentModal';
 import { ClientModal } from '@/components/new-order/ClientModal';
 import { ProductModal } from '@/components/new-order/ProductModal';
 
@@ -60,6 +61,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
               isManualEquipment={orderForm.isManualEquipment}
               equipmentDetails={orderForm.equipmentDetails}
               setEquipmentDetails={orderForm.setEquipmentDetails}
+              onNewEquipment={() => orderForm.setIsEquipmentModalOpen(true)}
             />
           </Card>
 
@@ -133,6 +135,19 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           loading={orderForm.loading}
         />
       </form>
+
+      <EquipmentModal
+        open={orderForm.isEquipmentModalOpen}
+        clientName={
+          orderForm.clientsList.find((c) => c.id === orderForm.clientId)?.name
+        }
+        categories={orderForm.categories}
+        saving={orderForm.savingEquipment}
+        errorMsg={orderForm.equipmentModalError}
+        onClose={() => orderForm.setIsEquipmentModalOpen(false)}
+        onSubmit={orderForm.handleCreateEquipment}
+        onCreateCategory={orderForm.handleCreateEquipmentCategory}
+      />
 
       <ClientModal
         isNewClientModalOpen={orderForm.isNewClientModalOpen}

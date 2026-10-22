@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
+import type { NewEquipmentPayload } from '@/components/new-order/EquipmentModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,12 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   // ── Modais ──────────────────────────────────────────────────────────────────
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
+
+  // ── Cadastro de Equipamento (popup dentro da OS) ────────────────────────────
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
+  const [savingEquipment, setSavingEquipment] = useState(false);
+  const [equipmentModalError, setEquipmentModalError] = useState('');
 
   // ── Formulário Novo Cliente ─────────────────────────────────────────────────
   const [clientModalStep, setClientModalStep] = useState(1);
@@ -212,9 +219,24 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('equipment_categories')
+          .select('id, name')
+          .order('name');
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (err) {
+        console.warn('Erro ao carregar categorias de equipamento:', err);
+        setCategories([]);
+      }
+    };
+
     fetchInventory();
     fetchServices();
     fetchTechnicians();
+    fetchCategories();
   }, []);
 
   // Carrega equipamentos quando o cliente muda
@@ -359,6 +381,63 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     } finally {
       setSavingClient(false);
     }
+  };
+
+  /**
+   * Cadastro completo de equipamento a partir da própria OS. Antes só existia
+   * "Digitar manualmente", que criava a OS sem vínculo com um aparelho.
+   */
+  const handleCreateEquipment = async (payload: NewEquipmentPayload) => {
+    setEquipmentModalError('');
+
+    if (!clientId) {
+      setEquipmentModalError('Selecione o cliente antes de cadastrar o equipamento.');
+      return;
+    }
+    if (!companyId) {
+      setEquipmentModalError('Empresa do usuário ainda não carregada. Tente novamente.');
+      return;
+    }
+
+    setSavingEquipment(true);
+    try {
+      const { data, error } = await supabase
+        .from('client_equipments')
+        .insert({ company_id: companyId, client_id: clientId, ...payload })
+        .select()
+        .single();
+
+      if (error || !data) {
+        throw new Error(describeDbError(error, 'Falha ao cadastrar o equipamento.'));
+      }
+
+      setEquipments((prev) => [...prev, data]);
+      setEquipmentId(data.id);
+      setIsManualEquipment(false);
+      setIsEquipmentModalOpen(false);
+    } catch (err: any) {
+      setEquipmentModalError(err.message || 'Erro inesperado ao cadastrar o equipamento.');
+    } finally {
+      setSavingEquipment(false);
+    }
+  };
+
+  const handleCreateEquipmentCategory = async (name: string) => {
+    if (!companyId) return null;
+
+    const { data, error } = await supabase
+      .from('equipment_categories')
+      .insert({ name, company_id: companyId })
+      .select('id, name')
+      .single();
+
+    if (error || !data) {
+      console.warn('Erro ao criar categoria:', error?.message);
+      return null;
+    }
+
+    setCategories((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+    return data as { id: string; name: string };
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -599,6 +678,13 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     // Modais
     isNewClientModalOpen, setIsNewClientModalOpen,
     isNewProductModalOpen, setIsNewProductModalOpen,
+    // Equipamento (popup dentro da OS)
+    categories,
+    isEquipmentModalOpen, setIsEquipmentModalOpen,
+    savingEquipment,
+    equipmentModalError,
+    handleCreateEquipment,
+    handleCreateEquipmentCategory,
     // Novo Cliente
     clientModalStep, setClientModalStep,
     newClientName, setNewClientName,
