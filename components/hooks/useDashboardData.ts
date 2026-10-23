@@ -40,6 +40,15 @@ export interface DashboardStats {
   pfCount: number;
 }
 
+/** Mesmos indicadores no período imediatamente anterior, de mesma duração. */
+export interface PreviousPeriodStats {
+  billing: number;
+  ticketMedio: number;
+  completedOrders: number;
+}
+
+const isPaidStatus = (status: string) => status === 'Pronto para Retirada' || status === 'Finalizado';
+
 export function useDashboardData(dateRange: DateRange | null) {
   const { company } = useCompany();
   const { user, role, loading: userLoading } = useUser();
@@ -56,6 +65,7 @@ export function useDashboardData(dateRange: DateRange | null) {
   });
   const [paymentDistribution, setPaymentDistribution] = useState<Record<string, number>>({});
   const [recentOrders, setRecentOrders] = useState<ServiceOrder[]>([]);
+  const [previousStats, setPreviousStats] = useState<PreviousPeriodStats | null>(null);
   const [chartData, setChartData] = useState<ChartDay[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -138,22 +148,64 @@ export function useDashboardData(dateRange: DateRange | null) {
         .gte('payment_date', fromDateStr)
         .lte('payment_date', toDateStr);
 
+      // Período anterior com a mesma quantidade de dias, terminando na véspera
+      // de `from` — base dos chips de variação nos KPIs.
+      const spanMs = toDate.getTime() - fromDate.getTime();
+      const prevTo = new Date(fromDate.getTime() - 1);
+      const prevFrom = new Date(prevTo.getTime() - spanMs);
+      prevFrom.setHours(0, 0, 0, 0);
+      const prevFromStr = toLocalYMD(prevFrom);
+      const prevToStr = toLocalYMD(prevTo);
+
+      // Só as colunas que o cálculo usa: o mesmo `or` cobre OS pagas no
+      // período anterior e as sem `payment_date` criadas nele.
+      let queryPrevious = supabase
+        .from('service_orders')
+        .select('id, status, total_value, payment_date, created_at')
+        .or(
+          `and(payment_date.gte.${prevFromStr},payment_date.lte.${prevToStr}),` +
+          `and(created_at.gte.${prevFrom.toISOString()},created_at.lte.${prevTo.toISOString()})`
+        );
+
       if (role === 'technician' && user?.id) {
         queryCreated = queryCreated.eq('technician_id', user.id);
         queryPaid = queryPaid.eq('technician_id', user.id);
+        queryPrevious = queryPrevious.eq('technician_id', user.id);
       }
 
       const [
         { data: createdOrders, error: errCreated },
         { data: paidOrders, error: errPaid },
         { data: allClients },
-        { data: allProducts }
+        { data: allProducts },
+        { data: previousOrders, error: errPrevious }
       ] = await Promise.all([
         queryCreated.order('created_at', { ascending: false }),
         queryPaid.order('created_at', { ascending: false }),
         supabase.from('clients').select('type'),
-        supabase.from('products_inventory').select('quantity, min_stock_alert')
+        supabase.from('products_inventory').select('quantity, min_stock_alert'),
+        queryPrevious
       ]);
+
+      // Comparação é complemento: se falhar, os cards só ficam sem o chip.
+      if (errPrevious || !previousOrders) {
+        setPreviousStats(null);
+      } else {
+        const prevPaid = previousOrders.filter(o => {
+          const d = o.payment_date ? toLocalYMD(o.payment_date) : toLocalYMD(o.created_at);
+          return d && isPaidStatus(o.status) && d >= prevFromStr && d <= prevToStr;
+        });
+        const prevBilling = prevPaid.reduce((sum, o) => sum + Number(o.total_value || 0), 0);
+        const prevCompleted = previousOrders.filter(o => {
+          const d = o.created_at ? toLocalYMD(o.created_at) : '';
+          return d >= prevFromStr && d <= prevToStr && isPaidStatus(o.status);
+        }).length;
+        setPreviousStats({
+          billing: prevBilling,
+          ticketMedio: prevPaid.length > 0 ? prevBilling / prevPaid.length : 0,
+          completedOrders: prevCompleted,
+        });
+      }
 
       if (errCreated) throw errCreated;
       if (errPaid && errPaid.code !== '42703') {
@@ -282,6 +334,7 @@ export function useDashboardData(dateRange: DateRange | null) {
 
   return {
     stats,
+    previousStats,
     paymentDistribution,
     recentOrders,
     chartData,

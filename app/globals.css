@@ -166,6 +166,18 @@ h1, h2 {
   }
 }
 
+/* Linha de brilho na base dos cards de KPI (`animate-kpi-sweep`). Pausa na
+   segunda metade do ciclo para não ficar correndo sem parar. Declarada no
+   `@theme` porque um `@keyframes` solto era descartado do CSS final. */
+@theme {
+  --animate-kpi-sweep: kpi-sweep 6s linear infinite;
+
+  @keyframes kpi-sweep {
+    0% { transform: translateX(-100%); }
+    55%, 100% { transform: translateX(100%); }
+  }
+}
+
 /* Entrada dos toasts. O bloco global de `prefers-reduced-motion` acima já
    neutraliza a duração para quem pediu menos movimento. */
 @keyframes toast-enter {
