@@ -54,15 +54,37 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           .eq('user_id', authUser.id)
           .maybeSingle();
 
-        if (profile) {
+        let userProfile = profile;
+        if (!userProfile) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+              if (session.access_token) {
+                headers['Authorization'] = `Bearer ${session.access_token}`;
+              }
+              const ensureRes = await fetch('/api/company/ensure', { method: 'POST', headers });
+              if (ensureRes.ok) {
+                const json = await ensureRes.json();
+                if (json.profile) {
+                  userProfile = json.profile;
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('[UserContext] Falha ao recuperar perfil via ensure:', e);
+          }
+        }
+
+        if (userProfile) {
           setUser({
-            id: profile.id,
-            user_id: profile.user_id,
-            role: (profile.role || 'viewer') as UserRole,
-            full_name: profile.full_name || authUser.user_metadata?.full_name || 'Usuário',
-            email: profile.email || authUser.email || '',
-            whatsapp: profile.whatsapp || '',
-            avatar_url: profile.avatar_url || ''
+            id: userProfile.id,
+            user_id: userProfile.user_id,
+            role: (userProfile.role || 'viewer') as UserRole,
+            full_name: userProfile.full_name || authUser.user_metadata?.full_name || 'Usuário',
+            email: userProfile.email || authUser.email || '',
+            whatsapp: userProfile.whatsapp || '',
+            avatar_url: userProfile.avatar_url || ''
           });
         } else {
           // Sem perfil cadastrado na empresa = sem acesso (F-29)

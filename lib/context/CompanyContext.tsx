@@ -50,31 +50,70 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       if (forceLoading) {
         setLoading(true);
       }
-      // Busca a empresa associada ao usuário autenticado (a política RLS de select_company cuida do filtro automático por tenant)
-      // Colunas explícitas: `api_key` e ids do Asaas não são legíveis pelo front.
-      const { data, error } = await supabase
+
+      // 1. Tenta buscar direto do Supabase via RLS
+      let companyData: any = null;
+      const resWithTrial = await supabase
         .from('companies')
         .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, trial_ends_at, subdomain')
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (!resWithTrial.error && resWithTrial.data) {
+        companyData = resWithTrial.data;
+      } else {
+        // Fallback: se trial_ends_at não tiver permissão concedida ainda ou não existir na tabela
+        const resBasic = await supabase
+          .from('companies')
+          .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, subdomain')
+          .maybeSingle();
 
-      if (data) {
+        if (!resBasic.error && resBasic.data) {
+          companyData = resBasic.data;
+        }
+      }
+
+      // 2. Se o usuário estiver autenticado no Supabase Auth mas não tiver empresa no RLS
+      // (ex: conta criada no dashboard em localhost sem trigger disparado), auto-provisiona
+      if (!companyData) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session.access_token) {
+              headers['Authorization'] = `Bearer ${session.access_token}`;
+            }
+            const ensureRes = await fetch('/api/company/ensure', { method: 'POST', headers });
+            if (ensureRes.ok) {
+              const json = await ensureRes.json();
+              if (json.company) {
+                companyData = json.company;
+              }
+            }
+          }
+        } catch (apiErr) {
+          console.warn('[CompanyContext] Falha na auto-recuperação da empresa via ensure:', apiErr);
+        }
+      }
+
+      if (companyData) {
         const companyObj = {
-          id: data.id,
-          name: data.name || 'Trust Care T.I.',
-          phone: data.phone || '(66) 99999-9999',
-          email: data.email || 'contato@trustcare.com.br',
-          logo_url: data.logo_url || '',
-          whatsapp: data.whatsapp || '',
-          subscription_plan: (data.subscription_plan || 'starter') as SubscriptionPlan,
-          subscription_status: (data.subscription_status || 'trialing') as SubscriptionStatus,
-          subscription_expires_at: data.subscription_expires_at || '',
-          trial_ends_at: data.trial_ends_at || '',
-          subdomain: data.subdomain || ''
+          id: companyData.id,
+          name: companyData.name || 'Trust Care T.I.',
+          phone: companyData.phone || '(66) 99999-9999',
+          email: companyData.email || 'contato@trustcare.com.br',
+          logo_url: companyData.logo_url || '',
+          whatsapp: companyData.whatsapp || '',
+          subscription_plan: (companyData.subscription_plan || 'starter') as SubscriptionPlan,
+          subscription_status: (companyData.subscription_status || 'trialing') as SubscriptionStatus,
+          subscription_expires_at: companyData.subscription_expires_at || '',
+          trial_ends_at: companyData.trial_ends_at || '',
+          subdomain: companyData.subdomain || ''
         };
         setCompany(companyObj);
+        return;
       }
+
+      throw new Error('Nenhuma empresa encontrada para o usuário.');
     } catch (err) {
       console.warn('Erro ao carregar dados da empresa do Supabase:', err);
       // Inicializa com dados padrão

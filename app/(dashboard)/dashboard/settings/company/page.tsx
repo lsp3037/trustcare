@@ -143,10 +143,39 @@ export default function CompanySettingsPage() {
 
     try {
       let finalLogoUrl = logoUrl;
-      if (!company.id) {
+      let targetCompanyId = company.id;
+
+      if (!targetCompanyId) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+          }
+          const ensureRes = await fetch('/api/company/ensure', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              name: name.trim(),
+              phone: phone.trim(),
+              email: email.trim(),
+              whatsapp: whatsapp.trim()
+            })
+          });
+          if (ensureRes.ok) {
+            const json = await ensureRes.json();
+            if (json.company?.id) {
+              targetCompanyId = json.company.id;
+            }
+          }
+        } catch (ensureErr) {
+          console.warn('[CompanySettings] Falha ao auto-provisionar empresa:', ensureErr);
+        }
+      }
+
+      if (!targetCompanyId) {
         throw new Error('Empresa não carregada. Atualize a página e tente novamente.');
       }
-      const targetCompanyId = company.id;
 
       // 1. Upload logo to Supabase Storage if a new file is staged
       if (file) {
@@ -166,9 +195,24 @@ export default function CompanySettingsPage() {
       const { error: updateErr } = await supabase
         .from('companies')
         .update(updateData)
-        .eq('id', company.id);
+        .eq('id', targetCompanyId);
 
-      if (updateErr) throw updateErr;
+      if (updateErr) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        const patchRes = await fetch('/api/company/ensure', {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify(updateData)
+        });
+        if (!patchRes.ok) {
+          const patchJson = await patchRes.json().catch(() => ({}));
+          throw new Error(patchJson.error || updateErr.message);
+        }
+      }
 
       // 3. Refresh Context state
       await refreshCompany();
