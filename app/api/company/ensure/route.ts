@@ -16,7 +16,7 @@ async function getAuthUser(request: Request) {
     }
   }
 
-  // 2. Tenta cookies da sessão SSR
+  // 2. Tenta cookies da sessao SSR
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -42,9 +42,8 @@ async function getAuthUser(request: Request) {
 
 /**
  * POST /api/company/ensure
- * Garante que o usuário autenticado possua uma empresa e um perfil admin vinculados.
- * Se já possuir, devolve os dados atuais. Se não possuir (comum em dev/localhost),
- * cria a empresa e o perfil com segurança usando supabaseAdmin.
+ * Garante que o usuario autenticado possua uma empresa e um perfil admin vinculados.
+ * Se ja possuir, devolve os dados atuais. Se nao possuir, cria a empresa e o perfil com seguranca usando supabaseAdmin.
  */
 export async function POST(request: Request) {
   try {
@@ -57,24 +56,24 @@ export async function POST(request: Request) {
 
     const user = await getAuthUser(request);
     if (!user) {
-      return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+      return NextResponse.json({ error: 'Nao autenticado.' }, { status: 401 });
     }
 
     let body: any = {};
     try {
       body = await request.json();
     } catch {
-      // Body é opcional
+      // Body opcional
     }
 
-    // 1. Verifica se já existe perfil para este usuário
+    // 1. Verifica se ja existe perfil para este usuario
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('id, user_id, company_id, role, full_name, email, phone')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    // 2. Se já tiver profile com company_id, busca a empresa
+    // 2. Se ja tiver profile com company_id, busca a empresa
     if (profile?.company_id) {
       let company: any = null;
       const { data: cData, error: compErr } = await supabaseAdmin
@@ -99,7 +98,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Usuário autenticado sem empresa/perfil -> provisiona nova empresa e perfil admin
+    // 3. Usuario autenticado sem empresa/perfil -> provisiona nova empresa e perfil admin
     const companyName = body.name?.trim() || user.user_metadata?.company_name || 'Minha Empresa';
     const trialDays = 14;
     const expiry = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
@@ -125,7 +124,7 @@ export async function POST(request: Request) {
     newCompany = initialNewCompany;
 
     if (insertCompErr) {
-      // Se der erro por trial_ends_at n�o existir no schema do banco ainda
+      // Se der erro por trial_ends_at nao existir no schema do banco ainda
       delete newCompanyPayload.trial_ends_at;
       const retryInsert = await supabaseAdmin
         .from('companies')
@@ -141,10 +140,10 @@ export async function POST(request: Request) {
     }
 
     if (!newCompany?.id) {
-      return NextResponse.json({ error: 'Falha ao instanciar empresa para o usu�rio.' }, { status: 500 });
+      return NextResponse.json({ error: 'Falha ao instanciar empresa para o usuario.' }, { status: 500 });
     }
 
-    // 4. Cria ou atualiza o perfil do usuário vinculado à nova empresa como admin
+    // 4. Cria ou atualiza o perfil do usuario vinculado a nova empresa como admin
     const profilePayload = {
       user_id: user.id,
       company_id: newCompany.id,
@@ -190,12 +189,12 @@ export async function PATCH(request: Request) {
 
     const user = await getAuthUser(request);
     if (!user) {
-      return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+      return NextResponse.json({ error: 'Nao autenticado.' }, { status: 401 });
     }
 
     const body = await request.json();
 
-    // 1. Obtém perfil do usuário para validar se é admin e de qual empresa
+    // 1. Obtem perfil do usuario para validar se e admin e de qual empresa
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('company_id, role')
