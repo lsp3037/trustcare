@@ -51,8 +51,6 @@ import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { formatPhone } from '@/lib/utils/phone';
 
-const OFFLINE_HINT = 'Sem conexão com o servidor. A alteração ficou só neste dispositivo.';
-
 export default function ClientDetailPage() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
@@ -91,6 +89,7 @@ export default function ClientDetailPage() {
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingEqId, setEditingEqId] = useState<string | null>(null);
+  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
 
   // Histórico clínico de checklists
   const [selectedEqForHistory, setSelectedEqForHistory] = useState<any | null>(null);
@@ -214,10 +213,6 @@ export default function ClientDetailPage() {
     e.preventDefault();
     setAddingEq(true);
 
-    // Marca se alguma etapa caiu para o armazenamento local, para que a
-    // mensagem final diga a verdade.
-    let usedFallback = false;
-
     try {
       const {
         data: { user },
@@ -272,14 +267,9 @@ export default function ClientDetailPage() {
       setEqGpuType('');
       setEqGpuModel('');
       setEditingEqId(null);
+      setIsEquipmentModalOpen(false);
 
-      if (usedFallback) {
-        toast.warning(`Equipamento salvo apenas neste dispositivo`, {
-          description: OFFLINE_HINT,
-        });
-      } else {
-        toast.success(`"${nomeEquipamento}" ${acao}`);
-      }
+      toast.success(`"${nomeEquipamento}" ${acao}`);
 
       fetchClientAndOrders();
     } catch (err: any) {
@@ -325,7 +315,12 @@ export default function ClientDetailPage() {
     setEqStorage(eq.storage || '');
     setEqGpuType(eq.gpu_type || '');
     setEqGpuModel(eq.gpu_model || '');
-    window.document.getElementById('equipment-form')?.scrollIntoView({ behavior: 'smooth' });
+    setIsEquipmentModalOpen(true);
+  };
+
+  const handleOpenNewEquipment = () => {
+    cancelEquipmentEdit();
+    setIsEquipmentModalOpen(true);
   };
 
   const handleSaveCategory = async () => {
@@ -372,7 +367,10 @@ export default function ClientDetailPage() {
   };
 
   const cancelEquipmentEdit = () => {
+    setIsEquipmentModalOpen(false);
     setEditingEqId(null);
+    setIsCreatingCategory(false);
+    setNewCategoryName('');
     setEqName('');
     setEqBrand('');
     setEqModel('');
@@ -569,16 +567,25 @@ export default function ClientDetailPage() {
         <div className="lg:col-span-2 space-y-8">
           {/* ─── Equipamentos ─── */}
           <Card>
-            <CardTitle className="mb-6 border-b border-border pb-3 flex items-center gap-2">
-              <Laptop className="w-5 h-5 text-text-subtle" aria-hidden /> Equipamentos do Cliente
-            </CardTitle>
+            <div className="mb-6 border-b border-border pb-3 flex flex-wrap items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <Laptop className="w-5 h-5 text-text-subtle" aria-hidden /> Equipamentos do Cliente
+              </CardTitle>
+              <Button
+                size="sm"
+                icon={<Plus className="w-3.5 h-3.5" aria-hidden />}
+                onClick={handleOpenNewEquipment}
+              >
+                Cadastrar Novo Equipamento
+              </Button>
+            </div>
 
             {equipments.length === 0 ? (
               <p className="text-center py-6 text-small text-text-subtle">
                 Nenhum equipamento cadastrado para este cliente.
               </p>
             ) : (
-              <div className="mb-6">
+              <div>
                 <Table density="compact">
                   <THead>
                     <TR>
@@ -693,25 +700,20 @@ export default function ClientDetailPage() {
                 </Table>
               </div>
             )}
+          </Card>
 
-            {/* Formulário de equipamento */}
-            <form
-              id="equipment-form"
-              onSubmit={handleSaveEquipment}
-              className="border-t border-border pt-5 space-y-4"
-            >
-              <h4 className="text-small font-semibold text-text flex items-center gap-2">
-                {editingEqId ? (
-                  <>
-                    <Edit className="w-4 h-4 text-text-subtle" aria-hidden /> Atualizar Equipamento
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 text-text-subtle" aria-hidden /> Cadastrar Novo Equipamento
-                  </>
-                )}
-              </h4>
-
+          <Modal
+            open={isEquipmentModalOpen}
+            onClose={cancelEquipmentEdit}
+            title={editingEqId ? 'Editar Equipamento' : 'Cadastrar Novo Equipamento'}
+            description={
+              editingEqId
+                ? `Atualizando "${eqName || 'equipamento'}".`
+                : 'Vincule um novo aparelho a este cliente com categoria e configuração de hardware.'
+            }
+            size="lg"
+          >
+            <form id="equipment-form" onSubmit={handleSaveEquipment} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Identificação / Nome"
@@ -884,11 +886,9 @@ export default function ClientDetailPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                {editingEqId && (
-                  <Button type="button" variant="secondary" size="sm" onClick={cancelEquipmentEdit}>
-                    Cancelar Edição
-                  </Button>
-                )}
+                <Button type="button" variant="secondary" size="sm" onClick={cancelEquipmentEdit}>
+                  Cancelar
+                </Button>
                 <Button
                   type="submit"
                   size="sm"
@@ -901,7 +901,7 @@ export default function ClientDetailPage() {
                 </Button>
               </div>
             </form>
-          </Card>
+          </Modal>
 
           {/* ─── Histórico de OS ─── */}
           <Card>

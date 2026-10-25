@@ -33,17 +33,6 @@ describe('reportFormatter', () => {
     expect(result).toContain('Garantia de 90 dias');
   });
 
-  it('deve formatar o problema relatado com bullets', () => {
-    const raw = `
-      • Tela piscando
-      • Conector solto
-    `;
-    const result = formatReportedProblem(raw);
-    expect(result).toContain('<ul>');
-    expect(result).toContain('<li>Tela piscando</li>');
-    expect(result).toContain('<li>Conector solto</li>');
-  });
-
   it('deve salvar e carregar templates do localStorage', () => {
     const custom = [{ id: 'teste', label: 'Teste', description: 'Desc', content: '<p>Teste</p>' }];
     saveStoredTemplates(custom);
@@ -67,5 +56,60 @@ describe('reportFormatter', () => {
     const duplicate = appendServiceToTechnicalReport(result.updatedReport, serviceName, description);
     expect(duplicate.added).toBe(false);
     expect(duplicate.updatedReport).toBe(result.updatedReport);
+  });
+});
+
+describe('formatReportedProblem', () => {
+  it('quebra texto corrido em uma lista de sintomas', () => {
+    const result = formatReportedProblem(
+      '<p>notebook não liga. faz barulho na ventoinha. esquenta muito</p>',
+    );
+
+    expect(result).toBe(
+      '<ul><li>Notebook não liga</li><li>Faz barulho na ventoinha</li><li>Esquenta muito</li></ul>',
+    );
+  });
+
+  it('respeita tópicos que o usuário já escreveu', () => {
+    const result = formatReportedProblem('<p>- tela quebrada</p><p>- teclado falhando</p>');
+
+    expect(result).toBe('<ul><li>Tela quebrada</li><li>Teclado falhando</li></ul>');
+  });
+
+  it('mantém bullets já existentes', () => {
+    const result = formatReportedProblem('• Tela piscando\n• Conector solto');
+
+    expect(result).toContain('<ul>');
+    expect(result).toContain('<li>Tela piscando</li>');
+    expect(result).toContain('<li>Conector solto</li>');
+  });
+
+  it('mantém um sintoma único como parágrafo', () => {
+    expect(formatReportedProblem('Tela quebrada')).toBe('<p>Tela quebrada</p>');
+  });
+
+  it('destaca a linha de total', () => {
+    const result = formatReportedProblem('tela quebrada\ntotal: 250,00');
+
+    expect(result).toContain('<li>Tela quebrada</li>');
+    expect(result).toContain('<strong>Total: 250,00</strong>');
+  });
+
+  it('não quebra valores decimais ao separar frases', () => {
+    const result = formatReportedProblem('Orçamento 180.50 aprovado. Cliente autorizou');
+
+    expect(result).toContain('<li>Orçamento 180.50 aprovado</li>');
+    expect(result).toContain('<li>Cliente autorizou</li>');
+  });
+
+  it('escapa HTML para não injetar marcação', () => {
+    const result = formatReportedProblem('5 < 10. tela piscando');
+
+    expect(result).toContain('5 &lt; 10');
+    expect(result).not.toContain('<li>5 < 10');
+  });
+
+  it('devolve vazio para conteúdo vazio', () => {
+    expect(formatReportedProblem('<p><br></p>')).toBe('');
   });
 });

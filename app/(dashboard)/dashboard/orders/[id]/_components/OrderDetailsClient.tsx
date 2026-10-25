@@ -42,6 +42,7 @@ import { FinancialSection } from './FinancialSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { OrderActions } from './OrderActions';
 import { appendServiceToTechnicalReport } from '@/lib/utils/reportFormatter';
+import { useFormatProblem } from '@/components/hooks/useFormatProblem';
 
 export function OrderDetailsClient({
   id,
@@ -107,6 +108,12 @@ export function OrderDetailsClient({
 
   const [saving, setSaving] = useState(false);
   const [formattingReport, setFormattingReport] = useState(false);
+  const { formatProblem: handleFormatProblem, formattingProblem } = useFormatProblem({
+    reportedProblem,
+    setReportedProblem,
+    equipment: order?.equipment_details || '',
+    successMessage: 'Problema relatado formatado. Revise e clique em Salvar.',
+  });
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -580,6 +587,8 @@ export function OrderDetailsClient({
               technicalReport={technicalReport} setTechnicalReport={setTechnicalReport}
               onFormatReport={handleFormatReport}
               formattingReport={formattingReport}
+              onFormatProblem={handleFormatProblem}
+              formattingProblem={formattingProblem}
               formatDisabled={isReadOnly || saving}
             />
 

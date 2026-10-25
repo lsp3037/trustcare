@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useOrderForm } from './useOrderForm';
 
 // Mock next/navigation
@@ -19,6 +19,13 @@ vi.mock('@/lib/supabase/client', () => {
   const mockEq = vi.fn().mockImplementation((key) => {
     if (key === 'ativo') {
       return { order: mockOrder };
+    }
+    if (key === 'role') {
+      // Apenas um técnico na equipe: o hook deve atribuí-lo automaticamente.
+      return Promise.resolve({
+        data: [{ id: 'tech-1', full_name: 'Luan Sabino Paixão', email: 'luan@trustcare.com', role: 'technician' }],
+        error: null,
+      });
     }
     return { single: mockSingle };
   });
@@ -88,5 +95,13 @@ describe('useOrderForm Hook', () => {
     });
 
     expect(result.current.isNewClientModalOpen).toBe(true);
+  });
+
+  it('deve pré-selecionar o técnico quando só existe um na equipe', async () => {
+    const { result } = renderHook(() => useOrderForm({ clients: mockClients, onSuccess: mockOnSuccess }));
+
+    await waitFor(() => expect(result.current.technicians).toHaveLength(1));
+
+    expect(result.current.technicianId).toBe('tech-1');
   });
 });

@@ -2,9 +2,9 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardTitle, Field, Input, Select, Skeleton } from '@/components/ui';
+import { Card, CardTitle, Field, Input, Select, Skeleton, Button } from '@/components/ui';
 import { OS_STATUS_FLOW } from '@/lib/design/status';
-import { Sliders, FileText } from 'lucide-react';
+import { Sliders, FileText, Wand2 } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
@@ -43,6 +43,9 @@ interface ProblemSectionProps {
   hideQuill?: boolean;
   /** When true, only renders the Quill editor card (hides the Status/Assignment card) */
   quillOnly?: boolean;
+  /** Formata o Problema Relatado com IA. Sem a prop, o botão não aparece. */
+  onFormatProblem?: () => void;
+  formattingProblem?: boolean;
 }
 
 export function ProblemSection({
@@ -56,7 +59,11 @@ export function ProblemSection({
   reportedProblem, setReportedProblem,
   hideQuill = false,
   quillOnly = false,
+  onFormatProblem,
+  formattingProblem = false,
 }: ProblemSectionProps) {
+  const hasProblem = reportedProblem.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim().length > 0;
+
   return (
     <div className="space-y-6">
       {/* Bloco de Status, Atribuição e Prazo */}
@@ -124,9 +131,25 @@ export function ProblemSection({
       {/* Bloco do Problema Relatado — renderizado à parte para ter largura total */}
       {!hideQuill && (
         <Card padding="md" className="space-y-4">
-          <CardTitle className="flex items-center gap-2 border-b border-border pb-2">
-            <FileText className="w-4 h-4 text-brand" aria-hidden /> Problema Relatado / Sintomas
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-brand" aria-hidden /> Problema Relatado / Sintomas
+            </CardTitle>
+            {onFormatProblem && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                icon={<Wand2 className="w-3.5 h-3.5 text-text-subtle" />}
+                onClick={onFormatProblem}
+                loading={formattingProblem}
+                disabled={formattingProblem || !hasProblem}
+                className="text-caption h-8 px-2.5 text-text-muted hover:text-text"
+              >
+                {formattingProblem ? 'Formatando...' : 'Formatar'}
+              </Button>
+            )}
+          </div>
 
           <Field>
             <ReactQuill

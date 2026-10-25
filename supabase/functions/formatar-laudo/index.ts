@@ -1,7 +1,8 @@
 // Edge Function: formatar-laudo
-// Recebe as anotações livres do técnico + os itens/valores da OS e devolve o
-// laudo formatado em HTML (Diagnóstico ✅/❌, Serviços orçados, Total,
-// Garantia, Prazo, Privacidade).
+// Recebe as anotações livres do técnico (ou o relato do cliente) + os itens e
+// valores da OS e devolve o texto formatado em HTML:
+// - "laudo": Diagnóstico ✅/❌, Serviços orçados, Total, Garantia, Prazo e Privacidade.
+// - "problema": sintomas relatados pelo cliente, em tópicos.
 //
 // Regras de segurança:
 // - Só usuários logados podem chamar (a chave do Gemini é gasta por chamada).
@@ -15,36 +16,51 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Item = {
-  nome: string;
-  quantidade: number;
-  valor_unitario: number;
-  tipo?: "peca" | "servico";
+const GARANTIA_PADRAO =
+  "90 dias sobre todos os serviços realizados. Não cobre novo impacto, queda, líquidos ou mau uso.";
+
+type ItemOS = {
+  nome?: string;
+  quantidade?: number | string;
+  valor_unitario?: number | string;
 };
 
 type Entrada = {
-  notas: string;
-  itens: Item[];
-  mao_de_obra: number;
-  desconto?: number;
+  /** "laudo" (padrão) formata o laudo técnico; "problema" formata o relato do cliente. */
+  tipo?: "laudo" | "problema";
+  notas?: string;
   equipamento?: string;
+  itens?: ItemOS[];
+  mao_de_obra?: number | string;
+  desconto?: number | string;
 };
 
-type SaidaIA = {
-  diagnostico: { status: "ok" | "defeito"; texto: string }[];
-  servicos: { descricao: string; valor: number }[];
+type Diagnostico = {
+  status: "ok" | "defeito";
+  texto: string;
+};
+
+type Servico = {
+  descricao: string;
+  valor: number;
+};
+
+type SaidaLaudo = {
+  diagnostico: Diagnostico[];
+  servicos: Servico[];
   garantia: string;
   prazo: string;
   privacidade: string;
 };
 
-const GARANTIA_PADRAO =
-  "90 dias sobre todos os serviços realizados. Não cobre novo impacto, queda, líquidos ou mau uso.";
+type SaidaProblema = {
+  sintomas: string[];
+  observacao: string;
+};
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -53,7 +69,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function esc(s: string) {
+function esc(s: unknown) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -64,12 +80,12 @@ function esc(s: string) {
 function brl(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
     .format(v)
-    .replace(/ /g, " ");
+    .replace(/\u00a0/g, " ");
 }
 
-const centavos = (v: number) => Math.round((Number(v) || 0) * 100);
+const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);
 
-function htmlParaTexto(html: string) {
+function htmlParaTexto(html: unknown) {
   return String(html ?? "")
     .replace(/<\/(p|li|div|h\d)>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -116,15 +132,25 @@ const SCHEMA = {
   required: ["diagnostico", "servicos", "garantia", "prazo", "privacidade"],
 };
 
+const SCHEMA_PROBLEMA = {
+  type: "OBJECT",
+  properties: {
+    sintomas: { type: "ARRAY", items: { type: "STRING" } },
+    observacao: { type: "STRING" },
+  },
+  required: ["sintomas", "observacao"],
+};
+
 function montarPrompt(e: Entrada, notas: string) {
-  const itens = (e.itens ?? [])
-    .map(
-      (i) =>
-        `- ${i.nome} | quantidade ${i.quantidade} | valor total da linha ${
-          (Number(i.quantidade) * Number(i.valor_unitario)).toFixed(2)
-        }`,
-    )
-    .join("\n") || "(nenhum item cadastrado)";
+  const itens =
+    (e.itens ?? [])
+      .map(
+        (i) =>
+          `- ${i.nome} | quantidade ${i.quantidade} | valor total da linha ${(
+            Number(i.quantidade) * Number(i.valor_unitario)
+          ).toFixed(2)}`,
+      )
+      .join("\n") || "(nenhum item cadastrado)";
 
   return `Você redige o laudo técnico de uma assistência técnica de informática (Trust Care), em português do Brasil, com tom profissional e claro para um cliente leigo.
 
@@ -157,42 +183,109 @@ Monte o JSON seguindo estas regras:
 Não use travessões (—). Não inclua o total; ele é calculado pelo sistema.`;
 }
 
-async function chamarGemini(prompt: string): Promise<SaidaIA> {
-  const key = Deno.env.get("GEMINI_API_KEY");
-  if (!key) throw new Error("GEMINI_API_KEY não configurada no Supabase.");
-  const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+/**
+ * Prompt do Problema Relatado: organiza o relato do cliente no mesmo padrão
+ * visual do laudo (tópicos), mas sem inventar diagnóstico — a queixa é do
+ * cliente, não uma conclusão técnica.
+ */
+function montarPromptProblema(e: Entrada, notas: string) {
+  return `Você organiza o relato de defeito de uma assistência técnica de informática (Trust Care), em português do Brasil, com tom profissional e claro.
 
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: "application/json",
-          responseSchema: SCHEMA,
-        },
-      }),
-    },
-  );
+EQUIPAMENTO: ${e.equipamento || "(não informado)"}
 
-  if (!resp.ok) {
-    const txt = await resp.text();
-    if (resp.status === 429) {
-      throw new Error("Limite gratuito do Gemini atingido. Tente de novo em alguns minutos.");
-    }
-    throw new Error(`Gemini respondeu ${resp.status}: ${txt.slice(0, 300)}`);
-  }
+RELATO DO CLIENTE (texto livre, pode estar abreviado, com erros de digitação ou tudo em um parágrafo):
+"""
+${notas}
+"""
 
-  const data = await resp.json();
-  const texto = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
-  if (!texto) throw new Error("O Gemini não retornou conteúdo.");
-  return JSON.parse(texto) as SaidaIA;
+Monte o JSON seguindo estas regras:
+
+1. "sintomas": uma entrada por queixa/sintoma relatado. Reescreva cada uma de forma curta, técnica e clara, corrigindo ortografia e separando relatos que estavam no mesmo parágrafo.
+   - Registre apenas o que o cliente relatou. NÃO invente causas, diagnósticos ou testes que não estão no texto.
+   - Preserve números e medições citados (temperaturas, tempo de uso, quantidade de vezes que ocorreu etc.).
+   - Não repita a mesma queixa em duas linhas.
+   - Se o relato tiver uma única queixa, devolva um único item.
+
+2. "observacao": só preencha se houver uma informação de contexto útil que não seja um sintoma (ex.: "equipamento chegou sem a fonte", "cliente autorizou orçamento até R$ 300"). Caso contrário, string vazia.
+
+Não use travessões (—). Escreva os sintomas sem ponto final.`;
 }
 
-function montarHtml(s: SaidaIA, desconto: number) {
+// O gemini-2.5-flash foi descontinuado para novas chaves (404). Os modelos da
+// linha 3 às vezes respondem 503 (alta demanda), então tentamos em cascata e
+// guardamos o último que funcionou para as próximas chamadas do mesmo isolate.
+const MODELOS_GEMINI = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+let modeloQueFuncionou: string | null = null;
+
+async function chamarGemini<T>(prompt: string, schema: unknown): Promise<T> {
+  const key = Deno.env.get("GEMINI_API_KEY");
+  if (!key) throw new Error("GEMINI_API_KEY não configurada no Supabase.");
+
+  const preferido = Deno.env.get("GEMINI_MODEL");
+  const modelos = [
+    ...new Set([
+      ...(modeloQueFuncionou ? [modeloQueFuncionou] : []),
+      ...(preferido ? [preferido] : []),
+      ...MODELOS_GEMINI,
+    ]),
+  ];
+
+  let ultimoErro = "";
+  let cotaEsgotada = false;
+
+  for (const model of modelos) {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+            responseSchema: schema,
+          },
+        }),
+      },
+    );
+
+    if (!resp.ok) {
+      const txt = await resp.text();
+      ultimoErro = `Gemini respondeu ${resp.status}: ${txt.slice(0, 300)}`;
+      if (resp.status === 429) cotaEsgotada = true;
+      // 404 (modelo indisponível), 429 (cota) e 503 (alta demanda) permitem
+      // tentar o próximo modelo; outros erros são definitivos.
+      if (resp.status === 404 || resp.status === 429 || resp.status === 503) continue;
+      throw new Error(ultimoErro);
+    }
+
+    const data = await resp.json();
+    const texto =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p.text ?? "")
+        .join("") ?? "";
+    if (!texto) {
+      ultimoErro = "O Gemini não retornou conteúdo.";
+      continue;
+    }
+
+    try {
+      const parsed = JSON.parse(texto) as T;
+      modeloQueFuncionou = model;
+      return parsed;
+    } catch {
+      ultimoErro = "O Gemini retornou um JSON inválido.";
+    }
+  }
+
+  if (cotaEsgotada) {
+    throw new Error("Limite gratuito do Gemini atingido. Tente de novo em alguns minutos.");
+  }
+  throw new Error(ultimoErro || "Nenhum modelo do Gemini respondeu.");
+}
+
+function montarHtml(s: SaidaLaudo, desconto: number) {
   const partes: string[] = [];
 
   if (s.diagnostico?.length) {
@@ -225,19 +318,43 @@ function montarHtml(s: SaidaIA, desconto: number) {
   return { html: partes.join(""), somaCentavos: soma };
 }
 
-Deno.serve(async (req) => {
+/**
+ * HTML do Problema Relatado: só os tópicos (o campo já tem o rótulo na tela),
+ * no mesmo estilo de lista usado no laudo.
+ */
+function montarHtmlProblema(s: SaidaProblema) {
+  const sintomas = (s.sintomas ?? [])
+    .map((item) => String(item ?? "").trim().replace(/[.;]+$/, ""))
+    .filter(Boolean);
+
+  const partes: string[] = [];
+  if (sintomas.length) {
+    partes.push("<ul>");
+    for (const sintoma of sintomas) partes.push(`<li>${esc(sintoma)}</li>`);
+    partes.push("</ul>");
+  }
+
+  const observacao = String(s.observacao ?? "").trim();
+  if (observacao) {
+    partes.push(`<p><strong>Observação:</strong> ${esc(observacao)}</p>`);
+  }
+
+  return partes.join("");
+}
+
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Método não permitido." }, 405);
 
   // Só usuário logado no sistema.
   const auth = req.headers.get("Authorization") ?? "";
-  const sb = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: auth } } },
-  );
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: auth } },
+  });
   const { data: userData, error: userErr } = await sb.auth.getUser();
-  if (userErr || !userData?.user) return json({ error: "Faça login para usar esta função." }, 401);
+  if (userErr || !userData?.user) {
+    return json({ error: "Faça login para usar esta função." }, 401);
+  }
 
   let e: Entrada;
   try {
@@ -248,11 +365,27 @@ Deno.serve(async (req) => {
 
   const notas = htmlParaTexto(e.notas).slice(0, 6000);
   if (notas.length < 5) {
-    return json({ error: "Escreva suas anotações no laudo antes de formatar." }, 400);
+    return json(
+      {
+        error:
+          e.tipo === "problema"
+            ? "Escreva o problema relatado antes de formatar."
+            : "Escreva suas anotações no laudo antes de formatar.",
+      },
+      400,
+    );
   }
 
   try {
-    const saida = await chamarGemini(montarPrompt(e, notas));
+    // Problema Relatado: organiza a queixa do cliente em tópicos.
+    if (e.tipo === "problema") {
+      const saida = await chamarGemini<SaidaProblema>(montarPromptProblema(e, notas), SCHEMA_PROBLEMA);
+      const html = montarHtmlProblema(saida);
+      if (!html) throw new Error("A IA não retornou sintomas para o problema.");
+      return json({ tipo: "problema", html });
+    }
+
+    const saida = await chamarGemini<SaidaLaudo>(montarPrompt(e, notas), SCHEMA);
     const desconto = Number(e.desconto || 0);
     const { html, somaCentavos } = montarHtml(saida, desconto);
 
@@ -263,12 +396,25 @@ Deno.serve(async (req) => {
         0,
       );
 
-    const aviso = somaCentavos !== esperado
-      ? `Atenção: as linhas do laudo somam ${brl(somaCentavos / 100)}, mas a OS soma ${brl(esperado / 100)} (antes do desconto). Confira os valores antes de salvar.`
-      : null;
+    const aviso =
+      somaCentavos !== esperado
+        ? `Atenção: as linhas do laudo somam ${brl(somaCentavos / 100)}, mas a OS soma ${brl(
+            esperado / 100,
+          )} (antes do desconto). Confira os valores antes de salvar.`
+        : null;
 
     return json({ html, aviso });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Erro ao formatar o laudo." }, 502);
+    return json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : e.tipo === "problema"
+              ? "Erro ao formatar o problema relatado."
+              : "Erro ao formatar o laudo.",
+      },
+      502,
+    );
   }
 });

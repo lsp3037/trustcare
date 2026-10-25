@@ -45,13 +45,18 @@ interface TechnicalReportSectionProps {
   /** Formata as anotações do laudo no padrão Trust Care (via IA). */
   onFormatReport?: () => void;
   formattingReport?: boolean;
+  /** Formata o problema relatado no mesmo padrão do laudo (via IA). */
+  onFormatProblem?: () => void;
+  formattingProblem?: boolean;
   formatDisabled?: boolean;
 }
 
 export function TechnicalReportSection({
   reportedProblem, setReportedProblem,
   technicalReport, setTechnicalReport,
-  onFormatReport, formattingReport = false, formatDisabled = false
+  onFormatReport, formattingReport = false,
+  onFormatProblem, formattingProblem = false,
+  formatDisabled = false
 }: TechnicalReportSectionProps) {
   const toast = useToast();
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
@@ -98,8 +103,28 @@ export function TechnicalReportSection({
   };
 
   const handleFormatProblem = () => {
-    if (!reportedProblem.trim()) return;
+    if (!reportedProblem.trim()) {
+      toast.warning('Escreva o problema relatado antes de formatar.');
+      return;
+    }
+
+    // Com IA disponível, o pai faz a chamada (mesma Edge Function do laudo).
+    if (onFormatProblem) {
+      onFormatProblem();
+      return;
+    }
+
+    // Fallback local: usado em telas/ambientes sem a função publicada.
     const formatted = formatReportedProblem(reportedProblem);
+    if (!formatted) {
+      toast.warning('Não há texto para formatar neste campo.');
+      return;
+    }
+    if (formatted === reportedProblem) {
+      toast.info('O problema relatado já está formatado.');
+      return;
+    }
+
     setReportedProblem(formatted);
     toast.success('Problema relatado formatado');
   };
@@ -120,9 +145,11 @@ export function TechnicalReportSection({
               size="sm"
               icon={<Wand2 className="w-3.5 h-3.5 text-text-subtle" />}
               onClick={handleFormatProblem}
+              loading={formattingProblem}
+              disabled={formatDisabled || formattingProblem}
               className="text-caption h-8 px-2.5 text-text-muted hover:text-text"
             >
-              Formatar
+              {formattingProblem ? 'Formatando...' : 'Formatar'}
             </Button>
           </div>
           <ReactQuill

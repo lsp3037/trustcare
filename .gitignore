@@ -47,3 +47,6 @@ next-env.d.ts
 .ag-kit-backups/
 __pycache__/
 *.pyc
+
+# prévias locais (referência visual, não versionar)
+/preview.html

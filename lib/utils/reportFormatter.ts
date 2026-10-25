@@ -210,46 +210,66 @@ export function formatToTechnicalReport(rawContent: string): string {
 
 /**
  * Formata o texto simples de problema relatado em tópicos limpos caso o usuário deseje.
+ *
+ * Texto corrido costuma vir como um único parágrafo ("não liga. faz barulho.
+ * esquenta"). Aqui ele é quebrado em sintomas e vira lista — antes a função
+ * devolvia o mesmo `<p>` de entrada e o botão "Formatar" parecia não fazer nada.
  */
 export function formatReportedProblem(rawContent: string): string {
   const text = cleanRawText(rawContent);
   if (!text) return '';
 
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  if (lines.length <= 1 && !lines[0]?.includes('•') && !lines[0]?.includes('-')) {
-    return `<p>${escapeHtml(text)}</p>`;
-  }
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) return '';
 
-  let html = '';
-  let inList = false;
+  const entryPattern = /^([•\-*]|\d+[.)])\s*/;
 
-  for (const line of lines) {
-    const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*');
-    if (isBullet) {
-      if (!inList) {
-        html += '<ul>';
-        inList = true;
-      }
-      const item = line.replace(/^[•\-\*]\s*/, '').trim();
-      html += `<li>${escapeHtml(item)}</li>`;
+  // Uma linha só, sem marcadores, é texto corrido: separa por frase.
+  // Várias linhas ou marcadores explícitos são intenção do usuário: respeita.
+  const entries =
+    lines.length === 1 && !entryPattern.test(lines[0])
+      ? splitIntoSymptoms(lines[0])
+      : lines.map((line) => line.replace(entryPattern, '').trim()).filter(Boolean);
+
+  if (entries.length === 0) return '';
+
+  const html: string[] = [];
+  const pendingItems: string[] = [];
+
+  const flushList = () => {
+    if (pendingItems.length === 0) return;
+    html.push(`<ul>${pendingItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
+    pendingItems.length = 0;
+  };
+
+  for (const entry of entries) {
+    const formatted = capitalizeFirst(entry);
+
+    if (/^(sub)?total:/i.test(formatted)) {
+      flushList();
+      html.push(`<p><strong>${escapeHtml(formatted)}</strong></p>`);
+    } else if (entries.length > 1) {
+      pendingItems.push(formatted);
     } else {
-      if (inList) {
-        html += '</ul>';
-        inList = false;
-      }
-      if (/total:/i.test(line)) {
-        html += `<p><strong>${escapeHtml(line)}</strong></p>`;
-      } else {
-        html += `<p>${escapeHtml(line)}</p>`;
-      }
+      html.push(`<p>${escapeHtml(formatted)}</p>`);
     }
   }
 
-  if (inList) {
-    html += '</ul>';
-  }
+  flushList();
+  return html.join('');
+}
 
-  return html;
+/** Quebra texto corrido em sintomas. Não separa abreviações como "S/N." nem decimais. */
+function splitIntoSymptoms(line: string): string[] {
+  return line
+    .split(/(?<=[.!?;])\s+/)
+    .map((part) => part.trim().replace(/[.;]+$/, ''))
+    .filter((part) => part.length > 0);
+}
+
+function capitalizeFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function escapeHtml(str: string): string {
