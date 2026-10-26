@@ -59,7 +59,14 @@ export function OrderDetailsDataFetcher({ id }: { id: string }) {
           initialSelectedProducts = itemsData.map((item: any) => ({
             id: item.id,
             product_id: item.product_id,
-            name: item.products_inventory?.name || 'Produto do Estoque',
+            name: item.products_inventory?.name || item.custom_name || 'Peça sob Encomenda',
+            custom_name: item.custom_name,
+            unit_cost: Number(item.unit_cost) || 0,
+            part_status: item.part_status || (item.product_id ? 'em_estoque' : 'pendente'),
+            supplier_link: item.supplier_link || '',
+            tracking_code: item.tracking_code || '',
+            actual_cost: item.actual_cost ? Number(item.actual_cost) : null,
+            is_custom: !item.product_id,
             quantity: item.quantity,
             unit_price: item.unit_price,
           }));

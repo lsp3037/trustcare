@@ -48,6 +48,7 @@ interface DateRange { from: Date; to: Date; }
 interface OrderItem {
   quantity: number;
   unit_cost?: number | null;
+  actual_cost?: number | null;
   products_inventory: {
     cost_price: number;
   } | {
@@ -143,6 +144,9 @@ function projectExpenses(expenses: Expense[], from: Date, to: Date): Expense[] {
 function calculateOrderPartsCost(order: Order): number {
   if (!order.service_order_items) return 0;
   return order.service_order_items.reduce((sum, item) => {
+    if (typeof item.actual_cost === 'number' && !isNaN(item.actual_cost) && item.actual_cost > 0) {
+      return sum + (item.quantity * item.actual_cost);
+    }
     if (typeof item.unit_cost === 'number' && !isNaN(item.unit_cost)) {
       return sum + (item.quantity * item.unit_cost);
     }
@@ -324,7 +328,7 @@ export default function FinanceiroPage() {
           .select(`
             id, codigo_os, total_value, status, created_at, payment_date, payment_method, pago,
             clients(name),
-            service_order_items(quantity, unit_cost, products_inventory(cost_price))
+            service_order_items(quantity, unit_cost, actual_cost, products_inventory(cost_price))
           `)
           .order('created_at', { ascending: false }),
         supabase

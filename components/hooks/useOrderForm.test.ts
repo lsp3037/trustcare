@@ -104,4 +104,63 @@ describe('useOrderForm Hook', () => {
 
     expect(result.current.technicianId).toBe('tech-1');
   });
+
+  it('deve adicionar peça sob encomenda e recalcular os totais corretamente', () => {
+    const { result } = renderHook(() => useOrderForm({ clients: mockClients, onSuccess: mockOnSuccess }));
+
+    act(() => {
+      result.current.setCustomPartName('Tela OLED Dell XPS 13');
+      result.current.setCustomPartQty('2');
+      result.current.setCustomPartCost('350.00');
+      result.current.setCustomPartPrice('600.00');
+      result.current.setCustomPartLink('https://fornecedor.com/tela-dell');
+    });
+
+    act(() => {
+      result.current.handleAddCustomProduct();
+    });
+
+    expect(result.current.selectedProducts).toHaveLength(1);
+    const added = result.current.selectedProducts[0];
+    expect(added.name).toBe('Tela OLED Dell XPS 13');
+    expect(added.quantity).toBe(2);
+    expect(added.unit_price).toBe(600);
+    expect(added.unit_cost).toBe(350);
+    expect(added.is_custom).toBe(true);
+    expect(added.supplier_link).toBe('https://fornecedor.com/tela-dell');
+    expect(added.product_id).toBeNull();
+    expect(result.current.subtotalValue).toBe('1200.00');
+    expect(result.current.totalValue).toBe('1200.00');
+
+    // Remover a peça sob encomenda
+    act(() => {
+      result.current.handleRemoveProduct(added);
+    });
+    expect(result.current.selectedProducts).toHaveLength(0);
+    expect(result.current.totalValue).toBe('0.00');
+  });
+
+  it('deve validar nome e preço ao tentar adicionar peça sob encomenda vazia ou sem valor', () => {
+    const { result } = renderHook(() => useOrderForm({ clients: mockClients, onSuccess: mockOnSuccess }));
+
+    act(() => {
+      result.current.setCustomPartName('');
+      result.current.handleAddCustomProduct();
+    });
+
+    expect(result.current.productAddError).toBe('Informe a descrição/nome da peça sob demanda.');
+    expect(result.current.selectedProducts).toHaveLength(0);
+
+    act(() => {
+      result.current.setCustomPartName('Bateria Externa');
+      result.current.setCustomPartPrice('0');
+    });
+
+    act(() => {
+      result.current.handleAddCustomProduct();
+    });
+
+    expect(result.current.productAddError).toBe('O valor de venda da peça sob demanda deve ser maior que zero.');
+    expect(result.current.selectedProducts).toHaveLength(0);
+  });
 });

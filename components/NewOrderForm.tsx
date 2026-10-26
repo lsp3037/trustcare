@@ -118,6 +118,17 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           handleAddProduct={orderForm.handleAddProduct}
           selectedProducts={orderForm.selectedProducts}
           handleRemoveProduct={orderForm.handleRemoveProduct}
+          customPartName={orderForm.customPartName}
+          setCustomPartName={orderForm.setCustomPartName}
+          customPartQty={orderForm.customPartQty}
+          setCustomPartQty={orderForm.setCustomPartQty}
+          customPartPrice={orderForm.customPartPrice}
+          setCustomPartPrice={orderForm.setCustomPartPrice}
+          customPartCost={orderForm.customPartCost}
+          setCustomPartCost={orderForm.setCustomPartCost}
+          customPartLink={orderForm.customPartLink}
+          setCustomPartLink={orderForm.setCustomPartLink}
+          handleAddCustomProduct={orderForm.handleAddCustomProduct}
           availableServices={orderForm.availableServices}
           currentServiceId={orderForm.currentServiceId}
           handleServiceSelect={orderForm.handleServiceSelect}

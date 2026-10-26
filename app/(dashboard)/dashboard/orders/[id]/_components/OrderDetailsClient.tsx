@@ -101,6 +101,13 @@ export function OrderDetailsClient({
   const [currentProductQty, setCurrentProductQty] = useState('1');
   const [productAddError, setProductAddError] = useState('');
 
+  // Peças sob encomenda / avulsas
+  const [customPartName, setCustomPartName] = useState('');
+  const [customPartQty, setCustomPartQty] = useState('1');
+  const [customPartPrice, setCustomPartPrice] = useState('');
+  const [customPartCost, setCustomPartCost] = useState('');
+  const [customPartLink, setCustomPartLink] = useState('');
+
   const [selectedServices, setSelectedServices] = useState<any[]>(initialSelectedServices || []);
   const [currentServiceId, setCurrentServiceId] = useState('');
   const [currentServicePrice, setCurrentServicePrice] = useState('0.00');
@@ -166,8 +173,57 @@ export function OrderDetailsClient({
     setCurrentProductQty('1');
   };
 
-  const handleRemoveProduct = (prodId: string) => {
-    setSelectedProducts(selectedProducts.filter((p) => p.product_id !== prodId));
+  const handleAddCustomProduct = () => {
+    if (!customPartName.trim()) {
+      setProductAddError('Informe a descrição/nome da peça sob encomenda.');
+      return;
+    }
+    const qty = parseInt(customPartQty) || 1;
+    const price = parseFloat(customPartPrice) || 0;
+    const cost = parseFloat(customPartCost) || 0;
+
+    if (price <= 0) {
+      setProductAddError('O valor de venda da peça sob encomenda deve ser maior que zero.');
+      return;
+    }
+
+    setProductAddError('');
+    setSelectedProducts((prev) => [
+      ...prev,
+      {
+        id: `custom-${Date.now()}`,
+        product_id: null,
+        name: customPartName.trim(),
+        custom_name: customPartName.trim(),
+        quantity: qty,
+        unit_price: price,
+        unit_cost: cost,
+        part_status: 'pendente',
+        supplier_link: customPartLink.trim() || null,
+        is_custom: true,
+      }
+    ]);
+
+    setCustomPartName('');
+    setCustomPartPrice('');
+    setCustomPartCost('');
+    setCustomPartLink('');
+    setCustomPartQty('1');
+    toast.success('Peça sob encomenda adicionada ao orçamento!');
+  };
+
+  const handleRemoveProduct = (itemOrId: any) => {
+    if (!itemOrId) return;
+    const idToRemove = typeof itemOrId === 'string' ? itemOrId : itemOrId.id;
+    const prodIdToRemove = typeof itemOrId === 'object' ? itemOrId.product_id : itemOrId;
+
+    setSelectedProducts((prev) =>
+      prev.filter((p) => {
+        if (p.id === idToRemove) return false;
+        if (prodIdToRemove && p.product_id === prodIdToRemove) return false;
+        return true;
+      })
+    );
   };
 
   const handleServiceSelect = (serviceId: string) => {
@@ -387,9 +443,15 @@ export function OrderDetailsClient({
     setSuccessMsg('');
     try {
       const itemsPayload = selectedProducts.map((p) => ({
-        product_id: p.product_id,
+        product_id: p.product_id || null,
+        custom_name: p.custom_name || (!p.product_id ? p.name : null),
         quantity: p.quantity,
         unit_price: p.unit_price,
+        unit_cost: p.unit_cost || 0,
+        part_status: p.part_status || (p.product_id ? 'em_estoque' : 'pendente'),
+        supplier_link: p.supplier_link || null,
+        tracking_code: p.tracking_code || null,
+        actual_cost: p.actual_cost || null,
       }));
 
       const servicesPayload = selectedServices.map((s) => ({
@@ -730,7 +792,14 @@ export function OrderDetailsClient({
             <FinancialSection 
               serviceValue={serviceValue} setServiceValue={setServiceValue} discount={discount} setDiscount={setDiscount} inventory={inventory}
               currentProductId={currentProductId} setCurrentProductId={setCurrentProductId} currentProductQty={currentProductQty} setCurrentProductQty={setCurrentProductQty} handleAddProduct={handleAddProduct}
-              selectedProducts={selectedProducts} handleRemoveProduct={handleRemoveProduct} availableServices={availableServices} currentServiceId={currentServiceId} handleServiceSelect={handleServiceSelect}
+              selectedProducts={selectedProducts} handleRemoveProduct={handleRemoveProduct}
+              customPartName={customPartName} setCustomPartName={setCustomPartName}
+              customPartQty={customPartQty} setCustomPartQty={setCustomPartQty}
+              customPartPrice={customPartPrice} setCustomPartPrice={setCustomPartPrice}
+              customPartCost={customPartCost} setCustomPartCost={setCustomPartCost}
+              customPartLink={customPartLink} setCustomPartLink={setCustomPartLink}
+              handleAddCustomProduct={handleAddCustomProduct}
+              availableServices={availableServices} currentServiceId={currentServiceId} handleServiceSelect={handleServiceSelect}
               currentServiceQty={currentServiceQty} setCurrentServiceQty={setCurrentServiceQty} currentServicePrice={currentServicePrice} setCurrentServicePrice={setCurrentServicePrice} handleAddService={handleAddService}
               selectedServices={selectedServices} handleRemoveService={handleRemoveService} totalValue={totalValue}
               productAddError={productAddError} setProductAddError={setProductAddError}

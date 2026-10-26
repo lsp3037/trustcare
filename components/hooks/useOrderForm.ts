@@ -111,6 +111,13 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [currentProductQty, setCurrentProductQty] = useState('1');
   const [productAddError, setProductAddError] = useState('');
 
+  // ── Peças Sob Demanda / Sob Encomenda ─────────────────────────────────────────
+  const [customPartName, setCustomPartName] = useState('');
+  const [customPartQty, setCustomPartQty] = useState('1');
+  const [customPartPrice, setCustomPartPrice] = useState('');
+  const [customPartCost, setCustomPartCost] = useState('');
+  const [customPartLink, setCustomPartLink] = useState('');
+
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [currentServiceId, setCurrentServiceId] = useState('');
   const [currentServiceQty, setCurrentServiceQty] = useState('1');
@@ -547,8 +554,53 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     setCurrentProductQty('1');
   };
 
-  const handleRemoveProduct = (prodId: string) => {
-    setSelectedProducts(selectedProducts.filter((p) => p.product_id !== prodId));
+  const handleAddCustomProduct = () => {
+    if (!customPartName.trim()) {
+      setProductAddError('Informe a descrição/nome da peça sob demanda.');
+      return;
+    }
+    const qty = parseInt(customPartQty) || 1;
+    const price = parseFloat(customPartPrice) || 0;
+    const cost = parseFloat(customPartCost) || 0;
+
+    if (price <= 0) {
+      setProductAddError('O valor de venda da peça sob demanda deve ser maior que zero.');
+      return;
+    }
+
+    setProductAddError('');
+    setSelectedProducts((prev) => [
+      ...prev,
+      {
+        id: `custom-${Date.now()}`,
+        product_id: null,
+        name: customPartName.trim(),
+        custom_name: customPartName.trim(),
+        quantity: qty,
+        unit_price: price,
+        unit_cost: cost,
+        part_status: 'pendente',
+        supplier_link: customPartLink.trim() || null,
+        is_custom: true,
+      },
+    ]);
+
+    setCustomPartName('');
+    setCustomPartPrice('');
+    setCustomPartCost('');
+    setCustomPartLink('');
+    setCustomPartQty('1');
+  };
+
+  const handleRemoveProduct = (target: any) => {
+    const idToRemove = typeof target === 'string' ? target : target?.id;
+    setSelectedProducts((prev) =>
+      prev.filter((p) => {
+        if (p.id && p.id === idToRemove) return false;
+        if (p.product_id && p.product_id === idToRemove) return false;
+        return true;
+      })
+    );
   };
 
   const handleServiceSelect = (serviceId: string) => {
@@ -608,9 +660,15 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       if (!user) throw new Error('Sua sessão expirou. Entre novamente para abrir a OS.');
 
       const itemsPayload = selectedProducts.map((item) => ({
-        product_id: item.product_id,
+        product_id: item.product_id || null,
+        custom_name: item.custom_name || (!item.product_id ? item.name : null),
         quantity: item.quantity,
         unit_price: item.unit_price,
+        unit_cost: item.unit_cost || 0,
+        part_status: item.part_status || (item.product_id ? 'em_estoque' : 'pendente'),
+        supplier_link: item.supplier_link || null,
+        tracking_code: item.tracking_code || null,
+        actual_cost: item.actual_cost || null,
       }));
 
       const servicesPayload = selectedServices.map((item) => ({
@@ -732,6 +790,12 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     currentProductId, setCurrentProductId,
     currentProductQty, setCurrentProductQty,
     productAddError, setProductAddError,
+    customPartName, setCustomPartName,
+    customPartQty, setCustomPartQty,
+    customPartPrice, setCustomPartPrice,
+    customPartCost, setCustomPartCost,
+    customPartLink, setCustomPartLink,
+    handleAddCustomProduct,
     selectedServices,
     currentServiceId,
     currentServiceQty, setCurrentServiceQty,

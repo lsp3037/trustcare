@@ -168,9 +168,17 @@ CREATE TABLE public.service_order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
     service_order_id UUID NOT NULL REFERENCES public.service_orders(id) ON DELETE CASCADE,
-    product_id UUID NOT NULL REFERENCES public.products_inventory(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES public.products_inventory(id) ON DELETE CASCADE,
+    custom_name TEXT,
+    supplier_link TEXT,
+    tracking_code TEXT,
+    part_status TEXT NOT NULL DEFAULT 'em_estoque' CHECK (part_status IN ('em_estoque', 'pendente', 'a_comprar', 'pedido_realizado', 'recebido')),
     quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    unit_price NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (unit_price >= 0)
+    unit_price NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (unit_price >= 0),
+    unit_cost NUMERIC(10,2) NOT NULL DEFAULT 0.00 CHECK (unit_cost >= 0),
+    actual_cost NUMERIC(10,2) CHECK (actual_cost >= 0),
+    released BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT service_order_items_product_or_custom_check CHECK (product_id IS NOT NULL OR (custom_name IS NOT NULL AND length(trim(custom_name)) > 0))
 );
 
 -- Habilitar RLS para Itens de OS

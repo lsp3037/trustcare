@@ -46,10 +46,16 @@ export interface CatalogService {
 }
 
 export interface SelectedProduct {
-  product_id: string;
+  id?: string;
+  product_id?: string | null;
   name: string;
+  custom_name?: string | null;
   quantity: number;
   unit_price: number;
+  unit_cost?: number;
+  part_status?: string;
+  supplier_link?: string | null;
+  is_custom?: boolean;
 }
 
 export interface SelectedService {

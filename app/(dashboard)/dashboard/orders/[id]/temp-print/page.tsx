@@ -109,7 +109,7 @@ export default function TempPrintPreviewPage() {
 
           if (itemsData) {
             setSelectedProducts(itemsData.map((item: any) => ({
-              name: item.products_inventory?.name || 'Peça do Estoque',
+              name: item.products_inventory?.name || item.custom_name || 'Peça sob Encomenda',
               quantity: item.quantity,
               unit_price: item.unit_price,
             })));

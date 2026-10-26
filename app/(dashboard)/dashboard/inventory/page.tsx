@@ -1,8 +1,9 @@
 'use client';
-import { Package, Plus, AlertCircle, Boxes, Trash2, Download } from 'lucide-react';
+import { Package, Plus, AlertCircle, Boxes, Trash2, Download, ShoppingBag } from 'lucide-react';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PendingPartsTab } from './PendingPartsTab';
 
 import {
   Badge,
@@ -65,11 +66,18 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
 
+  const [activeTab, setActiveTab] = useState<'inventory' | 'pending_orders'>('inventory');
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const filterParam = new URLSearchParams(window.location.search).get('filter');
+      const searchParams = new URLSearchParams(window.location.search);
+      const filterParam = searchParams.get('filter');
+      const tabParam = searchParams.get('tab');
       if (filterParam === 'low_stock') {
         setShowLowStockOnly(true);
+      }
+      if (tabParam === 'encomendas' || tabParam === 'pending' || tabParam === 'compras') {
+        setActiveTab('pending_orders');
       }
     }
   }, []);
@@ -462,13 +470,17 @@ export default function InventoryPage() {
   const isRamOrSsd = category === 'Memória RAM' || category === 'SSD';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        icon={<Package />}
-        title="Estoque de Produtos"
-        description="Gerencie peças de reposição e componentes da assistência."
+        icon={activeTab === 'inventory' ? <Package /> : <ShoppingBag />}
+        title={activeTab === 'inventory' ? 'Estoque de Produtos' : 'Peças Sob Encomenda (Para Pedido)'}
+        description={
+          activeTab === 'inventory'
+            ? 'Gerencie peças de reposição e componentes da assistência.'
+            : 'Acompanhe peças cotadas em Ordens de Serviço, pedidos ao fornecedor e rastreios.'
+        }
         actions={
-          !isCreating && (
+          activeTab === 'inventory' && !isCreating && (
             <>
               <Button
                 variant="secondary"
@@ -491,7 +503,32 @@ export default function InventoryPage() {
         }
       />
 
-      {isCreating ? (
+      <div className="flex items-center justify-between gap-4 border-b border-border pb-3">
+        <SegmentedControl
+          label="Visualização do Estoque"
+          value={activeTab}
+          onChange={(tab) => {
+            setActiveTab(tab);
+            setIsCreating(false);
+          }}
+          options={[
+            {
+              value: 'inventory',
+              label: 'Estoque Físico',
+              icon: <Boxes className="w-4 h-4" />,
+            },
+            {
+              value: 'pending_orders',
+              label: 'Peças Sob Encomenda / A Pedir',
+              icon: <ShoppingBag className="w-4 h-4" />,
+            },
+          ]}
+        />
+      </div>
+
+      {activeTab === 'pending_orders' ? (
+        <PendingPartsTab />
+      ) : isCreating ? (
         <Card padding="lg" className="max-w-2xl mx-auto">
           <div className="flex justify-between items-start gap-4 mb-6 pb-4 border-b border-border">
             <div>
