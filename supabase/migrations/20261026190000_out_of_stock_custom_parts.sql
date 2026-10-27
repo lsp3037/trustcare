@@ -786,3 +786,10 @@ GRANT EXECUTE ON FUNCTION public.save_order(jsonb, jsonb, jsonb) TO authenticate
 GRANT EXECUTE ON FUNCTION public.approve_budget_by_client(uuid, text, text, text, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_public_budget_details(uuid) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.update_order_item_part_status(uuid, text, text, numeric, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.save_order(jsonb, jsonb, jsonb) TO service_role;
+GRANT EXECUTE ON FUNCTION public.approve_budget_by_client(uuid, text, text, text, text, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_public_budget_details(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.update_order_item_part_status(uuid, text, text, numeric, text) TO service_role;
+
+-- 10. Recarregar cache de schema do PostgREST
+NOTIFY pgrst, 'reload schema';
