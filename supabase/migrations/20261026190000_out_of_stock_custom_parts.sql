@@ -31,7 +31,11 @@ CREATE INDEX IF NOT EXISTS idx_service_order_items_part_status
 
 -- 2. Atualizar trigger de movimentação de estoque para ignorar peças sem product_id
 CREATE OR REPLACE FUNCTION public.handle_inventory_change()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_prod_company_id UUID;
   v_current_stock INT;
@@ -83,11 +87,15 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$;
 
 -- 3. Atualizar trigger de snapshot padrão para não buscar produto caso product_id seja NULL
 CREATE OR REPLACE FUNCTION public.set_service_order_item_defaults()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_prod RECORD;
 BEGIN
@@ -116,11 +124,15 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$;
 
 -- 4. Atualizar trigger de cancelamento para ignorar itens sem product_id
 CREATE OR REPLACE FUNCTION public.handle_os_cancel_restock()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_item RECORD;
   v_prod RECORD;
@@ -174,7 +186,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$;
 
 -- 5. Atualizar RPC save_order para suportar peças de estoque e peças sob encomenda
 CREATE OR REPLACE FUNCTION public.save_order(
@@ -182,7 +194,11 @@ CREATE OR REPLACE FUNCTION public.save_order(
   items_data JSONB DEFAULT '[]'::jsonb,
   services_data JSONB DEFAULT '[]'::jsonb
 )
-RETURNS JSONB AS $$
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_company_id UUID;
   v_order_id UUID;
@@ -457,11 +473,15 @@ BEGIN
   SELECT * INTO v_saved_order FROM public.service_orders WHERE id = v_order_id;
   RETURN to_jsonb(v_saved_order);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$;
 
 -- 6. Atualizar get_public_budget_details para incluir custom_name nas peças públicas
 CREATE OR REPLACE FUNCTION public.get_public_budget_details(p_order_id UUID)
-RETURNS JSONB AS $$
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
     v_order public.service_orders%ROWTYPE;
     v_result JSONB;
@@ -532,7 +552,7 @@ BEGIN
 
     RETURN v_result;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$;
 
 -- 7. Atualizar approve_budget_by_client para direcionar para 'Aguardando Peças' se houver peças sob encomenda
 CREATE OR REPLACE FUNCTION public.approve_budget_by_client(
