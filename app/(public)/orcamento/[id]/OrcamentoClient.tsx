@@ -240,19 +240,6 @@ export default function PublicOrderBudgetPage() {
       if (res.ok && data?.success) {
         isSuccess = true;
         approvedIp = data.clientIp || '127.0.0.1';
-      } else if (res.status === 404) {
-        // Fallback de compatibilidade para mocks de testes unitários/E2E
-        const { data: rpcRes, error: rpcErr } = await supabase.rpc('approve_budget_by_client', {
-          order_id: id,
-          client_name: clientName.trim(),
-          signature_base64: signatureBase64,
-          client_ip: '203.0.113.10',
-        });
-        if (rpcErr) throw rpcErr;
-        if (rpcRes) {
-          isSuccess = true;
-          approvedIp = '203.0.113.10';
-        }
       } else {
         setErrorMsg(data?.error || 'Não foi possível aprovar este orçamento. Verifique se ele ainda está pendente.');
         return;

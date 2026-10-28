@@ -1,18 +1,36 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 /**
+ * Validação segura em tempo constante do token do cron (fail-closed).
+ */
+function verifyCronSecret(authHeader: string | null): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || !authHeader) return false;
+
+  const expected = `Bearer ${cronSecret}`;
+  const headerBuffer = Buffer.from(authHeader);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (headerBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(headerBuffer, expectedBuffer);
+}
+
+/**
  * GET /api/cron/expire-trials
- * Job periódico para expirar trials vencidos automaticamente (F-08).
- * Autenticado via cabeçalho Authorization: Bearer <CRON_SECRET>.
+ * Job periódico para expirar trials vencidos automaticamente (F-08 / Security Audit).
+ * Autenticado obrigatoriamente via cabeçalho Authorization: Bearer <CRON_SECRET>.
  */
 export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
 
-    // Se CRON_SECRET estiver configurada em produção, exige validação estrita
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Validação fail-closed: exige CRON_SECRET configurada e token idêntico em tempo constante
+    if (!verifyCronSecret(authHeader)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
