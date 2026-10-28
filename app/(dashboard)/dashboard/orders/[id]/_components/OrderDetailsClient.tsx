@@ -212,6 +212,27 @@ export function OrderDetailsClient({
     toast.success('Peça sob encomenda adicionada ao orçamento!');
   };
 
+  const handleUpdateCustomProduct = (updatedItem: any) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) => {
+        const matches = (p.id && p.id === updatedItem.id) || (p.custom_name && p.custom_name === updatedItem.custom_name && p.is_custom);
+        if (matches) {
+          return {
+            ...p,
+            name: updatedItem.name,
+            custom_name: updatedItem.name,
+            quantity: updatedItem.quantity,
+            unit_price: updatedItem.unit_price,
+            unit_cost: updatedItem.unit_cost,
+            supplier_link: updatedItem.supplier_link,
+          };
+        }
+        return p;
+      })
+    );
+    toast.success('Peça sob encomenda atualizada!');
+  };
+
   const handleRemoveProduct = (itemOrId: any) => {
     if (!itemOrId) return;
     const idToRemove = typeof itemOrId === 'string' ? itemOrId : itemOrId.id;
@@ -793,6 +814,7 @@ export function OrderDetailsClient({
               serviceValue={serviceValue} setServiceValue={setServiceValue} discount={discount} setDiscount={setDiscount} inventory={inventory}
               currentProductId={currentProductId} setCurrentProductId={setCurrentProductId} currentProductQty={currentProductQty} setCurrentProductQty={setCurrentProductQty} handleAddProduct={handleAddProduct}
               selectedProducts={selectedProducts} handleRemoveProduct={handleRemoveProduct}
+              handleUpdateCustomProduct={handleUpdateCustomProduct}
               customPartName={customPartName} setCustomPartName={setCustomPartName}
               customPartQty={customPartQty} setCustomPartQty={setCustomPartQty}
               customPartPrice={customPartPrice} setCustomPartPrice={setCustomPartPrice}

@@ -118,6 +118,7 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           handleAddProduct={orderForm.handleAddProduct}
           selectedProducts={orderForm.selectedProducts}
           handleRemoveProduct={orderForm.handleRemoveProduct}
+          handleUpdateCustomProduct={orderForm.handleUpdateCustomProduct}
           customPartName={orderForm.customPartName}
           setCustomPartName={orderForm.setCustomPartName}
           customPartQty={orderForm.customPartQty}
@@ -180,12 +181,8 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         newClientEmail={orderForm.newClientEmail}
         setNewClientEmail={orderForm.setNewClientEmail}
         newEqName={orderForm.newEqName}
-        setNewEqName={orderForm.setNewEqName}
-        newEqBrand={orderForm.newEqBrand}
         setNewEqBrand={orderForm.setNewEqBrand}
         newEqModel={orderForm.newEqModel}
-        setNewEqModel={orderForm.setNewEqModel}
-        newEqSerial={orderForm.newEqSerial}
         setNewEqSerial={orderForm.setNewEqSerial}
         savingClient={orderForm.savingClient}
         handleSaveClient={orderForm.handleSaveClient}
@@ -205,16 +202,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
         newProdCapacity={orderForm.newProdCapacity}
         setNewProdCapacity={orderForm.setNewProdCapacity}
         newProdSsdTech={orderForm.newProdSsdTech}
-        setNewProdSsdTech={orderForm.setNewProdSsdTech}
-        newProdSsdGb={orderForm.newProdSsdGb}
         setNewProdSsdGb={orderForm.setNewProdSsdGb}
         newProdRamApp={orderForm.newProdRamApp}
-        setNewProdRamApp={orderForm.setNewProdRamApp}
-        newProdRamTech={orderForm.newProdRamTech}
         setNewProdRamTech={orderForm.setNewProdRamTech}
         newProdRamSpeed={orderForm.newProdRamSpeed}
-        setNewProdRamSpeed={orderForm.setNewProdRamSpeed}
-        newProdRamGb={orderForm.newProdRamGb}
         setNewProdRamGb={orderForm.setNewProdRamGb}
         newProdSalePrice={orderForm.newProdSalePrice}
         setNewProdSalePrice={orderForm.setNewProdSalePrice}

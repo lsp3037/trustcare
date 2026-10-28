@@ -592,6 +592,26 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     setCustomPartQty('1');
   };
 
+  const handleUpdateCustomProduct = (updatedItem: any) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) => {
+        const matches = (p.id && p.id === updatedItem.id) || (p.custom_name && p.custom_name === updatedItem.custom_name && p.is_custom);
+        if (matches) {
+          return {
+            ...p,
+            name: updatedItem.name,
+            custom_name: updatedItem.name,
+            quantity: updatedItem.quantity,
+            unit_price: updatedItem.unit_price,
+            unit_cost: updatedItem.unit_cost,
+            supplier_link: updatedItem.supplier_link,
+          };
+        }
+        return p;
+      })
+    );
+  };
+
   const handleRemoveProduct = (target: any) => {
     const idToRemove = typeof target === 'string' ? target : target?.id;
     setSelectedProducts((prev) =>
@@ -796,6 +816,7 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     customPartCost, setCustomPartCost,
     customPartLink, setCustomPartLink,
     handleAddCustomProduct,
+    handleUpdateCustomProduct,
     selectedServices,
     currentServiceId,
     currentServiceQty, setCurrentServiceQty,

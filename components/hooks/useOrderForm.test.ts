@@ -132,9 +132,31 @@ describe('useOrderForm Hook', () => {
     expect(result.current.subtotalValue).toBe('1200.00');
     expect(result.current.totalValue).toBe('1200.00');
 
+    // Editar a peça sob encomenda
+    act(() => {
+      result.current.handleUpdateCustomProduct({
+        ...added,
+        name: 'Tela OLED Dell XPS 13 Plus 4K',
+        quantity: 1,
+        unit_price: 750,
+        unit_cost: 400,
+        supplier_link: 'https://fornecedor.com/tela-dell-plus',
+      });
+    });
+
+    expect(result.current.selectedProducts).toHaveLength(1);
+    const updated = result.current.selectedProducts[0];
+    expect(updated.name).toBe('Tela OLED Dell XPS 13 Plus 4K');
+    expect(updated.quantity).toBe(1);
+    expect(updated.unit_price).toBe(750);
+    expect(updated.unit_cost).toBe(400);
+    expect(updated.supplier_link).toBe('https://fornecedor.com/tela-dell-plus');
+    expect(result.current.subtotalValue).toBe('750.00');
+    expect(result.current.totalValue).toBe('750.00');
+
     // Remover a peça sob encomenda
     act(() => {
-      result.current.handleRemoveProduct(added);
+      result.current.handleRemoveProduct(updated);
     });
     expect(result.current.selectedProducts).toHaveLength(0);
     expect(result.current.totalValue).toBe('0.00');

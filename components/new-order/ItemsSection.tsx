@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Boxes, Wrench, Plus, Trash2, AlertTriangle, ShoppingBag, Package, ExternalLink } from 'lucide-react';
+import { Boxes, Wrench, Plus, Trash2, Pencil, AlertTriangle, ShoppingBag, Package, ExternalLink } from 'lucide-react';
 import {
   Card,
   CardTitle,
@@ -18,6 +18,7 @@ import {
   Badge,
   SegmentedControl,
 } from '@/components/ui';
+import { EditCustomPartModal } from '@/components/orders/EditCustomPartModal';
 import { cn } from '@/lib/utils';
 
 interface ItemsSectionProps {
@@ -32,6 +33,7 @@ interface ItemsSectionProps {
   handleAddProduct: () => void;
   selectedProducts: any[];
   handleRemoveProduct: (itemOrId: any) => void;
+  handleUpdateCustomProduct?: (item: any) => void;
   // Peça Sob Demanda / Sob Encomenda
   customPartName: string;
   setCustomPartName: (val: string) => void;
@@ -67,12 +69,14 @@ function ItemsTable({
   items,
   emptyLabel,
   onRemove,
+  onEdit,
   isParts = false,
 }: {
   itemLabel: string;
   items: any[];
   emptyLabel: string;
   onRemove: (itemOrId: any) => void;
+  onEdit?: (item: any) => void;
   isParts?: boolean;
 }) {
   if (items.length === 0) {
@@ -88,7 +92,7 @@ function ItemsTable({
           <TH align="center">Qtd.</TH>
           <TH align="right">Subtotal</TH>
           <TH align="center" className="pr-0">
-            <span className="sr-only">Remover</span>
+            <span className="sr-only">Ações</span>
           </TH>
         </TR>
       </THead>
@@ -135,14 +139,27 @@ function ItemsTable({
                 {brl(item.quantity * item.unit_price)}
               </TD>
               <TD align="center" className="pr-0">
-                <button
-                  type="button"
-                  onClick={() => onRemove(item.id || item.product_id || item.service_id || item)}
-                  aria-label={`Remover ${item.name}`}
-                  className="p-1 text-text-subtle hover:text-danger transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <Trash2 className="w-3.5 h-3.5" aria-hidden />
-                </button>
+                <div className="flex items-center justify-center gap-1">
+                  {isParts && isCustom && onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => onEdit(item)}
+                      aria-label={`Editar ${item.name}`}
+                      title="Editar peça sob encomenda"
+                      className="p-1 text-text-subtle hover:text-brand transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      <Pencil className="w-3.5 h-3.5" aria-hidden />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item.id || item.product_id || item.service_id || item)}
+                    aria-label={`Remover ${item.name}`}
+                    className="p-1 text-text-subtle hover:text-danger transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden />
+                  </button>
+                </div>
               </TD>
             </TR>
           );
@@ -161,6 +178,7 @@ export function ItemsSection({
   handleAddProduct,
   selectedProducts,
   handleRemoveProduct,
+  handleUpdateCustomProduct,
   customPartName, setCustomPartName,
   customPartQty, setCustomPartQty,
   customPartPrice, setCustomPartPrice,
@@ -177,6 +195,7 @@ export function ItemsSection({
   handleRemoveService,
 }: ItemsSectionProps) {
   const [partMode, setPartMode] = useState<'inventory' | 'custom'>('inventory');
+  const [editingCustomItem, setEditingCustomItem] = useState<any | null>(null);
 
   const selectedProduct = inventory.find((p) => p.id === currentProductId);
   const requestedQty = parseInt(currentProductQty) || 0;
@@ -396,6 +415,7 @@ export function ItemsSection({
           items={selectedProducts}
           emptyLabel="Nenhuma peça vinculada a esta ordem de serviço."
           onRemove={handleRemoveProduct}
+          onEdit={(item) => setEditingCustomItem(item)}
           isParts
         />
       </Card>
@@ -459,6 +479,18 @@ export function ItemsSection({
           onRemove={handleRemoveService}
         />
       </Card>
+
+      <EditCustomPartModal
+        open={Boolean(editingCustomItem)}
+        onClose={() => setEditingCustomItem(null)}
+        item={editingCustomItem}
+        onSave={(updated) => {
+          if (handleUpdateCustomProduct) {
+            handleUpdateCustomProduct(updated);
+          }
+          setEditingCustomItem(null);
+        }}
+      />
     </>
   );
 }

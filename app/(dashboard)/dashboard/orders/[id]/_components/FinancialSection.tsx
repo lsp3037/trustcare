@@ -1,7 +1,8 @@
 'use client';
 import React, { useState } from 'react';
-import { Boxes, Plus, Trash2, AlertTriangle, ExternalLink, ShoppingBag, Package } from 'lucide-react';
+import { Boxes, Plus, Trash2, Pencil, AlertTriangle, ExternalLink, ShoppingBag, Package } from 'lucide-react';
 import { Card, CardTitle, Button, Input, Select, Badge, SegmentedControl } from '@/components/ui';
+import { EditCustomPartModal } from '@/components/orders/EditCustomPartModal';
 import { cn } from '@/lib/utils';
 
 interface FinancialSectionProps {
@@ -17,6 +18,7 @@ interface FinancialSectionProps {
   handleAddProduct: () => void;
   selectedProducts: any[];
   handleRemoveProduct: (item: any) => void;
+  handleUpdateCustomProduct?: (item: any) => void;
   // Peça sob encomenda / avulsa
   customPartName: string;
   setCustomPartName: (v: string) => void;
@@ -70,6 +72,7 @@ function LineItemList({
   items,
   emptyLabel,
   onRemove,
+  onEdit,
   removeLabel,
   isPartsList = false,
 }: {
@@ -77,6 +80,7 @@ function LineItemList({
   items: any[];
   emptyLabel: string;
   onRemove: (item: any) => void;
+  onEdit?: (item: any) => void;
   removeLabel: string;
   isPartsList?: boolean;
 }) {
@@ -132,10 +136,21 @@ function LineItemList({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="text-small font-mono tabular-nums font-semibold text-text">
                     {brl(item.quantity * item.unit_price)}
                   </span>
+                  {isCustom && onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => onEdit(item)}
+                      aria-label={`Editar peça: ${item.name}`}
+                      title="Editar peça sob encomenda"
+                      className="p-1 text-text-subtle hover:text-brand transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      <Pencil className="w-3.5 h-3.5" aria-hidden />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onRemove(item)}
@@ -162,6 +177,7 @@ export function FinancialSection({
   currentProductQty, setCurrentProductQty,
   handleAddProduct,
   selectedProducts, handleRemoveProduct,
+  handleUpdateCustomProduct,
   customPartName, setCustomPartName,
   customPartQty, setCustomPartQty,
   customPartPrice, setCustomPartPrice,
@@ -178,6 +194,7 @@ export function FinancialSection({
   productAddError, setProductAddError
 }: FinancialSectionProps) {
   const [partSourceMode, setPartSourceMode] = useState<'inventory' | 'custom'>('inventory');
+  const [editingCustomItem, setEditingCustomItem] = useState<any | null>(null);
 
   const selectedProduct = inventory.find((p) => p.id === currentProductId);
   const requestedQty = parseInt(currentProductQty) || 0;
@@ -417,6 +434,7 @@ export function FinancialSection({
         items={selectedProducts}
         emptyLabel="Nenhuma peça vinculada"
         onRemove={(prod) => handleRemoveProduct(prod)}
+        onEdit={(prod) => setEditingCustomItem(prod)}
         removeLabel="Remover peça"
         isPartsList
       />
@@ -508,6 +526,18 @@ export function FinancialSection({
           </div>
         </dl>
       </div>
+
+      <EditCustomPartModal
+        open={Boolean(editingCustomItem)}
+        onClose={() => setEditingCustomItem(null)}
+        item={editingCustomItem}
+        onSave={(updated) => {
+          if (handleUpdateCustomProduct) {
+            handleUpdateCustomProduct(updated);
+          }
+          setEditingCustomItem(null);
+        }}
+      />
     </Card>
   );
 }
