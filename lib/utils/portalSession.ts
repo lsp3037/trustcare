@@ -1,11 +1,12 @@
 import crypto from 'crypto';
 
+// Fail-closed: a known static fallback would let anyone forge portal sessions.
 function getSecret(): string {
-  return (
-    process.env.PORTAL_SESSION_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    'trustcare-portal-session-internal-secret-key-32chars-min'
-  );
+  const secret = process.env.PORTAL_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) {
+    throw new Error('Portal session secret ausente: defina PORTAL_SESSION_SECRET no ambiente do servidor.');
+  }
+  return secret;
 }
 
 export function signPortalToken(email: string): string {
@@ -31,10 +32,16 @@ export function verifyPortalToken(token: string | undefined | null): { email: st
   if (parts.length !== 2) return null;
 
   const [b64Payload, signature] = parts;
-  const expectedSignature = crypto
-    .createHmac('sha256', getSecret())
-    .update(b64Payload)
-    .digest('base64url');
+  let expectedSignature: string;
+  try {
+    expectedSignature = crypto
+      .createHmac('sha256', getSecret())
+      .update(b64Payload)
+      .digest('base64url');
+  } catch {
+    // Misconfigured secret: deny the session instead of crashing the proxy.
+    return null;
+  }
 
   if (signature.length !== expectedSignature.length) return null;
 

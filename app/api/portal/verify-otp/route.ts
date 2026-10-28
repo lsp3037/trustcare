@@ -56,11 +56,8 @@ export async function POST(req: Request) {
           error: 'O código de acesso expirou. Solicite um novo.' 
         }, { status: 400 });
       }
-      if (result.reason === 'INVALID_CODE') {
-        return NextResponse.json({ 
-          error: `Código de acesso incorreto. Tentativas restantes: ${result.remaining_attempts}.` 
-        }, { status: 400 });
-      }
+      // INVALID_CODE and unknown tokens share one message so decoy tokens from
+      // request-otp are indistinguishable from real ones (anti-enumeration).
       return NextResponse.json({ 
         error: 'Código de acesso incorreto ou inválido.' 
       }, { status: 400 });

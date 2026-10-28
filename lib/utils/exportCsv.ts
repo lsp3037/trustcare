@@ -1,3 +1,5 @@
+import { neutralizeFormula } from './csvExport';
+
 /**
  * Exporta um array de objetos para um arquivo CSV e dispara o download no browser.
  * @param data - Array de objetos a exportar
@@ -38,7 +40,8 @@ export function exportToCsv<T extends Record<string, unknown>>(
   URL.revokeObjectURL(url);
 }
 
-function csvEscape(value: string): string {
+function csvEscape(raw: string): string {
+  const value = neutralizeFormula(raw);
   // Encapsula em aspas se contém ponto-e-vírgula, aspas ou nova linha
   if (value.includes(';') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`;

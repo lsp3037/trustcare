@@ -14,9 +14,17 @@ export function downloadCsv(filename: string, csvContent: string) {
   URL.revokeObjectURL(url);
 }
 
+// Spreadsheet apps evaluate cells starting with these chars as formulas (CWE-1236).
+const FORMULA_PREFIX = /^[=+\-@\t\r]/;
+const PLAIN_NUMBER = /^-?\d+(?:[.,]\d+)?$/;
+
+export function neutralizeFormula(str: string): string {
+  return FORMULA_PREFIX.test(str) && !PLAIN_NUMBER.test(str) ? `'${str}` : str;
+}
+
 function escapeCsvCell(cell: string | number | boolean | null | undefined): string {
   if (cell === null || cell === undefined) return '';
-  const str = String(cell);
+  const str = neutralizeFormula(String(cell));
   if (str.includes(';') || str.includes('\n') || str.includes('"')) {
     return `"${str.replace(/"/g, '""')}"`;
   }

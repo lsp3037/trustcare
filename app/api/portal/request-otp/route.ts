@@ -22,6 +22,18 @@ function maskEmail(email: string): string {
   return `${local.substring(0, 2)}***${local.substring(local.length - 2)}@${domain}`;
 }
 
+/**
+ * Anti-enumeration: unknown e-mails (or document mismatch) get a response with the
+ * same shape as a real one. The random tempTokenId has no row, so it never validates.
+ */
+function decoyResponse(email: string) {
+  return NextResponse.json({
+    success: true,
+    maskedEmail: maskEmail(email),
+    tempTokenId: randomUUID(),
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -47,7 +59,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Verificar se existe cliente com este e-mail
-    let query = supabaseAdmin
+    const query = supabaseAdmin
       .from('clients')
       .select('id, name, email, document')
       .ilike('email', email)
@@ -56,7 +68,7 @@ export async function POST(req: Request) {
     const { data: clients, error: clientErr } = await query;
 
     if (clientErr || !clients || clients.length === 0) {
-      return NextResponse.json({ error: 'Nenhum cadastro de cliente encontrado com este e-mail.' }, { status: 404 });
+      return decoyResponse(email);
     }
 
     // Se documento foi informado, valida correspondência
@@ -64,7 +76,7 @@ export async function POST(req: Request) {
       const docClean = cleanDocument(rawDocument);
       const matchesDoc = clients.some(c => cleanDocument(c.document || '') === docClean);
       if (!matchesDoc) {
-        return NextResponse.json({ error: 'O documento informado não confere com o e-mail cadastrado.' }, { status: 400 });
+        return decoyResponse(email);
       }
     }
 

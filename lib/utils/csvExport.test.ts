@@ -1,5 +1,21 @@
 import { describe, it, expect, vi } from 'vitest';
-import { exportOrdersToCsv, exportFinancialToCsv, exportInventoryToCsv } from '@/lib/utils/csvExport';
+import { exportOrdersToCsv, exportFinancialToCsv, exportInventoryToCsv, neutralizeFormula } from '@/lib/utils/csvExport';
+
+describe('neutralizeFormula (CSV injection)', () => {
+  it.each(['=HYPERLINK("https://x.test")', '+cmd', '-2+3', '@SUM(A1)', '\tfoo', '\rbar'])(
+    'deve prefixar apóstrofo em %j',
+    (payload) => {
+      expect(neutralizeFormula(payload)).toBe(`'${payload}`);
+    }
+  );
+
+  it.each(['-10.00', '-5', 'João da Silva', 'TC-2026-0001', '100.00'])(
+    'deve preservar valor seguro %j',
+    (value) => {
+      expect(neutralizeFormula(value)).toBe(value);
+    }
+  );
+});
 
 describe('CSV Export Utilities', () => {
   it('deve formatar corretamente os dados de ordens de serviço para CSV com BOM UTF-8', () => {

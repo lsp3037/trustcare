@@ -181,7 +181,7 @@ export default function PortalLoginPage() {
             <div className="mb-8">
               <h1 className="text-2xl font-semibold text-text mb-2">Verifique seu e-mail</h1>
               <p className="text-text-muted text-sm leading-relaxed">
-                Enviamos um código de verificação de 6 dígitos para o e-mail: <strong className="text-text font-mono">{maskedEmail}</strong>.
+                Se o e-mail <strong className="text-text font-mono">{maskedEmail}</strong> estiver cadastrado, você receberá um código de 6 dígitos em instantes. Confira também a caixa de spam.
               </p>
             </div>
 

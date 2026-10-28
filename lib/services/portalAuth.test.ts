@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { signPortalToken, verifyPortalToken } from '@/lib/utils/portalSession';
 import { POST as requestOtpPost } from '@/app/api/portal/request-otp/route';
 import { POST as verifyOtpPost } from '@/app/api/portal/verify-otp/route';
@@ -17,6 +17,34 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 describe('Portal do Cliente - Autenticação Segura (F-20)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('PORTAL_SESSION_SECRET', 'test-portal-secret-with-enough-entropy');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  describe('portalSession sem segredo configurado (fail-closed)', () => {
+    beforeEach(() => {
+      vi.stubEnv('PORTAL_SESSION_SECRET', '');
+      vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', '');
+    });
+
+    it('deve recusar assinar token sem segredo', () => {
+      expect(() => signPortalToken('cliente@exemplo.com')).toThrow(/PORTAL_SESSION_SECRET/);
+    });
+
+    it('deve rejeitar token forjado com o antigo segredo estático', async () => {
+      const { createHmac } = await import('crypto');
+      const payload = Buffer.from(
+        JSON.stringify({ email: 'vitima@exemplo.com', exp: Date.now() + 60_000 })
+      ).toString('base64url');
+      const sig = createHmac('sha256', 'trustcare-portal-session-internal-secret-key-32chars-min')
+        .update(payload)
+        .digest('base64url');
+
+      expect(verifyPortalToken(`${payload}.${sig}`)).toBeNull();
+    });
   });
 
   describe('portalSession (HMAC-SHA256)', () => {
@@ -78,6 +106,46 @@ describe('Portal do Cliente - Autenticação Segura (F-20)', () => {
       const json = await res.json();
       expect(res.status).toBe(429);
       expect(json.error).toContain('Muitas tentativas');
+    });
+
+    const mockClientLookup = (clients: any[]) => {
+      (supabaseAdmin.rpc as any).mockResolvedValue({ data: true, error: null });
+      (supabaseAdmin.from as any).mockReturnValue({
+        select: () => ({ ilike: () => ({ limit: () => Promise.resolve({ data: clients, error: null }) }) }),
+      });
+    };
+
+    const postOtp = (body: object) =>
+      requestOtpPost(
+        new Request('http://localhost:3000/api/portal/request-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+      );
+
+    it('não deve revelar se o e-mail existe (anti-enumeração)', async () => {
+      mockClientLookup([]);
+
+      const res = await postOtp({ email: 'inexistente@exemplo.com' });
+      const json = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(json.success).toBe(true);
+      expect(json.maskedEmail).toBe('in***te@exemplo.com');
+      expect(json.tempTokenId).toMatch(/^[0-9a-f-]{36}$/);
+      expect(json.error).toBeUndefined();
+    });
+
+    it('não deve revelar divergência de documento (anti-enumeração)', async () => {
+      mockClientLookup([{ id: '1', name: 'Cliente', email: 'cliente@exemplo.com', document: '11111111111' }]);
+
+      const res = await postOtp({ email: 'cliente@exemplo.com', document: '222.222.222-22' });
+      const json = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(json.success).toBe(true);
+      expect(json.tempTokenId).toBeDefined();
     });
   });
 
