@@ -170,7 +170,7 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'Trust Care <noreply@trustcare.com.br>',
+            from: process.env.RESEND_FROM_EMAIL || 'Trust Care <onboarding@resend.dev>',
             to: client.email,
             subject: `Código de Acesso - OS ${escapeHtml(order.codigo_os || order.id.slice(0, 8))}`,
             html: `

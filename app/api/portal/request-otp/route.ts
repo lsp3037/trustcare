@@ -137,7 +137,7 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'Trust Care <noreply@trustcare.com.br>',
+            from: process.env.RESEND_FROM_EMAIL || 'Trust Care <onboarding@resend.dev>',
             to: email,
             subject: 'Código de Acesso ao Portal do Cliente',
             html: `
