@@ -77,7 +77,7 @@ export function EditCustomPartModal({
       size="md"
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <Button variant="outline" type="button" onClick={onClose}>
+          <Button variant="secondary" type="button" onClick={onClose}>
             Cancelar
           </Button>
           <Button variant="primary" type="button" onClick={handleSave}>
