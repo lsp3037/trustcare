@@ -495,3 +495,11 @@ html.light .theme-dark .hover\:text-white:hover {
 }
 
 
+
+/* Âncoras da landing: rolagem suave só para quem não pediu menos movimento.
+   Escopado por `:has(.landing-root)` para não afetar o resto do app. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.landing-root) {
+    scroll-behavior: smooth;
+  }
+}
