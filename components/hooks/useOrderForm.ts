@@ -15,6 +15,15 @@ export interface Client {
   type: string;
 }
 
+export interface ProblemMediaFile {
+  name: string;
+  url: string;
+  type: string;
+  file?: File;
+  category: 'problem';
+  persistentUrl?: string;
+}
+
 export interface UseOrderFormProps {
   clients: Client[];
   onSuccess?: () => void;
@@ -44,6 +53,82 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [equipmentId, setEquipmentId] = useState(queryEquipmentId || (queryEquipmentName ? 'manual' : ''));
   const [equipmentDetails, setEquipmentDetails] = useState(queryEquipmentName || '');
   const [reportedProblem, setReportedProblem] = useState('');
+  const [problemMediaFiles, setProblemMediaFiles] = useState<ProblemMediaFile[]>([]);
+  const [uploadingProblemMedia, setUploadingProblemMedia] = useState(false);
+
+  const handleProblemFileUpload = (
+    filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList | File[] | File | ProblemMediaFile[] | ProblemMediaFile
+  ) => {
+    let rawFiles: (File | ProblemMediaFile)[] = [];
+    if (filesOrEvent && typeof filesOrEvent === 'object' && 'target' in filesOrEvent) {
+      const input = filesOrEvent.target as HTMLInputElement;
+      if (input.files) {
+        rawFiles = Array.from(input.files);
+      }
+      if ('value' in input) {
+        input.value = '';
+      }
+    } else if (Array.isArray(filesOrEvent)) {
+      rawFiles = filesOrEvent;
+    } else if (typeof FileList !== 'undefined' && filesOrEvent instanceof FileList) {
+      rawFiles = Array.from(filesOrEvent);
+    } else if (typeof File !== 'undefined' && filesOrEvent instanceof File) {
+      rawFiles = [filesOrEvent];
+    } else if (filesOrEvent && typeof filesOrEvent === 'object' && 'name' in filesOrEvent && 'category' in filesOrEvent) {
+      rawFiles = [filesOrEvent as ProblemMediaFile];
+    }
+
+    if (!rawFiles.length) return;
+
+    const newItems: ProblemMediaFile[] = rawFiles.map((item) => {
+      if ('category' in item && item.category === 'problem' && 'url' in item) {
+        return item as ProblemMediaFile;
+      }
+      const file = item as File;
+      const objectUrl = typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function'
+        ? URL.createObjectURL(file)
+        : '';
+      return {
+        name: file.name || 'anexo',
+        url: objectUrl,
+        type: file.type || 'application/octet-stream',
+        file,
+        category: 'problem',
+      };
+    });
+
+    setProblemMediaFiles((prev) => [...prev, ...newItems]);
+  };
+
+  const handleRemoveProblemFile = (indexOrTarget: number | string | ProblemMediaFile) => {
+    setProblemMediaFiles((prev) => {
+      let fileToRemove: ProblemMediaFile | undefined;
+      let nextList: ProblemMediaFile[] = [];
+
+      if (typeof indexOrTarget === 'number') {
+        fileToRemove = prev[indexOrTarget];
+        nextList = prev.filter((_, idx) => idx !== indexOrTarget);
+      } else if (typeof indexOrTarget === 'string') {
+        fileToRemove = prev.find((item) => item.url === indexOrTarget || item.name === indexOrTarget);
+        nextList = prev.filter((item) => item.url !== indexOrTarget && item.name !== indexOrTarget);
+      } else if (indexOrTarget && typeof indexOrTarget === 'object') {
+        fileToRemove = indexOrTarget;
+        nextList = prev.filter((item) => item !== indexOrTarget && item.url !== indexOrTarget.url);
+      } else {
+        return prev;
+      }
+
+      if (fileToRemove?.url?.startsWith('blob:') && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        try {
+          URL.revokeObjectURL(fileToRemove.url);
+        } catch {
+          // ignore
+        }
+      }
+
+      return nextList;
+    });
+  };
   const [status, setStatus] = useState('Em Análise');
   const [priority, setPriority] = useState('Média');
   const [technicianId, setTechnicianId] = useState('');
@@ -722,6 +807,104 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
 
       const insertedId = (savedOrder as any).id;
 
+      // Se houver mídias do problema relatado, envia para o storage e associa à OS
+      if (problemMediaFiles.length > 0 && insertedId) {
+        setUploadingProblemMedia(true);
+        try {
+          const targetCompanyId = (savedOrder as any).company_id || companyId;
+          const isRealUuid =
+            typeof insertedId === 'string' &&
+            !insertedId.startsWith('mock-os') &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(insertedId);
+
+          const uploadedList: Array<{ name: string; url: string; type: string; category: 'problem' }> = [];
+
+          if (isRealUuid && targetCompanyId) {
+            for (const item of problemMediaFiles) {
+              if (item.file) {
+                const fileExt = item.name.includes('.') ? (item.name.split('.').pop() || 'jpg') : 'jpg';
+                const randomSuffix = Math.random().toString(36).substring(2, 7);
+                const uniqueName = `problem_${Date.now()}_${randomSuffix}.${fileExt}`;
+                const filePath = `${targetCompanyId}/${insertedId}/${uniqueName}`;
+
+                const { error: upErr } = await supabase.storage.from('os-media').upload(filePath, item.file, {
+                  cacheControl: '3600',
+                  upsert: true,
+                });
+
+                if (!upErr) {
+                  const { data: { publicUrl } } = supabase.storage.from('os-media').getPublicUrl(filePath);
+                  uploadedList.push({
+                    name: item.name,
+                    url: publicUrl,
+                    type: item.type,
+                    category: 'problem',
+                  });
+                } else {
+                  console.warn(`Erro ao fazer upload de mídia do problema (${item.name}):`, upErr);
+                  uploadedList.push({
+                    name: item.name,
+                    url: item.persistentUrl || item.url,
+                    type: item.type,
+                    category: 'problem',
+                  });
+                }
+              } else {
+                uploadedList.push({
+                  name: item.name,
+                  url: item.persistentUrl || item.url,
+                  type: item.type,
+                  category: 'problem',
+                });
+              }
+            }
+
+            if (uploadedList.length > 0) {
+              const { error: updateError } = await supabase
+                .from('service_orders')
+                .update({ media: uploadedList })
+                .eq('id', insertedId);
+
+              if (updateError) {
+                console.warn('Aviso: O.S. criada, mas falhou ao atualizar a lista de mídias:', updateError);
+              }
+            }
+          } else {
+            // Fallback para pedidos mock em desenvolvimento ou testes
+            for (const item of problemMediaFiles) {
+              const fallbackUrl = item.persistentUrl ||
+                (item.url && !item.url.startsWith('blob:')
+                  ? item.url
+                  : (item.type.startsWith('image/')
+                    ? 'https://images.unsplash.com/photo-1597733336794-12d05021d510?w=600&auto=format&fit=crop&q=60'
+                    : item.url));
+
+              uploadedList.push({
+                name: item.name,
+                url: fallbackUrl,
+                type: item.type,
+                category: 'problem',
+              });
+            }
+
+            if (typeof insertedId === 'string' && !insertedId.startsWith('mock-os')) {
+              try {
+                await supabase
+                  .from('service_orders')
+                  .update({ media: uploadedList })
+                  .eq('id', insertedId);
+              } catch {
+                // silencioso para mocks
+              }
+            }
+          }
+        } catch (mediaErr) {
+          console.warn('Erro ao processar mídias do problema na abertura da OS:', mediaErr);
+        } finally {
+          setUploadingProblemMedia(false);
+        }
+      }
+
       // A API busca cliente, e-mail e equipamento no banco — só envia id e status.
       fetch('/api/notify', {
         method: 'POST',
@@ -821,6 +1004,12 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     currentServiceId,
     currentServiceQty, setCurrentServiceQty,
     currentServicePrice, setCurrentServicePrice,
+    // Mídias do Problema Relatado
+    problemMediaFiles,
+    setProblemMediaFiles,
+    uploadingProblemMedia,
+    handleProblemFileUpload,
+    handleRemoveProblemFile,
     // Feedback
     loading,
     errorMsg,

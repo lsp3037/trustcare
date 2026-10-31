@@ -1,6 +1,6 @@
 'use client';
 import { CheckCircle2, AlertTriangle, FileText, ChevronDown, Check } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -90,7 +90,6 @@ export function OrderDetailsClient({
   
   const [mediaFiles, setMediaFiles] = useState<any[]>(order?.media || []);
   const [uploading, setUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [entryChecklist, setEntryChecklist] = useState<OrderChecklist>(order?.entry_checklist || defaultChecklist);
   const [exitChecklist, setExitChecklist] = useState<OrderChecklist>(order?.exit_checklist || defaultChecklist);
@@ -305,8 +304,21 @@ export function OrderDetailsClient({
     setSelectedServices(selectedServices.filter((s) => s.service_id !== serviceId));
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const handleUploadFiles = async (
+    filesOrEvent: React.ChangeEvent<HTMLInputElement> | FileList | File[],
+    category: 'problem' | 'service' = 'service'
+  ) => {
+    let files: File[] = [];
+    if (filesOrEvent && 'target' in filesOrEvent) {
+      if (filesOrEvent.target.files) {
+        files = Array.from(filesOrEvent.target.files);
+      }
+    } else if (filesOrEvent instanceof FileList) {
+      files = Array.from(filesOrEvent);
+    } else if (Array.isArray(filesOrEvent)) {
+      files = filesOrEvent;
+    }
+
     if (!files || files.length === 0) return;
     setUploading(true);
     setErrorMsg('');
@@ -318,12 +330,13 @@ export function OrderDetailsClient({
       try {
         if (order && order.company_id && !order.id.startsWith('mock-os') && order.id.length === 36) {
           const fileExt = fileName.split('.').pop();
-          const uniqueName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+          const prefix = category === 'problem' ? 'problem_' : '';
+          const uniqueName = `${prefix}${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
           const filePath = `${order.company_id}/${id}/${uniqueName}`;
           const { data, error } = await supabase.storage.from('os-media').upload(filePath, file, { cacheControl: '3600', upsert: true });
           if (error) throw error;
           const { data: { publicUrl } } = supabase.storage.from('os-media').getPublicUrl(filePath);
-          setMediaFiles((prev) => [...prev, { name: fileName, url: publicUrl, type: fileType }]);
+          setMediaFiles((prev) => [...prev, { name: fileName, url: publicUrl, type: fileType, category }]);
         } else {
           const localUrl = URL.createObjectURL(file);
           const persistentUrl = fileType.startsWith('image/')
@@ -331,7 +344,7 @@ export function OrderDetailsClient({
             : fileType.startsWith('video/')
               ? 'https://www.w3schools.com/html/mov_bbb.mp4'
               : 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
-          setMediaFiles((prev) => [...prev, { name: fileName, url: localUrl, persistentUrl, type: fileType }]);
+          setMediaFiles((prev) => [...prev, { name: fileName, url: localUrl, persistentUrl, type: fileType, category }]);
         }
       } catch (uploadErr: any) {
         console.error('Erro de upload:', uploadErr);
@@ -339,7 +352,36 @@ export function OrderDetailsClient({
       }
     }
     setUploading(false);
-    e.target.value = '';
+    if (filesOrEvent && 'target' in filesOrEvent && filesOrEvent.target) {
+      filesOrEvent.target.value = '';
+    }
+  };
+
+  const problemMediaFiles = useMemo(
+    () => mediaFiles.filter((m) => m.category === 'problem'),
+    [mediaFiles]
+  );
+  const serviceMediaFiles = useMemo(
+    () => mediaFiles.filter((m) => m.category !== 'problem'),
+    [mediaFiles]
+  );
+
+  const handleRemoveProblemFile = async (index: number) => {
+    const item = problemMediaFiles[index];
+    if (!item) return;
+    const globalIndex = mediaFiles.indexOf(item);
+    if (globalIndex !== -1) {
+      await handleRemoveFile(globalIndex);
+    }
+  };
+
+  const handleRemoveServiceFile = async (index: number) => {
+    const item = serviceMediaFiles[index];
+    if (!item) return;
+    const globalIndex = mediaFiles.indexOf(item);
+    if (globalIndex !== -1) {
+      await handleRemoveFile(globalIndex);
+    }
   };
 
   const handleRemoveFile = async (index: number) => {
@@ -498,7 +540,7 @@ export function OrderDetailsClient({
         payment_status: pago ? 'pago' : 'pendente',
         payment_method: pago ? paymentMethod : null,
         payment_date: pago ? toLocalYMD(paymentDate) : null,
-        media: mediaFiles.map((m) => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type })),
+        media: mediaFiles.map((m) => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type, category: m.category || 'service' })),
         entry_checklist: entryChecklist,
         exit_checklist: exitChecklist,
       };
@@ -673,6 +715,11 @@ export function OrderDetailsClient({
               onFormatProblem={handleFormatProblem}
               formattingProblem={formattingProblem}
               formatDisabled={isReadOnly || saving}
+              problemMediaFiles={problemMediaFiles}
+              uploadingProblemMedia={uploading}
+              onUploadProblemMedia={(files) => handleUploadFiles(files, 'problem')}
+              onRemoveProblemMedia={handleRemoveProblemFile}
+              readOnly={isReadOnly}
             />
 
             <Card className="space-y-6">
@@ -804,7 +851,13 @@ export function OrderDetailsClient({
                 {technicians.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </Select>
 
-              <AttachmentsSection mediaFiles={mediaFiles} uploading={uploading} handleFileUpload={handleFileUpload} handleRemoveFile={handleRemoveFile} previewImage={previewImage} setPreviewImage={setPreviewImage} />
+              <AttachmentsSection
+                mediaFiles={serviceMediaFiles}
+                uploading={uploading}
+                handleFileUpload={(files) => handleUploadFiles(files, 'service')}
+                handleRemoveFile={handleRemoveServiceFile}
+                readOnly={isReadOnly}
+              />
             </Card>
 
           </div>
