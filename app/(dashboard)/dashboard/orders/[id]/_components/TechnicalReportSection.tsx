@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   useToast,
+  FileDropzone,
 } from '@/components/ui';
 import {
   ReportTemplate,
@@ -49,6 +50,11 @@ interface TechnicalReportSectionProps {
   onFormatProblem?: () => void;
   formattingProblem?: boolean;
   formatDisabled?: boolean;
+  problemMediaFiles?: any[];
+  uploadingProblemMedia?: boolean;
+  onUploadProblemMedia?: (files: File[]) => void;
+  onRemoveProblemMedia?: (index: number) => void;
+  readOnly?: boolean;
 }
 
 export function TechnicalReportSection({
@@ -56,7 +62,12 @@ export function TechnicalReportSection({
   technicalReport, setTechnicalReport,
   onFormatReport, formattingReport = false,
   onFormatProblem, formattingProblem = false,
-  formatDisabled = false
+  formatDisabled = false,
+  problemMediaFiles = [],
+  uploadingProblemMedia = false,
+  onUploadProblemMedia,
+  onRemoveProblemMedia,
+  readOnly = false,
 }: TechnicalReportSectionProps) {
   const toast = useToast();
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
@@ -136,30 +147,55 @@ export function TechnicalReportSection({
           <FileSignature className="w-5 h-5 text-text-subtle" aria-hidden /> Diagnóstico e Laudo
         </CardTitle>
 
-        <div className="w-full max-w-full overflow-hidden break-words">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-sm font-medium text-text-muted">Problema Relatado / Defeito</p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              icon={<Wand2 className="w-3.5 h-3.5 text-text-subtle" />}
-              onClick={handleFormatProblem}
-              loading={formattingProblem}
-              disabled={formatDisabled || formattingProblem}
-              className="text-caption h-8 px-2.5 text-text-muted hover:text-text"
-            >
-              {formattingProblem ? 'Formatando...' : 'Formatar'}
-            </Button>
+        <div className="w-full max-w-full overflow-hidden break-words space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-sm font-medium text-text-muted">Problema Relatado / Defeito</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                icon={<Wand2 className="w-3.5 h-3.5 text-text-subtle" />}
+                onClick={handleFormatProblem}
+                loading={formattingProblem}
+                disabled={formatDisabled || formattingProblem}
+                className="text-caption h-8 px-2.5 text-text-muted hover:text-text"
+              >
+                {formattingProblem ? 'Formatando...' : 'Formatar'}
+              </Button>
+            </div>
+            <ReactQuill
+              theme="snow"
+              value={reportedProblem}
+              onChange={setReportedProblem}
+              modules={modules}
+              formats={formats}
+              className="prose prose-invert max-w-none text-sm"
+            />
           </div>
-          <ReactQuill
-            theme="snow"
-            value={reportedProblem}
-            onChange={setReportedProblem}
-            modules={modules}
-            formats={formats}
-            className="prose prose-invert max-w-none text-sm"
-          />
+
+          {onUploadProblemMedia && (
+            <div className="pt-3 border-t border-glass-divider space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-caption uppercase tracking-wider text-text-muted font-semibold">
+                  Fotos de Entrada / Problema Relatado
+                </span>
+                <span className="text-caption text-text-subtle font-mono">
+                  Opcional
+                </span>
+              </div>
+              <FileDropzone
+                files={problemMediaFiles}
+                loading={uploadingProblemMedia}
+                onFilesSelected={onUploadProblemMedia}
+                onRemoveFile={onRemoveProblemMedia}
+                title="Arraste fotos do problema ou clique para anexar"
+                subtitle="JPG, PNG, WebP ou MP4 até 15MB"
+                compact
+                readOnly={readOnly}
+              />
+            </div>
+          )}
         </div>
 
         <div>

@@ -47,3 +47,4 @@ export {
   type DropdownMenuProps,
   type DropdownMenuItemProps,
 } from './DropdownMenu';
+export { FileDropzone, type FileDropzoneProps, type DropzoneFile, type MediaFileItem } from './FileDropzone';

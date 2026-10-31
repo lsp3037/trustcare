@@ -103,6 +103,10 @@ export default function NewOrderForm({ clients, onSuccess }: NewOrderFormProps) 
           setReportedProblem={orderForm.setReportedProblem}
           onFormatProblem={orderForm.formatProblem}
           formattingProblem={orderForm.formattingProblem}
+          mediaFiles={orderForm.problemMediaFiles}
+          uploadingMedia={orderForm.uploadingProblemMedia}
+          onFileUpload={orderForm.handleProblemFileUpload}
+          onRemoveFile={orderForm.handleRemoveProblemFile}
           quillOnly
         />
 

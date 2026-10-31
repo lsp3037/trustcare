@@ -13,6 +13,18 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock Supabase with inline factory return to prevent hoisting reference errors
+const { mockUpload, mockGetPublicUrl, mockUpdate, mockRpc } = vi.hoisted(() => ({
+  mockUpload: vi.fn().mockResolvedValue({ data: { path: 'test' }, error: null }),
+  mockGetPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://test-storage/file.png' } }),
+  mockUpdate: vi.fn().mockReturnValue({
+    eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+  }),
+  mockRpc: vi.fn().mockResolvedValue({
+    data: { id: 'a0000000-0000-0000-0000-000000000001', company_id: 'company-123' },
+    error: null,
+  }),
+}));
+
 vi.mock('@/lib/supabase/client', () => {
   const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null });
   const mockSingle = vi.fn().mockResolvedValue({ data: { company_id: 'company-123' }, error: null });
@@ -33,9 +45,10 @@ vi.mock('@/lib/supabase/client', () => {
     eq: mockEq,
     order: mockOrder,
   });
-  const mockFrom = vi.fn().mockReturnValue({
+  const mockFrom = vi.fn().mockImplementation((table: string) => ({
     select: mockSelect,
-  });
+    update: mockUpdate,
+  }));
 
   return {
     supabase: {
@@ -43,6 +56,13 @@ vi.mock('@/lib/supabase/client', () => {
         getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'user-1' } } })),
       },
       from: mockFrom,
+      rpc: mockRpc,
+      storage: {
+        from: vi.fn().mockReturnValue({
+          upload: mockUpload,
+          getPublicUrl: mockGetPublicUrl,
+        }),
+      },
     },
   };
 });
@@ -56,6 +76,12 @@ describe('useOrderForm Hook', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    if (!global.URL.createObjectURL) {
+      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:http://localhost/mock-uuid');
+    }
+    if (!global.URL.revokeObjectURL) {
+      global.URL.revokeObjectURL = vi.fn();
+    }
   });
 
   it('deve inicializar com valores padrão corretos', () => {
@@ -184,5 +210,69 @@ describe('useOrderForm Hook', () => {
 
     expect(result.current.productAddError).toBe('O valor de venda da peça sob demanda deve ser maior que zero.');
     expect(result.current.selectedProducts).toHaveLength(0);
+  });
+
+  it('deve inicializar com problemMediaFiles vazio e uploadingProblemMedia falso', () => {
+    const { result } = renderHook(() => useOrderForm({ clients: mockClients, onSuccess: mockOnSuccess }));
+    expect(result.current.problemMediaFiles).toEqual([]);
+    expect(result.current.uploadingProblemMedia).toBe(false);
+  });
+
+  it('deve adicionar e remover arquivos de mídia do problema relatado', () => {
+    const { result } = renderHook(() => useOrderForm({ clients: mockClients, onSuccess: mockOnSuccess }));
+
+    const dummyFile1 = new File(['content-1'], 'foto-tela-quebrada.jpg', { type: 'image/jpeg' });
+    const dummyFile2 = new File(['content-2'], 'conector-oxidado.png', { type: 'image/png' });
+
+    act(() => {
+      result.current.handleProblemFileUpload([dummyFile1, dummyFile2]);
+    });
+
+    expect(result.current.problemMediaFiles).toHaveLength(2);
+    expect(result.current.problemMediaFiles[0].name).toBe('foto-tela-quebrada.jpg');
+    expect(result.current.problemMediaFiles[0].category).toBe('problem');
+    expect(result.current.problemMediaFiles[0].file).toBe(dummyFile1);
+    expect(result.current.problemMediaFiles[1].name).toBe('conector-oxidado.png');
+
+    // Remover primeiro arquivo por índice
+    act(() => {
+      result.current.handleRemoveProblemFile(0);
+    });
+
+    expect(result.current.problemMediaFiles).toHaveLength(1);
+    expect(result.current.problemMediaFiles[0].name).toBe('conector-oxidado.png');
+  });
+
+  it('deve fazer upload de mídias e atualizar a OS ao submeter o formulário com sucesso', async () => {
+    const { result } = renderHook(() => useOrderForm({ clients: mockClients, onSuccess: mockOnSuccess }));
+
+    const dummyFile = new File(['imagem'], 'foto1.jpg', { type: 'image/jpeg' });
+
+    act(() => {
+      result.current.setClientId('client-1');
+      result.current.setReportedProblem('Aparelho não liga');
+      result.current.handleProblemFileUpload([dummyFile]);
+    });
+
+    expect(result.current.problemMediaFiles).toHaveLength(1);
+
+    await act(async () => {
+      const fakeEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      await result.current.handleSubmit(fakeEvent);
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith('save_order', expect.any(Object));
+    expect(mockUpload).toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        media: expect.arrayContaining([
+          expect.objectContaining({
+            name: 'foto1.jpg',
+            category: 'problem',
+            url: 'https://test-storage/file.png',
+          }),
+        ]),
+      })
+    );
   });
 });

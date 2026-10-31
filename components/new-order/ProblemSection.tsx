@@ -2,9 +2,9 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardTitle, Field, Input, Select, Skeleton, Button } from '@/components/ui';
+import { Card, CardTitle, Field, Input, Select, Skeleton, Button, FileDropzone } from '@/components/ui';
 import { OS_STATUS_FLOW } from '@/lib/design/status';
-import { Sliders, FileText, Wand2 } from 'lucide-react';
+import { Sliders, FileText, Wand2, Camera, Paperclip } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
@@ -46,6 +46,10 @@ interface ProblemSectionProps {
   /** Formata o Problema Relatado com IA. Sem a prop, o botão não aparece. */
   onFormatProblem?: () => void;
   formattingProblem?: boolean;
+  mediaFiles?: any[];
+  uploadingMedia?: boolean;
+  onFileUpload?: (files: FileList | File[]) => void;
+  onRemoveFile?: (index: number) => void;
 }
 
 export function ProblemSection({
@@ -61,6 +65,10 @@ export function ProblemSection({
   quillOnly = false,
   onFormatProblem,
   formattingProblem = false,
+  mediaFiles = [],
+  uploadingMedia = false,
+  onFileUpload,
+  onRemoveFile,
 }: ProblemSectionProps) {
   const hasProblem = reportedProblem.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim().length > 0;
 
@@ -161,6 +169,28 @@ export function ProblemSection({
               placeholder="Descreva o problema relatado..."
             />
           </Field>
+
+          {onFileUpload && (
+            <div className="pt-3 border-t border-glass-divider space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-caption uppercase tracking-wider text-text-muted font-semibold">
+                  Fotos de Entrada / Problema
+                </span>
+                <span className="text-caption text-text-subtle font-mono">
+                  Opcional
+                </span>
+              </div>
+              <FileDropzone
+                files={mediaFiles}
+                loading={uploadingMedia}
+                onFilesSelected={onFileUpload}
+                onRemoveFile={onRemoveFile}
+                title="Arraste fotos do problema ou clique para anexar"
+                subtitle="JPG, PNG, WebP ou MP4 até 15MB"
+                compact
+              />
+            </div>
+          )}
         </Card>
       )}
     </div>
