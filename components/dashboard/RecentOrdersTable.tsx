@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ClipboardList, ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { ClipboardList, ArrowUpRight } from 'lucide-react';
 import { ServiceOrder } from '@/components/hooks/useDashboardData';
 import { OS_STATUS_FLOW, getStatusDot } from '@/lib/design/status';
 import {
@@ -21,6 +20,8 @@ import {
   TR,
   TH,
   TD,
+  DropdownMenu,
+  DropdownMenuItem,
 } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -31,17 +32,7 @@ interface RecentOrdersTableProps {
 }
 
 export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: RecentOrdersTableProps) {
-  const router = useRouter();
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const [statusModalOrder, setStatusModalOrder] = useState<ServiceOrder | null>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = () => {
-      setActiveDropdownId(null);
-    };
-    window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
-  }, []);
 
   const formatEquipmentDetails = (details: string) => {
     if (!details) return '—';
@@ -114,42 +105,18 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
                   <TD align="right" numeric className="font-semibold">
                     R$ {Number(order.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </TD>
-                  <TD align="right" className="relative pr-0">
-                    <button
-                      type="button"
-                      aria-label={`Ações da OS ${order.codigo_os}`}
-                      aria-expanded={activeDropdownId === order.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
-                      }}
-                      className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-
-                    {activeDropdownId === order.id && (
-                      <div className="absolute right-0 mt-1 w-44 bg-surface-raised border border-border rounded-xl shadow-xl z-50 p-1.5 text-left">
-                        {[
-                          { label: 'Ver Detalhes', run: () => router.push(`/dashboard/orders/${order.id}`) },
-                          { label: 'Alterar Status', run: () => setStatusModalOrder(order) },
-                          { label: 'Imprimir OS', run: () => window.print() },
-                        ].map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDropdownId(null);
-                              item.run();
-                            }}
-                            className="w-full text-left px-3 py-2 text-small font-medium text-text hover:bg-surface-sunken hover:text-brand rounded-lg transition-colors cursor-pointer"
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <TD align="right" className="pr-0">
+                    <DropdownMenu label={`Ações da OS ${order.codigo_os}`}>
+                      <DropdownMenuItem href={`/dashboard/orders/${order.id}`}>
+                        Ver Detalhes
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setStatusModalOrder(order)}>
+                        Alterar Status
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => window.print()}>
+                        Imprimir OS
+                      </DropdownMenuItem>
+                    </DropdownMenu>
                   </TD>
                 </TR>
               ))}

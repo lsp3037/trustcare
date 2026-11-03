@@ -58,12 +58,27 @@ export function DropdownMenu({ label, trigger, children, className }: DropdownMe
     // `clientWidth`, não `innerWidth`: o segundo inclui a barra de rolagem,
     // e o painel acabaria parcialmente embaixo dela.
     const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight;
+    const panelHeight = panelRef.current?.offsetHeight || 160;
+
     // Alinhado à direita do gatilho, preso dentro da janela.
     const left = Math.min(
       Math.max(GAP, rect.right - PANEL_WIDTH),
       viewportWidth - PANEL_WIDTH - GAP,
     );
-    setPosition({ top: rect.bottom + GAP, left });
+
+    // Se não couber embaixo mas couber em cima, inverte para cima
+    const fitsBelow = rect.bottom + GAP + panelHeight <= viewportHeight;
+    const fitsAbove = rect.top - GAP - panelHeight >= GAP;
+
+    let top: number;
+    if (!fitsBelow && fitsAbove) {
+      top = rect.top - GAP - panelHeight;
+    } else {
+      top = Math.max(GAP, Math.min(rect.bottom + GAP, viewportHeight - panelHeight - GAP));
+    }
+
+    setPosition({ top, left });
   }, []);
 
   const close = React.useCallback(() => {
@@ -133,7 +148,7 @@ export function DropdownMenu({ label, trigger, children, className }: DropdownMe
           e.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center"
+        className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-surface-overlay transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand touch-manipulation min-w-[40px] min-h-[40px] inline-flex items-center justify-center"
       >
         {trigger ?? <MoreHorizontal className="w-4 h-4" aria-hidden />}
       </button>
