@@ -18,6 +18,10 @@ export async function sendTransactionalEmail(params: SendEmailParams) {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Trust Care <onboarding@resend.dev>';
 
   if (!apiKey) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[Email Service] RESEND_API_KEY ausente em ambiente de produção. Disparo cancelado.');
+      return { success: false, error: 'Serviço de e-mail não configurado em produção.' };
+    }
     console.warn(`[Email Service] RESEND_API_KEY não configurada no servidor. Simulação de envio para ${params.to} (${params.subject}).`);
     return { success: true, simulated: true, message: 'Resend API key missing; email simulated.' };
   }
@@ -35,14 +39,14 @@ export async function sendTransactionalEmail(params: SendEmailParams) {
 
     if (response.error) {
       console.error('[Email Service] Erro ao enviar e-mail via Resend:', response.error);
-      return { success: false, error: response.error };
+      return { success: false, error: (response.error as any)?.message || response.error };
     }
 
     console.log(`[Email Service] E-mail enviado com sucesso para ${params.to} (ID: ${response.data?.id})`);
     return { success: true, id: response.data?.id };
   } catch (err: any) {
     console.error('[Email Service] Exceção ao enviar e-mail:', err);
-    return { success: false, error: err.message || err };
+    return { success: false, error: err?.message || 'Erro inesperado no envio de e-mail' };
   }
 }
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { DollarSign, Users, BarChart3 } from 'lucide-react';
+import { DollarSign, BarChart3 } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -132,12 +132,12 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
         </div>
       </div>
 
-      <div className="mt-6 border-t border-border pt-6">
+      <div className="mt-6 border-t border-border pt-4">
         <Link
-          href="/dashboard/clients"
+          href="/dashboard/financeiro"
           className={buttonClasses({ variant: 'secondary', fullWidth: true })}
         >
-          <Users className="w-4 h-4" aria-hidden /> Gerenciar Todos os Clientes
+          <BarChart3 className="w-4 h-4" aria-hidden /> Acessar Relatório Financeiro Detalhado
         </Link>
       </div>
     </Card>

@@ -39,6 +39,7 @@ import { ClientInfoCard } from './ClientInfoCard';
 import { ChecklistSection } from './ChecklistSection';
 import { TechnicalReportSection } from './TechnicalReportSection';
 import { FinancialSection } from './FinancialSection';
+import { OrderLogisticsSection } from './OrderLogisticsSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { OrderActions } from './OrderActions';
 import { appendServiceToTechnicalReport } from '@/lib/utils/reportFormatter';
@@ -85,6 +86,7 @@ export function OrderDetailsClient({
   
   const [serviceValue, setServiceValue] = useState(Number(order?.service_value || 0).toString());
   const [discount, setDiscount] = useState(Number(order?.discount || 0).toString());
+  const [logisticsTotal, setLogisticsTotal] = useState(Number(order?.logistics_total || 0));
   const [totalValue, setTotalValue] = useState(Number(order?.total_value || 0).toString());
   const [pago, setPago] = useState(order?.pago || false);
   
@@ -127,10 +129,10 @@ export function OrderDetailsClient({
     const labor = parseFloat(serviceValue) || 0;
     const partsTotal = selectedProducts.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const servicesTotal = selectedServices.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    const subtotal = labor + partsTotal + servicesTotal;
+    const subtotal = labor + partsTotal + servicesTotal + logisticsTotal;
     const disc = parseFloat(discount) || 0;
     setTotalValue(Math.max(0, subtotal - disc).toFixed(2));
-  }, [serviceValue, selectedProducts, selectedServices, discount]);
+  }, [serviceValue, selectedProducts, selectedServices, discount, logisticsTotal]);
 
   const handleAddProduct = () => {
     if (!currentProductId) return;
@@ -863,7 +865,14 @@ export function OrderDetailsClient({
           </div>
 
           <div className="space-y-8">
+            <OrderLogisticsSection
+              orderId={id}
+              onLogisticsTotalChange={setLogisticsTotal}
+              disabled={isReadOnly}
+            />
+
             <FinancialSection 
+              logisticsTotal={logisticsTotal}
               serviceValue={serviceValue} setServiceValue={setServiceValue} discount={discount} setDiscount={setDiscount} inventory={inventory}
               currentProductId={currentProductId} setCurrentProductId={setCurrentProductId} currentProductQty={currentProductQty} setCurrentProductQty={setCurrentProductQty} handleAddProduct={handleAddProduct}
               selectedProducts={selectedProducts} handleRemoveProduct={handleRemoveProduct}

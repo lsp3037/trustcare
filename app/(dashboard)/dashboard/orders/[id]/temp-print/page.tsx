@@ -320,7 +320,8 @@ export default function TempPrintPreviewPage() {
   const discountValue = parseFloat(order.discount) || 0;
   const partsSubtotal = selectedProducts.reduce((sum, p) => sum + (p.quantity * p.unit_price), 0);
   const servicesSubtotal = selectedServices.reduce((sum, s) => sum + (s.quantity * s.unit_price), 0);
-  const subtotalValue = laborValue + partsSubtotal + servicesSubtotal;
+  const logisticsValue = parseFloat(order?.logistics_total) || 0;
+  const subtotalValue = laborValue + partsSubtotal + servicesSubtotal + logisticsValue;
 
   return (
     <div className="min-h-screen bg-surface text-text antialiased">
@@ -372,6 +373,7 @@ export default function TempPrintPreviewPage() {
             selectedProducts={selectedProducts}
             selectedServices={selectedServices}
             subtotalValue={subtotalValue}
+            logisticsValue={logisticsValue}
             discountValue={discountValue}
             laborValue={laborValue}
             checklistTemplateItems={checklistTemplateItems}
@@ -388,7 +390,8 @@ export default function TempPrintPreviewPage() {
           selectedProducts={selectedProducts}
           selectedServices={selectedServices}
           subtotalValue={subtotalValue}
-          discountValue={discountValue}
+            logisticsValue={logisticsValue}
+            discountValue={discountValue}
           laborValue={laborValue}
           checklistTemplateItems={checklistTemplateItems}
         />
@@ -406,6 +409,7 @@ function PrintDocumentContent({
   selectedProducts,
   selectedServices,
   subtotalValue,
+  logisticsValue = 0,
   discountValue,
   laborValue,
   checklistTemplateItems = DEFAULT_TEMPLATE_ITEMS
@@ -626,6 +630,12 @@ function PrintDocumentContent({
               <span>Subtotal dos Itens:</span>
               <span className="font-mono">R$ {subtotalValue.toFixed(2)}</span>
             </div>
+            {logisticsValue > 0 && (
+              <div className="flex justify-between text-small text-text-muted font-semibold">
+                <span>Taxa de Logística (Retirada/Entrega):</span>
+                <span className="font-mono">R$ {logisticsValue.toFixed(2)}</span>
+              </div>
+            )}
             {discountValue > 0 && (
               <div className="flex justify-between text-small text-danger font-bold">
                 <span>Desconto Aplicado:</span>

@@ -62,7 +62,8 @@ export async function POST(req: Request) {
     const clientRel = order.clients as any;
     const client = Array.isArray(clientRel) ? clientRel[0] : clientRel;
 
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const rawOrigin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const origin = rawOrigin.replace(/\/$/, '');
     const trackingUrl = `${origin}/rastreio?id=${order.id}`;
     const budgetUrl = `${origin}/orcamento/${order.id}`;
     const shortOrderCode = order.codigo_os || order.id.slice(0, 8);
@@ -129,12 +130,19 @@ export async function POST(req: Request) {
       }
     }
 
+    const emailFailedInProduction =
+      emailResult && !emailResult.success && process.env.NODE_ENV === 'production';
+
+    const statusCode = emailFailedInProduction ? 503 : 200;
+
     return NextResponse.json({
-      success: true,
-      message: 'Processamento de notificação concluído.',
+      success: !emailFailedInProduction,
+      message: emailFailedInProduction
+        ? 'Falha no serviço de e-mail em produção.'
+        : 'Processamento de notificação concluído.',
       email: emailResult,
       webhook: webhookResult,
-    });
+    }, { status: statusCode });
   } catch (err: any) {
     console.error('[Notify API] Erro interno no manipulador de notificações:', err);
     return NextResponse.json({ error: 'Erro interno ao processar notificação.' }, { status: 500 });

@@ -75,7 +75,8 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
           <Table>
             <THead>
               <TR>
-                <TH className="pl-0">Cliente</TH>
+                <TH className="pl-0">OS #</TH>
+                <TH>Cliente</TH>
                 <TH>Equipamento</TH>
                 <TH>Status</TH>
                 <TH align="right">Valor</TH>
@@ -87,8 +88,11 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
             <TBody>
               {recentOrders.map((order) => (
                 <TR key={order.id}>
+                  <TD className="pl-0 font-mono font-bold text-brand">
+                    #{order.codigo_os || order.id.slice(0, 6)}
+                  </TD>
                   <TD
-                    className="pl-0 font-semibold truncate max-w-[160px]"
+                    className="font-semibold truncate max-w-[160px]"
                     title={order.clients?.name || 'Cliente'}
                   >
                     {order.clients?.name || 'Cliente'}
@@ -113,7 +117,7 @@ export function RecentOrdersTable({ recentOrders, isAdmin, onUpdateStatus }: Rec
                       <DropdownMenuItem onSelect={() => setStatusModalOrder(order)}>
                         Alterar Status
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => window.print()}>
+                      <DropdownMenuItem onSelect={() => window.open(`/dashboard/orders/${order.id}/temp-print`, '_blank')}>
                         Imprimir OS
                       </DropdownMenuItem>
                     </DropdownMenu>

@@ -25,6 +25,7 @@ import {
   Calendar,
   Search,
   Key,
+  Truck,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { CompanyProvider, useCompany } from '@/lib/context/CompanyContext';
@@ -33,7 +34,7 @@ import OnboardingModal from '@/components/OnboardingModal';
 import Image from 'next/image';
 import SubscriptionBlockedScreen from '@/components/SubscriptionBlockedScreen';
 import { cn } from '@/lib/utils';
-import { Tooltip, Skeleton } from '@/components/ui';
+import { Tooltip, Skeleton, useToast } from '@/components/ui';
 import { CommandPalette } from '@/components/dashboard/CommandPalette';
 
 /**
@@ -109,6 +110,7 @@ function DashboardLayoutContent({
     return 'Painel de Controle';
   };
   const router = useRouter();
+  const toast = useToast();
   const { company, isReadOnly, trialDaysRemaining } = useCompany();
   const { user, role, isAdmin, loading: userLoading } = useUser();
   
@@ -124,6 +126,42 @@ function DashboardLayoutContent({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const settingsGroupRef = useRef<HTMLDivElement>(null);
+
+  // Feedback em tempo real para atualizações de Ordem de Serviço
+  useEffect(() => {
+    if (!company?.id) return;
+
+    const channel = supabase
+      .channel(`company-orders-${company.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'service_orders',
+          filter: `company_id=eq.${company.id}`,
+        },
+        (payload) => {
+          const newOrder = payload.new as any;
+          const oldOrder = payload.old as any;
+          if (newOrder.status === 'Aprovado' && oldOrder?.status !== 'Aprovado') {
+            toast.success(`Orçamento aprovado pelo cliente! OS #${newOrder.codigo_os || newOrder.id.slice(0, 8)}`, {
+              description: 'O cliente aprovou o orçamento online. Pronto para execução.',
+              duration: 6000,
+            });
+          } else if (newOrder.status !== oldOrder?.status) {
+            toast.info(`OS #${newOrder.codigo_os || newOrder.id.slice(0, 8)} atualizada para "${newOrder.status}".`, {
+              duration: 4000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [company?.id, toast]);
 
   // Rola o menu lateral suavemente para exibir os subitens ao expandir Configurações
   useEffect(() => {
@@ -279,6 +317,7 @@ function DashboardLayoutContent({
           { name: 'Dados da Empresa', href: '/dashboard/settings/company', icon: Building },
           { name: 'Equipe e Acessos', href: '/dashboard/settings/team', icon: Users },
           { name: 'Templates de Checklist', href: '/dashboard/settings/checklists', icon: ClipboardList },
+          { name: 'Logística & Retiradas', href: '/dashboard/settings/logistics', icon: Truck },
           { name: 'Chaves de API', href: '/dashboard/settings/api', icon: Key },
           { name: 'Assinatura e Faturamento', href: '/dashboard/settings/billing', icon: CreditCard }
         ]

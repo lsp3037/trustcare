@@ -1,3 +1,4 @@
+import { geocodeAddress } from '@/lib/logistics/ors';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
       let company: any = null;
       const { data: cData, error: compErr } = await supabaseAdmin
         .from('companies')
-        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, trial_ends_at, subdomain')
+        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, trial_ends_at, subdomain, address_zip, address_street, address_number, address_district, address_city, address_state, latitude, longitude')
         .eq('id', profile.company_id)
         .maybeSingle();
 

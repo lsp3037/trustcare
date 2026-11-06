@@ -42,6 +42,7 @@ interface FinancialSectionProps {
   handleAddService: () => void;
   selectedServices: any[];
   handleRemoveService: (id: string) => void;
+  logisticsTotal?: number;
   totalValue: string;
   productAddError: string;
   setProductAddError: (v: string) => void;
@@ -190,6 +191,7 @@ export function FinancialSection({
   currentServicePrice, setCurrentServicePrice,
   handleAddService,
   selectedServices, handleRemoveService,
+  logisticsTotal = 0,
   totalValue,
   productAddError, setProductAddError
 }: FinancialSectionProps) {
@@ -502,6 +504,7 @@ export function FinancialSection({
             { label: 'Mão de Obra Geral', value: parseFloat(serviceValue || '0') },
             { label: 'Serviços do Catálogo', value: servicesTotal },
             { label: 'Peças da OS (Estoque + Encomenda)', value: partsTotal },
+            ...(logisticsTotal > 0 ? [{ label: 'Logística (Retirada / Devolução)', value: logisticsTotal }] : []),
           ].map((row) => (
             <div key={row.label} className="flex justify-between items-baseline gap-3 text-small">
               <dt className="text-text-muted">{row.label}</dt>

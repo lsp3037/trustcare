@@ -1,5 +1,5 @@
 'use client';
-import { Building, AlertCircle, CheckCircle2, Upload, ImageIcon, Trash2, Phone, Mail } from 'lucide-react';
+import { Building, AlertCircle, CheckCircle2, Upload, ImageIcon, Trash2, Phone, Mail, MapPin, Search } from 'lucide-react';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -27,6 +27,17 @@ export default function CompanySettingsPage() {
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  
+  // Endereço da Empresa
+  const [addressZip, setAddressZip] = useState('');
+  const [addressStreet, setAddressStreet] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
+  const [addressDistrict, setAddressDistrict] = useState('');
+  const [addressCity, setAddressCity] = useState('');
+  const [addressState, setAddressState] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [searchingCep, setSearchingCep] = useState(false);
   
   // File upload states
   const [file, setFile] = useState<File | null>(null);
@@ -132,6 +143,35 @@ export default function CompanySettingsPage() {
       return previewUrl;
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Busca de CEP no ViaCEP
+  const handleSearchCep = async () => {
+    const raw = addressZip.replace(/\D/g, '');
+    if (raw.length !== 8) {
+      setErrorMsg('Informe um CEP válido com 8 dígitos.');
+      return;
+    }
+    try {
+      setSearchingCep(true);
+      setErrorMsg('');
+      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`);
+      const data = await res.json();
+      if (data.erro) {
+        setErrorMsg('CEP não encontrado.');
+        return;
+      }
+      setAddressStreet(data.logradouro || addressStreet);
+      setAddressDistrict(data.bairro || addressDistrict);
+      setAddressCity(data.localidade || addressCity);
+      setAddressState(data.uf || addressState);
+      setLatitude(null);
+      setLongitude(null);
+    } catch {
+      setErrorMsg('Erro ao consultar o ViaCEP.');
+    } finally {
+      setSearchingCep(false);
     }
   };
 
@@ -434,6 +474,118 @@ export default function CompanySettingsPage() {
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+                    {/* Seção de Endereço da Empresa (Base de Deslocamento) */}
+          <div className="border-t border-border/80 pt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-brand" />
+                <h3 className="text-sm font-bold text-text uppercase tracking-wider">Endereço da Sede / Empresa</h3>
+              </div>
+              {latitude !== null && longitude !== null ? (
+                <span className="text-caption font-semibold text-success flex items-center gap-1 bg-success/10 px-2 py-0.5 rounded-full border border-success/20">
+                  <CheckCircle2 className="w-3 h-3" /> Coordenadas Ativas
+                </span>
+              ) : (
+                <span className="text-caption text-text-subtle">
+                  Origem do cálculo de retiradas na O.S.
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-caption font-bold text-text-muted uppercase tracking-wider mb-1">
+                  CEP
+                </label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={addressZip}
+                    onChange={(e) => setAddressZip(e.target.value)}
+                    placeholder="00000-000"
+                    className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-semibold"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSearchCep}
+                    disabled={searchingCep}
+                    title="Buscar no ViaCEP"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-caption font-bold text-text-muted uppercase tracking-wider mb-1">
+                  Logradouro / Rua
+                </label>
+                <input
+                  type="text"
+                  value={addressStreet}
+                  onChange={(e) => { setAddressStreet(e.target.value); setLatitude(null); setLongitude(null); }}
+                  placeholder="Ex: Av. Historiador Rubens de Mendonça"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-caption font-bold text-text-muted uppercase tracking-wider mb-1">
+                  Número
+                </label>
+                <input
+                  type="text"
+                  value={addressNumber}
+                  onChange={(e) => { setAddressNumber(e.target.value); setLatitude(null); setLongitude(null); }}
+                  placeholder="Ex: 1000"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-caption font-bold text-text-muted uppercase tracking-wider mb-1">
+                  Bairro
+                </label>
+                <input
+                  type="text"
+                  value={addressDistrict}
+                  onChange={(e) => setAddressDistrict(e.target.value)}
+                  placeholder="Ex: Bosque da Saúde"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-semibold"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-caption font-bold text-text-muted uppercase tracking-wider mb-1">
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  value={addressCity}
+                  onChange={(e) => { setAddressCity(e.target.value); setLatitude(null); setLongitude(null); }}
+                  placeholder="Ex: Cuiabá"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-xl text-sm text-text focus:outline-none focus:border-brand font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-caption font-bold text-text-muted uppercase tracking-wider mb-1">
+                  UF
+                </label>
+                <input
+                  type="text"
+                  maxLength={2}
+                  value={addressState}
+                  onChange={(e) => { setAddressState(e.target.value.toUpperCase()); setLatitude(null); setLongitude(null); }}
+                  placeholder="MT"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-xl text-sm text-text uppercase focus:outline-none focus:border-brand font-semibold"
+                />
               </div>
             </div>
           </div>

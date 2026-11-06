@@ -1,9 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { sendTransactionalEmail } from '@/lib/services/email';
 
 describe('Transactional Email Service (Resend)', () => {
-  it('deve simular envio com sucesso quando RESEND_API_KEY não está presente', async () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('deve simular envio com sucesso quando RESEND_API_KEY não está presente fora de produção', async () => {
     delete process.env.RESEND_API_KEY;
+    vi.stubEnv('NODE_ENV', 'test');
 
     const result = await sendTransactionalEmail({
       to: 'cliente@exemplo.com',
@@ -21,8 +26,27 @@ describe('Transactional Email Service (Resend)', () => {
     expect(result.simulated).toBe(true);
   });
 
+  it('deve falhar de forma controlada quando RESEND_API_KEY não está presente em produção', async () => {
+    delete process.env.RESEND_API_KEY;
+    vi.stubEnv('NODE_ENV', 'production');
+
+    const result = await sendTransactionalEmail({
+      to: 'cliente@exemplo.com',
+      subject: 'Teste de Produção',
+      type: 'new_order',
+      clientName: 'Maria Santos',
+      orderCode: 'TC-2026-0002',
+      equipment: 'MacBook Air M2',
+      trackingUrl: 'https://app.trustcare.com.br/rastreio?id=456',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.simulated).toBeUndefined();
+    expect(result.error).toContain('não configurado');
+  });
+
   it('deve escapar HTML e neutralizar URLs perigosas no template', async () => {
-    process.env.RESEND_API_KEY = 're_test';
+    vi.stubEnv('RESEND_API_KEY', 're_test');
     const send = vi.fn().mockResolvedValue({ data: { id: '1' }, error: null });
     vi.resetModules();
     vi.doMock('resend', () => ({ Resend: class { emails = { send }; } }));
@@ -45,7 +69,6 @@ describe('Transactional Email Service (Resend)', () => {
     expect(html).not.toContain('javascript:');
     expect(html).toContain('&lt;img');
 
-    delete process.env.RESEND_API_KEY;
     vi.doUnmock('resend');
   });
 });

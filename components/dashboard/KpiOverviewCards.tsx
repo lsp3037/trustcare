@@ -27,15 +27,15 @@ type Tone = 'brand' | 'info' | 'warning' | 'danger';
 const ICON_CLASS = 'w-[18px] h-[18px]';
 
 /**
- * Cor de destaque do card: ponto do rótulo, selo do ícone e linha de brilho.
+ * Cor de destaque do card: ponto do rótulo e selo do ícone.
  * O selo leva um fio na própria cor (`ring-current/20`) em vez de um contorno
  * branco igual para todos, que desbotava sobre os tons quentes.
  */
-const TONE: Record<Tone, { dot: string; icon: string; sweep: string }> = {
-  brand: { dot: 'bg-brand', icon: 'bg-brand/12 text-brand', sweep: 'via-brand' },
-  info: { dot: 'bg-info', icon: 'bg-info/12 text-info', sweep: 'via-info' },
-  warning: { dot: 'bg-warning', icon: 'bg-warning/12 text-warning', sweep: 'via-warning' },
-  danger: { dot: 'bg-danger', icon: 'bg-danger/12 text-danger', sweep: 'via-danger' },
+const TONE: Record<Tone, { dot: string; icon: string }> = {
+  brand: { dot: 'bg-brand', icon: 'bg-brand/12 text-brand' },
+  info: { dot: 'bg-info', icon: 'bg-info/12 text-info' },
+  warning: { dot: 'bg-warning', icon: 'bg-warning/12 text-warning' },
+  danger: { dot: 'bg-danger', icon: 'bg-danger/12 text-danger' },
 };
 
 /** Setas do chip de variação — traço fino, no desenho da referência. */
@@ -124,7 +124,7 @@ function KpiCard({ icon, label, value, format, hint, previous, tone = 'brand', h
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-text-muted">
+        <span className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.07em] text-text-muted">
           <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', colors.dot)} aria-hidden />
           {label}
         </span>
@@ -147,7 +147,7 @@ function KpiCard({ icon, label, value, format, hint, previous, tone = 'brand', h
         <div className="flex items-center gap-2 min-w-0" title={hint}>
           <span
             className={cn(
-              'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums shrink-0',
+              'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-caption font-bold tabular-nums shrink-0',
               deltaTone === 'up' && 'bg-success/15 text-success',
               deltaTone === 'down' && 'bg-danger/15 text-danger',
               deltaTone === 'flat' && 'bg-text-muted/15 text-text-muted'
@@ -158,29 +158,15 @@ function KpiCard({ icon, label, value, format, hint, previous, tone = 'brand', h
             {delta > 0 ? '+' : ''}
             {delta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
           </span>
-          <span className="text-[11px] text-text-muted truncate">
+          <span className="text-caption text-text-muted truncate">
             vs {format(previous!)} <span className="sr-only">no período anterior. {hint}</span>
           </span>
         </div>
       ) : (
-        <p className={cn('text-[11px] leading-snug', critical ? 'text-danger font-medium' : 'text-text-muted')}>
+        <p className={cn('text-caption leading-snug', critical ? 'text-danger font-medium' : 'text-text-muted')}>
           {hint}
         </p>
       )}
-
-      {/* Linha de brilho que varre a base do card; só com movimento liberado. */}
-      <span
-        aria-hidden
-        className={cn(
-          'pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent to-transparent opacity-60',
-          colors.sweep,
-          'motion-safe:animate-kpi-sweep'
-        )}
-        // Posição de repouso via `transform` (e não a classe `-translate-x-full`):
-        // no Tailwind 4 ela usa a propriedade `translate`, que se soma ao
-        // `transform` do keyframe e empurrava a barra para fora do card.
-        style={{ transform: 'translateX(-100%)', animationDelay: `${index * 1.4}s` }}
-      />
     </Card>
   );
 }
@@ -203,7 +189,7 @@ export function KpiOverviewCards({
     <section className="space-y-4" aria-label="Indicadores do período">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="font-sans text-[15px] font-bold tracking-[0.02em] text-text">Visão geral</h2>
-        {periodLabel && <span className="text-[11px] font-semibold text-text-muted">{periodLabel}</span>}
+        {periodLabel && <span className="text-caption font-semibold text-text-muted">{periodLabel}</span>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

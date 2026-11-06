@@ -2,6 +2,11 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import {
+  isBillingSimulationAllowed,
+  getAsaasBaseUrl,
+  safeCheckoutUrl,
+} from '@/lib/services/billing';
 
 const PLAN_VALUES: Record<string, number> = {
   starter: 79.0,
@@ -56,11 +61,8 @@ export async function POST(req: Request) {
 
     // MODO SIMULAÇÃO (F-03) — só permitido expressamente fora de produção com flag ativa
     if (!asaasApiKey) {
-      const simulationAllowed =
-        process.env.NODE_ENV !== 'production' && process.env.ENABLE_BILLING_SIMULATION === '1';
-
-      if (!simulationAllowed) {
-        console.error('[Checkout] ASAAS_API_KEY ausente e simulação desabilitada.');
+      if (!isBillingSimulationAllowed()) {
+        console.error('[Checkout] ASAAS_API_KEY ausente ou simulação desabilitada.');
         return NextResponse.json({ error: 'Cobrança indisponível no momento.' }, { status: 503 });
       }
 
@@ -99,11 +101,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 404 });
     }
 
-    const asaasBaseUrl =
-      process.env.ASAAS_BASE_URL ||
-      (process.env.NODE_ENV === 'production'
-        ? 'https://api.asaas.com/v3'
-        : 'https://sandbox.asaas.com/v3');
+    const asaasBaseUrl = getAsaasBaseUrl();
 
     const headers = {
       access_token: asaasApiKey,
@@ -176,7 +174,7 @@ export async function POST(req: Request) {
       invoiceUrl = paymentsData.data?.[0]?.invoiceUrl || '/dashboard/settings/billing?checkout_success=true';
     }
 
-    return NextResponse.json({ url: invoiceUrl });
+    return NextResponse.json({ url: safeCheckoutUrl(invoiceUrl) });
   } catch (err: any) {
     console.error('[Checkout API Error]', err);
     return NextResponse.json({ error: 'Erro interno ao processar pagamento.' }, { status: 500 });

@@ -110,8 +110,19 @@ function OrdersContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'Todos');
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
+
+  const statusCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {
+      Todas: orders.length,
+      Ativas: orders.filter((o) => !['Finalizado', 'Cancelado'].includes(o.status)).length,
+    };
+    OS_STATUS_FLOW.forEach((status) => {
+      counts[status] = orders.filter((o) => o.status === status).length;
+    });
+    return counts;
+  }, [orders]);
 
   useEffect(() => {
     const saved = localStorage.getItem('orders-view-mode') as 'grid' | 'table';
@@ -288,13 +299,14 @@ function OrdersContent() {
 
     const matchesStatus = 
       statusFilter === 'Todos' || 
+      statusFilter === 'Todas' || 
       (statusFilter === 'Ativas' && !['Finalizado', 'Cancelado'].includes(order.status)) ||
       order.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
-  const hasActiveFilters = Boolean(searchTerm) || statusFilter !== 'Todos';
+  const hasActiveFilters = Boolean(searchTerm) || (statusFilter !== 'Todos' && statusFilter !== 'Todas');
 
   const allVisibleSelected =
     filteredOrders.length > 0 && filteredOrders.every((o) => selectedOrderIds.includes(o.id));
@@ -314,13 +326,14 @@ function OrdersContent() {
                 icon={<Download className="w-4 h-4" />}
                 onClick={() => exportOrdersToCsv(filteredOrders)}
               >
-                Exportar CSV
+                Exportar
               </Button>
               <Button
                 icon={<Plus className="w-4 h-4" />}
                 disabled={isReadOnly}
                 title={isReadOnly ? 'Conta em modo apenas-leitura por faturamento pendente' : undefined}
                 onClick={() => router.push('/dashboard/orders?new=true')}
+                className="shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] transition-shadow"
               >
                 Nova Ordem de Serviço
               </Button>
@@ -361,7 +374,7 @@ function OrdersContent() {
           <Toolbar>
             <ToolbarSearch
               aria-label="Buscar ordens de serviço"
-              placeholder="Buscar por cliente, equipamento, problema..."
+              placeholder="Buscar por código (#1042), cliente, modelo..."
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
@@ -370,15 +383,17 @@ function OrdersContent() {
               <Filter className="w-4 h-4 text-text-subtle shrink-0" aria-hidden />
               <Select
                 aria-label="Filtrar por status"
-                value={statusFilter}
+                value={statusFilter === 'Todas' ? 'Todos' : statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 wrapperClassName="w-auto"
                 className="w-auto"
               >
-                <option value="Todos">Todos os Status</option>
-                <option value="Ativas">OS Abertas / Em Análise</option>
+                <option value="Todos">Todos os Status ({statusCounts.Todas ?? 0})</option>
+                <option value="Ativas">OS Abertas / Em Análise ({statusCounts.Ativas ?? 0})</option>
                 {OS_STATUS_FLOW.map((status) => (
-                  <option key={status} value={status}>{status}</option>
+                  <option key={status} value={status}>
+                    {status} ({statusCounts[status] ?? 0})
+                  </option>
                 ))}
               </Select>
 
@@ -496,8 +511,10 @@ function OrdersContent() {
                         />
                         <StatusBadge status={order.status} />
                       </div>
-                      <span className="text-caption font-mono text-text-subtle shrink-0">
-                        OS #{order.codigo_os || order.id.slice(0, 8)}
+                      <span className="px-2 py-0.5 rounded font-mono font-bold text-caption bg-brand/10 text-brand border border-brand/20 shrink-0">
+                        {order.codigo_os
+                          ? (order.codigo_os.startsWith('#') ? order.codigo_os : `#${order.codigo_os}`)
+                          : `#${order.id.slice(0, 8).toUpperCase()}`}
                       </span>
                     </div>
 
@@ -512,15 +529,12 @@ function OrdersContent() {
                       </p>
                     </div>
 
-                    {/* Problema Reportado */}
-                    <div className="p-3 bg-surface-sunken border border-border">
-                      <p className="text-caption uppercase tracking-wider text-text-subtle mb-1">
-                        Problema Reportado
-                      </p>
-                      <p className="text-small text-text-muted line-clamp-2">
-                        {stripHtml(order.reported_problem || '')}
-                      </p>
-                    </div>
+                    {/* Problema Reportado - Streamlined */}
+                    {order.reported_problem && (
+                      <div className="border-l-2 border-brand/40 pl-2.5 py-0.5 text-small text-text-muted line-clamp-2">
+                        {stripHtml(order.reported_problem)}
+                      </div>
+                    )}
 
                     <SlaTracker variant="mini" startedAt={order?.analysis_started_at} status={order.status} />
                   </div>
@@ -591,8 +605,10 @@ function OrdersContent() {
                           }}
                         />
                       </TD>
-                      <TD numeric className="text-text-muted">
-                        {order.codigo_os || order.id.slice(0, 8).toUpperCase()}
+                      <TD numeric className="font-mono font-bold text-brand">
+                        {order.codigo_os
+                          ? (order.codigo_os.startsWith('#') ? order.codigo_os : `#${order.codigo_os}`)
+                          : `#${order.id.slice(0, 8).toUpperCase()}`}
                       </TD>
                       <TD className="font-semibold">
                         {order.clients?.name || 'Cliente'}

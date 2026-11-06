@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   formatToTechnicalReport,
   formatReportedProblem,
@@ -10,6 +10,11 @@ import {
 } from './reportFormatter';
 
 describe('reportFormatter', () => {
+  beforeEach(() => {
+    if (typeof localStorage !== 'undefined' && localStorage.clear) {
+      localStorage.clear();
+    }
+  });
   it('deve retornar o modelo padrão se o conteúdo for vazio', () => {
     const result = formatToTechnicalReport('');
     expect(result).toBe(REPORT_TEMPLATES[0].content);

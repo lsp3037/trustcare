@@ -55,7 +55,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       let companyData: any = null;
       const resWithTrial = await supabase
         .from('companies')
-        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, trial_ends_at, subdomain')
+        .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, trial_ends_at, subdomain, address_zip, address_street, address_number, address_district, address_city, address_state, latitude, longitude')
         .maybeSingle();
 
       if (!resWithTrial.error && resWithTrial.data) {
@@ -64,7 +64,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         // Fallback: se trial_ends_at não tiver permissão concedida ainda ou não existir na tabela
         const resBasic = await supabase
           .from('companies')
-          .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, subdomain')
+          .select('id, name, phone, email, logo_url, whatsapp, subscription_plan, subscription_status, subscription_expires_at, subdomain, address_zip, address_street, address_number, address_district, address_city, address_state, latitude, longitude')
           .maybeSingle();
 
         if (!resBasic.error && resBasic.data) {

@@ -9,7 +9,7 @@ import { useDashboardData, DateRange } from '@/components/hooks/useDashboardData
 import { KpiOverviewCards } from '@/components/dashboard/KpiOverviewCards';
 import { RecentOrdersTable } from '@/components/dashboard/RecentOrdersTable';
 import { FinancialChartSection } from '@/components/dashboard/FinancialChartSection';
-import { Badge, buttonClasses } from '@/components/ui';
+import { buttonClasses } from '@/components/ui';
 
 /** "Últimos 30 dias" quando o período termina hoje; senão, "23/09 – 22/10". */
 function formatPeriodLabel(range: DateRange | null) {
@@ -43,46 +43,37 @@ export default function DashboardOverviewPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-h1 text-text">Dashboard</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <span className="text-small text-text-muted">
-              Indicadores e visão geral da assistência técnica.
-            </span>
-            <span className="hidden sm:inline h-4 w-px bg-border" />
-            <Badge tone="brand">
-              PJ: {stats.pjCount} {stats.pjCount === 1 ? 'cliente' : 'clientes'}
-            </Badge>
-            <Badge>
-              PF: {stats.pfCount} {stats.pfCount === 1 ? 'cliente' : 'clientes'}
-            </Badge>
-          </div>
+          <p className="mt-1 text-small text-text-muted">
+            Indicadores e visão geral da assistência técnica.
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Seletor de Período Global */}
           <DatePickerWithRange onChange={(range) => setDateRange(range)} />
 
-          <Link href="/dashboard/orders" className={buttonClasses({ variant: 'secondary' })}>
-            Ver Todas OS
-          </Link>
-          <Link href="/dashboard/orders?new=true" className={buttonClasses()}>
+          <Link
+            href="/dashboard/orders?new=true"
+            className={buttonClasses({ className: 'shadow-[0_0_20px_rgba(16,185,129,0.25)]' })}
+          >
             <Plus className="w-4 h-4" /> Nova OS
           </Link>
         </div>
       </div>
 
-      {/* Alerta de SLA Operacional (Ordens em Aberto / Prazo Crítico) */}
+      {/* Alerta de SLA Operacional */}
       {!loading && stats.openOrders > 0 && (
-        <div className="p-3.5 rounded-2xl bg-warning/10 border border-warning/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-3.5 rounded-2xl bg-warning/10 border border-warning/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-warning/20 text-warning shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <div>
               <p className="text-small font-semibold text-warning">
-                Atenção: {stats.openOrders} {stats.openOrders === 1 ? 'ordem de serviço ativa aguarda' : 'ordens de serviço ativas aguardam'} conclusão ou laudo técnico
+                SLA de Bancada: {stats.openOrders} {stats.openOrders === 1 ? 'ordem de serviço ativa aguarda' : 'ordens de serviço ativas aguardam'} laudo ou conclusão
               </p>
               <p className="text-caption text-text-muted">
-                Acompanhe a bancada técnica para evitar atrasos no prazo de entrega prometido.
+                Acompanhe a fila operacional para evitar atrasos no prazo de entrega prometido.
               </p>
             </div>
           </div>
@@ -90,7 +81,7 @@ export default function DashboardOverviewPage() {
             href="/dashboard/orders?status=Ativas"
             className={buttonClasses({ variant: 'secondary', size: 'sm', className: 'shrink-0 self-start sm:self-auto' })}
           >
-            Ver Fila Crítica
+            Ver Fila Ativa →
           </Link>
         </div>
       )}

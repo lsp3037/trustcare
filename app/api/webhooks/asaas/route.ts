@@ -1,41 +1,19 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import {
+  verifyWebhookToken,
+  parseSafeDate,
+  parseExternalReference,
+} from '@/lib/services/billing';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_PLANS = ['starter', 'pro', 'premium'] as const;
-
-/**
- * Validação em tempo constante do token de webhook do Asaas (F-31).
- */
-function verifyWebhookToken(headerToken: string | null): boolean {
-  const secret = process.env.ASAAS_WEBHOOK_TOKEN;
-  if (!secret || !headerToken) return false;
-
-  const secretBuffer = Buffer.from(secret);
-  const headerBuffer = Buffer.from(headerToken);
-
-  if (secretBuffer.length !== headerBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(secretBuffer, headerBuffer);
-}
-
-/**
- * Parsing seguro de data evitando RangeError em formatos inválidos.
- */
-function parseSafeDate(dateStr: string | null | undefined): Date | null {
-  if (!dateStr || typeof dateStr !== 'string') return null;
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d;
-}
 
 export async function POST(req: Request) {
   try {
     const accessToken = req.headers.get('asaas-access-token');
 
-    // 1. Validação com tempo constante
+    // 1. Validação com tempo constante via timingSafeEqual
     if (!verifyWebhookToken(accessToken)) {
       console.warn('[Asaas Webhook] Token de acesso inválido ou ausente.');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -69,18 +47,7 @@ export async function POST(req: Request) {
     const customerAsaasId = payment?.customer || subscription?.customer;
     const subscriptionAsaasId = payment?.subscription || subscription?.id;
 
-    let companyId = '';
-    let targetPlan = '';
-
-    if (extRef && typeof extRef === 'string') {
-      if (extRef.includes(':')) {
-        const parts = extRef.split(':');
-        companyId = parts[0];
-        targetPlan = parts[1];
-      } else {
-        companyId = extRef;
-      }
-    }
+    let { companyId, targetPlan } = parseExternalReference(extRef);
 
     if (companyId && !UUID_REGEX.test(companyId)) {
       companyId = '';

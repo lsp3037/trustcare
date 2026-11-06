@@ -1,16 +1,23 @@
 'use client';
-import { Wrench, ShieldCheck, Search, AlertCircle, ArrowLeft, Clock, Calendar, CheckCircle2, FileText, ChevronRight, Lock } from 'lucide-react';
 
-
+import {
+  Wrench,
+  Search,
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  FileText,
+  Lock,
+  ChevronRight,
+} from 'lucide-react';
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Badge, StatusBadge } from '@/components/ui';
-import { supabase } from '@/lib/supabase/client';
 import { getSubdomain } from '@/lib/utils/subdomain';
 import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
+import { cn } from '@/lib/utils';
 
 // Define public service order structure
 interface PublicOrder {
@@ -25,6 +32,15 @@ interface PublicOrder {
   delivery_prediction?: string;
   codigo_os?: string;
 }
+
+// 5 marcos claros para o cliente final
+const MILESTONES = [
+  { id: 'recepcao', label: 'Entrada', statuses: ['Aguardando Equipamento'] },
+  { id: 'diagnostico', label: 'Diagnóstico', statuses: ['Em Análise'] },
+  { id: 'aprovacao', label: 'Aprovação', statuses: ['Aguardando Aprovação', 'Aprovado', 'Aguardando Peças'] },
+  { id: 'reparo', label: 'Reparo & Testes', statuses: ['Em Execução', 'Em Testes'] },
+  { id: 'conclusao', label: 'Pronto', statuses: ['Pronto para Retirada', 'Finalizado'] },
+];
 
 function TrackingContent() {
   const searchParams = useSearchParams();
@@ -41,19 +57,6 @@ function TrackingContent() {
   const [order, setOrder] = useState<PublicOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Timeline steps definition
-  const steps = [
-    { label: 'Aguardando Equipamento', status: 'Aguardando Equipamento', desc: 'Aparelho ainda não entregue na assistência.' },
-    { label: 'Em Análise', status: 'Em Análise', desc: 'Aparelho recebido e aguardando diagnóstico.' },
-    { label: 'Aguardando Aprovação', status: 'Aguardando Aprovação', desc: 'Orçamento gerado, aguardando aprovação do cliente.' },
-    { label: 'Aprovado', status: 'Aprovado', desc: 'Orçamento aprovado pelo cliente, aguardando início do conserto.' },
-    { label: 'Aguardando Peças', status: 'Aguardando Peças', desc: 'Conserto pausado aguardando chegada de peças.' },
-    { label: 'Em Execução', status: 'Em Execução', desc: 'Técnico trabalhando no diagnóstico ou conserto.' },
-    { label: 'Em Testes', status: 'Em Testes', desc: 'Aparelho montado passando por testes de estresse.' },
-    { label: 'Pronto para Retirada', status: 'Pronto para Retirada', desc: 'Serviço concluído, pronto para retirada pelo cliente.' },
-    { label: 'Finalizado', status: 'Finalizado', desc: 'Equipamento entregue e finalizado.' }
-  ];
 
   // Request verification token
   const requestToken = async (rawId: string) => {
@@ -78,7 +81,7 @@ function TrackingContent() {
       const res = await fetch('/api/rastreio/request-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ searchId: id, subdomain: activeSubdomain })
+        body: JSON.stringify({ searchId: id, subdomain: activeSubdomain }),
       });
 
       const data = await res.json();
@@ -111,13 +114,11 @@ function TrackingContent() {
     setLoading(true);
     setErrorMsg('');
 
-
-
     try {
       const res = await fetch('/api/rastreio/verify-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tempTokenId, code: otpCode })
+        body: JSON.stringify({ tempTokenId, code: otpCode }),
       });
 
       const data = await res.json();
@@ -156,194 +157,225 @@ function TrackingContent() {
     }
   };
 
-
-  // Helper to determine active steps
-  const getStepIndex = (currentStatus: string) => {
+  const getMilestoneIndex = (currentStatus: string) => {
     if (currentStatus === 'Cancelado') return -1;
-    return steps.findIndex(s => s.status === currentStatus);
+    return MILESTONES.findIndex((m) => m.statuses.includes(currentStatus));
   };
 
-  const currentStepIndex = order ? getStepIndex(order.status) : -1;
+  const currentMilestoneIndex = order ? getMilestoneIndex(order.status) : -1;
+
+  const displayCode = order?.codigo_os
+    ? (order.codigo_os.startsWith('#') ? order.codigo_os : `#${order.codigo_os}`)
+    : (order ? `#${order.id.slice(0, 8).toUpperCase()}` : '');
+
+  const whatsappMessage = order
+    ? `Olá! Gostaria de falar sobre o andamento da OS ${displayCode} (${order.equipment_name || 'Equipamento'} ${order.equipment_brand || ''}).`
+    : 'Olá! Gostaria de falar sobre minha ordem de serviço na TrustCare.';
 
   return (
-    <div className="min-h-screen bg-surface-sunken text-text flex flex-col font-sans">
-      {/* Background patterns */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(30,58,138,0.1),transparent_50%)] pointer-events-none" />
+    <div className="min-h-screen bg-surface text-text flex flex-col justify-between font-sans selection:bg-brand selection:text-black">
+      
+      {/* Navbar Limpa e Direta */}
+      <header className="border-b border-border bg-surface-raised/80 backdrop-blur-sm sticky top-0 z-20">
+        <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/rastreio" className="flex items-center gap-2.5 group">
+            <div className="w-7 h-7 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-bold font-mono text-xs transition-colors group-hover:bg-brand/20">
+              TC
+            </div>
+            <span className="font-bold text-sm tracking-tight text-white">TrustCare</span>
+          </Link>
 
-      {/* Header */}
-      <header className="h-20 border-b border-border bg-surface/60 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-6 lg:px-16">
-        <div className="flex items-center gap-2.5 font-bold text-lg text-white">
-          <div className="p-1.5 bg-info rounded-xl shadow-md shadow-blue-500/20">
-            <Wrench className="w-5 h-5" />
-          </div>
-          <span className="tracking-tight bg-gradient-to-r from-white to-text-muted bg-clip-text text-transparent">TrustCare Rastreamento</span>
+          <Link
+            href="/login"
+            className="text-xs text-text-muted hover:text-white transition-colors font-mono"
+          >
+            Área do Técnico →
+          </Link>
         </div>
-
-        <Link 
-          href="/login" 
-          className="text-caption font-semibold text-text-muted hover:text-white transition-colors bg-surface-raised border border-border px-4 py-2 rounded-xl"
-        >
-          Área do Técnico
-        </Link>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-4xl w-full mx-auto z-5">
-        
-        {/* Search Panel if not loaded or when searching */}
+      {/* Conteúdo Central Focado (Impeccable Distill) */}
+      <main className="flex-1 flex flex-col justify-center max-w-xl w-full mx-auto px-6 py-10 sm:py-14">
+
+        {/* ========================================================= */}
+        {/* ESTÁGIO 1: BUSCA DESTILADA (Zero Distração)               */}
+        {/* ========================================================= */}
         {stage === 'search' && !loading && (
-          <div className="w-full max-w-xl space-y-8 py-12">
-            <div className="text-center space-y-3">
-              <Badge tone="info" className="uppercase tracking-widest">
-                <ShieldCheck className="w-3.5 h-3.5" /> Portal Seguro LGPD
-              </Badge>
-              <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
-                Acompanhe o status do seu conserto
+          <div className="space-y-6 text-center animate-fadeIn">
+            
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                Rastrear Ordem de Serviço
               </h1>
-              <p className="text-sm text-text-muted max-w-md mx-auto">
-                Consulte o andamento em tempo real do seu aparelho de forma rápida e segura.
+              <p className="text-xs sm:text-sm text-text-muted max-w-sm mx-auto">
+                Digite o código da sua OS para acompanhar o andamento do reparo em tempo real.
               </p>
             </div>
 
-            <form onSubmit={handleSearchSubmit} className="space-y-4">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-info rounded-xl blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
-                <div className="relative flex items-center bg-surface-raised border border-border rounded-xl p-2.5">
-                  <Search className="w-5 h-5 text-text-muted ml-3" />
-                  <input
-                    type="text"
-                    id="rastreio-search-id"
-                    name="searchId"
-                    aria-label="Código da Ordem de Serviço"
-                    required
-                    placeholder="Código da OS (Ex: 0e15ff9a)..."
-                    value={searchId}
-                    onChange={(e) => setSearchId(e.target.value)}
-                    className="flex-1 bg-transparent border-0 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-0 px-3 py-2"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-info hover:bg-info text-white font-bold px-6 py-2.5 rounded-xl text-caption transition-all shadow-lg shadow-blue-500/15 cursor-pointer shrink-0"
-                  >
-                    Buscar
-                  </button>
-                </div>
+            {/* Campo de Busca Principal */}
+            <form onSubmit={handleSearchSubmit} className="pt-2 space-y-3">
+              <div className="relative flex items-center bg-surface-sunken border border-border focus-within:border-brand rounded-xl p-1.5 transition-all shadow-sm">
+                <span className="pl-3.5 pr-2 text-text-subtle font-mono text-sm select-none">
+                  #
+                </span>
+                <input
+                  type="text"
+                  id="rastreio-search-id"
+                  name="searchId"
+                  required
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  placeholder="Ex: TC-2026-0001"
+                  className="flex-1 bg-transparent border-0 text-sm font-mono text-white placeholder:text-text-subtle focus:outline-none px-2 py-2.5"
+                />
+                <button
+                  type="submit"
+                  className="bg-brand hover:bg-brand-hover text-black text-xs font-bold font-mono px-5 py-2.5 rounded-lg transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
+                >
+                  Buscar OS
+                </button>
               </div>
 
               {errorMsg && (
-                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-caption flex items-center gap-2.5">
+                <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs font-mono flex items-center gap-2 text-left">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
+
+              {/* Atalho Factual */}
+              <div className="flex items-center justify-between text-xs text-text-subtle px-1 font-mono">
+                <span>O código está no seu comprovante de entrada.</span>
+                <button
+                  type="button"
+                  onClick={() => setSearchId('TC-2026-0001')}
+                  className="text-brand hover:underline cursor-pointer"
+                >
+                  Testar com #TC-2026-0001
+                </button>
+              </div>
             </form>
 
-            <div className="pt-6 border-t border-border flex justify-center items-center gap-2 text-caption text-text-muted font-medium">
-              <Lock className="w-3.5 h-3.5" />
-              <span>Nenhum dado pessoal ou financeiro é exposto publicamente</span>
+            {/* Suporte direto discreto */}
+            <div className="pt-8 text-xs text-text-muted">
+              <span>Não encontrou o código da sua OS? </span>
+              <a
+                href="https://wa.me/5565999620703"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand hover:underline font-semibold"
+              >
+                Fale com a recepção no WhatsApp
+              </a>
             </div>
+
           </div>
         )}
 
-        {/* OTP Verification Panel */}
+        {/* ========================================================= */}
+        {/* ESTÁGIO 2: VALIDAÇÃO OTP DESTILADA                        */}
+        {/* ========================================================= */}
         {stage === 'otp' && !loading && (
-          <div className="w-full max-w-xl space-y-8 py-12 animate-fadeIn">
-            <div className="text-center space-y-3">
-              <Badge tone="success" className="uppercase tracking-widest">
-                <Lock className="w-3.5 h-3.5" /> Verificação de Segurança
-              </Badge>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight sm:text-3xl">
-                Digite o código de acesso
-              </h1>
-              <p className="text-sm text-text-muted max-w-md mx-auto">
-                Enviamos um código de verificação para o e-mail cadastrado:<br />
-                <strong className="text-info">{maskedEmail}</strong>
+          <div className="max-w-sm mx-auto w-full text-center space-y-6 animate-fadeIn my-4">
+            
+            <div className="space-y-1.5">
+              <span className="text-xs font-mono text-brand font-bold uppercase tracking-wider">
+                OS #{searchId.replace(/^#/, '')}
+              </span>
+              <h2 className="text-xl font-bold text-white">
+                Código de Segurança
+              </h2>
+              <p className="text-xs text-text-muted">
+                Informe o código de 6 dígitos enviado para:<br />
+                <strong className="font-mono text-white text-xs mt-1 block">{maskedEmail}</strong>
               </p>
             </div>
 
             <form onSubmit={verifyToken} className="space-y-4">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-brand-hover rounded-xl blur opacity-25 group-focus-within:opacity-40 transition-opacity duration-300" />
-                <div className="relative flex items-center bg-surface-raised border border-border rounded-xl p-2.5">
-                  <input
-                    type="text"
-                    id="rastreio-otp-code"
-                    name="otpCode"
-                    aria-label="Código de verificação de 6 dígitos"
-                    required
-                    maxLength={6}
-                    placeholder="Código de 6 dígitos"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    className="flex-1 bg-transparent border-0 text-center text-lg font-mono tracking-widest text-text placeholder:text-text-subtle focus:outline-none focus:ring-0 py-2"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-brand-hover hover:bg-brand text-white font-bold px-6 py-2.5 rounded-xl text-caption transition-all shadow-lg cursor-pointer shrink-0"
-                  >
-                    Verificar
-                  </button>
-                </div>
+              <div>
+                <input
+                  type="text"
+                  id="rastreio-otp-code"
+                  name="otpCode"
+                  aria-label="Código de verificação de 6 dígitos"
+                  required
+                  maxLength={6}
+                  placeholder="000000"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-surface-sunken border border-border focus:border-brand rounded-xl text-center text-2xl font-mono tracking-[0.35em] text-white py-3 focus:outline-none transition-colors"
+                />
               </div>
 
               {process.env.NODE_ENV === 'development' && devToken && (
-                <div className="p-3 bg-info/10 border border-info/25 rounded-xl text-center">
+                <div className="p-2.5 rounded-lg bg-surface-sunken border border-border text-center">
                   <button
                     type="button"
                     onClick={() => setOtpCode(devToken)}
-                    className="text-caption text-info hover:text-info underline font-mono"
+                    className="text-xs font-mono text-brand hover:underline cursor-pointer"
                   >
-                    [Modo de Testes] Clique aqui para auto-preencher o código: {devToken}
+                    [Modo Testes] Auto-preencher: {devToken}
                   </button>
                 </div>
               )}
 
               {errorMsg && (
-                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger text-caption flex items-center gap-2.5">
+                <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs font-mono flex items-center gap-2 text-left">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
-              <div className="flex justify-between items-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStage('search');
-                    setErrorMsg('');
-                    setOtpCode('');
-                  }}
-                  className="text-caption font-semibold text-text-muted hover:text-white transition-colors flex items-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Voltar para busca
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => requestToken(searchId)}
-                  className="text-caption font-semibold text-info hover:text-info transition-colors"
-                >
-                  Reenviar código
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full bg-brand hover:bg-brand-hover text-black font-bold text-xs py-3 rounded-xl transition-all cursor-pointer font-mono active:scale-95 shadow-sm"
+              >
+                Confirmar e Visualizar OS
+              </button>
             </form>
+
+            <div className="flex items-center justify-between text-xs text-text-muted pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => {
+                  setStage('search');
+                  setErrorMsg('');
+                  setOtpCode('');
+                }}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                ← Trocar código de OS
+              </button>
+              <button
+                type="button"
+                onClick={() => requestToken(searchId)}
+                className="text-brand hover:underline cursor-pointer"
+              >
+                Reenviar código
+              </button>
+            </div>
+
           </div>
         )}
 
         {/* Loading Spinner */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-            <LoadingSpinner className="w-10 h-10 text-info animate-spin" />
-            <p className="text-sm text-text-muted font-medium">Processando solicitação...</p>
+            <LoadingSpinner className="w-8 h-8 text-brand animate-spin" />
+            <p className="text-xs font-mono text-text-muted">Consultando chamado técnico...</p>
           </div>
         )}
 
-        {/* Displaying Order Details & Timeline */}
+        {/* ========================================================= */}
+        {/* ESTÁGIO 3: STATUS LIMPO E DIRETO                           */}
+        {/* ========================================================= */}
         {stage === 'result' && order && !loading && (
-          <div className="w-full space-y-8 py-8 animate-fadeIn">
-            {/* Navigation / Header details */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
+          <div className="space-y-6 animate-fadeIn">
+            
+            {/* Topo com botão de voltar */}
+            <div className="flex items-center justify-between pb-2 border-b border-border">
               <button
+                type="button"
                 onClick={() => {
                   setOrder(null);
                   setSearchId('');
@@ -353,201 +385,137 @@ function TrackingContent() {
                   setDevToken('');
                   router.push('/rastreio');
                 }}
-                className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-muted hover:text-white transition-colors self-start"
+                className="text-xs font-mono text-text-muted hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                <ArrowLeft className="w-4 h-4" /> Buscar outro equipamento
+                ← Buscar outra OS
               </button>
-
-              <div className="flex items-center gap-2 text-caption font-medium text-text-muted bg-surface-raised px-3.5 py-2 rounded-xl border border-border self-start">
-                <Clock className="w-3.5 h-3.5 text-info" />
-                <span>Entrada em: {new Date(order.created_at).toLocaleDateString('pt-BR')}</span>
-              </div>
+              <span className="text-xs font-mono text-text-subtle">
+                Entrada: {new Date(order.created_at).toLocaleDateString('pt-BR')}
+              </span>
             </div>
 
-            {/* Quick overview widget */}
-            <div className="bg-surface-raised/40 backdrop-blur-xl border border-border rounded-xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-              <div className="space-y-4 z-2">
-                <div className="flex items-center gap-3">
-                  <StatusBadge status={order.status} className="uppercase tracking-wider" />
-                  <span className="text-caption font-bold text-text-muted uppercase tracking-widest">
-                    OS #{order.codigo_os || order.id.slice(0, 8)}
+            {/* Cartão Principal: O que importa de relance */}
+            <div className="p-6 rounded-2xl bg-surface-raised border border-border space-y-6 shadow-sm">
+              
+              {/* Equipamento e Status */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-border">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="font-mono text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded border border-brand/20">
+                      {displayCode}
+                    </span>
+                    <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                      ● {order.status}
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-bold text-white tracking-tight">
+                    {order.equipment_name || 'Equipamento'} {order.equipment_brand} {order.equipment_model}
+                  </h2>
+                </div>
+
+                <div className="sm:text-right font-mono text-xs shrink-0">
+                  <span className="text-text-subtle block">Previsão de Conclusão</span>
+                  <span className="text-base font-bold text-white block mt-0.5">
+                    {order.delivery_prediction
+                      ? new Date(order.delivery_prediction).toLocaleDateString('pt-BR')
+                      : 'A combinar com o técnico'}
                   </span>
                 </div>
-                
-                <h2 className="text-xl sm:text-2xl font-extrabold text-white">
-                  {order.equipment_name || 'Aparelho'} {order.equipment_brand} {order.equipment_model}
-                </h2>
-                
-                <div className="text-caption text-text-muted space-y-1 mt-2">
-                  <span className="font-semibold text-text">Defeito relatado:</span>
-                  <div 
-                    className="prose prose-invert max-w-none text-caption text-text-muted italic font-medium break-words whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.reported_problem) }}
-                  />
-                </div>
               </div>
 
-              {/* Delivery Prediction Info */}
-              <div className="p-4 bg-surface/80 rounded-xl border border-border shrink-0 md:w-64 space-y-1.5 text-center md:text-left z-2">
-                <p className="text-caption font-bold text-text-muted uppercase tracking-wider flex items-center justify-center md:justify-start gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-info" /> Previsão de Entrega
-                </p>
-                <p className="text-sm font-extrabold text-white">
-                  {order.delivery_prediction 
-                    ? new Date(order.delivery_prediction).toLocaleDateString('pt-BR') 
-                    : 'A combinar'}
-                </p>
-                <p className="text-caption text-text-muted font-medium">
-                  {order.status === 'Pronto para Retirada' 
-                    ? 'Seu aparelho já está pronto!' 
-                    : 'Sujeito a alterações técnicas.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Cancelled Alert Box */}
-            {order.status === 'Cancelado' && (
-              <div className="p-6 rounded-xl bg-danger/5 border border-danger/25 text-danger space-y-2">
-                <div className="flex items-center gap-2 font-bold text-sm">
-                  <AlertCircle className="w-5 h-5 shrink-0 text-danger" />
-                  <span>Serviço Cancelado</span>
-                </div>
-                <p className="text-caption text-text-muted leading-relaxed pl-7">
-                  Esta ordem de serviço foi classificada como cancelada. Para obter informações detalhadas sobre a recusa do orçamento, entrega de peças ou devolução do aparelho físico, por favor, entre em contato diretamente com o nosso suporte via WhatsApp.
-                </p>
-              </div>
-            )}
-
-            {/* Main Interactive Progress Stepper */}
-            {order.status !== 'Cancelada' && (
-              <div className="bg-surface-raised/20 border border-border rounded-xl p-6 sm:p-8 shadow-xl space-y-8">
-                <h3 className="text-sm font-bold text-text uppercase tracking-wider">
-                  Progresso do Reparo
-                </h3>
-
-                {/* Desktop Stepper */}
-                <div className="hidden md:grid grid-cols-6 gap-2 relative">
-                  {/* Connecting background bar */}
-                  <div className="absolute top-5 left-[8%] right-[8%] h-0.5 bg-surface-overlay z-1" />
-                  {/* Active progress bar */}
-                  {currentStepIndex > 0 && (
-                    <div 
-                      className="absolute top-5 left-[8%] h-0.5 bg-info z-2 transition-all duration-500" 
-                      style={{ width: `${(currentStepIndex / (steps.length - 1)) * 84}%` }}
-                    />
-                  )}
-
-                  {steps.map((step, idx) => {
-                    const isCompleted = idx < currentStepIndex;
-                    const isCurrent = idx === currentStepIndex;
-                    const isPending = idx > currentStepIndex;
-
-                    return (
-                      <div key={idx} className="flex flex-col items-center text-center space-y-3 z-3">
-                        {/* Step badge */}
-                        <div 
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-caption font-bold border transition-all duration-300 ${
-                            isCompleted 
-                              ? 'bg-info text-white border-info shadow-md shadow-blue-500/20' 
-                              : isCurrent 
-                              ? 'bg-surface-raised border-info text-info shadow-md shadow-blue-500/10 ring-4 ring-blue-500/10 animate-[pulse_2.5s_cubic-bezier(0.4,0,0.6,1)_infinite]' 
-                              : 'bg-surface-sunken border-border text-text-subtle'
-                          }`}
-                        >
-                          {isCompleted ? <CheckCircle2 className="w-5 h-5 text-white" /> : idx + 1}
-                        </div>
-
-                        {/* Step labels */}
-                        <div className="space-y-1">
-                          <p className={`text-caption font-extrabold tracking-tight ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
-                            {step.label}
-                          </p>
-                          <p className="text-caption text-text-muted leading-normal max-w-[120px] mx-auto">
-                            {step.desc}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Mobile Stepper (Vertical) */}
-                <div className="md:hidden space-y-6 relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-overlay">
-                  
-                  {/* Mobile Progress Bar Fill */}
-                  {currentStepIndex > 0 && (
-                    <div 
-                      className="absolute left-2 top-2 w-0.5 bg-info transition-all duration-500" 
-                      style={{ height: `${(currentStepIndex / (steps.length - 1)) * 96}%` }}
-                    />
-                  )}
-
-                  {steps.map((step, idx) => {
-                    const isCompleted = idx < currentStepIndex;
-                    const isCurrent = idx === currentStepIndex;
-                    const isPending = idx > currentStepIndex;
-
-                    return (
-                      <div key={idx} className="flex gap-4 items-start relative z-2">
-                        {/* Circle bullet */}
-                        <div 
-                          className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center shrink-0 -ml-[23px] transition-all duration-300 ${
-                            isCompleted 
-                              ? 'bg-info border-info text-white' 
-                              : isCurrent 
-                              ? 'bg-surface-sunken border-info ring-4 ring-blue-500/15 text-info animate-[pulse_2.5s_cubic-bezier(0.4,0,0.6,1)_infinite]' 
-                              : 'bg-surface-sunken border-border text-text-subtle'
-                          }`}
-                        >
-                          {isCompleted && <div className="w-1.5 h-1.5 bg-surface-raised rounded-full" />}
-                        </div>
-
-                        {/* Labels */}
-                        <div className="space-y-0.5">
-                          <p className={`text-caption font-extrabold tracking-tight flex items-center gap-1.5 ${isCurrent ? 'text-info' : isPending ? 'text-text-muted' : 'text-text'}`}>
-                            {step.label}
-                            {isCurrent && <span className="inline-block h-1.5 w-1.5 rounded-full bg-info animate-ping" />}
-                          </p>
-                          <p className="text-caption text-text-muted">
-                            {step.desc}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Technical Report / Laudo Técnico (If present) */}
-            {order.technical_report && (
-              <div className="bg-surface-raised/20 border border-border rounded-xl p-6 sm:p-8 shadow-xl space-y-4">
-                <h3 className="text-sm font-bold text-text uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-info" />
-                  Laudo Técnico / Diagnóstico do Serviço / Serviço Realizado
-                </h3>
-                <div 
-                  className="text-caption text-text prose prose-invert max-w-none leading-relaxed bg-surface/40 p-4 rounded-xl border border-border font-medium"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.technical_report) }}
+              {/* Problema Reportado */}
+              <div className="text-xs space-y-1">
+                <span className="font-semibold text-text-muted uppercase tracking-wider text-[10px]">
+                  Defeito Informado:
+                </span>
+                <div
+                  className="text-slate-300 italic"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.reported_problem) }}
                 />
               </div>
-            )}
 
-            {/* Footer help notice */}
-            <div className="p-6 bg-surface-raised/10 border border-border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="space-y-1 text-center sm:text-left">
-                <p className="text-caption font-bold text-text">Dúvidas sobre o conserto?</p>
-                <p className="text-caption text-text-muted">Estamos à disposição no canal de atendimento direto.</p>
+              {/* Alerta de OS Cancelada (se aplicável) */}
+              {order.status === 'Cancelado' && (
+                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger font-mono text-xs space-y-1">
+                  <span className="font-bold block">● Atendimento Cancelado</span>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    Esta ordem de serviço foi classificada como cancelada. Para orientações sobre retirada física do equipamento ou peças, entre em contato direto pelo WhatsApp.
+                  </p>
+                </div>
+              )}
+
+              {/* Linha do Tempo Direta de 5 Passos (Sem poluição) */}
+              {order.status !== 'Cancelado' && (
+                <div className="space-y-3 pt-2">
+                  <span className="font-mono text-xs font-bold text-white uppercase tracking-wider block">
+                    Progresso do Atendimento
+                  </span>
+
+                  <div className="grid grid-cols-5 gap-2 text-center text-xs font-mono">
+                    {MILESTONES.map((milestone, idx) => {
+                      const isCompleted = idx < currentMilestoneIndex;
+                      const isCurrent = idx === currentMilestoneIndex;
+                      const isPending = idx > currentMilestoneIndex;
+
+                      return (
+                        <div
+                          key={milestone.id}
+                          className={cn('space-y-1.5 transition-opacity', isPending && 'opacity-40')}
+                        >
+                          <div
+                            className={cn(
+                              'h-1.5 rounded-full transition-all',
+                              isCompleted && 'bg-brand',
+                              isCurrent && 'bg-blue-400 animate-pulse',
+                              isPending && 'bg-surface-sunken border border-border'
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              'text-[11px] font-bold block',
+                              isCurrent ? 'text-blue-400' : isCompleted ? 'text-white' : 'text-text-muted'
+                            )}
+                          >
+                            {milestone.label}
+                          </span>
+                          <span className="text-[10px] text-text-subtle block">
+                            {isCurrent ? 'Fase atual' : isCompleted ? 'Concluído' : 'Pendente'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Parecer Técnico Conciso (se houver) */}
+              {order.technical_report && (
+                <div className="p-4 rounded-xl bg-surface-sunken border border-border text-xs font-mono space-y-1">
+                  <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+                    Laudo Técnico de Bancada:
+                  </span>
+                  <div
+                    className="text-text-muted leading-relaxed text-[11px] prose prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.technical_report) }}
+                  />
+                </div>
+              )}
+
+              {/* Ação Direta WhatsApp */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border text-xs">
+                <span className="text-text-muted text-center sm:text-left">
+                  Deseja falar diretamente com o técnico responsável?
+                </span>
+                <a
+                  href={`https://wa.me/5565999620703?text=${encodeURIComponent(whatsappMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-brand hover:bg-brand-hover text-black font-bold font-mono px-4 py-2 rounded-lg transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  Falar no WhatsApp →
+                </a>
               </div>
 
-              <a 
-                href="https://wa.me/5565999620703" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-brand-hover hover:bg-brand text-white font-bold px-5 py-2.5 rounded-xl text-caption transition-all shadow-md flex items-center gap-1.5"
-              >
-                Falar com Suporte no WhatsApp <ChevronRight className="w-4 h-4" />
-              </a>
             </div>
 
           </div>
@@ -555,22 +523,25 @@ function TrackingContent() {
 
       </main>
 
-      {/* Footer copyright */}
-      <footer className="h-16 border-t border-border flex items-center justify-center text-caption text-text-muted font-semibold tracking-wide uppercase px-6">
-        <span>© {new Date().getFullYear()} Trust Care - Consultoria em T.I • Todos os direitos reservados.</span>
+      {/* Rodapé Mínimo */}
+      <footer className="border-t border-border py-5 text-center text-xs font-mono text-text-subtle">
+        <span>© {new Date().getFullYear()} TrustCare • Gestão de Assistência Técnica</span>
       </footer>
+
     </div>
   );
 }
 
 export default function PublicTrackingPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-surface-sunken text-text flex flex-col items-center justify-center">
-        <LoadingSpinner className="w-10 h-10 text-info animate-spin" />
-        <p className="text-sm text-text-muted font-medium mt-4">Carregando portal...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-surface text-text flex flex-col items-center justify-center space-y-4">
+          <LoadingSpinner className="w-8 h-8 text-brand animate-spin" />
+          <p className="text-xs font-mono text-text-muted">Carregando portal de rastreamento...</p>
+        </div>
+      }
+    >
       <TrackingContent />
     </Suspense>
   );

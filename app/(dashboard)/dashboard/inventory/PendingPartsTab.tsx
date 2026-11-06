@@ -425,7 +425,7 @@ export function PendingPartsTab() {
                             {item.equipment_details}
                           </p>
                         )}
-                        <span className="text-[11px] text-text-muted">OS: {item.order_status}</span>
+                        <span className="text-caption text-text-muted">OS: {item.order_status}</span>
                       </div>
                     </TD>
 
@@ -450,7 +450,7 @@ export function PendingPartsTab() {
                     <TD>
                       <div className="space-y-1 min-w-[180px]">
                         <p className="text-small font-semibold text-text">{item.product_name}</p>
-                        <Badge tone="warning" className="text-[10px] py-0 px-1.5">
+                        <Badge tone="warning" className="text-caption py-0 px-1.5">
                           Sob Encomenda
                         </Badge>
                       </div>
@@ -474,7 +474,7 @@ export function PendingPartsTab() {
                             Real: {brl(item.actual_cost)}
                           </span>
                         ) : (
-                          <span className="text-text-muted text-[11px] block">Sem custo real</span>
+                          <span className="text-text-muted text-caption block">Sem custo real</span>
                         )}
                       </div>
                     </TD>

@@ -19,6 +19,7 @@ import {
   Clock,
   Sparkles,
   Info,
+  Truck,
 } from 'lucide-react';
 
 import { Button, Field, Input, LoadingSpinner } from '@/components/ui';
@@ -213,6 +214,7 @@ export default function PublicOrderBudgetPage() {
   const [client, setClient] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [orderServices, setOrderServices] = useState<any[]>([]);
+  const [orderLogistics, setOrderLogistics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -261,6 +263,7 @@ export default function PublicOrderBudgetPage() {
       setClient(payload.client);
       setOrderItems(payload.items || []);
       setOrderServices(payload.services || []);
+      setOrderLogistics(payload.logistics || []);
 
       // Auto preenche o nome do cliente na assinatura se existir
       if (payload.client?.name) {
@@ -676,6 +679,20 @@ export default function PublicOrderBudgetPage() {
                       </div>
                       <span className="font-mono font-semibold text-text tabular-nums">
                         {brl(item.subtotal)}
+                      </span>
+                    </div>
+                  ))}
+
+                  {orderLogistics.map((item, idx) => (
+                    <div key={`log-${idx}`} className="p-3.5 flex justify-between items-center text-sm bg-surface-sunken/40">
+                      <div className="flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-text font-medium">
+                          {item.leg === 'pickup' ? 'Taxa de Retirada do Equipamento' : 'Taxa de Devolução / Entrega'}
+                        </span>
+                      </div>
+                      <span className="font-mono font-semibold text-text tabular-nums">
+                        {brl(item.charged_price)}
                       </span>
                     </div>
                   ))}
