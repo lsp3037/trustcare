@@ -31,20 +31,20 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
     await page.goto(BUDGET_URL);
 
     // Cabeçalho do chamado
-    await expect(page.getByText(/Orçamento & Diagnóstico Técnico/i)).toBeVisible();
+    await expect(page.getByText(/Orçamento & Parecer Técnico Oficial/i)).toBeVisible();
     await expect(page.getByText(`#OS-${budgetFixture.order.codigo_os}`)).toBeVisible();
 
     // Laudo técnico
-    await expect(page.getByText(/Laudo Técnico & Parecer do Diagnóstico/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Laudo & Diagnóstico Técnico/i })).toBeVisible();
     await expect(page.getByText(budgetFixture.order.technical_report)).toBeVisible();
 
     // Demonstrativo de valores — itens, serviços, desconto e total
-    await expect(page.getByText(/Demonstrativo de Valores/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Discriminação dos Serviços e Peças/i })).toBeVisible();
     await expect(page.getByText('Pasta Térmica Grizzly')).toBeVisible();
     await expect(page.getByText('Limpeza Interna Completa')).toBeVisible();
-    await expect(page.getByText(/Desconto: - R\$ 20\.00/)).toBeVisible();
-    await expect(page.getByText('Valor total', { exact: true })).toBeVisible();
-    await expect(page.getByText('R$ 580.00')).toBeVisible();
+    await expect(page.getByText(/Desconto:\s*-\s*R\$\s*20,00/)).toBeVisible();
+    await expect(page.getByText('Total do Orçamento', { exact: true })).toBeVisible();
+    await expect(page.getByText(/R\$\s*580,00/)).toBeVisible();
 
     // Seção de assinatura eletrônica
     await expect(page.getByText(/Assinatura Eletrônica do Cliente/i)).toBeVisible();
@@ -53,7 +53,7 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
   test('deve bloquear aprovação se o nome ou a assinatura no canvas não forem informados', async ({ page }) => {
     await page.goto(BUDGET_URL);
 
-    const approveBtn = page.getByRole('button', { name: /Aprovar Orçamento e Iniciar Serviço/i });
+    const approveBtn = page.getByRole('button', { name: /Aprovar Orçamento/i });
     await expect(approveBtn).toBeVisible();
 
     // A validação é inline, no próprio campo — não mais por `window.alert`.
@@ -74,21 +74,25 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
       await dialog.dismiss();
     });
 
-    // 1. Sem nome e sem assinatura — os dois erros aparecem de uma vez
+    // Como o budgetFixture já traz o cliente preenchido, limpamos para validar ambos vazios
+    const nameInput = page.getByLabel(/Nome completo do signatário/i);
+    await nameInput.clear();
+
+    // 1. Sem nome e sem assinatura — os dois erros aparecem
     await approveBtn.click();
-    await expect(page.getByText(/Informe seu nome por extenso/i)).toBeVisible();
-    await expect(page.getByText(/Assine no painel abaixo/i)).toBeVisible();
+    await expect(page.getByText(/Informe seu nome completo/i)).toBeVisible();
+    await expect(page.getByText(/Assine no painel para autorizar o serviço/i)).toBeVisible();
 
     // 2. Com nome, o erro do nome some e sobra o da assinatura
-    await page.getByLabel(/Nome completo do signatário/i).fill('Maria Oliveira');
+    await nameInput.fill('Maria Oliveira');
     await approveBtn.click();
-    await expect(page.getByText(/Informe seu nome por extenso/i)).toHaveCount(0);
-    await expect(page.getByText(/Assine no painel abaixo/i)).toBeVisible();
+    await expect(page.getByText(/Informe seu nome completo/i)).toHaveCount(0);
+    await expect(page.getByText(/Assine no painel para autorizar o serviço/i)).toBeVisible();
 
     expect(dialogs).toEqual([]);
     expect(approvalAttempted).toBe(false);
     // Segue na tela de aprovação, sem confirmação de sucesso.
-    await expect(page.getByText(/Orçamento Aprovado/i)).toHaveCount(0);
+    await expect(page.getByText(/Orçamento Aprovado com Sucesso/i)).toHaveCount(0);
   });
 
   test('deve permitir desenhar no canvas de assinatura, preencher nome e aprovar com sucesso', async ({ page }) => {
@@ -105,13 +109,13 @@ test.describe('Fluxo Público de Aprovação de Orçamento (/orcamento/[id])', (
     await page.getByLabel(/Nome completo do signatário/i).fill('Maria Oliveira');
     await drawSignature(page);
 
-    await page.getByRole('button', { name: /Aprovar Orçamento e Iniciar Serviço/i }).click();
+    await page.getByRole('button', { name: /Aprovar Orçamento/i }).click();
 
     // Tela de confirmação com os dados de auditoria
-    await expect(page.getByText(/Orçamento Aprovado/i)).toBeVisible();
-    await expect(page.getByText(/Assinatura e Auditoria Registradas/i)).toBeVisible();
+    await expect(page.getByText(/Orçamento Aprovado com Sucesso/i)).toBeVisible();
+    await expect(page.getByText(/Signatário Autorizado/i)).toBeVisible();
     await expect(page.getByText('Maria Oliveira')).toBeVisible();
     await expect(page.getByText('203.0.113.10')).toBeVisible();
-    await expect(page.getByAltText(/Assinatura digital/i)).toBeVisible();
+    await expect(page.getByAltText(/Assinatura digital do cliente/i)).toBeVisible();
   });
 });

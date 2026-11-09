@@ -49,6 +49,7 @@ import {
 } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { fetchOrSeedEquipmentCategories } from '@/lib/equipment-categories';
 import { formatPhone } from '@/lib/utils/phone';
 
 export default function ClientDetailPage() {
@@ -156,11 +157,7 @@ export default function ClientDetailPage() {
 
         if (ordersData) setOrders(ordersData);
 
-        const { data: catData } = await supabase
-          .from('equipment_categories')
-          .select('*')
-          .order('name');
-
+        const catData = await fetchOrSeedEquipmentCategories(supabase, clientData.company_id);
         if (catData) setCategories(catData);
 
         const { data: eqData } = await supabase

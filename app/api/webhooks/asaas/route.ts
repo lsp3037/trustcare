@@ -47,7 +47,8 @@ export async function POST(req: Request) {
     const customerAsaasId = payment?.customer || subscription?.customer;
     const subscriptionAsaasId = payment?.subscription || subscription?.id;
 
-    let { companyId, targetPlan } = parseExternalReference(extRef);
+    const { companyId: parsedCompanyId, targetPlan } = parseExternalReference(extRef);
+    let companyId = parsedCompanyId;
 
     if (companyId && !UUID_REGEX.test(companyId)) {
       companyId = '';

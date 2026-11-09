@@ -14,7 +14,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner, StatusBadge } from '@/components/ui';
 import { getSubdomain } from '@/lib/utils/subdomain';
 import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 import { cn } from '@/lib/utils';
@@ -173,21 +173,21 @@ function TrackingContent() {
     : 'Olá! Gostaria de falar sobre minha ordem de serviço na TrustCare.';
 
   return (
-    <div className="min-h-screen bg-surface text-text flex flex-col justify-between font-sans selection:bg-brand selection:text-black">
+    <div className="min-h-screen bg-surface text-text flex flex-col justify-between font-sans selection:bg-brand selection:text-brand-contrast">
       
       {/* Navbar Limpa e Direta */}
       <header className="border-b border-border bg-surface-raised/80 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/rastreio" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-bold font-mono text-xs transition-colors group-hover:bg-brand/20">
+            <div className="w-7 h-7 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand font-bold font-mono text-caption transition-colors group-hover:bg-brand/20">
               TC
             </div>
-            <span className="font-bold text-sm tracking-tight text-white">TrustCare</span>
+            <span className="font-bold text-small tracking-tight text-text">TrustCare</span>
           </Link>
 
           <Link
             href="/login"
-            className="text-xs text-text-muted hover:text-white transition-colors font-mono"
+            className="text-caption text-text-muted hover:text-text transition-colors font-mono"
           >
             Área do Técnico →
           </Link>
@@ -204,10 +204,10 @@ function TrackingContent() {
           <div className="space-y-6 text-center animate-fadeIn">
             
             <div className="space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              <h1 className="text-h2 sm:text-h1 font-bold tracking-tight text-text">
                 Rastrear Ordem de Serviço
               </h1>
-              <p className="text-xs sm:text-sm text-text-muted max-w-sm mx-auto">
+              <p className="text-small text-text-muted max-w-sm mx-auto">
                 Digite o código da sua OS para acompanhar o andamento do reparo em tempo real.
               </p>
             </div>
@@ -215,7 +215,7 @@ function TrackingContent() {
             {/* Campo de Busca Principal */}
             <form onSubmit={handleSearchSubmit} className="pt-2 space-y-3">
               <div className="relative flex items-center bg-surface-sunken border border-border focus-within:border-brand rounded-xl p-1.5 transition-all shadow-sm">
-                <span className="pl-3.5 pr-2 text-text-subtle font-mono text-sm select-none">
+                <span className="pl-3.5 pr-2 text-text-subtle font-mono text-small select-none">
                   #
                 </span>
                 <input
@@ -226,25 +226,25 @@ function TrackingContent() {
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
                   placeholder="Ex: TC-2026-0001"
-                  className="flex-1 bg-transparent border-0 text-sm font-mono text-white placeholder:text-text-subtle focus:outline-none px-2 py-2.5"
+                  className="flex-1 bg-transparent border-0 text-body font-mono text-text placeholder:text-text-subtle focus:outline-none px-2 py-2.5"
                 />
                 <button
                   type="submit"
-                  className="bg-brand hover:bg-brand-hover text-black text-xs font-bold font-mono px-5 py-2.5 rounded-lg transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
+                  className="bg-brand hover:bg-brand-hover text-brand-contrast text-small font-bold font-mono px-5 py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0 shadow-sm"
                 >
                   Buscar OS
                 </button>
               </div>
 
               {errorMsg && (
-                <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs font-mono flex items-center gap-2 text-left">
+                <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-small font-mono flex items-center gap-2 text-left">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {/* Atalho Factual */}
-              <div className="flex items-center justify-between text-xs text-text-subtle px-1 font-mono">
+              <div className="flex items-center justify-between text-caption text-text-subtle px-1 font-mono">
                 <span>O código está no seu comprovante de entrada.</span>
                 <button
                   type="button"
@@ -257,7 +257,7 @@ function TrackingContent() {
             </form>
 
             {/* Suporte direto discreto */}
-            <div className="pt-8 text-xs text-text-muted">
+            <div className="pt-8 text-small text-text-muted">
               <span>Não encontrou o código da sua OS? </span>
               <a
                 href="https://wa.me/5565999620703"
@@ -279,15 +279,15 @@ function TrackingContent() {
           <div className="max-w-sm mx-auto w-full text-center space-y-6 animate-fadeIn my-4">
             
             <div className="space-y-1.5">
-              <span className="text-xs font-mono text-brand font-bold uppercase tracking-wider">
+              <span className="text-caption font-mono text-brand font-bold uppercase tracking-wider">
                 OS #{searchId.replace(/^#/, '')}
               </span>
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-h2 font-bold text-text">
                 Código de Segurança
               </h2>
-              <p className="text-xs text-text-muted">
+              <p className="text-small text-text-muted">
                 Informe o código de 6 dígitos enviado para:<br />
-                <strong className="font-mono text-white text-xs mt-1 block">{maskedEmail}</strong>
+                <strong className="font-mono text-text text-small mt-1 block">{maskedEmail}</strong>
               </p>
             </div>
 
@@ -303,7 +303,7 @@ function TrackingContent() {
                   placeholder="000000"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-surface-sunken border border-border focus:border-brand rounded-xl text-center text-2xl font-mono tracking-[0.35em] text-white py-3 focus:outline-none transition-colors"
+                  className="w-full bg-surface-sunken border border-border focus:border-brand rounded-xl text-center text-2xl font-mono tracking-[0.35em] text-text py-3 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -312,7 +312,7 @@ function TrackingContent() {
                   <button
                     type="button"
                     onClick={() => setOtpCode(devToken)}
-                    className="text-xs font-mono text-brand hover:underline cursor-pointer"
+                    className="text-caption font-mono text-brand hover:underline cursor-pointer"
                   >
                     [Modo Testes] Auto-preencher: {devToken}
                   </button>
@@ -320,7 +320,7 @@ function TrackingContent() {
               )}
 
               {errorMsg && (
-                <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-xs font-mono flex items-center gap-2 text-left">
+                <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/25 text-danger text-small font-mono flex items-center gap-2 text-left">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -328,13 +328,13 @@ function TrackingContent() {
 
               <button
                 type="submit"
-                className="w-full bg-brand hover:bg-brand-hover text-black font-bold text-xs py-3 rounded-xl transition-all cursor-pointer font-mono active:scale-95 shadow-sm"
+                className="w-full bg-brand hover:bg-brand-hover text-brand-contrast font-bold text-small py-3 rounded-xl transition-all cursor-pointer font-mono active:scale-95 shadow-sm"
               >
                 Confirmar e Visualizar OS
               </button>
             </form>
 
-            <div className="flex items-center justify-between text-xs text-text-muted pt-2 border-t border-border">
+            <div className="flex items-center justify-between text-small text-text-muted pt-2 border-t border-border">
               <button
                 type="button"
                 onClick={() => {
@@ -342,7 +342,7 @@ function TrackingContent() {
                   setErrorMsg('');
                   setOtpCode('');
                 }}
-                className="hover:text-white transition-colors cursor-pointer"
+                className="hover:text-text transition-colors cursor-pointer"
               >
                 ← Trocar código de OS
               </button>
@@ -362,7 +362,7 @@ function TrackingContent() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
             <LoadingSpinner className="w-8 h-8 text-brand animate-spin" />
-            <p className="text-xs font-mono text-text-muted">Consultando chamado técnico...</p>
+            <p className="text-small font-mono text-text-muted">Consultando chamado técnico...</p>
           </div>
         )}
 
@@ -385,37 +385,35 @@ function TrackingContent() {
                   setDevToken('');
                   router.push('/rastreio');
                 }}
-                className="text-xs font-mono text-text-muted hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                className="text-caption font-mono text-text-muted hover:text-text transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 ← Buscar outra OS
               </button>
-              <span className="text-xs font-mono text-text-subtle">
+              <span className="text-caption font-mono text-text-subtle">
                 Entrada: {new Date(order.created_at).toLocaleDateString('pt-BR')}
               </span>
             </div>
 
             {/* Cartão Principal: O que importa de relance */}
-            <div className="p-6 rounded-2xl bg-surface-raised border border-border space-y-6 shadow-sm">
+            <div className="p-6 rounded-[20px] bg-surface-raised border border-border space-y-6 shadow-sm">
               
               {/* Equipamento e Status */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-border">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded border border-brand/20">
+                    <span className="font-mono text-caption font-bold text-brand bg-brand/10 px-2.5 py-0.5 rounded-full border border-brand/20">
                       {displayCode}
                     </span>
-                    <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                      ● {order.status}
-                    </span>
+                    <StatusBadge status={order.status} dot />
                   </div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">
+                  <h2 className="text-h2 font-bold text-text tracking-tight">
                     {order.equipment_name || 'Equipamento'} {order.equipment_brand} {order.equipment_model}
                   </h2>
                 </div>
 
-                <div className="sm:text-right font-mono text-xs shrink-0">
+                <div className="sm:text-right font-mono text-caption shrink-0">
                   <span className="text-text-subtle block">Previsão de Conclusão</span>
-                  <span className="text-base font-bold text-white block mt-0.5">
+                  <span className="text-body font-bold text-text block mt-0.5">
                     {order.delivery_prediction
                       ? new Date(order.delivery_prediction).toLocaleDateString('pt-BR')
                       : 'A combinar com o técnico'}
@@ -424,21 +422,21 @@ function TrackingContent() {
               </div>
 
               {/* Problema Reportado */}
-              <div className="text-xs space-y-1">
-                <span className="font-semibold text-text-muted uppercase tracking-wider text-[10px]">
+              <div className="text-small space-y-1">
+                <span className="font-semibold text-text-muted uppercase tracking-wider text-caption">
                   Defeito Informado:
                 </span>
                 <div
-                  className="text-slate-300 italic"
+                  className="text-text-muted italic leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.reported_problem) }}
                 />
               </div>
 
               {/* Alerta de OS Cancelada (se aplicável) */}
               {order.status === 'Cancelado' && (
-                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger font-mono text-xs space-y-1">
+                <div className="p-4 rounded-xl bg-danger/10 border border-danger/25 text-danger font-mono text-small space-y-1">
                   <span className="font-bold block">● Atendimento Cancelado</span>
-                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                  <p className="text-text-muted text-caption leading-relaxed">
                     Esta ordem de serviço foi classificada como cancelada. Para orientações sobre retirada física do equipamento ou peças, entre em contato direto pelo WhatsApp.
                   </p>
                 </div>
@@ -447,11 +445,11 @@ function TrackingContent() {
               {/* Linha do Tempo Direta de 5 Passos (Sem poluição) */}
               {order.status !== 'Cancelado' && (
                 <div className="space-y-3 pt-2">
-                  <span className="font-mono text-xs font-bold text-white uppercase tracking-wider block">
+                  <span className="font-mono text-caption font-bold text-text uppercase tracking-wider block">
                     Progresso do Atendimento
                   </span>
 
-                  <div className="grid grid-cols-5 gap-2 text-center text-xs font-mono">
+                  <div className="grid grid-cols-5 gap-2 text-center text-caption font-mono">
                     {MILESTONES.map((milestone, idx) => {
                       const isCompleted = idx < currentMilestoneIndex;
                       const isCurrent = idx === currentMilestoneIndex;
@@ -466,19 +464,20 @@ function TrackingContent() {
                             className={cn(
                               'h-1.5 rounded-full transition-all',
                               isCompleted && 'bg-brand',
-                              isCurrent && 'bg-blue-400 animate-pulse',
+                              isCurrent && 'bg-info',
                               isPending && 'bg-surface-sunken border border-border'
                             )}
+                            style={isCurrent ? { animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' } : undefined}
                           />
                           <span
                             className={cn(
-                              'text-[11px] font-bold block',
-                              isCurrent ? 'text-blue-400' : isCompleted ? 'text-white' : 'text-text-muted'
+                              'text-caption font-bold block',
+                              isCurrent ? 'text-info' : isCompleted ? 'text-text' : 'text-text-muted'
                             )}
                           >
                             {milestone.label}
                           </span>
-                          <span className="text-[10px] text-text-subtle block">
+                          <span className="text-caption text-text-subtle block">
                             {isCurrent ? 'Fase atual' : isCompleted ? 'Concluído' : 'Pendente'}
                           </span>
                         </div>
@@ -490,19 +489,19 @@ function TrackingContent() {
 
               {/* Parecer Técnico Conciso (se houver) */}
               {order.technical_report && (
-                <div className="p-4 rounded-xl bg-surface-sunken border border-border text-xs font-mono space-y-1">
-                  <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+                <div className="p-4 rounded-xl bg-surface-sunken border border-border text-small font-mono space-y-1">
+                  <span className="font-bold text-text-muted uppercase tracking-wider text-caption">
                     Laudo Técnico de Bancada:
                   </span>
                   <div
-                    className="text-text-muted leading-relaxed text-[11px] prose prose-invert max-w-none"
+                    className="text-text-muted leading-relaxed text-caption prose prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(order.technical_report) }}
                   />
                 </div>
               )}
 
               {/* Ação Direta WhatsApp */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border text-xs">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border text-small">
                 <span className="text-text-muted text-center sm:text-left">
                   Deseja falar diretamente com o técnico responsável?
                 </span>
@@ -510,7 +509,7 @@ function TrackingContent() {
                   href={`https://wa.me/5565999620703?text=${encodeURIComponent(whatsappMessage)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-brand hover:bg-brand-hover text-black font-bold font-mono px-4 py-2 rounded-lg transition-all active:scale-95 cursor-pointer shrink-0"
+                  className="bg-brand hover:bg-brand-hover text-brand-contrast font-bold font-mono px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0 text-small"
                 >
                   Falar no WhatsApp →
                 </a>
@@ -524,7 +523,7 @@ function TrackingContent() {
       </main>
 
       {/* Rodapé Mínimo */}
-      <footer className="border-t border-border py-5 text-center text-xs font-mono text-text-subtle">
+      <footer className="border-t border-border py-5 text-center text-caption font-mono text-text-subtle">
         <span>© {new Date().getFullYear()} TrustCare • Gestão de Assistência Técnica</span>
       </footer>
 
@@ -538,7 +537,7 @@ export default function PublicTrackingPage() {
       fallback={
         <div className="min-h-screen bg-surface text-text flex flex-col items-center justify-center space-y-4">
           <LoadingSpinner className="w-8 h-8 text-brand animate-spin" />
-          <p className="text-xs font-mono text-text-muted">Carregando portal de rastreamento...</p>
+          <p className="text-small font-mono text-text-muted">Carregando portal de rastreamento...</p>
         </div>
       }
     >

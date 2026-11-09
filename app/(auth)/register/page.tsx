@@ -2,7 +2,7 @@
 import { Building, User, Phone, Mail, Lock, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -20,6 +20,12 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // A landing (/v2) envia o nome digitado no primeiro passo como ?empresa=.
+  useEffect(() => {
+    const empresa = new URLSearchParams(window.location.search).get('empresa');
+    if (empresa) setCompanyName((atual) => atual || empresa.slice(0, 120));
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();

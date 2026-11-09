@@ -45,9 +45,16 @@ vi.mock('@/lib/supabase/client', () => {
     eq: mockEq,
     order: mockOrder,
   });
+  const mockInsert = vi.fn().mockImplementation(() => ({
+    select: vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({ data: { id: 'item-1' }, error: null }),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }),
+  }));
   const mockFrom = vi.fn().mockImplementation((table: string) => ({
     select: mockSelect,
     update: mockUpdate,
+    insert: mockInsert,
   }));
 
   return {

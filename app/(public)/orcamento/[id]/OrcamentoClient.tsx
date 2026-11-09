@@ -43,7 +43,7 @@ function DocLabel({ children, className }: { children: React.ReactNode; classNam
   return (
     <span
       className={cn(
-        'text-xs font-semibold text-text-subtle uppercase tracking-wider block',
+        'text-caption font-semibold text-text-subtle uppercase tracking-wider block',
         className,
       )}
     >
@@ -178,8 +178,8 @@ const SignaturePad = ({
         {!hasDrawn && (
           <div className="absolute inset-0 flex flex-col justify-end items-center pb-5 pointer-events-none select-none">
             <div className="w-4/5 border-b border-border-strong border-dashed flex items-center justify-start pb-1">
-              <span className="text-xs font-mono text-text-subtle mr-2 font-bold">✕</span>
-              <span className="text-xs text-text-subtle">Assine aqui com o dedo ou mouse</span>
+              <span className="text-caption font-mono text-text-subtle mr-2 font-bold">✕</span>
+              <span className="text-caption text-text-subtle">Assine aqui com o dedo ou mouse</span>
             </div>
           </div>
         )}
@@ -189,7 +189,7 @@ const SignaturePad = ({
         </span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-text-muted">
+      <div className="flex items-center justify-between text-caption text-text-muted">
         <span>{hasDrawn ? '✓ Assinatura pronta' : 'Desenhe no quadro acima'}</span>
         <Button
           type="button"
@@ -197,7 +197,7 @@ const SignaturePad = ({
           size="sm"
           onClick={clearCanvas}
           disabled={!hasDrawn}
-          className="text-xs h-7 px-2.5 text-text-muted hover:text-danger"
+          className="text-caption h-7 px-2.5 text-text-muted hover:text-danger"
         >
           Limpar painel
         </Button>
@@ -416,7 +416,7 @@ export default function PublicOrderBudgetPage() {
               <h1 className="text-lg sm:text-xl font-bold text-text">
                 {company?.name || 'Trust Care'}
               </h1>
-              <p className="text-xs text-text-muted flex items-center gap-1.5 mt-0.5">
+              <p className="text-caption text-text-muted flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-brand"></span>
                 Orçamento & Parecer Técnico Oficial
               </p>
@@ -446,7 +446,7 @@ export default function PublicOrderBudgetPage() {
                   <h2 className="text-lg sm:text-xl font-bold text-text">
                     Orçamento Aprovado com Sucesso!
                   </h2>
-                  <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+                  <p className="text-small sm:text-body text-text-muted mt-0.5">
                     A autorização foi registrada com fé pública digital e os serviços foram liberados.
                   </p>
                 </div>
@@ -597,7 +597,7 @@ export default function PublicOrderBudgetPage() {
                   {serialNumber && (
                     <div className="sm:col-span-2 pt-2 border-t border-border/60">
                       <DocLabel>Número de Série (S/N)</DocLabel>
-                      <p className="text-xs font-mono font-bold text-text mt-0.5 tracking-wider">
+                      <p className="text-caption font-mono font-bold text-text mt-0.5 tracking-wider">
                         {serialNumber}
                       </p>
                     </div>
@@ -672,7 +672,7 @@ export default function PublicOrderBudgetPage() {
                       <div>
                         <span className="text-text font-medium">{item.service_name}</span>
                         {item.quantidade > 1 && (
-                          <span className="text-xs text-text-subtle ml-2 bg-surface px-2 py-0.5 rounded-full border border-border">
+                          <span className="text-caption text-text-subtle ml-2 bg-surface px-2 py-0.5 rounded-full border border-border">
                             x{item.quantidade}
                           </span>
                         )}
@@ -702,7 +702,7 @@ export default function PublicOrderBudgetPage() {
                       <div>
                         <span className="text-text font-medium">{item.product_name}</span>
                         {item.quantity > 1 && (
-                          <span className="text-xs text-text-subtle ml-2 bg-surface px-2 py-0.5 rounded-full border border-border">
+                          <span className="text-caption text-text-subtle ml-2 bg-surface px-2 py-0.5 rounded-full border border-border">
                             x{item.quantity}
                           </span>
                         )}
@@ -724,7 +724,7 @@ export default function PublicOrderBudgetPage() {
                   >
                     <span className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-text-subtle shrink-0" aria-hidden />
-                      <span className="text-xs font-bold text-text uppercase tracking-wider">
+                      <span className="text-caption font-bold text-text uppercase tracking-wider">
                         Termos de autorização & política de garantia
                       </span>
                     </span>
@@ -738,7 +738,7 @@ export default function PublicOrderBudgetPage() {
                   </button>
 
                   {isTermsOpen && (
-                    <div className="p-4 pt-0 border-t border-border text-xs text-text-muted leading-relaxed space-y-3 whitespace-pre-line">
+                    <div className="p-4 pt-0 border-t border-border text-small text-text-muted leading-relaxed space-y-3 whitespace-pre-line">
                       {`1. ISENÇÃO DE RESPONSABILIDADE SOBRE DADOS:
 A contratada não se responsabiliza por eventuais perdas de dados, softwares ou sistemas operacionais presentes no equipamento. É de total responsabilidade do cliente realizar backup prévio dos arquivos antes da entrega do aparelho.
 
@@ -762,7 +762,7 @@ O prazo estimado para início da execução dos serviços é de 2 a 5 dias útei
                   <div className="flex items-baseline justify-between">
                     <div>
                       {parseFloat(order.discount) > 0 && (
-                        <span className="text-xs text-danger font-semibold block mb-0.5 font-mono">
+                        <span className="text-caption text-danger font-semibold block mb-0.5 font-mono">
                           Desconto: - {brl(order.discount)}
                         </span>
                       )}
@@ -774,7 +774,7 @@ O prazo estimado para início da execução dos serviços é de 2 a 5 dias útei
                 </div>
 
                 {/* Condições de pagamento informativas */}
-                <div className="p-3 rounded-xl border border-brand/15 bg-brand/5 text-xs text-text-muted flex items-center gap-2.5">
+                <div className="p-3 rounded-xl border border-brand/15 bg-brand/5 text-small text-text-muted flex items-center gap-2.5">
                   <CreditCard className="w-4 h-4 text-brand shrink-0" aria-hidden />
                   <span>Consulte facilidades de parcelamento no cartão ou condições à vista via Pix.</span>
                 </div>
@@ -783,7 +783,7 @@ O prazo estimado para início da execução dos serviços é de 2 a 5 dias útei
                 <div className="pt-4 border-t border-border space-y-4">
                   <div className="flex items-center gap-2">
                     <FileSignature className="w-4 h-4 text-brand shrink-0" aria-hidden />
-                    <h3 className="text-xs font-bold text-text uppercase tracking-wider">
+                    <h3 className="text-caption font-bold text-text uppercase tracking-wider">
                       Assinatura Eletrônica do Cliente
                     </h3>
                   </div>
@@ -818,7 +818,7 @@ O prazo estimado para início da execução dos serviços é de 2 a 5 dias útei
                   {errorMsg && (
                     <p
                       role="alert"
-                      className="p-3 border border-danger/25 bg-danger/10 text-danger text-xs leading-relaxed rounded-xl"
+                      className="p-3 border border-danger/25 bg-danger/10 text-danger text-small leading-relaxed rounded-xl"
                     >
                       {errorMsg}
                     </p>

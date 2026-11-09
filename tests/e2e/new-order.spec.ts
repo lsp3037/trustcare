@@ -19,9 +19,8 @@ test.describe('Fluxo de Ordem de Serviço (NewOrderForm)', () => {
     await expect(page.getByText(/Cadastre um novo chamado técnico/i)).toBeVisible();
 
     // Blocos do formulário
-    await expect(page.getByRole('heading', { name: /Informações Iniciais/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Status & Prioridade/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Atribuição e Prazo/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Informações do Atendimento/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Status, Atribuição e Prazo/i })).toBeVisible();
   });
 
   test('deve permitir preencher os campos de status, prioridade e valores', async ({ page }) => {
@@ -51,7 +50,7 @@ test.describe('Fluxo de Ordem de Serviço (NewOrderForm)', () => {
   test('deve exigir a seleção de um cliente antes de salvar', async ({ page }) => {
     await page.goto('/dashboard/orders?new=true');
 
-    const clientSelect = page.getByLabel('Cliente', { exact: true });
+    const clientSelect = page.getByRole('combobox', { name: /Selecionar cliente/i });
     await expect(clientSelect).toBeVisible();
     await expect(clientSelect).toHaveValue('');
 

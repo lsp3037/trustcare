@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { formatDocument, validateDocument } from '@/lib/utils/documentValidation';
 import { useFormatProblem } from '@/components/hooks/useFormatProblem';
 import type { NewEquipmentPayload } from '@/components/new-order/EquipmentModal';
+import { fetchOrSeedEquipmentCategories } from '@/lib/equipment-categories';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -170,6 +171,12 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
   const [newEqBrand, setNewEqBrand] = useState('');
   const [newEqModel, setNewEqModel] = useState('');
   const [newEqSerial, setNewEqSerial] = useState('');
+  const [newEqCategoryId, setNewEqCategoryId] = useState('');
+  const [newEqProcessor, setNewEqProcessor] = useState('');
+  const [newEqRam, setNewEqRam] = useState('');
+  const [newEqStorage, setNewEqStorage] = useState('');
+  const [newEqGpuType, setNewEqGpuType] = useState('');
+  const [newEqGpuModel, setNewEqGpuModel] = useState('');
   const [savingClient, setSavingClient] = useState(false);
   const [clientModalError, setClientModalError] = useState('');
 
@@ -261,7 +268,14 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
             .select('company_id')
             .eq('user_id', user.id)
             .single();
-          if (profile?.company_id) setCompanyId(profile.company_id);
+          if (profile?.company_id) {
+            setCompanyId(profile.company_id);
+            fetchOrSeedEquipmentCategories(supabase, profile.company_id)
+              .then((data) => {
+                if (data && data.length > 0) setCategories(data);
+              })
+              .catch((err) => console.warn('Erro ao carregar categorias com companyId:', err));
+          }
         }
       } catch (err) {
         console.warn('Erro ao carregar company_id:', err);
@@ -325,12 +339,8 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
 
     const fetchCategories = async () => {
       try {
-        const { data, error } = await supabase
-          .from('equipment_categories')
-          .select('id, name')
-          .order('name');
-        if (error) throw error;
-        setCategories(data || []);
+        const catData = await fetchOrSeedEquipmentCategories(supabase, companyId);
+        setCategories(catData || []);
       } catch (err) {
         console.warn('Erro ao carregar categorias de equipamento:', err);
         setCategories([]);
@@ -451,17 +461,32 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       const eqData = {
         company_id: companyId,
         client_id: newClient.id,
+        category_id: newEqCategoryId || null,
         name: newEqName,
         brand: newEqBrand || '',
         model: newEqModel || '',
         serial_number: newEqSerial || '',
+        processor: newEqProcessor.trim() || null,
+        ram: newEqRam.trim() || null,
+        storage: newEqStorage.trim() || null,
+        gpu_type: newEqGpuType.trim() || null,
+        gpu_model: newEqGpuType === 'dedicada' ? newEqGpuModel.trim() || null : null,
       };
 
-      const { data: newEquipment, error: eqErr } = await supabase
+      let { data: newEquipment, error: eqErr } = await supabase
         .from('client_equipments')
         .insert(eqData)
         .select()
         .single();
+
+      if (eqErr && (eqErr.message?.includes('column') || eqErr.code === 'PGRST204')) {
+        const { processor, ram, storage, gpu_type, gpu_model, category_id, ...basicEq } = eqData;
+        const retry = await supabase.from('client_equipments').insert(basicEq).select().single();
+        if (!retry.error) {
+          newEquipment = retry.data;
+          eqErr = null;
+        }
+      }
 
       // O cliente já foi salvo: falha no equipamento não desfaz o cliente. O modal
       // fecha mesmo assim (reenviar duplicaria o cliente) e o aviso vai para o form.
@@ -479,7 +504,8 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
       setClientModalStep(1);
       setNewClientName(''); setNewClientType('PF'); setNewClientDoc('');
       setNewClientPhone(''); setNewClientEmail('');
-      setNewEqName(''); setNewEqBrand(''); setNewEqModel(''); setNewEqSerial('');
+      setNewEqName(''); setNewEqCategoryId(''); setNewEqBrand(''); setNewEqModel(''); setNewEqSerial('');
+      setNewEqProcessor(''); setNewEqRam(''); setNewEqStorage(''); setNewEqGpuType(''); setNewEqGpuModel('');
     } catch (err: any) {
       setClientModalError(err.message || 'Erro inesperado ao salvar cliente/equipamento.');
     } finally {
@@ -967,9 +993,15 @@ export function useOrderForm({ clients, onSuccess }: UseOrderFormProps) {
     newClientPhone, setNewClientPhone,
     newClientEmail, setNewClientEmail,
     newEqName, setNewEqName,
+    newEqCategoryId, setNewEqCategoryId,
     newEqBrand, setNewEqBrand,
     newEqModel, setNewEqModel,
     newEqSerial, setNewEqSerial,
+    newEqProcessor, setNewEqProcessor,
+    newEqRam, setNewEqRam,
+    newEqStorage, setNewEqStorage,
+    newEqGpuType, setNewEqGpuType,
+    newEqGpuModel, setNewEqGpuModel,
     savingClient,
     clientModalError, setClientModalError,
     // Nova Peça

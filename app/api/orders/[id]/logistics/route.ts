@@ -213,7 +213,7 @@ export async function PUT(
 
     // 5. Ajuste manual de preço
     const calculatedPrice = quote.calculatedPrice;
-    let chargedPrice =
+    const chargedPrice =
       body.charged_price !== undefined && body.charged_price !== null
         ? Math.max(0, Number(body.charged_price))
         : calculatedPrice;

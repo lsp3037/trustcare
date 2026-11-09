@@ -10,7 +10,9 @@ import {
   Plus,
   AlertCircle,
   Cpu,
+  FolderPlus,
 } from 'lucide-react';
+import { fetchOrSeedEquipmentCategories } from '@/lib/equipment-categories';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -79,6 +81,10 @@ export default function ClientsPage() {
   const [eqGpuType, setEqGpuType] = useState('');
   const [eqGpuModel, setEqGpuModel] = useState('');
   const [addingEq, setAddingEq] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [eqCategoryId, setEqCategoryId] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const fetchClients = async () => {
     try {
@@ -127,6 +133,25 @@ export default function ClientsPage() {
 
   useEffect(() => {
     fetchClients();
+    const loadCategories = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        let compId: string | null = null;
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .single();
+          if (profile?.company_id) compId = profile.company_id;
+        }
+        const cats = await fetchOrSeedEquipmentCategories(supabase, compId);
+        setCategories(cats || []);
+      } catch (err) {
+        console.warn('Erro ao carregar categorias:', err);
+      }
+    };
+    loadCategories();
   }, []);
 
   const handleCreateClient = async (e: React.FormEvent) => {
@@ -198,6 +223,44 @@ export default function ClientsPage() {
     }
   };
 
+  const handleSaveCategory = async () => {
+    const catName = newCategoryName.trim();
+    if (!catName) {
+      setIsCreatingCategory(false);
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado.');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      if (!profile?.company_id) throw new Error('Empresa do usuário não encontrada.');
+
+      const { data, error } = await supabase
+        .from('equipment_categories')
+        .insert({ name: catName, company_id: profile.company_id })
+        .select('id, name')
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setCategories((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        setEqCategoryId(data.id);
+        toast.success(`Categoria "${catName}" criada`);
+      }
+    } catch (err: any) {
+      toast.error('Não foi possível criar a categoria', {
+        description: err.message || 'Erro inesperado.',
+      });
+    } finally {
+      setIsCreatingCategory(false);
+      setNewCategoryName('');
+    }
+  };
+
   const handleCreateEquipment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createdClient) return;
@@ -218,9 +281,13 @@ export default function ClientsPage() {
         if (profile?.company_id) companyId = profile.company_id;
       }
 
+      const isUuid = (val: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+      const catObj = categories.find((c) => c.id === eqCategoryId);
       const newEq = {
         company_id: companyId,
         client_id: createdClient.id,
+        category_id: isUuid(eqCategoryId) ? eqCategoryId : null,
         name: eqName,
         brand: eqBrand,
         model: eqModel,
@@ -264,8 +331,9 @@ export default function ClientsPage() {
         toast.success(`"${eqName}" adicionado`);
       }
 
-      setAddedEquipments((prev) => [...prev, finalEq || newEq]);
+      setAddedEquipments((prev) => [...prev, { ...(finalEq || newEq), category_name: catObj?.name }]);
       setEqName('');
+      setEqCategoryId('');
       setEqBrand('');
       setEqModel('');
       setEqSerial('');
@@ -497,7 +565,12 @@ export default function ClientsPage() {
                       {addedEquipments.map((eq, idx) => (
                         <TR key={eq.id || idx}>
                           <TD className="font-semibold">
-                            <div>{eq.name}</div>
+                            <div className="flex items-center gap-2">
+                              <span>{eq.name}</span>
+                              {(eq.category_name || eq.equipment_categories?.name) && (
+                                <Badge tone="neutral">{eq.category_name || eq.equipment_categories?.name}</Badge>
+                              )}
+                            </div>
                             {(eq.processor || eq.ram || eq.storage || eq.gpu_type || eq.gpu_model) && (
                               <div className="flex flex-wrap items-center gap-1 mt-1 font-normal">
                                 {eq.processor && (
@@ -566,6 +639,72 @@ export default function ClientsPage() {
                     value={eqName}
                     onChange={(e) => setEqName(e.target.value)}
                   />
+
+                  <Field label="Categoria (Opcional)" hint="Define o tipo do equipamento.">
+                    <div className="flex gap-2">
+                      <Select
+                        aria-label="Categoria do equipamento"
+                        value={eqCategoryId}
+                        onChange={(e) => setEqCategoryId(e.target.value)}
+                        wrapperClassName="flex-1"
+                      >
+                        <option value="">Selecione...</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="px-3 shrink-0"
+                        onClick={() => setIsCreatingCategory((v) => !v)}
+                        title="Nova categoria"
+                        aria-label="Criar nova categoria"
+                        aria-expanded={isCreatingCategory}
+                      >
+                        <FolderPlus className="w-4 h-4" aria-hidden />
+                      </Button>
+                    </div>
+                  </Field>
+
+                  {isCreatingCategory && (
+                    <div className="col-span-1 md:col-span-2">
+                      <Field label="Nova categoria">
+                        <div className="flex gap-2">
+                          <Input
+                            aria-label="Nome da nova categoria"
+                            placeholder="Ex: Notebook"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            wrapperClassName="flex-1"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCategory();
+                              }
+                            }}
+                          />
+                          <Button type="button" onClick={handleSaveCategory}>
+                            Salvar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => {
+                              setIsCreatingCategory(false);
+                              setNewCategoryName('');
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </Field>
+                    </div>
+                  )}
+
                   <Input
                     label="Marca"
                     placeholder="Ex: Lenovo"
@@ -578,7 +717,7 @@ export default function ClientsPage() {
                     value={eqModel}
                     onChange={(e) => setEqModel(e.target.value)}
                   />
-                  <Field label="Nº de Série / Tag">
+                  <Field label="Nº de Série / Tag" className="md:col-span-2">
                     <div className="relative">
                       <QrCode
                         className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-subtle pointer-events-none"
