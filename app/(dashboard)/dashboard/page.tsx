@@ -10,19 +10,8 @@ import { useDashboardData, DateRange } from '@/components/hooks/useDashboardData
 import { KpiOverviewCards } from '@/components/dashboard/KpiOverviewCards';
 import { RecentOrdersTable } from '@/components/dashboard/RecentOrdersTable';
 import { FinancialChartSection } from '@/components/dashboard/FinancialChartSection';
+import { formatPeriodLabel, GLOW_BUTTON } from '@/components/dashboard/glass';
 import { buttonClasses } from '@/components/ui';
-
-/** "Últimos 30 dias" quando o período termina hoje; senão, "23/09 – 22/10". */
-function formatPeriodLabel(range: DateRange | null) {
-  if (!range) return undefined;
-  const dayMs = 24 * 60 * 60 * 1000;
-  const days = Math.round((range.to.getTime() - range.from.getTime()) / dayMs) + 1;
-  if (range.to.toDateString() === new Date().toDateString()) {
-    return days === 1 ? 'Hoje' : `Últimos ${days} dias`;
-  }
-  const short = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  return `${short(range.from)} – ${short(range.to)}`;
-}
 
 export default function DashboardOverviewPage() {
   const { role, isAdmin } = useUser();
@@ -55,10 +44,7 @@ export default function DashboardOverviewPage() {
 
           <Link
             href="/dashboard/orders?new=true"
-            className={buttonClasses({
-              className:
-                'rounded-full shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:shadow-[0_0_32px_rgba(16,185,129,0.5)] transition-all duration-300 font-bold',
-            })}
+            className={buttonClasses({ className: GLOW_BUTTON })}
           >
             <Plus className="w-4 h-4 stroke-[2.5]" /> Nova OS
           </Link>
