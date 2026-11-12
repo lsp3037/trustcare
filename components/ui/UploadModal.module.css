@@ -1,0 +1,282 @@
+/*
+ * Modal de anexos — adaptado do modelo "Upload modal" (transitions.dev):
+ * abre com scale + fade, troca suave entre área de arraste e lista,
+ * ícone do arquivo vira check, barra de progresso e texto do botão com swap.
+ */
+.scrim {
+  --open-dur: 250ms;
+  --close-dur: 150ms;
+  --modal-scale: 0.96;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --swap-dur: 150ms;
+  --swap-distance: 4px;
+  --swap-blur: 2px;
+  --icon-dur: 250ms;
+  --icon-blur: 2px;
+  --icon-scale: 0.25;
+  --progress-dur: 150ms;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--close-dur) var(--ease);
+}
+
+.scrim[data-state='open'] {
+  opacity: 1;
+  pointer-events: auto;
+  transition-duration: var(--open-dur);
+}
+
+.modal {
+  width: 400px;
+  max-width: 100%;
+  max-height: calc(100vh - 32px);
+  padding: 16px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  transition:
+    transform var(--open-dur) var(--ease),
+    opacity var(--open-dur) var(--ease);
+  will-change: transform, opacity;
+}
+
+.scrim[data-state='open'] .modal {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.scrim[data-state='closing'] .modal {
+  transition-duration: var(--close-dur);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0 0 6px;
+}
+
+.x {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 150ms var(--ease),
+    background-color 150ms var(--ease);
+}
+
+.x:active {
+  transform: scale(0.95);
+}
+
+/* ── Zona: área de arraste e lista empilhadas ── */
+.zone {
+  display: grid;
+  border-radius: 14px;
+  min-height: 132px;
+}
+
+.zone > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--icon-dur) ease-in-out,
+    filter var(--icon-dur) ease-in-out;
+}
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 16px;
+  text-align: center;
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    opacity var(--icon-dur) ease-in-out,
+    filter var(--icon-dur) ease-in-out,
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.zone[data-has-files='false'] .list,
+.zone[data-has-files='true'] .drop {
+  opacity: 0;
+  filter: blur(var(--icon-blur));
+  pointer-events: none;
+}
+
+.zone[data-has-files='false'] .drop,
+.zone[data-has-files='true'] .list {
+  opacity: 1;
+  filter: blur(0);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.thumb {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity var(--icon-dur) ease-in-out;
+}
+
+.thumb[data-done] img {
+  opacity: 0.25;
+}
+
+/* ── Troca de ícone (arquivo → check) ── */
+.iconSwap {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+}
+
+.icon {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity var(--icon-dur) ease-in-out,
+    filter var(--icon-dur) ease-in-out,
+    transform var(--icon-dur) ease-in-out;
+}
+
+.iconSwap[data-state='a'] .icon[data-icon='a'],
+.iconSwap[data-state='b'] .icon[data-icon='b'] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.iconSwap[data-state='a'] .icon[data-icon='b'],
+.iconSwap[data-state='b'] .icon[data-icon='a'] {
+  opacity: 0;
+  filter: blur(var(--icon-blur));
+  transform: scale(var(--icon-scale));
+}
+
+.bar {
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 2px;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform var(--progress-dur) var(--ease);
+}
+
+.pct {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Texto com swap ── */
+.swap {
+  display: inline-block;
+  transform: translateY(0);
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform var(--swap-dur) ease-in-out,
+    filter var(--swap-dur) ease-in-out,
+    opacity var(--swap-dur) ease-in-out;
+}
+
+.swap[data-phase='exit'] {
+  transform: translateY(calc(var(--swap-distance) * -1));
+  filter: blur(var(--swap-blur));
+  opacity: 0;
+}
+
+.swap[data-phase='enter'] {
+  transform: translateY(var(--swap-distance));
+  filter: blur(var(--swap-blur));
+  opacity: 0;
+  transition: none;
+}
+
+.press {
+  transition:
+    transform 150ms var(--ease),
+    filter 150ms var(--ease),
+    background-color 150ms var(--ease);
+}
+
+.press:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .modal,
+  .zone > *,
+  .drop,
+  .icon,
+  .fill,
+  .swap,
+  .press,
+  .x,
+  .thumb img {
+    transition: none !important;
+  }
+}

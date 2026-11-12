@@ -193,6 +193,7 @@ export function TechnicalReportSection({
                 subtitle="JPG, PNG, WebP ou MP4 até 15MB"
                 compact
                 readOnly={readOnly}
+                pickerMode="modal"
               />
             </div>
           )}
