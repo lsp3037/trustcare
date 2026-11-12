@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, CheckCircle2, Plus } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/WhatsAppButton';
+import { PricingSwitcher } from '@/components/landing/PricingSwitcher';
 
 export const metadata = {
   title: 'Trust Care | Sistema de Gestão para Assistências Técnicas',
@@ -386,70 +387,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-h1 text-text text-balance text-center max-w-2xl mx-auto mb-16">Planos para a assistência de qualquer tamanho.</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-800 max-w-5xl mx-auto border border-slate-800 rounded-2xl overflow-hidden">
-            {/* Starter */}
-            <div className="bg-slate-950 p-8 flex flex-col relative">
-              <div className="mb-6">
-                <h3 className="font-display text-xl font-bold text-white mb-1.5">Starter</h3>
-                <p className="text-slate-300 text-sm">Para quem atende sozinho.</p>
-              </div>
-              <div className="mb-8 tabular-nums">
-                <span className="font-display text-4xl font-bold text-white">R$ 29</span>
-                <span className="text-slate-400 text-sm">,90/mês</span>
-              </div>
-              <ul className="space-y-3.5 mb-10 flex-1">
-                {['1 usuário (admin)', 'O.S. ilimitadas', 'Cadastro de clientes', 'Orçamento em PDF'].map((f) => (
-                  <li key={f} className="flex gap-3 text-slate-300 text-sm"><CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>
-                ))}
-              </ul>
-              <Link href="/register?plan=starter" className={ghostButton + ' w-full'}>
-                Assinar Starter
-              </Link>
-            </div>
-
-            {/* Pro */}
-            <div className="bg-slate-900 p-8 flex flex-col relative">
-              <span className="absolute top-6 right-6 border-2 border-dashed border-emerald-500 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rotate-[-4deg]">
-                Mais Usado
-              </span>
-              <div className="mb-6">
-                <h3 className="font-display text-xl font-bold text-emerald-400 mb-1.5">Pro</h3>
-                <p className="text-slate-300 text-sm">O ponto de equilíbrio para crescer.</p>
-              </div>
-              <div className="mb-8 tabular-nums">
-                <span className="font-display text-4xl font-bold text-white">R$ 69</span>
-                <span className="text-slate-400 text-sm">,90/mês</span>
-              </div>
-              <ul className="space-y-3.5 mb-10 flex-1">
-                {['Até 3 usuários', 'Painel de rastreio público', 'Módulo financeiro', 'Aviso automático de status', 'Controle de estoque'].map((f) => (
-                  <li key={f} className="flex gap-3 text-slate-200 text-sm"><CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>
-                ))}
-              </ul>
-              <Link href="/register?plan=pro" className={ctaButton + ' w-full'}>
-                Iniciar Teste Grátis
-              </Link>
-            </div>
-
-            {/* Premium */}
-            <div className="bg-slate-950 p-8 flex flex-col relative">
-              <div className="mb-6">
-                <h3 className="font-display text-xl font-bold text-white mb-1.5">Premium</h3>
-                <p className="text-slate-300 text-sm">Para assistências de alto volume.</p>
-              </div>
-              <div className="mb-8 tabular-nums">
-                <span className="font-display text-4xl font-bold text-white">R$ 149</span>
-                <span className="text-slate-400 text-sm">,90/mês</span>
-              </div>
-              <ul className="space-y-3.5 mb-10 flex-1">
-                {['Usuários ilimitados', 'Tudo do plano Pro', 'API para integrações', 'Suporte prioritário'].map((f) => (
-                  <li key={f} className="flex gap-3 text-slate-300 text-sm"><CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {f}</li>
-                ))}
-              </ul>
-              <Link href="/register?plan=premium" className={ghostButton + ' w-full'}>
-                Assinar Premium
-              </Link>
-            </div>
-          </div>
+          <PricingSwitcher />
         </div>
       </section>
 
