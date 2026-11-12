@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Banknote, Wrench, ReceiptText, ClipboardCheck, Contact, PackageMinus } from 'lucide-react';
+import { motion } from 'motion/react';
 import { DashboardStats, PreviousPeriodStats } from '@/components/hooks/useDashboardData';
 import { Card, SkeletonCards } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -27,15 +28,37 @@ type Tone = 'brand' | 'info' | 'warning' | 'danger';
 const ICON_CLASS = 'w-[18px] h-[18px]';
 
 /**
- * Cor de destaque do card: ponto do rótulo e selo do ícone.
- * O selo leva um fio na própria cor (`ring-current/20`) em vez de um contorno
- * branco igual para todos, que desbotava sobre os tons quentes.
+ * Cor de destaque do card: ponto do rótulo, selo do ícone e halo ambiental.
  */
-const TONE: Record<Tone, { dot: string; icon: string }> = {
-  brand: { dot: 'bg-brand', icon: 'bg-brand/12 text-brand' },
-  info: { dot: 'bg-info', icon: 'bg-info/12 text-info' },
-  warning: { dot: 'bg-warning', icon: 'bg-warning/12 text-warning' },
-  danger: { dot: 'bg-danger', icon: 'bg-danger/12 text-danger' },
+const TONE: Record<Tone, { dot: string; icon: string; halo: string; sparkStroke: string; sparkGrad: string }> = {
+  brand: {
+    dot: 'bg-brand shadow-[0_0_8px_var(--color-brand)]',
+    icon: 'bg-brand/15 text-brand border border-brand/25 shadow-[0_0_12px_rgba(16,185,129,0.2)]',
+    halo: 'from-brand/25 to-transparent',
+    sparkStroke: '#10b981',
+    sparkGrad: 'rgba(16, 185, 129, 0.35)',
+  },
+  info: {
+    dot: 'bg-info shadow-[0_0_8px_var(--color-info)]',
+    icon: 'bg-info/15 text-info border border-info/25 shadow-[0_0_12px_rgba(59,130,246,0.2)]',
+    halo: 'from-info/25 to-transparent',
+    sparkStroke: '#3b82f6',
+    sparkGrad: 'rgba(59, 130, 246, 0.35)',
+  },
+  warning: {
+    dot: 'bg-warning shadow-[0_0_8px_var(--color-warning)]',
+    icon: 'bg-warning/15 text-warning border border-warning/25 shadow-[0_0_12px_rgba(245,158,11,0.2)]',
+    halo: 'from-warning/25 to-transparent',
+    sparkStroke: '#f59e0b',
+    sparkGrad: 'rgba(245, 158, 11, 0.35)',
+  },
+  danger: {
+    dot: 'bg-danger shadow-[0_0_8px_var(--color-danger)]',
+    icon: 'bg-danger/15 text-danger border border-danger/25 shadow-[0_0_12px_rgba(244,63,94,0.2)]',
+    halo: 'from-danger/25 to-transparent',
+    sparkStroke: '#f43f5e',
+    sparkGrad: 'rgba(244, 63, 94, 0.35)',
+  },
 };
 
 /** Setas do chip de variação — traço fino, no desenho da referência. */
@@ -111,63 +134,116 @@ function KpiCard({ icon, label, value, format, hint, previous, tone = 'brand', h
   const delta = previous && previous > 0 ? ((value - previous) / previous) * 100 : null;
   const deltaTone = delta === null || Math.abs(delta) < 0.05 ? 'flat' : delta > 0 ? 'up' : 'down';
 
+  // ID único para o gradiente SVG da sparkline
+  const sparkId = `sparkline-${tone}-${index}`;
+
   return (
-    <Card
-      padding="none"
-      href={href}
-      linkLabel={href ? `${label}: ${format(value)}. Ver detalhes` : undefined}
-      className={cn(
-        // Mesmo contorno e raio das demais caixas do painel (tabela de OS e
-        // gráfico): `border-border` sólido, não o vidro a 8% do Card.
-        'relative overflow-hidden min-h-[168px] p-6 flex flex-col justify-between border-border',
-        critical && 'border-danger/30'
-      )}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 24, delay: index * 0.06 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="h-full"
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.07em] text-text-muted">
-          <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', colors.dot)} aria-hidden />
-          {label}
-        </span>
-        <div className={cn('p-2 rounded-xl ring-1 ring-inset ring-current/20 shrink-0', colors.icon)} aria-hidden>
-          {icon}
-        </div>
-      </div>
-
-      <p
+      <Card
+        padding="none"
+        href={href}
+        linkLabel={href ? `${label}: ${format(value)}. Ver detalhes` : undefined}
         className={cn(
-          'my-3 font-sans text-[2rem] xl:text-[2.25rem] font-extrabold leading-none tracking-tight tabular-nums',
-          critical ? 'text-danger' : 'text-text'
+          'relative overflow-hidden min-h-[174px] p-6 flex flex-col justify-between h-full group',
+          'bg-gradient-to-br from-surface-raised/95 via-surface/90 to-surface-sunken/95 backdrop-blur-2xl',
+          'border border-border/80 border-t-white/20 border-x-white/8 border-b-black/40 rounded-[22px]',
+          'shadow-[0_14px_34px_-8px_rgba(0,0,0,0.55)] transition-all duration-300',
+          'hover:shadow-[0_20px_45px_-10px_rgba(0,0,0,0.7)] hover:border-t-white/35',
+          critical && 'border-danger/35 hover:border-danger/50 shadow-[0_14px_34px_-8px_rgba(244,63,94,0.15)]'
         )}
-        aria-label={format(value)}
       >
-        {format(shown)}
-      </p>
+        {/* Halo de luz ambiental no canto superior direito */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            'absolute -top-8 -right-8 w-32 h-32 rounded-full blur-3xl pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity duration-300 bg-radial',
+            colors.halo
+          )}
+        />
 
-      {delta !== null ? (
-        <div className="flex items-center gap-2 min-w-0" title={hint}>
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-caption font-bold tabular-nums shrink-0',
-              deltaTone === 'up' && 'bg-success/15 text-success',
-              deltaTone === 'down' && 'bg-danger/15 text-danger',
-              deltaTone === 'flat' && 'bg-text-muted/15 text-text-muted'
-            )}
-          >
-            {deltaTone === 'up' && <ArrowUpIcon />}
-            {deltaTone === 'down' && <ArrowDownIcon />}
-            {delta > 0 ? '+' : ''}
-            {delta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+        {/* Micro-sparkline de tendência no fundo */}
+        <svg
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 w-full h-14 pointer-events-none opacity-25 group-hover:opacity-45 transition-opacity duration-300 z-0"
+          viewBox="0 0 200 60"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <linearGradient id={sparkId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={colors.sparkStroke} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={colors.sparkStroke} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {tone === 'danger' ? (
+            <>
+              <path d="M 0,20 Q 50,26 100,38 T 150,34 T 200,48 L 200,60 L 0,60 Z" fill={`url(#${sparkId})`} />
+              <path d="M 0,20 Q 50,26 100,38 T 150,34 T 200,48" fill="none" stroke={colors.sparkStroke} strokeWidth="2" />
+            </>
+          ) : tone === 'warning' ? (
+            <>
+              <path d="M 0,40 Q 40,20 80,45 T 150,22 T 200,32 L 200,60 L 0,60 Z" fill={`url(#${sparkId})`} />
+              <path d="M 0,40 Q 40,20 80,45 T 150,22 T 200,32" fill="none" stroke={colors.sparkStroke} strokeWidth="2" />
+            </>
+          ) : (
+            <>
+              <path d="M 0,45 Q 35,50 70,30 T 140,22 T 200,8 L 200,60 L 0,60 Z" fill={`url(#${sparkId})`} />
+              <path d="M 0,45 Q 35,50 70,30 T 140,22 T 200,8" fill="none" stroke={colors.sparkStroke} strokeWidth="2" />
+            </>
+          )}
+        </svg>
+
+        <div className="flex items-start justify-between gap-2 relative z-10">
+          <span className="flex items-center gap-2.5 text-caption font-bold uppercase tracking-[0.08em] text-text-muted">
+            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', colors.dot)} aria-hidden />
+            {label}
           </span>
-          <span className="text-caption text-text-muted truncate">
-            vs {format(previous!)} <span className="sr-only">no período anterior. {hint}</span>
-          </span>
+          <div className={cn('p-2 rounded-xl ring-1 ring-inset ring-current/20 shrink-0', colors.icon)} aria-hidden>
+            {icon}
+          </div>
         </div>
-      ) : (
-        <p className={cn('text-caption leading-snug', critical ? 'text-danger font-medium' : 'text-text-muted')}>
-          {hint}
+
+        <p
+          className={cn(
+            'my-3 font-sans text-[2rem] xl:text-[2.25rem] font-extrabold leading-none tracking-tight tabular-nums relative z-10',
+            critical ? 'text-danger drop-shadow-[0_0_12px_rgba(244,63,94,0.3)]' : 'text-text'
+          )}
+          aria-label={format(value)}
+        >
+          {format(shown)}
         </p>
-      )}
-    </Card>
+
+        {delta !== null ? (
+          <div className="flex items-center gap-2 min-w-0 relative z-10" title={hint}>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-caption font-bold tabular-nums shrink-0 border',
+                deltaTone === 'up' && 'bg-success/15 text-success border-success/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]',
+                deltaTone === 'down' && 'bg-danger/15 text-danger border-danger/30 shadow-[0_0_10px_rgba(244,63,94,0.15)]',
+                deltaTone === 'flat' && 'bg-text-muted/15 text-text-muted border-text-muted/30'
+              )}
+            >
+              {deltaTone === 'up' && <ArrowUpIcon />}
+              {deltaTone === 'down' && <ArrowDownIcon />}
+              {delta > 0 ? '+' : ''}
+              {delta.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+            </span>
+            <span className="text-caption text-text-muted truncate">
+              vs {format(previous!)} <span className="sr-only">no período anterior. {hint}</span>
+            </span>
+          </div>
+        ) : (
+          <p className={cn('text-caption leading-snug relative z-10', critical ? 'text-danger font-medium' : 'text-text-muted')}>
+            {hint}
+          </p>
+        )}
+      </Card>
+    </motion.div>
   );
 }
 
