@@ -5,6 +5,7 @@ import { UploadCloud, Film, FileText, Eye, Trash2, Image as ImageIcon } from 'lu
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from './LoadingSpinner';
 import { Modal } from './Modal';
+import { UploadModal } from './UploadModal';
 
 export interface DropzoneFile {
   file?: File;
@@ -46,6 +47,12 @@ export interface FileDropzoneProps {
   className?: string;
   /** Desativa o botão de remoção e a área de upload (apenas visualização). */
   readOnly?: boolean;
+  /**
+   * Como o clique escolhe arquivos: `native` abre o seletor do sistema direto;
+   * `modal` abre o UploadModal para revisar antes de anexar. Arrastar sobre a
+   * área continua anexando direto nos dois modos.
+   */
+  pickerMode?: 'native' | 'modal';
 }
 
 export function FileDropzone({
@@ -63,12 +70,19 @@ export function FileDropzone({
   compact = false,
   className,
   readOnly = false,
+  pickerMode = 'native',
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [previewItem, setPreviewItem] = useState<DropzoneFile | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const openPicker = () => {
+    if (pickerMode === 'modal') setModalOpen(true);
+    else inputRef.current?.click();
+  };
 
   const filterAndEmitFiles = (incoming: File[]) => {
     setValidationError(null);
@@ -141,14 +155,14 @@ export function FileDropzone({
 
   const handleTriggerClick = () => {
     if (disabled || readOnly || loading) return;
-    inputRef.current?.click();
+    openPicker();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (disabled || readOnly || loading) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      inputRef.current?.click();
+      openPicker();
     }
   };
 
@@ -322,6 +336,19 @@ export function FileDropzone({
             })}
           </ul>
         </div>
+      )}
+
+      {pickerMode === 'modal' && !readOnly && (
+        <UploadModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onConfirm={(selected) => onFilesSelected(selected)}
+          title="Anexar fotos"
+          subtitle={subtitle}
+          accept={accept}
+          multiple={multiple}
+          maxSizeMB={maxSizeMB}
+        />
       )}
 
       {/* Modal de Pré-visualização do Anexo */}

@@ -3,178 +3,127 @@
 import React from 'react';
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from 'recharts';
-import { EmptyState } from '@/components/ui';
-import { PieChart as PieIcon, BarChart3 as BarIcon } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 /**
- * Recharts pinta atributos SVG, não classes do Tailwind — então as cores
- * entram como `var(--token)`. SVG resolve variáveis CSS normalmente, e assim
- * o gráfico acompanha o tema claro/escuro sem um mapa de hex duplicado.
+ * Gráfico de área com o mesmo desenho do "Faturamento Diário" do Dashboard:
+ * curvas monotônicas, preenchimento em gradiente e grade quase invisível.
+ * Cores entram como `var(--token)` porque o Recharts pinta atributos SVG.
  */
-const COLOR = {
-  grid: 'var(--color-border)',
-  axis: 'var(--color-text-subtle)',
-  legend: 'var(--color-text-muted)',
-  receita: 'var(--color-success)',
-  custo: 'var(--color-danger)',
-} as const;
-
-/** Paleta do gráfico de pizza — categorias, não severidade. */
-const PIE_COLORS = [
-  'var(--color-brand)',
-  'var(--color-info)',
-  'var(--color-warning)',
-  'var(--color-danger)',
-  'var(--color-status-execucao)',
-  'var(--color-origem-instagram)',
-  'var(--color-status-aguardando)',
-];
+const AXIS = 'var(--color-text-subtle)';
 
 const brl = (value: number) =>
-  `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const TOOLTIP_SHELL =
-  'bg-surface-raised/95 backdrop-blur-xl border border-glass-border-strong rounded-xl p-3 text-small shadow-2xl';
+const compact = (value: number) =>
+  value >= 1000 ? `R$${(value / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}k` : `R$${value}`;
 
-/* ─── Barras ─── */
-
-interface BarEntry {
+interface Entry {
   dia: string;
   faturamento: number;
   custos: number;
 }
 
-const CustomTooltipBar = ({ active, payload, label }: any) => {
+const SERIES = {
+  faturamento: { label: 'Recebido', color: 'var(--color-brand)', dot: 'bg-brand shadow-[0_0_8px_var(--color-brand)]', text: 'text-brand' },
+  custos: { label: 'Custos/Despesas', color: 'var(--color-danger)', dot: 'bg-danger shadow-[0_0_8px_var(--color-danger)]', text: 'text-danger' },
+} as const;
+
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className={`${TOOLTIP_SHELL} space-y-1`}>
-      <p className="text-text font-semibold mb-1">{label}</p>
-      {payload.map((item: any, index: number) => (
-        <div key={index} className="flex justify-between gap-4">
-          <span className="text-text-muted">
-            {item.name === 'faturamento' ? 'Recebido' : 'Custos/Despesas'}:
-          </span>
-          <span
-            className={`font-semibold font-mono tabular-nums ${
-              item.name === 'faturamento' ? 'text-success' : 'text-danger'
-            }`}
-          >
-            {brl(item.value)}
-          </span>
-        </div>
+    <div className="bg-surface-raised/95 backdrop-blur-xl border border-glass-border-strong rounded-2xl p-3.5 shadow-2xl space-y-1">
+      <p className="text-text-muted text-caption font-semibold mb-1">{label}</p>
+      {payload.map((item: any) => {
+        const s = SERIES[item.dataKey as keyof typeof SERIES];
+        return (
+          <p key={item.dataKey} className="text-text text-sm font-bold tabular-nums flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${s.dot}`} />
+            {s.label}: <span className={`${s.text} font-mono`}>{brl(item.value)}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
+/** Legenda em pílulas, no lugar da legenda padrão do Recharts. */
+export function FinanceiroChartLegend() {
+  return (
+    <div className="flex items-center gap-3">
+      {Object.values(SERIES).map((s) => (
+        <span key={s.label} className="flex items-center gap-1.5 text-caption font-semibold text-text-muted">
+          <span className={`w-2 h-2 rounded-full ${s.dot}`} aria-hidden />
+          {s.label}
+        </span>
       ))}
     </div>
   );
-};
+}
 
-export function FinanceiroBarChart({ data }: { data: BarEntry[] }) {
-  const hasData = data.length > 0 && data.some((d) => (d.faturamento || 0) > 0 || (d.custos || 0) > 0);
+export function FinanceiroAreaChart({ data }: { data: Entry[] }) {
+  const hasData = data.some((d) => (d.faturamento || 0) > 0 || (d.custos || 0) > 0);
 
   if (!hasData) {
     return (
-      <EmptyState
-        icon={<BarIcon />}
-        title="Sem movimentações no período"
-        description="Nenhum faturamento ou custo registrado no período selecionado."
-      />
+      <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-surface-sunken/40 rounded-2xl border border-dashed border-border">
+        <BarChart3 className="w-8 h-8 text-text-subtle/50 mb-2" aria-hidden="true" />
+        <p className="text-small font-medium text-text-muted">Sem movimentações no período</p>
+        <p className="text-caption text-text-subtle mt-0.5 max-w-xs">
+          Nenhum faturamento ou custo registrado no período selecionado.
+        </p>
+      </div>
     );
   }
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={COLOR.grid} vertical={false} />
-        <XAxis
-          dataKey="dia"
-          tick={{ fontSize: 12, fill: COLOR.axis }}
-          axisLine={false}
-          tickLine={false}
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 15, right: 10, left: -8, bottom: 0 }}>
+        <defs>
+          <linearGradient id="finRecebidoGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="var(--color-brand)" stopOpacity={0.45} />
+            <stop offset="60%" stopColor="var(--color-brand)" stopOpacity={0.12} />
+            <stop offset="95%" stopColor="var(--color-brand)" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="finCustosGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="var(--color-danger)" stopOpacity={0.3} />
+            <stop offset="60%" stopColor="var(--color-danger)" stopOpacity={0.08} />
+            <stop offset="95%" stopColor="var(--color-danger)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(255, 255, 255, 0.06)" />
+        <XAxis dataKey="dia" stroke={AXIS} fontSize={12} tickLine={false} axisLine={false} minTickGap={16} />
+        <YAxis stroke={AXIS} fontSize={12} tickLine={false} axisLine={false} tickFormatter={compact} width={56} />
+        <Tooltip
+          content={<CustomTooltip />}
+          cursor={{ stroke: 'var(--color-text-subtle)', strokeWidth: 1.5, strokeDasharray: '3 3' }}
         />
-        <YAxis
-          tick={{ fontSize: 12, fill: COLOR.axis }}
-          axisLine={false}
-          tickLine={false}
-          tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
-          width={48}
+        <Area
+          type="monotone"
+          dataKey="custos"
+          stroke="var(--color-danger)"
+          strokeWidth={2}
+          fillOpacity={1}
+          fill="url(#finCustosGradient)"
+          activeDot={{ r: 5, fill: 'var(--color-danger)', stroke: '#0b0d10', strokeWidth: 2 }}
         />
-        <Tooltip content={<CustomTooltipBar />} cursor={{ fill: COLOR.grid, fillOpacity: 0.4 }} />
-        <Legend
-          formatter={(value) => (
-            <span style={{ color: COLOR.legend, fontSize: 12 }}>
-              {value === 'faturamento' ? 'Recebido' : 'Custos/Despesas'}
-            </span>
-          )}
-          wrapperStyle={{ paddingTop: 8 }}
+        <Area
+          type="monotone"
+          dataKey="faturamento"
+          stroke="var(--color-brand)"
+          strokeWidth={3}
+          fillOpacity={1}
+          fill="url(#finRecebidoGradient)"
+          activeDot={{ r: 6, fill: 'var(--color-brand)', stroke: '#0b0d10', strokeWidth: 2 }}
         />
-        <Bar name="faturamento" dataKey="faturamento" fill={COLOR.receita} maxBarSize={20} />
-        <Bar name="custos" dataKey="custos" fill={COLOR.custo} maxBarSize={20} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-/* ─── Pizza ─── */
-
-interface PieEntry {
-  name: string;
-  value: number;
-}
-
-const CustomTooltipPie = ({ active, payload }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className={TOOLTIP_SHELL}>
-      <p className="text-text font-medium">{payload[0].name}</p>
-      <p className="text-text font-semibold font-mono tabular-nums">{brl(payload[0].value)}</p>
-    </div>
-  );
-};
-
-export function FinanceiroPieChart({ data }: { data: PieEntry[] }) {
-  if (!data.length) {
-    return (
-      <EmptyState
-        icon={<PieIcon />}
-        title="Sem dados de pagamento"
-        description="Nenhum recebimento registrado no período selecionado."
-      />
-    );
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          outerRadius={80}
-          dataKey="value"
-          label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
-          labelLine={false}
-          fontSize={12}
-        >
-          {data.map((_entry, index) => (
-            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltipPie />} />
-        <Legend
-          formatter={(value) => <span style={{ color: COLOR.legend, fontSize: 12 }}>{value}</span>}
-          wrapperStyle={{ paddingTop: 8 }}
-        />
-      </PieChart>
+      </AreaChart>
     </ResponsiveContainer>
   );
 }

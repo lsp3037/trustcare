@@ -15,6 +15,8 @@ import {
 } from 'recharts';
 import { ChartDay } from '@/components/hooks/useDashboardData';
 import { Card, CardTitle, buttonClasses } from '@/components/ui';
+import { PaymentMethodsList } from './PaymentMethodsList';
+import { GLASS_PANEL } from './glass';
 
 interface FinancialChartSectionProps {
   chartData: ChartDay[];
@@ -37,45 +39,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const PAYMENT_ICONS: Record<string, { label: string; bg: string; text: string; border: string; grad: string }> = {
-  pix: {
-    label: 'PIX',
-    bg: 'bg-emerald-500/15',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/30',
-    grad: 'from-emerald-500 to-teal-300',
-  },
-  cartao: {
-    label: 'CC',
-    bg: 'bg-blue-500/15',
-    text: 'text-blue-400',
-    border: 'border-blue-500/30',
-    grad: 'from-blue-500 to-indigo-300',
-  },
-  boleto: {
-    label: 'BOL',
-    bg: 'bg-amber-500/15',
-    text: 'text-amber-400',
-    border: 'border-amber-500/30',
-    grad: 'from-amber-500 to-yellow-300',
-  },
-  default: {
-    label: 'OUT',
-    bg: 'bg-slate-500/15',
-    text: 'text-slate-300',
-    border: 'border-slate-500/30',
-    grad: 'from-slate-400 to-slate-200',
-  },
-};
-
-function getPaymentStyle(method: string) {
-  const norm = method.toLowerCase();
-  if (norm.includes('pix')) return PAYMENT_ICONS.pix;
-  if (norm.includes('cart') || norm.includes('crédito') || norm.includes('debito')) return PAYMENT_ICONS.cartao;
-  if (norm.includes('bol') || norm.includes('transf')) return PAYMENT_ICONS.boleto;
-  return PAYMENT_ICONS.default;
-}
-
 export function FinancialChartSection({ chartData, paymentDistribution, billingTotal }: FinancialChartSectionProps) {
   const hasBilling = billingTotal > 0 || chartData.some((d) => d.faturamento > 0);
 
@@ -87,7 +50,7 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
     >
       <Card
         padding="lg"
-        className="flex flex-col justify-between bg-gradient-to-br from-surface-raised/95 via-surface/90 to-surface-sunken/95 backdrop-blur-2xl border border-border/80 border-t-white/20 border-x-white/8 border-b-black/40 rounded-[24px] shadow-[0_20px_45px_-10px_rgba(0,0,0,0.6)]"
+        className={`flex flex-col justify-between ${GLASS_PANEL}`}
       >
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
@@ -103,7 +66,7 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
 
             {hasBilling && (
               <div className="flex items-baseline gap-2 self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-surface-sunken/80 border border-glass-border">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Total Acumulado:</span>
+                <span className="text-caption font-bold uppercase tracking-wider text-text-muted">Total Acumulado:</span>
                 <span className="text-base font-extrabold text-brand font-mono tabular-nums">
                   R$ {billingTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
@@ -174,54 +137,7 @@ export function FinancialChartSection({ chartData, paymentDistribution, billingT
             <DollarSign className="w-4 h-4 text-brand" aria-hidden />
             Formas de Recebimento
           </h4>
-          <div className="space-y-3">
-            {Object.keys(paymentDistribution).length === 0 ? (
-              <p className="text-small text-text-subtle">Nenhum pagamento registrado no período.</p>
-            ) : (
-              Object.entries(paymentDistribution)
-                .sort(([, a], [, b]) => b - a)
-                .map(([method, value]) => {
-                  const percent = billingTotal > 0 ? (value / billingTotal) * 100 : 0;
-                  const style = getPaymentStyle(method);
-                  return (
-                    <div
-                      key={method}
-                      className="p-3 rounded-2xl bg-surface-sunken/60 border border-glass-border hover:border-glass-border-strong transition-colors"
-                    >
-                      <div className="flex justify-between items-center gap-3 text-small mb-2">
-                        <div className="flex items-center gap-2.5">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${style.bg} ${style.text} ${style.border}`}>
-                            {style.label}
-                          </span>
-                          <span className="font-semibold text-text">{method}</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-mono font-bold text-text tabular-nums">{percent.toFixed(1)}%</span>
-                          <span className="text-caption text-text-subtle font-mono tabular-nums">
-                            (R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        className="w-full bg-surface h-2 rounded-full border border-glass-divider overflow-hidden"
-                        role="meter"
-                        aria-valuenow={Number(percent.toFixed(1))}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`Participação de ${method}`}
-                      >
-                        <motion.div
-                          className={`h-full rounded-full bg-gradient-to-r ${style.grad}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percent}%` }}
-                          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-            )}
-          </div>
+          <PaymentMethodsList distribution={paymentDistribution} total={billingTotal} />
         </div>
 
         <div className="mt-6 border-t border-glass-divider pt-4">

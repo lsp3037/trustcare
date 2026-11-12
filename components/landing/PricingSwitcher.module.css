@@ -1,0 +1,337 @@
+/*
+ * Seletor de planos da landing — adaptado do modelo "Manage Subscription"
+ * (transitions.dev): pílula deslizante nas abas, painel com slide + blur,
+ * dígitos do preço entrando em cascata e troca suave do texto do botão.
+ */
+.root {
+  --page-dur: 250ms;
+  --page-distance: 8px;
+  --page-blur: 3px;
+  --tabs-dur: 250ms;
+  --digit-dur: 500ms;
+  --digit-distance: 8px;
+  --digit-stagger: 70ms;
+  --digit-blur: 2px;
+  --swap-dur: 150ms;
+  --swap-distance: 4px;
+  --swap-blur: 2px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pop: cubic-bezier(0.34, 1.45, 0.64, 1);
+
+  --surface: #0f172a; /* slate-900 */
+  --chip: rgba(255, 255, 255, 0.06);
+  --pill: rgba(255, 255, 255, 0.1);
+  --fg: #f8fafc;
+  --muted: #94a3b8; /* slate-400 */
+  --accent: #10b981; /* emerald-500 */
+  --divider: rgba(148, 163, 184, 0.22);
+
+  width: 100%;
+  max-width: 440px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: 28px;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid #1e293b; /* slate-800 */
+  box-shadow: 0 24px 64px -24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.trial {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Abas com pílula ── */
+.tabs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--chip);
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--tabs-dur) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.tab:hover {
+  color: #cbd5e1;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--fg);
+}
+
+.tab:focus-visible {
+  outline: 2px solid #6ee7b7; /* emerald-300 */
+  outline-offset: 2px;
+}
+
+.pill {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  height: 34px;
+  width: 0;
+  border-radius: 999px;
+  background: var(--pill);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transform: translateX(0);
+  transition:
+    transform var(--tabs-dur) var(--ease-out),
+    width var(--tabs-dur) var(--ease-out);
+  pointer-events: none;
+}
+
+/* ── Painéis empilhados ── */
+.pages {
+  display: grid;
+}
+
+.page {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--dir, 1) * var(--page-distance)));
+  filter: blur(var(--page-blur));
+  transition:
+    opacity var(--page-dur) var(--ease-out),
+    transform var(--page-dur) var(--ease-out),
+    filter var(--page-dur) var(--ease-out);
+}
+
+.page[data-on] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+  filter: blur(0);
+}
+
+.meta {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0 4px;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.price small {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.badge {
+  border: 1.5px dashed var(--accent);
+  border-radius: 999px;
+  color: #34d399; /* emerald-400 */
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  transform: rotate(-4deg);
+  white-space: nowrap;
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--divider) 20%, var(--divider) 80%, transparent);
+}
+
+.feats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #cbd5e1; /* slate-300 */
+}
+
+.feats li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.check {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+/* ── Dígitos do preço ── */
+.digits {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.digit {
+  display: inline-block;
+}
+
+.digits[data-animating] .digit {
+  animation: digit-pop-in var(--digit-dur) var(--ease-pop) both;
+}
+
+.digits[data-animating] .digit[data-stagger='1'] {
+  animation-delay: var(--digit-stagger);
+}
+
+.digits[data-animating] .digit[data-stagger='2'] {
+  animation-delay: calc(var(--digit-stagger) * 2);
+}
+
+@keyframes digit-pop-in {
+  0% {
+    transform: translateY(var(--digit-distance));
+    opacity: 0;
+    filter: blur(var(--digit-blur));
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* ── Botão ── */
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  border-radius: 999px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #000;
+  transition:
+    transform 150ms var(--ease-out),
+    background-color 150ms var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cta:hover {
+  background: #34d399; /* emerald-400 */
+}
+
+.cta:active {
+  transform: scale(0.98);
+}
+
+.cta:focus-visible {
+  outline: 2px solid #6ee7b7;
+  outline-offset: 2px;
+}
+
+.swap {
+  display: inline-block;
+  transform: translateY(0);
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform var(--swap-dur) ease-in-out,
+    filter var(--swap-dur) ease-in-out,
+    opacity var(--swap-dur) ease-in-out;
+}
+
+.swap[data-phase='exit'] {
+  transform: translateY(calc(var(--swap-distance) * -1));
+  filter: blur(var(--swap-blur));
+  opacity: 0;
+}
+
+.swap[data-phase='enter'] {
+  transform: translateY(var(--swap-distance));
+  filter: blur(var(--swap-blur));
+  opacity: 0;
+  transition: none;
+}
+
+.footnote {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .pill,
+  .tab,
+  .swap,
+  .cta {
+    transition: none !important;
+  }
+  .digits .digit {
+    animation: none !important;
+  }
+}

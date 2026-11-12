@@ -188,6 +188,7 @@ export function ProblemSection({
                 title="Arraste fotos do problema ou clique para anexar"
                 subtitle="JPG, PNG, WebP ou MP4 até 15MB"
                 compact
+                pickerMode="modal"
               />
             </div>
           )}

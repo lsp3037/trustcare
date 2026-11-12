@@ -42,6 +42,7 @@ export function AttachmentsSection({
         title="Arraste fotos ou vídeos aqui, ou clique para anexar"
         subtitle="JPG, PNG, WebP ou MP4 até 15MB"
         readOnly={readOnly}
+        pickerMode="modal"
       />
     </div>
   );

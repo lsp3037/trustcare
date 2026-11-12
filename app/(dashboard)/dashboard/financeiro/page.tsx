@@ -1,12 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'motion/react';
 import {
   DollarSign,
-  CheckCircle2,
   Clock,
-  TrendingUp,
   Download,
+  Banknote,
+  PiggyBank,
+  ReceiptText,
+  HandCoins,
+  ArrowRight,
   RefreshCw,
   Plus,
   Trash2,
@@ -22,10 +26,11 @@ import {
   Badge,
   Button,
   Card,
+  CardTitle,
   EmptyState,
-  PageHeader,
   SegmentedControl,
   Skeleton,
+  SkeletonCards,
   SkeletonTable,
   Table,
   TBody,
@@ -36,9 +41,11 @@ import {
   useConfirm,
   useToast,
 } from '@/components/ui';
-import { KpiCard } from './_components/KpiCard';
 import { PaymentTable } from './_components/PaymentTable';
-import { FinanceiroBarChart, FinanceiroPieChart } from './_components/FinanceiroChart';
+import { FinanceiroAreaChart, FinanceiroChartLegend } from './_components/FinanceiroChart';
+import { GlassKpiCard, KPI_ICON_CLASS } from '@/components/dashboard/GlassKpiCard';
+import { PaymentMethodsList } from '@/components/dashboard/PaymentMethodsList';
+import { GLASS_PANEL, SECTION_TITLE, formatPeriodLabel } from '@/components/dashboard/glass';
 import { exportFinancialToCsv, exportToCsv } from '@/lib/utils/csvExport';
 import { AddExpenseModal } from './_components/AddExpenseModal';
 import { toLocalYMD, toBrazilianDate, addMonthsPreservingDay } from '@/lib/utils/dates';
@@ -258,13 +265,13 @@ function buildBarData(
   return weeks;
 }
 
-function buildPieData(orders: Order[]) {
+function buildPaymentDistribution(orders: Order[]) {
   const dist: Record<string, number> = {};
   orders.forEach((o) => {
     const m = o.payment_method || 'Não Informado';
     dist[m] = (dist[m] || 0) + Number(o.total_value || 0);
   });
-  return Object.entries(dist).map(([name, value]) => ({ name, value }));
+  return dist;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -304,6 +311,7 @@ export default function FinanceiroPage() {
   const [activeTab, setActiveTab] = useState<'pendentes' | 'recebidos' | 'despesas'>('pendentes');
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   // Redirect non-admins
   useEffect(() => {
@@ -480,9 +488,15 @@ export default function FinanceiroPage() {
   const lucroLiquido = receitaRecebida - totalCustos;
 
   const barData = buildBarData(paidOrders, periodExpenses, dateRange.from, dateRange.to, summary?.daily_revenue);
-  const pieData = summary?.payment_distribution && Object.keys(summary.payment_distribution).length > 0
-    ? Object.entries(summary.payment_distribution).map(([name, value]) => ({ name, value }))
-    : buildPieData(paidOrders);
+  const paymentDistribution: Record<string, number> =
+    summary?.payment_distribution && Object.keys(summary.payment_distribution).length > 0
+      ? Object.fromEntries(Object.entries(summary.payment_distribution).map(([k, v]) => [k, Number(v)]))
+      : buildPaymentDistribution(paidOrders);
+
+  // Séries reais para as sparklines dos cards
+  const serieRecebido = barData.map((d) => d.faturamento);
+  const serieCustos = barData.map((d) => d.custos);
+  const serieLucro = barData.map((d) => d.faturamento - d.custos);
 
   const fmtCurrency = (v: number) =>
     `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -529,14 +543,7 @@ export default function FinanceiroPage() {
     return (
       <div className="space-y-6" aria-busy="true" aria-label="Carregando financeiro">
         <Skeleton className="h-8 w-56" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <Card key={i} padding="sm">
-              <Skeleton className="h-3 w-28 mb-2" style={{ animationDelay: `${i * 80}ms` }} />
-              <Skeleton className="h-7 w-32" />
-            </Card>
-          ))}
-        </div>
+        <SkeletonCards count={4} />
       </div>
     );
   }
@@ -567,99 +574,195 @@ export default function FinanceiroPage() {
         />
       )}
 
-      <PageHeader
-        icon={<DollarSign />}
-        title="Financeiro"
-        description="Controle de fluxo de caixa, custos de peças e lucratividade."
-        actions={
-          <>
-            <DatePickerWithRange onChange={setDateRange} />
-            <Button
-              variant="secondary"
-              icon={<Download className="w-4 h-4" />}
-              onClick={() => {
-                const transactions = [
-                  ...paidOrders.map((o) => ({
-                    date: o.payment_date || o.created_at,
-                    type: 'income',
-                    description: `OS #${o.codigo_os || (o.id ? o.id.slice(0, 8) : '')} - ${o.clients?.name || 'Cliente'}`,
-                    amount: o.total_value,
-                    status: 'Pago',
-                  })),
-                  ...periodExpenses.map((e) => ({
-                    date: e.expense_date,
-                    type: 'expense',
-                    description: `${e.description} (${e.category})`,
-                    amount: e.amount,
-                    status: e.recurrence || 'Único',
-                  })),
-                ];
-                exportFinancialToCsv(transactions);
-              }}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={fetchData}
-              title="Atualizar dados"
-              aria-label="Atualizar dados"
-              className="px-2.5"
-            >
-              <RefreshCw className="w-4 h-4" aria-hidden />
-            </Button>
-          </>
-        }
-      />
+      {/* Page Header — mesmo desenho do Dashboard */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-text tracking-tight">Financeiro</h1>
+          <p className="mt-1 text-small text-text-muted">
+            Fluxo de caixa, custos de peças e lucratividade da assistência.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          title="Faturamento (Caixa)"
-          value={loading ? '—' : fmtCurrency(receitaRecebida)}
-          subtitle={`${paidOrders.length} OS pagas no período`}
-          icon={CheckCircle2}
-          accentColor="success"
-        />
-        <KpiCard
-          title="Custos Operacionais"
-          value={loading ? '—' : fmtCurrency(totalCustos)}
-          subtitle={`Peças: ${fmtCurrency(totalPartsCost)} · Despesas: ${fmtCurrency(totalGeneralExpenses)}`}
-          icon={TrendingUp}
-          accentColor="danger"
-        />
-        <KpiCard
-          title="Lucro Líquido"
-          value={loading ? '—' : fmtCurrency(lucroLiquido)}
-          subtitle="Faturamento menos custos acumulados"
-          icon={DollarSign}
-          accentColor={lucroLiquido >= 0 ? 'success' : 'danger'}
-        />
-        <KpiCard
-          title="A Receber"
-          value={loading ? '—' : fmtCurrency(aReceber)}
-          subtitle={`${pendingOrders.length} OS pendentes`}
-          icon={Clock}
-          accentColor="warning"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <DatePickerWithRange onChange={setDateRange} />
+          <Button
+            variant="secondary"
+            className="rounded-full font-bold"
+            icon={<Download className="w-4 h-4" />}
+            onClick={() => {
+              const transactions = [
+                ...paidOrders.map((o) => ({
+                  date: o.payment_date || o.created_at,
+                  type: 'income',
+                  description: `OS #${o.codigo_os || (o.id ? o.id.slice(0, 8) : '')} - ${o.clients?.name || 'Cliente'}`,
+                  amount: o.total_value,
+                  status: 'Pago',
+                })),
+                ...periodExpenses.map((e) => ({
+                  date: e.expense_date,
+                  type: 'expense',
+                  description: `${e.description} (${e.category})`,
+                  amount: e.amount,
+                  status: e.recurrence || 'Único',
+                })),
+              ];
+              exportFinancialToCsv(transactions);
+            }}
+          >
+            Exportar CSV
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={fetchData}
+            title="Atualizar dados"
+            aria-label="Atualizar dados"
+            className="rounded-full px-2.5"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden />
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2">
-          <h2 className="text-caption font-semibold text-text-muted uppercase tracking-wider mb-4">
-            Faturamento vs Custos
-          </h2>
-          {loading ? <Skeleton className="h-[220px] w-full" /> : <FinanceiroBarChart data={barData} />}
-        </Card>
-        <Card>
-          <h2 className="text-caption font-semibold text-text-muted uppercase tracking-wider mb-4">
-            Faturamento por Forma de Pagamento
-          </h2>
-          {loading ? <Skeleton className="h-[220px] w-full" /> : <FinanceiroPieChart data={pieData} />}
-        </Card>
+      {/* Aviso de recebíveis — estilo Dynamic Island, como o SLA do Dashboard */}
+      {!loading && pendingOrders.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+          className="p-4 rounded-[22px] bg-gradient-to-r from-amber-950/35 via-surface-raised/80 to-surface-sunken/80 backdrop-blur-2xl border border-warning/35 border-t-warning/60 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.5),0_0_24px_rgba(245,158,11,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="relative w-10 h-10 rounded-xl bg-warning/15 text-warning border border-warning/30 flex items-center justify-center shrink-0">
+              <span className="absolute inset-0 rounded-xl border border-warning/50 animate-ping opacity-35 pointer-events-none" />
+              <HandCoins className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-small font-bold text-warning tracking-tight">
+                {fmtCurrency(aReceber)} a receber em {pendingOrders.length}{' '}
+                {pendingOrders.length === 1 ? 'ordem de serviço concluída' : 'ordens de serviço concluídas'}
+              </p>
+              <p className="text-caption text-text-muted mt-0.5">
+                Registre o pagamento assim que o cliente acertar para o caixa refletir a realidade.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setActiveTab('pendentes');
+              tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="rounded-full shrink-0 self-start sm:self-auto bg-warning/15 text-warning border-warning/35 hover:bg-warning/25 transition-all duration-200 font-bold"
+          >
+            Ver a receber <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </motion.div>
+      )}
+
+      {/* KPIs com vidro, halo e sparkline de dados reais */}
+      {loading ? (
+        <SkeletonCards count={4} />
+      ) : (
+        <section className="space-y-4" aria-label="Indicadores financeiros do período">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className={SECTION_TITLE}>Visão geral</h2>
+            <span className="text-caption font-semibold text-text-muted">{formatPeriodLabel(dateRange)}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <GlassKpiCard
+              index={0}
+              icon={<Banknote className={KPI_ICON_CLASS} strokeWidth={1.75} />}
+              label="Faturamento (Caixa)"
+              value={receitaRecebida}
+              format={fmtCurrency}
+              series={serieRecebido}
+              hint={`${paidOrders.length} ${paidOrders.length === 1 ? 'OS paga' : 'OS pagas'} no período`}
+            />
+            <GlassKpiCard
+              index={1}
+              tone="danger"
+              critical={false}
+              icon={<ReceiptText className={KPI_ICON_CLASS} strokeWidth={1.75} />}
+              label="Custos Operacionais"
+              value={totalCustos}
+              format={fmtCurrency}
+              series={serieCustos}
+              hint={`Peças ${fmtCurrency(totalPartsCost)} · Despesas ${fmtCurrency(totalGeneralExpenses)}`}
+            />
+            <GlassKpiCard
+              index={2}
+              tone={lucroLiquido >= 0 ? 'info' : 'danger'}
+              icon={<PiggyBank className={KPI_ICON_CLASS} strokeWidth={1.75} />}
+              label="Lucro Líquido"
+              value={lucroLiquido}
+              format={fmtCurrency}
+              series={serieLucro}
+              hint={lucroLiquido >= 0 ? 'Faturamento menos custos acumulados' : 'Custos acima do faturamento no período'}
+            />
+            <GlassKpiCard
+              index={3}
+              tone="warning"
+              icon={<Clock className={KPI_ICON_CLASS} strokeWidth={1.75} />}
+              label="A Receber"
+              value={aReceber}
+              format={fmtCurrency}
+              hint={`${pendingOrders.length} ${pendingOrders.length === 1 ? 'OS concluída' : 'OS concluídas'} sem pagamento`}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Gráfico de área + formas de recebimento */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <motion.div
+          className="lg:col-span-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 25, delay: 0.15 }}
+        >
+          <Card padding="lg" className={`h-full flex flex-col ${GLASS_PANEL}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+              <div>
+                <CardTitle>Faturamento vs Custos</CardTitle>
+                <p className="text-caption text-text-subtle mt-0.5">
+                  Quanto entrou no caixa e quanto saiu em peças e despesas.
+                </p>
+              </div>
+              <FinanceiroChartLegend />
+            </div>
+            <div className="w-full h-72">
+              {loading ? <Skeleton className="h-full w-full rounded-2xl" /> : <FinanceiroAreaChart data={barData} />}
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 25, delay: 0.22 }}
+        >
+          <Card padding="lg" className={`h-full ${GLASS_PANEL}`}>
+            <h2 className="text-caption uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2 font-bold">
+              <DollarSign className="w-4 h-4 text-brand" aria-hidden />
+              Formas de Recebimento
+            </h2>
+            {loading ? (
+              <div className="space-y-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full rounded-2xl" />
+                ))}
+              </div>
+            ) : (
+              <PaymentMethodsList distribution={paymentDistribution} total={receitaRecebida} />
+            )}
+          </Card>
+        </motion.div>
       </div>
 
-      <Card padding="none">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-border">
+      <div ref={tableRef} className="scroll-mt-6">
+      <Card padding="none" className={`overflow-hidden ${GLASS_PANEL}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-glass-divider">
           <SegmentedControl
             label="Seção do financeiro"
             value={activeTab}
@@ -671,6 +774,7 @@ export default function FinanceiroPage() {
             {activeTab === 'despesas' && (
               <Button
                 size="sm"
+                className="rounded-full shadow-[0_0_18px_rgba(16,185,129,0.3)] font-bold"
                 icon={<Plus className="w-3.5 h-3.5" />}
                 onClick={() => setIsAddExpenseOpen(true)}
               >
@@ -680,6 +784,7 @@ export default function FinanceiroPage() {
             <Button
               variant="secondary"
               size="sm"
+              className="rounded-full"
               icon={<Download className="w-3.5 h-3.5" />}
               onClick={exportAtual}
             >
@@ -794,6 +899,7 @@ export default function FinanceiroPage() {
           )}
         </div>
       </Card>
+      </div>
     </div>
   );
 }
