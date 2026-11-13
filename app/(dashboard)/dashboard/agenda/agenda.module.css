@@ -1,0 +1,153 @@
+/*
+ * Movimento da Agenda — mesmos tempos do modelo "Calendar Day Card"
+ * (transitions.dev): pílula da semana, troca da lista com slide + blur
+ * e troca suave dos textos do cabeçalho.
+ */
+.root {
+  --tabs-dur: 250ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --page-dur: 250ms;
+  --page-distance: 8px;
+  --page-blur: 3px;
+  --soft-dur: 200ms;
+  --soft-blur: 2px;
+}
+
+/* ── Faixa da semana ── */
+.tabs {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 20px;
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition:
+    color var(--tabs-dur) var(--ease),
+    background-color var(--tabs-dur) var(--ease),
+    transform 150ms var(--ease);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.tab:active {
+  transform: scale(0.96);
+}
+
+.pill {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 0;
+  border-radius: 15px;
+  background: rgb(255 255 255 / 0.09);
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.24),
+    inset 0 0 0 1px rgb(255 255 255 / 0.07),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+  transition:
+    transform var(--tabs-dur) var(--ease),
+    width var(--tabs-dur) var(--ease);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Listas do dia empilhadas ── */
+.pages {
+  display: grid;
+}
+
+.page {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--dir, 1) * var(--page-distance)));
+  filter: blur(var(--page-blur));
+  transition:
+    opacity var(--page-dur) var(--ease),
+    transform var(--page-dur) var(--ease),
+    filter var(--page-dur) var(--ease);
+}
+
+.page[data-on] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  filter: none;
+}
+
+/* ── Linha de O.S. tingida pela cor do estado (--c) ── */
+.os {
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 22%, transparent);
+  transition:
+    transform 200ms var(--ease),
+    background-color 200ms var(--ease);
+}
+
+.os:hover {
+  transform: translateX(3px);
+  background: color-mix(in srgb, var(--c) 17%, transparent);
+}
+
+.bar {
+  background: var(--c);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
+}
+
+.tag {
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
+}
+
+.avatar {
+  transition: transform 320ms cubic-bezier(0.34, 3.85, 0.64, 1);
+}
+
+.os:hover .avatar {
+  transform: translateY(-3px) scale(1.05);
+}
+
+/* ── Texto que troca com blur ── */
+.soft {
+  display: inline-grid;
+}
+
+.soft > span {
+  grid-area: 1 / 1;
+  white-space: pre;
+  transition:
+    filter var(--soft-dur) ease-in-out,
+    opacity var(--soft-dur) ease-in-out;
+}
+
+.soft > span[data-state='out'] {
+  opacity: 0;
+  filter: blur(var(--soft-blur));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .tab,
+  .page,
+  .soft > span,
+  .os,
+  .avatar {
+    transition: none !important;
+  }
+}
