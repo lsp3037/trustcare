@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
+import { CheckCircle2, ChevronDown } from 'lucide-react';
 import { Button, Card, Textarea } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { ChecklistTemplateItem, OrderChecklist, ChecklistItem } from './types';
@@ -133,9 +133,6 @@ function ChecklistPanel({
   headerActions,
   open,
   onToggleOpen,
-  saving,
-  onSave,
-  saveLabel,
   children,
 }: {
   phase: Phase;
@@ -145,9 +142,6 @@ function ChecklistPanel({
   headerActions?: React.ReactNode;
   open: boolean;
   onToggleOpen: () => void;
-  saving: boolean;
-  onSave: () => void;
-  saveLabel: string;
   children: React.ReactNode;
 }) {
   const tone = PHASE[phase];
@@ -187,16 +181,6 @@ function ChecklistPanel({
       {open && (
         <>
           <div className="flex-1 space-y-1">{children}</div>
-          <div className="mt-6 pt-6 border-t border-border">
-            <Button
-              fullWidth
-              loading={saving}
-              icon={<Check className="w-4 h-4" />}
-              onClick={onSave}
-            >
-              {saveLabel}
-            </Button>
-          </div>
         </>
       )}
     </Card>
@@ -210,8 +194,6 @@ interface ChecklistSectionProps {
   setEntryChecklist: React.Dispatch<React.SetStateAction<OrderChecklist>>;
   exitChecklist: OrderChecklist;
   setExitChecklist: React.Dispatch<React.SetStateAction<OrderChecklist>>;
-  handleSaveChecklists: (type: 'entry' | 'exit') => Promise<void>;
-  savingChecklist: boolean;
 }
 
 export function ChecklistSection({
@@ -221,18 +203,35 @@ export function ChecklistSection({
   setEntryChecklist,
   exitChecklist,
   setExitChecklist,
-  handleSaveChecklists,
-  savingChecklist
 }: ChecklistSectionProps) {
+  const [sectionOpen, setSectionOpen] = useState(false);
   const [isEntryOpen, setIsEntryOpen] = useState(true);
   const [isExitOpen, setIsExitOpen] = useState(true);
   const showExit = status === 'Finalizado';
 
   return (
-    <div className="mt-8 space-y-4 lg:col-span-3">
-      <h2 className="text-h2 text-text flex items-center gap-2 mb-6">
-        <CheckCircle2 className="w-6 h-6 text-text-subtle" aria-hidden /> Checklist e Condições
-      </h2>
+    <Card className="lg:col-span-3 space-y-4">
+      <button
+        type="button"
+        onClick={() => setSectionOpen(!sectionOpen)}
+        aria-expanded={sectionOpen}
+        className="w-full flex items-center justify-between gap-3 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <CheckCircle2 className="w-5 h-5 text-text-subtle shrink-0" aria-hidden />
+          <div className="min-w-0">
+            <h2 className="text-h3 text-text">Checklist e Condições</h2>
+            <p className="text-caption text-text-muted">
+              {showExit ? 'Entrada e saída do equipamento' : 'Condições de entrada do equipamento'}
+            </p>
+          </div>
+        </div>
+        <ChevronDown
+          className={cn('w-4 h-4 text-text-subtle shrink-0 transition-transform duration-250 ease-in-out', sectionOpen && 'rotate-180')}
+          aria-hidden
+        />
+      </button>
+      {sectionOpen && (
       <div className={cn('grid grid-cols-1 gap-8', showExit && 'lg:grid-cols-2')}>
         {/* Bloco de Entrada */}
         <ChecklistPanel
@@ -242,9 +241,6 @@ export function ChecklistSection({
           badge="Preenchimento Inicial"
           open={isEntryOpen}
           onToggleOpen={() => setIsEntryOpen(!isEntryOpen)}
-          saving={savingChecklist}
-          onSave={() => handleSaveChecklists('entry')}
-          saveLabel="Salvar Checklist de Entrada"
         >
           {checklistTemplateItems.map((item) => (
             <ChecklistItemRow
@@ -312,9 +308,6 @@ export function ChecklistSection({
             badge="Revisão Final"
             open={isExitOpen}
             onToggleOpen={() => setIsExitOpen(!isExitOpen)}
-            saving={savingChecklist}
-            onSave={() => handleSaveChecklists('exit')}
-            saveLabel="Salvar Checklist de Saída"
             headerActions={
               <Button
                 variant="secondary"
@@ -350,6 +343,7 @@ export function ChecklistSection({
           </ChecklistPanel>
         )}
       </div>
-    </div>
+      )}
+    </Card>
   );
 }

@@ -81,7 +81,7 @@ export function OrderLogisticsSection({
   const [loading, setLoading] = useState(true);
   const [pickup, setPickup] = useState<LegFormState>({ ...initialLegState(), enabled: true });
   const [delivery, setDelivery] = useState<LegFormState>(initialLegState());
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   // Carregar dados existentes
   useEffect(() => {
@@ -312,7 +312,7 @@ export function OrderLogisticsSection({
       }
 
       setState((prev) => ({ ...prev, savedLeg: data.leg }));
-      toast.success(`Logística de ${targetLeg === 'pickup' ? 'Retirada' : 'Devolução'} salva com sucesso!`);
+      toast.success(`Trecho de ${targetLeg === 'pickup' ? 'retirada' : 'devolução'} confirmado.`);
 
       // Notifica alteração do total
       recalculateAndNotify(targetLeg, data.leg);
@@ -757,7 +757,7 @@ export function OrderLogisticsSection({
                   className="w-full flex items-center justify-center gap-2 py-2.5 font-semibold"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  {state.saving ? 'Salvando...' : `Salvar ${isPickup ? 'Retirada' : 'Devolução'} na OS`}
+                  {state.saving ? 'Confirmando...' : `Confirmar trecho de ${isPickup ? 'retirada' : 'devolução'}`}
                 </Button>
               </div>
             </div>
@@ -767,35 +767,36 @@ export function OrderLogisticsSection({
     );
   };
 
+  const legLabel = (st: LegFormState, name: string) => (st.savedLeg ? `${name} ✓` : null);
+  const legsSummary =
+    [legLabel(pickup, 'Retirada'), legLabel(delivery, 'Devolução')].filter(Boolean).join(' · ') ||
+    'Nenhum trecho configurado';
+
   return (
     <Card className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        className="w-full flex items-center justify-between gap-2 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      >
         <div className="flex items-center gap-2.5 min-w-0">
-          <Truck className="w-5 h-5 text-primary shrink-0" />
+          <Truck className="w-5 h-5 text-primary shrink-0" aria-hidden />
           <div className="min-w-0">
             <CardTitle className="text-sm font-semibold truncate">Logística & Retiradas</CardTitle>
-            <p className="text-caption text-text-muted truncate">
-              Cálculo de rota a partir da sede
-            </p>
+            <p className="text-caption text-text-muted truncate">{legsSummary}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {totalLogisticsValue > 0 && (
             <span className="px-2.5 py-1 rounded-full text-caption font-semibold bg-primary/10 text-primary border border-primary/20">
-              Total Logística: {brl(totalLogisticsValue)}
+              {brl(totalLogisticsValue)}
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded text-text-muted hover:text-text"
-            aria-label={expanded ? 'Recolher' : 'Expandir'}
-          >
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+          {expanded ? <ChevronUp className="w-4 h-4 text-text-muted" aria-hidden /> : <ChevronDown className="w-4 h-4 text-text-muted" aria-hidden />}
         </div>
-      </div>
+      </button>
 
       {expanded && (
         <div className="space-y-4 pt-2">

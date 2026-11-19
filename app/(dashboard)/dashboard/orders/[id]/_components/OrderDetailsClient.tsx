@@ -41,7 +41,7 @@ import { TechnicalReportSection } from './TechnicalReportSection';
 import { FinancialSection } from './FinancialSection';
 import { OrderLogisticsSection } from './OrderLogisticsSection';
 import { AttachmentsSection } from './AttachmentsSection';
-import { OrderActions } from './OrderActions';
+import { SaveBar } from './SaveBar';
 import { appendServiceToTechnicalReport } from '@/lib/utils/reportFormatter';
 import { useFormatProblem } from '@/components/hooks/useFormatProblem';
 
@@ -95,7 +95,6 @@ export function OrderDetailsClient({
 
   const [entryChecklist, setEntryChecklist] = useState<OrderChecklist>(order?.entry_checklist || defaultChecklist);
   const [exitChecklist, setExitChecklist] = useState<OrderChecklist>(order?.exit_checklist || defaultChecklist);
-  const [savingChecklist, setSavingChecklist] = useState(false);
 
   const [selectedProducts, setSelectedProducts] = useState<any[]>(initialSelectedProducts || []);
   const [currentProductId, setCurrentProductId] = useState('');
@@ -120,10 +119,71 @@ export function OrderDetailsClient({
     reportedProblem,
     setReportedProblem,
     equipment: order?.equipment_details || '',
-    successMessage: 'Problema relatado formatado. Revise e clique em Salvar.',
+    successMessage: 'Problema relatado formatado. Revise e salve a OS.',
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // ── Alterações pendentes ──────────────────────────────────────────────
+  // Snapshot de tudo o que "Salvar OS" grava. Status e logística ficam de
+  // fora: gravam por conta própria, na hora.
+  const takeSnapshot = () => ({
+    reportedProblem,
+    technicalReport,
+    priority,
+    technicianId,
+    deliveryPrediction,
+    serviceValue,
+    discount,
+    pago,
+    paymentMethod,
+    paymentDate,
+    mediaFiles: mediaFiles.map((m) => ({ name: m.name, url: m.persistentUrl || m.url, type: m.type, category: m.category || 'service' })),
+    entryChecklist,
+    exitChecklist,
+    selectedProducts,
+    selectedServices,
+  });
+  type Snapshot = ReturnType<typeof takeSnapshot>;
+
+  const [baseline, setBaseline] = useState<Snapshot>(takeSnapshot);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const dirty = useMemo(
+    () => JSON.stringify(takeSnapshot()) !== JSON.stringify(baseline),
+    [reportedProblem, technicalReport, priority, technicianId, deliveryPrediction, serviceValue, discount, pago, paymentMethod, paymentDate, mediaFiles, entryChecklist, exitChecklist, selectedProducts, selectedServices, baseline],
+  );
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  const handleDiscard = async () => {
+    const ok = await confirm({
+      title: 'Descartar alterações?',
+      description: 'Tudo o que foi editado desde o último salvamento será perdido.',
+      confirmLabel: 'Descartar',
+      destructive: true,
+    });
+    if (!ok) return;
+    setReportedProblem(baseline.reportedProblem);
+    setTechnicalReport(baseline.technicalReport);
+    setPriority(baseline.priority);
+    setTechnicianId(baseline.technicianId);
+    setDeliveryPrediction(baseline.deliveryPrediction);
+    setServiceValue(baseline.serviceValue);
+    setDiscount(baseline.discount);
+    setPago(baseline.pago);
+    setPaymentMethod(baseline.paymentMethod);
+    setPaymentDate(baseline.paymentDate);
+    setMediaFiles(mediaFiles.filter((m) => baseline.mediaFiles.some((b) => b.url === (m.persistentUrl || m.url))));
+    setEntryChecklist(baseline.entryChecklist);
+    setExitChecklist(baseline.exitChecklist);
+    setSelectedProducts(baseline.selectedProducts);
+    setSelectedServices(baseline.selectedServices);
+  };
 
   useEffect(() => {
     const labor = parseFloat(serviceValue) || 0;
@@ -403,28 +463,6 @@ export function OrderDetailsClient({
     setMediaFiles(mediaFiles.filter((_, idx) => idx !== index));
   };
 
-  const handleSaveChecklists = async (type: 'entry' | 'exit') => {
-    if (isReadOnly) {
-      setErrorMsg('A conta está em modo apenas-leitura devido a atraso no pagamento. Alterações de checklist não são permitidas.');
-      return;
-    }
-    setSavingChecklist(true);
-    setErrorMsg('');
-    setSuccessMsg('');
-    try {
-      const updateData = type === 'entry' ? { entry_checklist: entryChecklist } : { exit_checklist: exitChecklist };
-      const { error } = await supabase.from('service_orders').update(updateData).eq('id', id);
-      if (error) throw error;
-      setSuccessMsg(`Checklist de ${type === 'entry' ? 'Entrada' : 'Saída'} salvo com sucesso!`);
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (err: any) {
-      console.error(`Erro ao salvar checklist de ${type}:`, err);
-      setErrorMsg(`Falha ao salvar checklist: ${err.message}`);
-    } finally {
-      setSavingChecklist(false);
-    }
-  };
-
   const triggerWebhook = async (newStatus: string) => {
     try {
       await fetch('/api/notify', {
@@ -451,7 +489,7 @@ export function OrderDetailsClient({
    * Transforma as anotações livres do laudo no formato padrão (Diagnóstico,
    * Serviços orçados, Total, Garantia, Prazo, Privacidade) via Edge Function
    * `formatar-laudo`. Os valores vêm dos itens da OS na tela; o total é
-   * calculado no servidor. Nada é salvo: o técnico revisa e clica em Salvar.
+   * calculado no servidor. Nada é salvo: o técnico revisa e usa Salvar OS.
    */
   const handleFormatReport = async () => {
     const plain = technicalReport.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim();
@@ -486,7 +524,7 @@ export function OrderDetailsClient({
       }
       if (!data?.html) throw new Error('A formatação voltou vazia.');
       setTechnicalReport(data.html);
-      toast.success('Laudo formatado. Revise e clique em Salvar.', {
+      toast.success('Laudo formatado. Revise e salve a OS.', {
         action: { label: 'Desfazer', onClick: () => setTechnicalReport(previous) },
         duration: 10000,
       });
@@ -506,6 +544,7 @@ export function OrderDetailsClient({
     setSaving(true);
     setErrorMsg('');
     setSuccessMsg('');
+    const savedSnapshot = takeSnapshot();
     try {
       const itemsPayload = selectedProducts.map((p) => ({
         product_id: p.product_id || null,
@@ -563,9 +602,10 @@ export function OrderDetailsClient({
         await triggerWebhook(status);
       }
       
-      setSuccessMsg('Ordem de Serviço atualizada com sucesso no banco de dados!');
+      setBaseline(savedSnapshot);
+      setSavedAt(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+      toast.success('Ordem de Serviço salva');
       router.refresh();
-      setTimeout(() => { router.push('/dashboard/orders'); }, 1200);
 
     } catch (err: any) {
       console.warn('Erro ao atualizar online:', err.message);
@@ -630,6 +670,7 @@ export function OrderDetailsClient({
       setOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
       if (newStatus === 'Cancelado') {
         setSelectedProducts([]);
+        setBaseline((b) => ({ ...b, selectedProducts: [] }));
       }
       setSuccessMsg('Status atualizado em tempo real!');
       setTimeout(() => setSuccessMsg(''), 3000);
@@ -662,6 +703,7 @@ export function OrderDetailsClient({
         throw new Error('Atualização não concluída. Verifique as permissões da sua conta.');
       }
       setPago(true);
+      setBaseline((b) => ({ ...b, pago: true, paymentMethod, paymentDate }));
       setOrder((prev: any) => prev ? { ...prev, status: pendingStatusUpdate, payment_date: paymentDate, payment_method: paymentMethod, pago: true } : null);
       setSuccessMsg('Status e fluxo de caixa atualizados em tempo real!');
       
@@ -684,6 +726,7 @@ export function OrderDetailsClient({
           selectedServices={selectedServices}
           status={status}
           priority={priority}
+          onDelete={handleDeleteOrder}
         />
 
         {successMsg && (
@@ -888,15 +931,22 @@ export function OrderDetailsClient({
               selectedServices={selectedServices} handleRemoveService={handleRemoveService} totalValue={totalValue}
               productAddError={productAddError} setProductAddError={setProductAddError}
             />
-            
-            <OrderActions handleDeleteOrder={handleDeleteOrder} handleSaveChanges={handleSaveChanges} saving={saving} />
           </div>
           
           <ChecklistSection 
             status={status} checklistTemplateItems={checklistTemplateItems} entryChecklist={entryChecklist} setEntryChecklist={setEntryChecklist}
-            exitChecklist={exitChecklist} setExitChecklist={setExitChecklist} handleSaveChecklists={handleSaveChecklists} savingChecklist={savingChecklist}
+            exitChecklist={exitChecklist} setExitChecklist={setExitChecklist}
           />
         </div>
+
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          disabled={isReadOnly}
+          savedLabel={savedAt ? `Salvo às ${savedAt}` : 'Tudo salvo'}
+          onSave={handleSaveChanges}
+          onDiscard={handleDiscard}
+        />
       </div>
 
       <Modal
